@@ -6,5 +6,8 @@
   "prettier.enable": true,
   "terminal.integrated.defaultProfile.linux": "zsh",
   "workbench.panel.defaultLocation": "right",
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "files.associations": {
+    "action.yml": "github-action-workflow"
+  }
 }
