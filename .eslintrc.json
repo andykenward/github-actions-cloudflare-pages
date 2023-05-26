@@ -3,20 +3,21 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:github/typescript"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2021,
     "sourceType": "module",
-    "project": "./tsconfig.json"
+    "project": true,
+    "tsconfigRootDir": "__dirname"
   },
   "overrides": [
     {
       "files": ["__tests__/**"],
       "plugins": ["jest"],
-      "extends": ["plugin:jest/recommended"],
-      "rules": {"jest/prefer-expect-assertions": "off"}
+      "extends": ["plugin:jest/recommended"]
     }
   ],
   "rules": {
