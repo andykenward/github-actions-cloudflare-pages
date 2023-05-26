@@ -12,5 +12,5 @@ runs:
     - uses: actions/setup-node@v3.6.0
       with:
         node-version: 18.x
-    - run: ${{ github.action_path }}/dist/index.js
+    - run: ${{ github.action_path }}dist/index.js
       shell: bash
