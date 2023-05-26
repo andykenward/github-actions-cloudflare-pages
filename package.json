@@ -9,7 +9,7 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "format-check": "prettier --check .",
-    "lint": "eslint src __tests__ --cache",
+    "lint": "eslint src __tests__  --ext .ts --cache",
     "lint:debug": "npm run lint -- --debug",
     "lint:fix": "npm run lint -- --fix",
     "lint:ls": "DEBUG=eslint:cli-engine npm run lint",
