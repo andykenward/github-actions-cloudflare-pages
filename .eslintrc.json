@@ -7,6 +7,14 @@
     "sourceType": "module",
     "project": "./tsconfig.json"
   },
+  "overrides": [
+    {
+      "files": ["__tests__/**"],
+      "plugins": ["jest"],
+      "extends": ["plugin:jest/recommended"],
+      "rules": {"jest/prefer-expect-assertions": "off"}
+    }
+  ],
   "rules": {
     "i18n-text/no-en": "off",
     "eslint-comments/no-use": "off",
