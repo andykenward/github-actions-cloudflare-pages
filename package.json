@@ -5,10 +5,14 @@
   "description": "TypeScript template action",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
+    "check": "tsc --noEmit",
     "format": "prettier --write .",
     "format-check": "prettier --check .",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint src __tests__ --cache",
+    "lint:debug": "npm run lint -- --debug",
+    "lint:fix": "npm run lint -- --fix",
+    "lint:ls": "DEBUG=eslint:cli-engine npm run lint",
     "package": "ncc build --source-map --license licenses.txt --target es2021",
     "test": "jest",
     "all": "npm run build && npm run format && npm run lint && npm run package && npm test"

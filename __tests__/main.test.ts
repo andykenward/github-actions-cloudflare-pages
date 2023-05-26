@@ -1,8 +1,9 @@
-import {wait} from '../src/wait'
-import * as process from 'process'
-import * as cp from 'child_process'
-import * as path from 'path'
 import {expect, test} from '@jest/globals'
+import cp from 'node:child_process'
+import path from 'node:path'
+import process from 'node:process'
+
+import {wait} from '../src/wait'
 
 test('throws invalid number', async () => {
   const input = parseInt('foo', 10)
@@ -18,7 +19,6 @@ test('wait 500 ms', async () => {
 })
 
 // shows how the runner will run a javascript action with env / stdout protocol
-// eslint-disable-next-line jest/expect-expect
 test('runs', () => {
   process.env['INPUT_MILLISECONDS'] = '500'
   const np = process.execPath
@@ -26,5 +26,6 @@ test('runs', () => {
   const options: cp.ExecFileSyncOptions = {
     env: process.env
   }
-  console.log(cp.execFileSync(np, [ip], options).toString())
+  const output = cp.execFileSync(np, [ip], options).toString()
+  expect(output).toMatch(/::debug::Waiting 500 milliseconds .../i)
 })
