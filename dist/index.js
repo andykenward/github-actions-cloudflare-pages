@@ -2872,7 +2872,7 @@ async function run() {
             (0, core_1.setFailed)(error.message);
     }
 }
-run();
+void run();
 
 })();
 
