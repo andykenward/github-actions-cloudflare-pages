@@ -13,4 +13,4 @@ runs:
       with:
         node-version: 18.x
     - run: ${{ github.action_path }}dist/index.js
-      shell: bash
+      shell: bash -l {0}
