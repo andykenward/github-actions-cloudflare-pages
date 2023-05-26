@@ -1,0 +1,9 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "eslint.enable": true,
+  "eslint.validate": ["javascript", "typescript"],
+  "prettier.enable": true,
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "workbench.panel.defaultLocation": "right"
+}
