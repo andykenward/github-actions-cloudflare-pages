@@ -6,7 +6,7 @@ import process from 'node:process'
 import {wait} from '../src/wait'
 
 test('throws invalid number', async () => {
-  const input = parseInt('foo', 10)
+  const input = Number.parseInt('foo', 10)
   await expect(wait(input)).rejects.toThrow('milliseconds not a number')
 })
 
@@ -22,10 +22,11 @@ test('wait 500 ms', async () => {
 test('runs', () => {
   process.env['INPUT_MILLISECONDS'] = '500'
   const np = process.execPath
+  // eslint-disable-next-line unicorn/prefer-module
   const ip = path.join(__dirname, '..', 'lib', 'main.js')
   const options: cp.ExecFileSyncOptions = {
     env: process.env
   }
   const output = cp.execFileSync(np, [ip], options).toString()
-  expect(output).toMatch(/::debug::Waiting 500 milliseconds .../i)
+  expect(output).toMatch(/::debug::waiting 500 milliseconds .../i)
 })

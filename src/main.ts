@@ -7,7 +7,7 @@ async function run(): Promise<void> {
     debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
 
     debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
+    await wait(Number.parseInt(ms, 10))
     debug(new Date().toTimeString())
 
     setOutput('time', new Date().toTimeString())

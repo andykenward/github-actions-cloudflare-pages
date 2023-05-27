@@ -8,6 +8,7 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    'plugin:unicorn/all',
     'prettier'
   ],
   overrides: [
@@ -28,11 +29,12 @@ module.exports = {
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    ecmaVersion: 'latest',
     sourceType: 'module',
     project: true,
     tsconfigRootDir: '__dirname'
   },
   plugins: ['@typescript-eslint'],
-  rules: {}
+  rules: {
+    'unicorn/prefer-top-level-await': 'off'
+  }
 }

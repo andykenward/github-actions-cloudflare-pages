@@ -10,8 +10,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.wait = void 0;
 async function wait(milliseconds) {
     return new Promise(resolve => {
-        if (isNaN(milliseconds)) {
-            throw new Error('milliseconds not a number');
+        if (Number.isNaN(milliseconds)) {
+            throw new TypeError('milliseconds not a number');
         }
         setTimeout(() => resolve('done!'), milliseconds);
     });
@@ -2863,7 +2863,7 @@ async function run() {
         const ms = (0, core_1.getInput)('milliseconds');
         (0, core_1.debug)(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
         (0, core_1.debug)(new Date().toTimeString());
-        await (0, wait_1.wait)(parseInt(ms, 10));
+        await (0, wait_1.wait)(Number.parseInt(ms, 10));
         (0, core_1.debug)(new Date().toTimeString());
         (0, core_1.setOutput)('time', new Date().toTimeString());
     }
