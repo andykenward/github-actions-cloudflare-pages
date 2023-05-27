@@ -15,7 +15,7 @@
     "lint:ls": "DEBUG=eslint:cli-engine npm run lint",
     "package": "ncc build --source-map --license licenses.txt --target es2021",
     "test": "jest",
-    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+    "all": "npm run build && npm run format && npm run lint:ls && npm run package && npm test"
   },
   "repository": {
     "type": "git",
@@ -34,13 +34,13 @@
   "devDependencies": {
     "@tsconfig/node16": "1.0.4",
     "@types/eslint": "8.40.0",
-    "@types/prettier": "2.7.2",
     "@types/node": "16.18.34",
+    "@types/prettier": "2.7.2",
     "@typescript-eslint/eslint-plugin": "5.59.7",
     "@typescript-eslint/parser": "5.59.7",
     "@vercel/ncc": "0.36.1",
     "eslint": "8.41.0",
-    "eslint-plugin-github": "4.7.0",
+    "eslint-config-prettier": "8.8.0",
     "eslint-plugin-jest": "27.2.1",
     "jest": "29.5.0",
     "js-yaml": "4.1.0",
