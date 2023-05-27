@@ -14,8 +14,11 @@ module.exports = {
   overrides: [
     {
       files: ['__tests__/**'],
-      plugins: ['jest'],
-      extends: ['plugin:jest/recommended']
+      plugins: ['vitest'],
+      extends: ['plugin:vitest/all'],
+      rules: {
+        'vitest/consistent-test-it': ['error', {fn: 'test'}]
+      }
     },
     {
       env: {
