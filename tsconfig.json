@@ -1,5 +1,9 @@
 {
   "extends": "@tsconfig/node16/tsconfig.json",
-  "include": ["src/**/*", "__tests__/**/*"],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true
+  },
+  "include": ["src", "__tests__", ".*.cjs", "*.cjs"],
   "exclude": ["dist", "lib", "node_modules"]
 }
