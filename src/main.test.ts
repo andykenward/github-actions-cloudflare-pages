@@ -1,35 +1,93 @@
-import cp from 'node:child_process'
-import path from 'node:path'
-import process from 'node:process'
+import core from '@actions/core'
+import github from '@actions/github'
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type SpyInstance
+} from 'vitest'
 
-import {describe, expect, test} from 'vitest'
-
-import {wait} from './wait'
+import {run} from './main'
 
 describe('action', () => {
-  test('throws invalid number', async () => {
-    const input = Number.parseInt('foo', 10)
-    await expect(wait(input)).rejects.toThrow('milliseconds not a number')
+  const consoleMock = vi.spyOn(console, 'log').mockImplementation(() => vi.fn())
+  let inputs: Record<string, string | undefined>
+  let spySetOutput: SpyInstance<
+    Parameters<typeof core.setOutput>,
+    ReturnType<typeof core.setOutput>
+  >
+  let spySetFailed: SpyInstance<
+    Parameters<typeof core.setFailed>,
+    ReturnType<typeof core.setFailed>
+  >
+
+  beforeEach(() => {
+    inputs = {}
+    vi.useFakeTimers()
+
+    const date = new Date(2000, 1, 1, 13)
+    vi.setSystemTime(date)
+
+    vi.spyOn(core, 'getInput').mockImplementation(name => inputs[name] || '')
+    spySetOutput = vi.spyOn(core, 'setOutput').mockImplementation(() => vi.fn())
+    spySetFailed = vi
+      .spyOn(core, 'setFailed')
+      .mockImplementation(error => error)
+
+    vi.spyOn(github.context, 'payload', 'get').mockReturnValue({
+      repository: {name: 'unlike-action', owner: {login: 'andykenward'}}
+    })
   })
 
-  test('wait 500 ms', async () => {
-    const start = new Date()
-    await wait(500)
-    const end = new Date()
-    const delta = Math.abs(end.getTime() - start.getTime())
-    expect(delta).toBeGreaterThan(450)
+  afterEach(() => {
+    consoleMock.mockReset()
   })
 
-  // shows how the runner will run a javascript action with env / stdout protocol
-  test('runs', () => {
-    process.env['INPUT_MILLISECONDS'] = '500'
-    const np = process.execPath
-    // eslint-disable-next-line unicorn/prefer-module
-    const ip = path.join(__dirname, '..', 'lib', 'main.js')
-    const options: cp.ExecFileSyncOptions = {
-      env: process.env
-    }
-    const output = cp.execFileSync(np, [ip], options).toString()
-    expect(output).toMatch(/::debug::waiting 500 milliseconds .../i)
+  afterAll(() => {
+    vi.useRealTimers()
+  })
+
+  test('run', () => {
+    inputs['who-to-greet'] = 'Andy'
+
+    run()
+
+    expect(consoleMock).toHaveBeenCalledWith(`Hello Andy!`)
+    expect(spySetOutput).toHaveBeenCalledWith(
+      'time',
+      new Date(2000, 1, 1, 13).toTimeString()
+    )
+    const payload = JSON.stringify(
+      {
+        repository: {name: 'unlike-action', owner: {login: 'andykenward'}}
+      },
+      undefined,
+      2
+    )
+    expect(consoleMock).toHaveBeenCalledWith(`The event payload: ${payload}`)
+
+    expect(consoleMock).toHaveBeenCalledTimes(2)
+
+    expect(spySetFailed).not.toHaveBeenCalled()
+  })
+
+  test('should setFailed on error', () => {
+    spySetOutput.mockImplementationOnce(() => {
+      throw new Error('setOutput error')
+    })
+    // We want to catch any thrown errors and call setFailed.
+    expect(() => run()).not.toThrow()
+    expect(spySetFailed).toHaveBeenCalledWith('setOutput error')
+
+    expect(consoleMock).toHaveBeenCalledTimes(1)
+    expect(consoleMock).toHaveBeenCalledWith(`Hello !`)
+    expect(spySetOutput).toHaveBeenCalledWith(
+      'time',
+      new Date(2000, 1, 1, 13).toTimeString()
+    )
   })
 })

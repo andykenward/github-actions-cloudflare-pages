@@ -1,13 +1,15 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Hello World'
+description: 'Greet someone and record the time'
 inputs:
-  milliseconds: # change this
+  who-to-greet: # id of input
+    description: 'Who to greet'
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    default: 'World'
+outputs:
+  time: # id of output
+    description: 'The time we greeted you'
 runs:
   using: 'node16'
   main: 'dist/index.js'

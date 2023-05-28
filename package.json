@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "description": "TypeScript template action",
-  "main": "lib/main.js",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "ncc build src/index.ts --source-map --license licenses.txt",
     "tsc:check": "tsc --noEmit --checkJs",
     "tsc:ls": "npm run tsc:check -- --listFilesOnly",
     "format": "prettier --write .",
@@ -14,11 +14,10 @@
     "lint:debug": "npm run lint -- --debug",
     "lint:fix": "npm run lint -- --fix",
     "lint:ls": "DEBUG=eslint:cli-engine npm run lint",
-    "package": "ncc build --source-map --license licenses.txt --target es2021",
     "test": "vitest",
     "test:ci": "vitest run",
     "test:ui": "vitest --ui",
-    "all": "npm run tsc:check && npm run build && npm run format && npm run lint:ls && npm run package && npm run test:ci"
+    "all": "npm run tsc:check && npm run format && npm run lint:ls && npm run test:ci && npm run build"
   },
   "repository": {
     "type": "git",

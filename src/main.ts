@@ -1,20 +1,19 @@
-import {debug, getInput, setFailed, setOutput} from '@actions/core'
+import {getInput, setFailed, setOutput} from '@actions/core'
+import {context} from '@actions/github'
 
-import {wait} from './wait'
-
-async function run(): Promise<void> {
+/**
+ * https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
+ */
+export function run(): void {
   try {
-    const ms: string = getInput('milliseconds')
-    debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
-
-    debug(new Date().toTimeString())
-    await wait(Number.parseInt(ms, 10))
-    debug(new Date().toTimeString())
-
-    setOutput('time', new Date().toTimeString())
+    const nameToGreet = getInput('who-to-greet')
+    console.log(`Hello ${nameToGreet}!`)
+    const time = new Date().toTimeString()
+    setOutput('time', time)
+    // // Get the JSON webhook payload for the event that triggered the workflow
+    const payload = JSON.stringify(context.payload, undefined, 2)
+    console.log(`The event payload: ${payload}`)
   } catch (error) {
     if (error instanceof Error) setFailed(error.message)
   }
 }
-
-void run()
