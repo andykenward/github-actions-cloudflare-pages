@@ -1,4 +1,5 @@
 import {debug, getInput, setFailed, setOutput} from '@actions/core'
+
 import {wait} from './wait'
 
 async function run(): Promise<void> {
