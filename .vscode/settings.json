@@ -7,7 +7,7 @@
   "terminal.integrated.defaultProfile.linux": "zsh",
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.associations": {
-    "action.yml": "github-action-workflow"
+    "action.yml": "yaml"
   },
   "workbench.colorCustomizations": {
     "activityBar.activeBackground": "#2f7c47",
