@@ -15,10 +15,10 @@
     "lint:fix": "npm run lint -- --fix",
     "lint:ls": "DEBUG=eslint:cli-engine npm run lint",
     "package": "ncc build --source-map --license licenses.txt --target es2021",
-    "test": "vitest run",
+    "test": "vitest",
+    "test:ci": "vitest run",
     "test:ui": "vitest --ui",
-    "test:watch": "vitest",
-    "all": "npm run tsc:check && npm run build && npm run format && npm run lint:ls && npm run package && npm test"
+    "all": "npm run tsc:check && npm run build && npm run format && npm run lint:ls && npm run package && npm run test:ci"
   },
   "repository": {
     "type": "git",
