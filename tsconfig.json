@@ -1,7 +1,6 @@
 {
   "extends": "@tsconfig/node16/tsconfig.json",
   "compilerOptions": {
-    "allowJs": true,
     "checkJs": true
   },
   "exclude": ["dist", "lib", "node_modules"]

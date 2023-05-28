@@ -6,8 +6,8 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
-    "tsc:check": "tsc --noEmit",
-    "tsc:ls": "tsc --noEmit --listFilesOnly",
+    "tsc:check": "tsc --noEmit --checkJs",
+    "tsc:ls": "npm run tsc:check -- --listFilesOnly",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .  --ext .ts,.cjs,.js",
@@ -18,7 +18,7 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
-    "all": "npm run build && npm run format && npm run lint:ls && npm run package && npm test"
+    "all": "npm run tsc:check && npm run build && npm run format && npm run lint:ls && npm run package && npm test"
   },
   "repository": {
     "type": "git",

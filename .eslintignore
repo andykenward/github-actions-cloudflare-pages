@@ -1,4 +1,6 @@
-dist/
-lib/
-node_modules/
+.vscode
+.devcontainer
+dist
+lib
+node_modules
 .eslintrc.cjs

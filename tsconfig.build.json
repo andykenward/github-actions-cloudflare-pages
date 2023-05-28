@@ -5,7 +5,8 @@
   "compilerOptions": {
     "outDir": "./lib",
     "rootDir": "./src",
-    "noEmit": false
+    "noEmit": false,
+    "checkJs": false
   },
   "include": ["src"],
   "exclude": ["__tests__", "dist", "lib", "node_modules"]

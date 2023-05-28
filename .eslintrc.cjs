@@ -1,5 +1,8 @@
+// @ts-check
+
 /** @type {import("eslint").Linter.Config} */
-module.exports = {
+const config = {
+  root: true,
   env: {
     es2021: true,
     node: true
@@ -41,3 +44,5 @@ module.exports = {
     'unicorn/prefer-top-level-await': 'off'
   }
 }
+
+module.exports = config
