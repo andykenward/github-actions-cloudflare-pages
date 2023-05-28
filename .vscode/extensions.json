@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "johnpapa.vscode-peacock",
+    "dbaeumer.vscode-eslint",
+    "github.vscode-github-actions",
+    "github.vscode-pull-request-github",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "yoavbls.pretty-ts-errors",
+    "redhat.vscode-yaml"
+  ]
+}
