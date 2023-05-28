@@ -9,5 +9,5 @@
     "checkJs": false
   },
   "include": ["src"],
-  "exclude": ["__tests__", "dist", "lib", "node_modules"]
+  "exclude": ["dist", "lib", "node_modules", "src/**/*.test.ts"]
 }

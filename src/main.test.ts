@@ -3,7 +3,7 @@ import path from 'node:path'
 import process from 'node:process'
 import {describe, expect, test} from 'vitest'
 
-import {wait} from '../src/wait'
+import {wait} from './wait'
 
 describe('action', () => {
   test('throws invalid number', async () => {

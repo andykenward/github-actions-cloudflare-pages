@@ -16,7 +16,7 @@ const config = {
   ],
   overrides: [
     {
-      files: ['__tests__/**'],
+      files: ['*.test.ts'],
       plugins: ['vitest'],
       extends: ['plugin:vitest/all'],
       rules: {
