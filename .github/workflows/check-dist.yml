@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
 # `dist/index.js` is a special file in Actions.
 # When you reference an action with `uses:` in a workflow,
 # `index.js` is the code that will run.
