@@ -24,7 +24,8 @@ const config = {
         'vitest/no-hooks': [
           'error',
           {allow: ['afterEach', 'beforeEach', 'afterAll']}
-        ]
+        ],
+        'vitest/max-expects': 'off'
       }
     },
     {
@@ -45,7 +46,8 @@ const config = {
   },
   plugins: ['@typescript-eslint'],
   rules: {
-    'unicorn/prefer-top-level-await': 'off'
+    'unicorn/prefer-top-level-await': 'off',
+    'unicorn/prevent-abbreviations': 'off'
   }
 }
 

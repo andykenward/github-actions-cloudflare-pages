@@ -9621,12 +9621,13 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const core_1 = __nccwpck_require__(7733);
 const github_1 = __nccwpck_require__(3695);
+const INPUT_GREETING = 'who-to-greet';
 /**
  * https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
  */
 function run() {
     try {
-        const nameToGreet = (0, core_1.getInput)('who-to-greet');
+        const nameToGreet = (0, core_1.getInput)(INPUT_GREETING, { required: true });
         console.log(`Hello ${nameToGreet}!`);
         const time = new Date().toTimeString();
         (0, core_1.setOutput)('time', time);
