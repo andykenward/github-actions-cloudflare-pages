@@ -8,19 +8,24 @@ on: # rebuild any PRs and main branch changes
       - main
       - 'releases/*'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          npm install
-      - run: |
-          npm run all
+      - uses: ./.github/actions/node
+      - uses: ./.github/actions/pnpm
+      - name: Install dependencies
+        run: pnpm install
+      - run: pnpm run all
   test: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: ./
         with:
-          milliseconds: 1000
+          who-to-greet: 'Tester in a GitHub workflow'

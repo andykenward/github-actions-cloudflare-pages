@@ -7,17 +7,17 @@
   "scripts": {
     "build": "ncc build src/index.ts --source-map --license licenses.txt",
     "tsc:check": "tsc --noEmit --checkJs",
-    "tsc:ls": "npm run tsc:check -- --listFilesOnly",
+    "tsc:ls": "pnpm run tsc:check -- --listFilesOnly",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .  --ext .ts,.cjs,.js",
-    "lint:debug": "npm run lint -- --debug",
-    "lint:fix": "npm run lint -- --fix",
-    "lint:ls": "DEBUG=eslint:cli-engine npm run lint",
+    "lint:debug": "pnpm run lint -- --debug",
+    "lint:fix": "pnpm run lint -- --fix",
+    "lint:ls": "DEBUG=eslint:cli-engine pnpm run lint",
     "test": "vitest",
     "test:ci": "vitest run",
     "test:ui": "vitest --ui",
-    "all": "npm run tsc:check && npm run format && npm run lint:ls && npm run test:ci && npm run build"
+    "all": "pnpm run tsc:check && pnpm run format && pnpm run lint:ls && pnpm run test:ci && pnpm run build"
   },
   "repository": {
     "type": "git",
@@ -33,6 +33,7 @@
   "engines": {
     "node": "^16.20.0"
   },
+  "packageManager": "pnpm@8.3.1",
   "dependencies": {
     "@actions/core": "1.10.0",
     "@actions/github": "5.1.1"
