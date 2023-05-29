@@ -20,7 +20,12 @@ const config = {
       plugins: ['vitest'],
       extends: ['plugin:vitest/all'],
       rules: {
-        'vitest/consistent-test-it': ['error', {fn: 'test'}]
+        'vitest/consistent-test-it': ['error', {fn: 'test'}],
+        'vitest/no-hooks': [
+          'error',
+          {allow: ['afterEach', 'beforeEach', 'afterAll']}
+        ],
+        'vitest/max-expects': 'off'
       }
     },
     {
@@ -41,7 +46,8 @@ const config = {
   },
   plugins: ['@typescript-eslint'],
   rules: {
-    'unicorn/prefer-top-level-await': 'off'
+    'unicorn/prefer-top-level-await': 'off',
+    'unicorn/prevent-abbreviations': 'off'
   }
 }
 

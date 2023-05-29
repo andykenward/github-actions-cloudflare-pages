@@ -1,34 +1,103 @@
-import cp from 'node:child_process'
-import path from 'node:path'
-import process from 'node:process'
-import {describe, expect, test} from 'vitest'
+import core from '@actions/core'
+import github from '@actions/github'
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type SpyInstance
+} from 'vitest'
 
-import {wait} from './wait'
+import {run} from './main'
+
+const INPUT_GREETING = 'who-to-greet'
+const ENV_INPUT_WHO_TO_GREET = `INPUT_${INPUT_GREETING.toUpperCase()}`
 
 describe('action', () => {
-  test('throws invalid number', async () => {
-    const input = Number.parseInt('foo', 10)
-    await expect(wait(input)).rejects.toThrow('milliseconds not a number')
+  /** So we can reset process.env between tests */
+  const env = process.env
+  const consoleMock = vi.spyOn(console, 'log').mockImplementation(() => vi.fn())
+
+  let spySetOutput: SpyInstance<
+    Parameters<typeof core.setOutput>,
+    ReturnType<typeof core.setOutput>
+  >
+  let spySetFailed: SpyInstance<
+    Parameters<typeof core.setFailed>,
+    ReturnType<typeof core.setFailed>
+  >
+
+  beforeEach(() => {
+    vi.resetModules()
+    /**
+     * Reset process.env as GitHub Action inputs are on process.env.
+     * This is used by `core.getInput()`.
+     */
+    process.env = {...env}
+
+    vi.useFakeTimers()
+
+    const date = new Date(2000, 1, 1, 13)
+    vi.setSystemTime(date)
+
+    spySetOutput = vi.spyOn(core, 'setOutput').mockImplementation(() => vi.fn())
+    spySetFailed = vi
+      .spyOn(core, 'setFailed')
+      .mockImplementation(error => error)
+
+    vi.spyOn(github.context, 'payload', 'get').mockReturnValue({
+      repository: {name: 'unlike-action', owner: {login: 'andykenward'}}
+    })
   })
 
-  test('wait 500 ms', async () => {
-    const start = new Date()
-    await wait(500)
-    const end = new Date()
-    const delta = Math.abs(end.getTime() - start.getTime())
-    expect(delta).toBeGreaterThan(450)
+  afterEach(() => {
+    consoleMock.mockReset()
+    /**
+     * Reset process.env as GitHub Action inputs are on process.env.
+     * This is used by `core.getInput()`.
+     */
+    process.env = {...env}
   })
 
-  // shows how the runner will run a javascript action with env / stdout protocol
-  test('runs', () => {
-    process.env['INPUT_MILLISECONDS'] = '500'
-    const np = process.execPath
-    // eslint-disable-next-line unicorn/prefer-module
-    const ip = path.join(__dirname, '..', 'lib', 'main.js')
-    const options: cp.ExecFileSyncOptions = {
-      env: process.env
-    }
-    const output = cp.execFileSync(np, [ip], options).toString()
-    expect(output).toMatch(/::debug::waiting 500 milliseconds .../i)
+  afterAll(() => {
+    vi.useRealTimers()
+  })
+
+  test('run', () => {
+    /** For `core.getInput()` */
+    process.env[ENV_INPUT_WHO_TO_GREET] = 'Andy'
+
+    run()
+
+    expect(process.env[ENV_INPUT_WHO_TO_GREET]).not.toBeUndefined()
+    expect(consoleMock).toHaveBeenCalledWith(`Hello Andy!`)
+    expect(spySetOutput).toHaveBeenCalledWith(
+      'time',
+      new Date(2000, 1, 1, 13).toTimeString()
+    )
+    expect(consoleMock).toHaveBeenCalledWith(
+      `The event payload: ${JSON.stringify(
+        {
+          repository: {name: 'unlike-action', owner: {login: 'andykenward'}}
+        },
+        undefined,
+        2
+      )}`
+    )
+    expect(consoleMock).toHaveBeenCalledTimes(2)
+    expect(spySetFailed).not.toHaveBeenCalled()
+  })
+
+  test(`should call setFailed when input ${INPUT_GREETING} is undefined`, () => {
+    expect(() => run()).not.toThrow()
+    expect(spySetFailed).toHaveBeenCalledWith(
+      `Input required and not supplied: ${INPUT_GREETING}`
+    )
+    expect(process.env[ENV_INPUT_WHO_TO_GREET]).toBeUndefined()
+    expect(consoleMock).not.toHaveBeenCalled()
+    expect(spySetOutput).not.toHaveBeenCalled()
   })
 })
