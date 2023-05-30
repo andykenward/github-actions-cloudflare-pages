@@ -7,7 +7,6 @@
     "eamodio.gitlens",
     "esbenp.prettier-vscode",
     "yoavbls.pretty-ts-errors",
-    "redhat.vscode-yaml",
-    "zixuanchen.vitest-explorer"
+    "redhat.vscode-yaml"
   ]
 }
