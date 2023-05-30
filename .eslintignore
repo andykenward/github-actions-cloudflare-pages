@@ -1,6 +1,5 @@
 .vscode
 .devcontainer
 dist
-lib
 node_modules
 .eslintrc.cjs
