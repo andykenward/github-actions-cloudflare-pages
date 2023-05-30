@@ -3,13 +3,18 @@
 name: 'Hello World'
 description: 'Greet someone and record the time'
 inputs:
-  who-to-greet: # id of input
-    description: 'Who to greet'
+  apiToken:
+    description: 'Cloudflare API Token'
     required: true
-    default: 'World'
+  accountId:
+    description: 'Cloudflare Account ID'
+    required: true
+  projectName:
+    description: 'The name of the Pages project to upload to'
+    required: true
 outputs:
-  time: # id of output
-    description: 'The time we greeted you'
+  subdomain:
+    description: 'Subdomain of Cloudflare Page project'
 runs:
   using: 'node16'
   main: 'dist/index.js'

@@ -1,21 +1,20 @@
-import {getInput, setFailed, setOutput} from '@actions/core'
-import {context} from '@actions/github'
+import {env} from 'node:process'
 
-const INPUT_GREETING = 'who-to-greet'
+import {setOutput} from '@actions/core'
 
-/**
- * https://docs.github.com/en/actions/creating-actions/creating-a-javascript-action
- */
-export function run(): void {
-  try {
-    const nameToGreet = getInput(INPUT_GREETING, {required: true})
-    console.log(`Hello ${nameToGreet}!`)
-    const time = new Date().toTimeString()
-    setOutput('time', time)
-    // // Get the JSON webhook payload for the event that triggered the workflow
-    const payload = JSON.stringify(context.payload, undefined, 2)
-    console.log(`The event payload: ${payload}`)
-  } catch (error) {
-    if (error instanceof Error) setFailed(error.message)
-  }
+import {getProject} from './cloudflare/project'
+
+export async function run(): Promise<string> {
+  const githubBranch = env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME
+
+  const project = await getProject()
+
+  const productionEnvironment: boolean =
+    githubBranch === project.production_branch
+
+  // TODO use core https://github.com/actions/toolkit/blob/main/docs/action-debugging.md#step-debug-logs
+  console.log('isProduction', productionEnvironment)
+
+  setOutput('subdomain', project.subdomain)
+  return project.name
 }

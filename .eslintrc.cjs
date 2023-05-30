@@ -25,7 +25,8 @@ const config = {
           'error',
           {allow: ['afterEach', 'beforeEach', 'afterAll']}
         ],
-        'vitest/max-expects': 'off'
+        'vitest/max-expects': 'off',
+        'vitest/no-mocks-import': 'off'
       }
     },
     {
