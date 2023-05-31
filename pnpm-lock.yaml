@@ -36,15 +36,15 @@ devDependencies:
   '@typescript-eslint/parser':
     specifier: 5.59.7
     version: 5.59.7(eslint@8.41.0)(typescript@5.0.4)
-  '@vercel/ncc':
-    specifier: 0.36.1
-    version: 0.36.1
   '@vitest/ui':
     specifier: 0.31.1
     version: 0.31.1(vitest@0.31.1)
   dotenv:
     specifier: 16.0.3
     version: 16.0.3
+  esbuild:
+    specifier: 0.17.19
+    version: 0.17.19
   eslint:
     specifier: 8.41.0
     version: 8.41.0
@@ -1010,11 +1010,6 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.59.8
       eslint-visitor-keys: 3.4.1
-    dev: true
-
-  /@vercel/ncc@0.36.1:
-    resolution: {integrity: sha512-S4cL7Taa9yb5qbv+6wLgiKVZ03Qfkc4jGRuiUQMQ8HGBD5pcNRnHeYM33zBvJE4/zJGjJJ8GScB+WmTsn9mORw==}
-    hasBin: true
     dev: true
 
   /@vitest/expect@0.31.1:
