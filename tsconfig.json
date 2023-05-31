@@ -3,7 +3,10 @@
   "compilerOptions": {
     "checkJs": true,
     "noEmit": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "exclude": ["dist", "node_modules"]
 }

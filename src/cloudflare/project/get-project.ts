@@ -1,7 +1,7 @@
 import type {Project} from '@cloudflare/types'
 
-import {getCloudflareApiEndpoint} from './endpoints'
-import {fetchResult} from './utils'
+import {getCloudflareApiEndpoint} from '../api/endpoints'
+import {fetchResult} from '../api/fetch-result'
 
 /** Get Cloudflare Pages project */
 export const getProject = async (): Promise<Project> => {

@@ -1,10 +1,12 @@
+import {setOutput} from '@actions/core'
 import type {Project} from '@cloudflare/types'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-import {getProject} from '../cloudflare/project'
-import {run} from '../main'
+import {getProject} from '@/cloudflare/project/get-project'
+import {run} from '@/main'
 
-vi.mock('../cloudflare/project')
+vi.mock('@actions/core')
+vi.mock('@/cloudflare/project/get-project')
 
 describe('main', () => {
   afterEach(() => {
@@ -13,6 +15,8 @@ describe('main', () => {
 
   test('can mock project response', async () => {
     await expect(run()).resolves.toStrictEqual('mock-project-name')
+    // eslint-disable-next-line vitest/prefer-called-with
+    expect(setOutput).toHaveBeenCalledOnce()
   })
 
   test('can we replace the mock in the test', async () => {

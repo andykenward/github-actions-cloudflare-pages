@@ -4,10 +4,13 @@ export interface FetchError {
   error_chain?: FetchError[]
 }
 
-export interface FetchResult<ResponseType = unknown> {
+export interface FetchNoResult {
   success: boolean
-  result: ResponseType
   errors: FetchError[]
+}
+
+export interface FetchResult<ResponseType = unknown> extends FetchNoResult {
+  result: ResponseType
   messages: string[]
   result_info?: unknown
 }

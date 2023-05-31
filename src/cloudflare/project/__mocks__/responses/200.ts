@@ -1,9 +1,8 @@
 /* eslint-disable unicorn/no-null */
 
 import type {Project} from '@cloudflare/types'
-import {vi} from 'vitest'
 
-export const PROJECT_RESPONSE: Project = {
+export const PROJECT_RESPONSE_OK = {
   id: '51dd62e5-fe5b-43aa-92c2-b1d4306e3c2c',
   name: 'mock-project-name',
   subdomain: 'mock-project-name.pages.dev',
@@ -201,6 +200,4 @@ export const PROJECT_RESPONSE: Project = {
   production_branch: 'main',
   production_script_name: 'pages-worker--977947-production',
   preview_script_name: 'pages-worker--977947-preview'
-}
-
-export const getProject = vi.fn().mockResolvedValue(PROJECT_RESPONSE)
+} satisfies Project

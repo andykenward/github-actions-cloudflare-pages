@@ -2,7 +2,7 @@ import {env} from 'node:process'
 
 import {setOutput} from '@actions/core'
 
-import {getProject} from './cloudflare/project'
+import {getProject} from '@/cloudflare/project/get-project'
 
 export async function run(): Promise<string> {
   const githubBranch = env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME

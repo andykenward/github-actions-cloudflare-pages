@@ -1,8 +1,8 @@
 import {getInput} from '@actions/core'
 import {fetch, type RequestInit} from 'undici'
 
-import {throwFetchError} from './lib/cfetch'
-import type {FetchResult} from './types'
+import {throwFetchError} from '../lib/cfetch'
+import type {FetchResult} from '../types'
 
 /** Cloudflare API token */
 export const ACTION_INPUT_API_TOKEN = 'apiToken'
@@ -32,6 +32,9 @@ export async function fetchResult<ResponseType>(
   const json = (await response.json()) as FetchResult<ResponseType>
 
   if (json.success) {
+    if (json.result === null) {
+      throwFetchError(resource, json)
+    }
     return json.result
   } else {
     throwFetchError(resource, json)
