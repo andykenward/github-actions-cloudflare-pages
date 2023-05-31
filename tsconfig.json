@@ -8,5 +8,8 @@
       "@/*": ["./src/*"]
     }
   },
-  "exclude": ["dist", "node_modules"]
+  "exclude": ["dist", "node_modules"],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }

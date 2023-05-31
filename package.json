@@ -58,6 +58,7 @@
     "eslint-plugin-vitest": "0.2.5",
     "prettier": "2.8.8",
     "ts-node": "10.9.1",
+    "tsconfig-paths": "4.2.0",
     "typescript": "5.0.4",
     "vitest": "0.31.3"
   },
