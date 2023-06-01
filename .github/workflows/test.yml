@@ -16,18 +16,15 @@ jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/node
+      - uses: actions/checkout@v3.5.2
       - uses: ./.github/actions/pnpm
-      - name: Install dependencies
-        run: pnpm install
       - run: pnpm run all
   test: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     # outputs:
     #   subdomain: ${{steps.our-action.outputs.subdomain}}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.2
       - id: 'our-action'
         uses: ./
         with:

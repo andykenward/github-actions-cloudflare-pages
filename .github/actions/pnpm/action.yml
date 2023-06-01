@@ -1,11 +1,19 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 
 name: 'pnpm'
-description: 'Pnpm install & cache action'
+description: 'Node, Pnpm, Cache & Install'
+inputs:
+  node-version:
+    description: 'Version of node'
+    required: false
+    default: 18.x
 runs:
   using: 'composite'
   steps:
-    - uses: pnpm/action-setup@v2.2.4
+    - uses: actions/setup-node@v3.6.0
+      with:
+        node-version: ${{ inputs.node-version }}
+    - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd
       name: Install pnpm
       with:
         run_install: false
@@ -21,3 +29,6 @@ runs:
         key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-pnpm-store-
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install
