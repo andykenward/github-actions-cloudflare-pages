@@ -1,11 +1,9 @@
 import {getInput} from '@actions/core'
 import {fetch, type RequestInit} from 'undici'
 
-import type {FetchResult} from '../types'
-import {throwFetchError} from './fetch-error'
-
-/** Cloudflare API token */
-export const ACTION_INPUT_API_TOKEN = 'apiToken'
+import {ACTION_INPUT_API_TOKEN} from '../../constants.js'
+import type {FetchResult} from '../types.js'
+import {throwFetchError} from './fetch-error.js'
 
 export async function fetchResult<ResponseType>(
   resource: string,

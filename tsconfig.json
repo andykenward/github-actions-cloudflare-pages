@@ -4,12 +4,12 @@
     "checkJs": true,
     "noEmit": true,
     "verbatimModuleSyntax": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "moduleResolution": "node16"
   },
   "exclude": ["dist", "node_modules"],
   "ts-node": {
-    "require": ["tsconfig-paths/register"]
+    "transpileOnly": true,
+    "files": true,
+    "experimentalResolver": true
   }
 }

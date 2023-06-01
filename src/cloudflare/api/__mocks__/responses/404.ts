@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/no-null */
 /* eslint-disable unicorn/numeric-separators-style */
 
-import type {FetchResult} from '@/cloudflare/types'
+import type {FetchResult} from '../../../types.js'
 
 export const API_RESPONSE_NOT_FOUND = {
   result: null,

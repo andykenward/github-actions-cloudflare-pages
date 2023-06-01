@@ -2,11 +2,11 @@ import {setOutput} from '@actions/core'
 import type {Project} from '@cloudflare/types'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-import {getProject} from '@/cloudflare/project/get-project'
-import {run} from '@/main'
+import {getProject} from '../cloudflare/project/get-project.js'
+import {run} from '../main.js'
 
 vi.mock('@actions/core')
-vi.mock('@/cloudflare/project/get-project')
+vi.mock('../cloudflare/project/get-project')
 
 describe('main', () => {
   afterEach(() => {

@@ -1,4 +1,4 @@
-import type {FetchNoResult} from '@/cloudflare/types'
+import type {FetchNoResult} from '../../../types.js'
 
 /* eslint-disable unicorn/numeric-separators-style */
 export const API_RESPONSE_UNAUTHORIZED = {

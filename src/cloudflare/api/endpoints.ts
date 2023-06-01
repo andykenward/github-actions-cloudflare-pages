@@ -1,10 +1,11 @@
 import {getInput} from '@actions/core'
 
+import {
+  ACTION_INPUT_ACCOUNT_ID,
+  ACTION_INPUT_PROJECT_NAME
+} from '../../constants.js'
+
 const API_ENDPOINT = `https://api.cloudflare.com`
-/** Cloudflare Account Id */
-export const ACTION_INPUT_ACCOUNT_ID = 'accountId'
-/** Cloudflare Project Name */
-export const ACTION_INPUT_PROJECT_NAME = 'projectName'
 
 export const getCloudflareApiEndpoint = (path?: string): string => {
   const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {

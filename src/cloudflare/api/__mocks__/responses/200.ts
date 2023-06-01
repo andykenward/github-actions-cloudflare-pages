@@ -1,4 +1,4 @@
-import type {FetchResult} from '@/cloudflare/types'
+import type {FetchResult} from '../../../types.js'
 
 export const API_RESPONSE_OK = {
   success: true,

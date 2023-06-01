@@ -1,7 +1,7 @@
 import core from '@actions/core'
 
-import type {FetchError, FetchResult} from '../types'
-import {ParseError} from './parse-error'
+import type {FetchError, FetchResult} from '../types.js'
+import {ParseError} from './parse-error.js'
 
 /**
  * Source: https://github.com/cloudflare/workers-sdk/blob/55703e52da35b15f5c11f9e3936cc5b1ad5836dc/packages/wrangler/src/cfetch/index.ts#L83-L101

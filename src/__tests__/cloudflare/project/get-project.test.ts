@@ -1,12 +1,12 @@
 import type {Project} from '@cloudflare/types'
 import {afterEach, describe, expect, expectTypeOf, test, vi} from 'vitest'
 
-import {fetchResult} from '@/cloudflare/api/fetch-result'
-import {PROJECT_RESPONSE_OK} from '@/cloudflare/project/__mocks__/responses/200'
-import {getProject} from '@/cloudflare/project/get-project'
+import {fetchResult} from '../../../cloudflare/api/fetch-result.js'
+import {PROJECT_RESPONSE_OK} from '../../../cloudflare/project/__mocks__/responses/200.js'
+import {getProject} from '../../../cloudflare/project/get-project.js'
 
-vi.mock('@/cloudflare/api/endpoints')
-vi.mock('@/cloudflare/api/fetch-result')
+vi.mock('../../../cloudflare/api/endpoints')
+vi.mock('../../../cloudflare/api/fetch-result')
 
 describe('getProject', () => {
   afterEach(() => {

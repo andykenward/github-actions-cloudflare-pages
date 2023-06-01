@@ -9,8 +9,8 @@ import {
   type SpyInstance
 } from 'vitest'
 
-import {throwFetchError} from '@/cloudflare/api/fetch-error'
-import type {FetchResult} from '@/cloudflare/types'
+import {throwFetchError} from '../../../cloudflare/api/fetch-error.js'
+import type {FetchResult} from '../../../cloudflare/types.js'
 
 const RESOURCE_URL = `https://api.cloudflare.com/path`
 

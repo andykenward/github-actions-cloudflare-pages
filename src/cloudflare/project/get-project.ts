@@ -1,7 +1,7 @@
 import type {Project} from '@cloudflare/types'
 
-import {getCloudflareApiEndpoint} from '../api/endpoints'
-import {fetchResult} from '../api/fetch-result'
+import {getCloudflareApiEndpoint} from '../api/endpoints.js'
+import {fetchResult} from '../api/fetch-result.js'
 
 /**
  * Get Cloudfalre Pages project

@@ -1,11 +1,11 @@
 import {describe, expect, test} from 'vitest'
 
-import {setInputEnv} from '@/__tests__/helpers/inputs'
+import {getCloudflareApiEndpoint} from '../../../cloudflare/api/endpoints.js'
 import {
   ACTION_INPUT_ACCOUNT_ID,
-  ACTION_INPUT_PROJECT_NAME,
-  getCloudflareApiEndpoint
-} from '@/cloudflare/api/endpoints'
+  ACTION_INPUT_PROJECT_NAME
+} from '../../../constants.js'
+import {setInputEnv} from '../../helpers/inputs.js'
 
 describe('getCloudflareApiEndpoint', () => {
   test('returns correct url', () => {
