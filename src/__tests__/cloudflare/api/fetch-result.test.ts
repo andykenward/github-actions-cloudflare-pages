@@ -2,6 +2,7 @@ import core from '@actions/core'
 import {MockAgent, setGlobalDispatcher, type Interceptable} from 'undici'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
+import {API_RESPONSE_OK} from '@/cloudflare/api/__mocks__/responses/200'
 import {API_RESPONSE_UNAUTHORIZED} from '@/cloudflare/api/__mocks__/responses/401'
 import {API_RESPONSE_NOT_FOUND} from '@/cloudflare/api/__mocks__/responses/404'
 import {
@@ -42,6 +43,26 @@ describe('api', () => {
       ).rejects.toThrowErrorMatchingInlineSnapshot(
         '"Input required and not supplied: apiToken"'
       )
+    })
+
+    test('handles 200 response OK', async () => {
+      const errorSpy = vi
+        .spyOn(core, 'error')
+        .mockImplementation((value: string | Error) => value)
+
+      mockPoolCloudflare
+        .intercept({
+          path: RESOURCE_URL_PATH,
+          method: `GET`
+        })
+        .reply<FetchResult<{id: string}>>(200, API_RESPONSE_OK)
+
+      await expect(fetchResult(RESOURCE_URL)).resolves.toMatchInlineSnapshot(`
+        {
+          "id": "mock-id",
+        }
+      `)
+      expect(errorSpy).not.toHaveBeenCalled()
     })
 
     test('handles not found 404 response', async () => {
