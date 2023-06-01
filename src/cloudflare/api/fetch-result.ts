@@ -33,7 +33,7 @@ export async function fetchResult<ResponseType>(
 
   if (json.success) {
     if (json.result === null || json.result === undefined) {
-      throwFetchError(resource, json)
+      throw new Error(`Cloudflare API: response missing 'result'`)
     }
     return json.result
   } else {

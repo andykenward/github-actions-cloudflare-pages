@@ -27,7 +27,8 @@ const config = {
         ],
         'vitest/max-expects': 'off',
         'vitest/no-mocks-import': 'off',
-        'unicorn/numeric-separators-style': 'off'
+        'unicorn/numeric-separators-style': 'off',
+        'unicorn/no-null': 'off'
       }
     },
     {

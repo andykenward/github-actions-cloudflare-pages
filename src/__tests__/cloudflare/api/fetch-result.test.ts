@@ -8,12 +8,12 @@ import {
   ACTION_INPUT_API_TOKEN,
   fetchResult
 } from '@/cloudflare/api/fetch-result'
-import type {FetchNoResult, FetchResult} from '@/cloudflare/types'
+import type {FetchResult} from '@/cloudflare/types'
 import {setInputEnv, unsetInputEnv} from '@/helpers/inputs'
 
 const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
-const RESOURCE_URL_SUFFIX = `/client/v4/accounts`
-const RESOURCE_URL = `${RESOURCE_URL_DOMAIN}${RESOURCE_URL_SUFFIX}`
+const RESOURCE_URL_PATH = `/client/v4/accounts`
+const RESOURCE_URL = `${RESOURCE_URL_DOMAIN}${RESOURCE_URL_PATH}`
 
 describe('api', () => {
   describe('fetchResult', () => {
@@ -45,15 +45,13 @@ describe('api', () => {
     })
 
     test('handles not found 404 response', async () => {
-      // setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
-
       const errorSpy = vi
         .spyOn(core, 'error')
         .mockImplementation((value: string | Error) => value)
 
       mockPoolCloudflare
         .intercept({
-          path: RESOURCE_URL_SUFFIX,
+          path: RESOURCE_URL_PATH,
           method: `GET`
         })
         .reply<FetchResult<null>>(404, API_RESPONSE_NOT_FOUND)
@@ -69,13 +67,12 @@ describe('api', () => {
     })
 
     test('handles unauthorized 401 response', async () => {
-      // setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
       mockPoolCloudflare
         .intercept({
-          path: RESOURCE_URL_SUFFIX,
+          path: RESOURCE_URL_PATH,
           method: `GET`
         })
-        .reply<FetchNoResult>(401, API_RESPONSE_UNAUTHORIZED)
+        .reply<FetchResult>(401, API_RESPONSE_UNAUTHORIZED)
 
       await expect(
         fetchResult(RESOURCE_URL)
@@ -83,5 +80,25 @@ describe('api', () => {
         '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed."'
       )
     })
+
+    test.each([{result: null}, {result: undefined}])(
+      `handles response result of $result with thrown error`,
+      async ({result}) => {
+        mockPoolCloudflare
+          .intercept({
+            path: RESOURCE_URL_PATH,
+            method: `GET`
+          })
+          .reply<FetchResult<null>>(200, {
+            errors: [],
+            success: true,
+            result
+          })
+
+        await expect(fetchResult(RESOURCE_URL)).rejects.toThrow(
+          `Cloudflare API: response missing 'result'`
+        )
+      }
+    )
   })
 })
