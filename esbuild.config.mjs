@@ -7,7 +7,7 @@ await esbuild.build({
   bundle: true,
   outdir: './dist',
   format: 'esm',
-  target: 'esnext',
+  target: 'node16.20.0',
   platform: 'node',
   sourcemap: true,
   legalComments: 'external',
