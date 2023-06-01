@@ -5,7 +5,7 @@ import {
   ACTION_INPUT_PROJECT_NAME,
   getCloudflareApiEndpoint
 } from '@/cloudflare/api/endpoints'
-import {setInputEnv} from '@/helpers/inputs'
+import {setInputEnv} from '@/test-helpers/inputs'
 
 describe('getCloudflareApiEndpoint', () => {
   test('returns correct url', () => {

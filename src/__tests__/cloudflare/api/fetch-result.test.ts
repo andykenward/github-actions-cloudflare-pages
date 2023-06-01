@@ -10,7 +10,7 @@ import {
   fetchResult
 } from '@/cloudflare/api/fetch-result'
 import type {FetchResult} from '@/cloudflare/types'
-import {setInputEnv, unsetInputEnv} from '@/helpers/inputs'
+import {setInputEnv, unsetInputEnv} from '@/test-helpers/inputs'
 
 const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
 const RESOURCE_URL_PATH = `/client/v4/accounts`
