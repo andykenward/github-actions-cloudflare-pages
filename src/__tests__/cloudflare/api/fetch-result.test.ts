@@ -2,6 +2,7 @@ import core from '@actions/core'
 import {MockAgent, setGlobalDispatcher, type Interceptable} from 'undici'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
+import {setInputEnv, unsetInputEnv} from '@/__tests__/helpers/inputs'
 import {API_RESPONSE_OK} from '@/cloudflare/api/__mocks__/responses/200'
 import {API_RESPONSE_UNAUTHORIZED} from '@/cloudflare/api/__mocks__/responses/401'
 import {API_RESPONSE_NOT_FOUND} from '@/cloudflare/api/__mocks__/responses/404'
@@ -10,7 +11,6 @@ import {
   fetchResult
 } from '@/cloudflare/api/fetch-result'
 import type {FetchResult} from '@/cloudflare/types'
-import {setInputEnv, unsetInputEnv} from '@/test-helpers/inputs'
 
 const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
 const RESOURCE_URL_PATH = `/client/v4/accounts`
