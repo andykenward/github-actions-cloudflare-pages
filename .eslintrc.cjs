@@ -26,7 +26,8 @@ const config = {
           {allow: ['afterEach', 'beforeEach', 'afterAll']}
         ],
         'vitest/max-expects': 'off',
-        'vitest/no-mocks-import': 'off'
+        'vitest/no-mocks-import': 'off',
+        'unicorn/numeric-separators-style': 'off'
       }
     },
     {

@@ -10,7 +10,7 @@ export interface FetchNoResult {
 }
 
 export interface FetchResult<ResponseType = unknown> extends FetchNoResult {
-  result: ResponseType
-  messages: string[]
+  result?: ResponseType | null
+  messages?: string[]
   result_info?: unknown
 }

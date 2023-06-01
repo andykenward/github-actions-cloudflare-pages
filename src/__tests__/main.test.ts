@@ -34,6 +34,10 @@ describe('main', () => {
   test('can error mock', async () => {
     vi.mocked(getProject).mockRejectedValueOnce({message: 'mock error'})
 
-    await expect(() => run()).rejects.toThrow('mock error')
+    await expect(() => run()).rejects.toThrowErrorMatchingInlineSnapshot(`
+      {
+        "message": "mock error",
+      }
+    `)
   })
 })

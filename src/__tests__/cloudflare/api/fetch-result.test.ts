@@ -1,3 +1,4 @@
+import core from '@actions/core'
 import {MockAgent, setGlobalDispatcher, type Interceptable} from 'undici'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -22,6 +23,7 @@ describe('api', () => {
 
     beforeEach(() => {
       setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
+
       mockAgent = new MockAgent()
       mockAgent.disableNetConnect() // prevent actual requests
       setGlobalDispatcher(mockAgent) // enabled the mock client to intercept requests
@@ -35,13 +37,20 @@ describe('api', () => {
 
     test(`throws error if ${ACTION_INPUT_API_TOKEN} undefined`, async () => {
       unsetInputEnv(ACTION_INPUT_API_TOKEN)
-      await expect(fetchResult(RESOURCE_URL)).rejects.toThrow(
-        `Input required and not supplied: ${ACTION_INPUT_API_TOKEN}`
+      await expect(
+        fetchResult(RESOURCE_URL)
+      ).rejects.toThrowErrorMatchingInlineSnapshot(
+        '"Input required and not supplied: apiToken"'
       )
     })
 
     test('handles not found 404 response', async () => {
       // setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
+
+      const errorSpy = vi
+        .spyOn(core, 'error')
+        .mockImplementation((value: string | Error) => value)
+
       mockPoolCloudflare
         .intercept({
           path: RESOURCE_URL_SUFFIX,
@@ -49,8 +58,13 @@ describe('api', () => {
         })
         .reply<FetchResult<null>>(404, API_RESPONSE_NOT_FOUND)
 
-      await expect(fetchResult(RESOURCE_URL)).rejects.toThrow(
-        `A request to the Cloudflare API (${RESOURCE_URL}) failed.`
+      await expect(
+        fetchResult(RESOURCE_URL)
+      ).rejects.toThrowErrorMatchingInlineSnapshot(
+        '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed."'
+      )
+      expect(errorSpy).toHaveBeenCalledWith(
+        `Cloudflare API: Project not found. The specified project name does not match any of your existing projects. [code: 8000007]`
       )
     })
 
@@ -63,8 +77,10 @@ describe('api', () => {
         })
         .reply<FetchNoResult>(401, API_RESPONSE_UNAUTHORIZED)
 
-      await expect(fetchResult(RESOURCE_URL)).rejects.toThrow(
-        `A request to the Cloudflare API (${RESOURCE_URL}) failed.`
+      await expect(
+        fetchResult(RESOURCE_URL)
+      ).rejects.toThrowErrorMatchingInlineSnapshot(
+        '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed."'
       )
     })
   })
