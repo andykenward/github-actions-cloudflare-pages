@@ -10,9 +10,11 @@ yarn-error.log*
 pnpm-debug.log*
 
 # environment variables
-.env
-.env.production
-.env*.local
+.env*
+.flaskenv*
+!.env.project
+!.env.vault
+!.env.example
 
 # OS metadata
 .DS_Store
@@ -27,4 +29,5 @@ Thumbs.db
 # Coverage directory used by tools like istanbul
 coverage
 *.lcov
+
 

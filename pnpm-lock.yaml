@@ -40,8 +40,8 @@ devDependencies:
     specifier: 0.31.3
     version: 0.31.3(vitest@0.31.3)
   dotenv:
-    specifier: 16.0.3
-    version: 16.0.3
+    specifier: 16.1.2
+    version: 16.1.2
   esbuild:
     specifier: 0.17.19
     version: 0.17.19
@@ -1356,8 +1356,8 @@ packages:
       esutils: 2.0.3
     dev: true
 
-  /dotenv@16.0.3:
-    resolution: {integrity: sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==}
+  /dotenv@16.1.2:
+    resolution: {integrity: sha512-RiNjjDF5yr9NtjqJqmWYA/XZShmt3r8FtJgAaqTiYqb99SqT0+aw5xAwOIvjMyXsH/C9/fLNafFkkZDwRi1KHA==}
     engines: {node: '>=12'}
     dev: true
 

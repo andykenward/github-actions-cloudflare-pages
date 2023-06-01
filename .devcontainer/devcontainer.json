@@ -13,7 +13,8 @@
 				"github.vscode-github-actions",
 				"GitHub.vscode-pull-request-github",
 				"yoavbls.pretty-ts-errors",
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"dotenv.dotenv-vscode"
 			]
 		}
 	},
