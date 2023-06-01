@@ -19,6 +19,17 @@ describe('getCloudflareApiEndpoint', () => {
     )
   })
 
+  test('appends path argument', () => {
+    setInputEnv(ACTION_INPUT_ACCOUNT_ID, 'mock-account-id')
+    setInputEnv(ACTION_INPUT_PROJECT_NAME, 'mock-project-name')
+
+    const url = getCloudflareApiEndpoint('mock-deployment')
+
+    expect(url).toBe(
+      `https://api.cloudflare.com/client/v4/accounts/mock-account-id/pages/projects/mock-project-name/mock-deployment`
+    )
+  })
+
   test.each([
     {
       input: ACTION_INPUT_ACCOUNT_ID,
