@@ -8,7 +8,7 @@ import {API_RESPONSE_NOT_FOUND} from '../../../cloudflare/api/__mocks__/response
 import {fetchResult} from '../../../cloudflare/api/fetch-result.js'
 import type {FetchResult} from '../../../cloudflare/types.js'
 import {ACTION_INPUT_API_TOKEN} from '../../../constants.js'
-import {setInputEnv, unsetInputEnv} from '../../helpers/inputs.js'
+import {setInputEnv, unsetInputEnv} from '../../helpers/inputs.test.js'
 
 const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
 const RESOURCE_URL_PATH = `/client/v4/accounts`
