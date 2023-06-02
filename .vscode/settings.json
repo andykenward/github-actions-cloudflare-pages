@@ -30,5 +30,11 @@
   },
   "peacock.remoteColor": "#215732",
   "javascript.preferences.importModuleSpecifierEnding": "js",
-  "typescript.preferences.importModuleSpecifierEnding": "js"
+  "typescript.preferences.importModuleSpecifierEnding": "js",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/*.code-search": true,
+    "**/dist": true,
+    "**/example": true
+  }
 }
