@@ -5,3 +5,103 @@ undici/lib/fetch/body.js:
 
 undici/lib/websocket/frame.js:
   /*! ws. MIT License. Einar Otto Stangvik <einaros@gmail.com> */
+
+cookie/index.js:
+  /*!
+   * cookie
+   * Copyright(c) 2012-2014 Roman Shtylman
+   * Copyright(c) 2015 Douglas Christopher Wilson
+   * MIT Licensed
+   */
+
+mustache/mustache.js:
+  /*!
+   * mustache.js - Logic-less {{mustache}} templates with JavaScript
+   * http://github.com/janl/mustache.js
+   */
+
+miniflare/dist/src/index.js:
+  /*! Path sanitisation regexps adapted from node-sanitize-filename:
+   * https://github.com/parshap/node-sanitize-filename/blob/209c39b914c8eb48ee27bcbde64b2c7822fdf3de/index.js#L4-L37
+   *
+   * Licensed under the ISC license:
+   *
+   * Copyright Parsha Pourkhomami <parshap@gmail.com>
+   *
+   * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the
+   * above copyright notice and this permission notice appear in all copies.
+   *
+   * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+   * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY
+   * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+   * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+   */
+  /*!
+   * Copyright (c) 2011 Felix Geisendörfer (felix@debuggable.com)
+   *
+   *  Permission is hereby granted, free of charge, to any person obtaining a copy
+   *  of this software and associated documentation files (the "Software"), to deal
+   *  in the Software without restriction, including without limitation the rights
+   *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   *  copies of the Software, and to permit persons to whom the Software is
+   *  furnished to do so, subject to the following conditions:
+   *
+   *  The above copyright notice and this permission notice shall be included in
+   *  all copies or substantial portions of the Software.
+   *
+   *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   *  THE SOFTWARE.
+   */
+
+normalize-path/index.js:
+  /*!
+   * normalize-path <https://github.com/jonschlinkert/normalize-path>
+   *
+   * Copyright (c) 2014-2018, Jon Schlinkert.
+   * Released under the MIT License.
+   */
+
+is-extglob/index.js:
+  /*!
+   * is-extglob <https://github.com/jonschlinkert/is-extglob>
+   *
+   * Copyright (c) 2014-2016, Jon Schlinkert.
+   * Licensed under the MIT License.
+   */
+
+is-glob/index.js:
+  /*!
+   * is-glob <https://github.com/jonschlinkert/is-glob>
+   *
+   * Copyright (c) 2014-2017, Jon Schlinkert.
+   * Released under the MIT License.
+   */
+
+is-number/index.js:
+  /*!
+   * is-number <https://github.com/jonschlinkert/is-number>
+   *
+   * Copyright (c) 2014-present, Jon Schlinkert.
+   * Released under the MIT License.
+   */
+
+to-regex-range/index.js:
+  /*!
+   * to-regex-range <https://github.com/micromatch/to-regex-range>
+   *
+   * Copyright (c) 2015-present, Jon Schlinkert.
+   * Released under the MIT License.
+   */
+
+fill-range/index.js:
+  /*!
+   * fill-range <https://github.com/jonschlinkert/fill-range>
+   *
+   * Copyright (c) 2014-present, Jon Schlinkert.
+   * Licensed under the MIT License.
+   */

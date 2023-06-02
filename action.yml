@@ -12,9 +12,15 @@ inputs:
   projectName:
     description: 'The name of the Pages project to upload to'
     required: true
+  directory:
+    description: 'The directory of static files to upload'
+    required: true
 outputs:
-  subdomain:
-    description: 'Subdomain of Cloudflare Page project'
+  url:
+    description: 'Cloudflare Pages deployed url'
+  environment:
+    description: 'Cloudflare Pages deployed environment'
+
 runs:
   using: 'node16'
   main: 'dist/index.js'

@@ -50,7 +50,8 @@ const config = {
   plugins: ['@typescript-eslint'],
   rules: {
     'unicorn/prefer-top-level-await': 'off',
-    'unicorn/prevent-abbreviations': 'off'
+    'unicorn/prevent-abbreviations': 'off',
+    'no-console': 'error'
   }
 }
 

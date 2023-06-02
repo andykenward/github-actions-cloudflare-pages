@@ -1,13 +1,5 @@
 import core from '@actions/core'
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-  type SpyInstance
-} from 'vitest'
+import {beforeEach, describe, expect, test, vi, type SpyInstance} from 'vitest'
 
 import {throwFetchError} from '../../../cloudflare/api/fetch-error.js'
 import type {FetchResult} from '../../../cloudflare/types.js'
@@ -25,9 +17,7 @@ describe('throwFetchError', () => {
       .spyOn(core, 'error')
       .mockImplementation((value: string | Error) => value)
   })
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
+
   test('throws parsed error with notes', () => {
     const ERRORS = {
       success: false,

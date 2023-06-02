@@ -5,7 +5,7 @@ import {
   ACTION_INPUT_ACCOUNT_ID,
   ACTION_INPUT_PROJECT_NAME
 } from '../../../constants.js'
-import {setInputEnv} from '../../helpers/inputs.test.js'
+import {setInputEnv} from '../../helpers/inputs.js'
 
 describe('getCloudflareApiEndpoint', () => {
   test('returns correct url', () => {

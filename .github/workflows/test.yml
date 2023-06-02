@@ -23,8 +23,6 @@ jobs:
       - run: pnpm run all
   test: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
-    # outputs:
-    #   subdomain: ${{steps.our-action.outputs.subdomain}}
     steps:
       - uses: actions/checkout@v3.5.2
       - id: 'our-action'
@@ -33,6 +31,4 @@ jobs:
           apiToken: ${{secrets.CLOUDFLARE_API_TOKEN}}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
-      - env:
-          OUTPUT1: ${{steps.our-action.outputs.subdomain}}
-        run: echo "$OUTPUT1"
+          directory: 'example/dist'

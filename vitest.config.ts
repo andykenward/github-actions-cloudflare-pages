@@ -2,8 +2,6 @@
 
 // Configure Vitest (https://vitest.dev/config/)
 
-import {resolve} from 'node:path'
-
 import {defaultExclude, defineConfig} from 'vitest/config'
 
 export default defineConfig({
@@ -15,8 +13,6 @@ export default defineConfig({
       '**/{prettier}.config.*',
       '**/{vitest}.setup.*'
     ],
-    alias: {
-      '@/': `${resolve(process.cwd(), 'src')}/`
-    }
+    clearMocks: true
   }
 })

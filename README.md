@@ -24,3 +24,7 @@ All actions ran while this secret is enabled contain additional diagnostic log f
 
 [GitHub Action Variables](https://docs.github.com/en/actions/learn-github-actions/variables)
 [GitHub Action Default Environment variables](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables)
+
+## ESM
+
+[TypeScript ESM Node](https://www.typescriptlang.org/docs/handbook/esm-node.html)
