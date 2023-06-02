@@ -37,6 +37,8 @@ jobs:
         with:
           languages: ${{ matrix.language }}
       - uses: ./.github/actions/pnpm
+        with:
+          node-version: 16.x
       - name: Rebuild the dist/ directory
         run: pnpm run build
       - name: Perform CodeQL Analysis
