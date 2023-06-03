@@ -1,4 +1,4 @@
-import {describe, expect, test, vi} from 'vitest'
+import {beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import wrangler from 'wrangler'
 
 import {createDeployment} from '../../../cloudflare/project/create-deployment.js'
@@ -27,6 +27,11 @@ const EACH_REQUIRED_INPUTS = REQUIRED_INPUTS.map(input => ({
 vi.mock('wrangler')
 
 describe('create-deployment', () => {
+  beforeEach(() => {
+    process.env['GITHUB_HEAD_REF'] = 'mock-branch'
+    process.env['GITHUB_SHA'] = 'mock-hash-123'
+  })
+
   test.each(EACH_REQUIRED_INPUTS)(
     `throws error when required input $expected is undefined`,
     async ({expected, inputs}) => {
@@ -62,8 +67,8 @@ describe('create-deployment', () => {
 
     expect(wrangler.unstable_pages.deploy).toHaveBeenCalledWith({
       accountId: 'mock-accountId',
-      branch: 'unknown-branch',
-      commitHash: undefined,
+      branch: 'mock-branch',
+      commitHash: 'mock-hash-123',
       directory: 'mock-directory',
       projectName: 'mock-projectName'
     })
@@ -88,8 +93,8 @@ describe('create-deployment', () => {
 
     expect(wrangler.unstable_pages.deploy).toHaveBeenCalledWith({
       accountId: 'mock-accountId',
-      branch: 'unknown-branch',
-      commitHash: undefined,
+      branch: 'mock-branch',
+      commitHash: 'mock-hash-123',
       directory: 'mock-directory',
       projectName: 'mock-projectName'
     })
