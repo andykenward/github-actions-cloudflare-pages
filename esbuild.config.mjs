@@ -13,6 +13,7 @@ await esbuild.build({
   legalComments: 'external',
   logLevel: 'info',
   minify: true,
+  external: ['wrangler', 'esbuild'],
   banner: {
     /**
      * Adding banner js import fixes the error of
