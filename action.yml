@@ -16,7 +16,7 @@ inputs:
     description: 'The directory of static files to upload'
     required: true
   githubToken:
-    description: 'Github API key from the action to use. e.g ${{ secrets.GITHUB_TOKEN }}'
+    description: 'Github API key'
     required: true
 
 outputs:
