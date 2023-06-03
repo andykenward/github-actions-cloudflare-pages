@@ -9,6 +9,7 @@
     "dev": "node -r dotenv/config --loader ts-node/esm ./src/index.ts",
     "start": "node -r dotenv/config ./dist/index.js",
     "build": "node ./esbuild.config.mjs",
+    "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node16.20.0 --format=esm --legal-comments=external --minify --sourcemap --analyze --outfile=dist/index.js",
     "tsc:check": "tsc --noEmit --checkJs",
     "tsc:ls": "pnpm run tsc:check -- --listFilesOnly",
     "format": "prettier --write .",
@@ -20,7 +21,8 @@
     "test": "vitest",
     "test:ci": "vitest run",
     "test:ui": "vitest --ui",
-    "all": "pnpm run tsc:check && pnpm run format && pnpm run lint:ls && pnpm run test:ci && pnpm run build"
+    "all": "pnpm run tsc:check && pnpm run format && pnpm run lint:ls && pnpm run test:ci && pnpm run build",
+    "act:d": "act -j delete --secret-file .env"
   },
   "repository": {
     "type": "git",
