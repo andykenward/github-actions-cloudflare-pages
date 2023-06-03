@@ -25,11 +25,12 @@ export function run() {
   console.log(branch)
   console.log(commitHash)
 
-  console.log(process.env)
-
   console.log(context)
 
   console.log(context.payload)
+
+  context.payload.action
+  context.payload.pull_request
   // const project = await getProject()
   // const deploy = await createDeployment()
   // console.log(deploy)
@@ -42,3 +43,5 @@ export function run() {
   // setOutput('url', deployment.url)
   // setOutput('environment', deployment.environment)
 }
+
+// CONTEXT
