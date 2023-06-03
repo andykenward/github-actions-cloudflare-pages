@@ -29,3 +29,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: 'cloudflare-pages-action'
           directory: 'example/dist'
+          githubToken: ${{ secrets.GITHUB_TOKEN }}

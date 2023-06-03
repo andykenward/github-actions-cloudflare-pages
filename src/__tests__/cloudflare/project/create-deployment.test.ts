@@ -1,4 +1,4 @@
-import {beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import wrangler from 'wrangler'
 
 import {createDeployment} from '../../../cloudflare/project/create-deployment.js'

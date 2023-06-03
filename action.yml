@@ -15,6 +15,10 @@ inputs:
   directory:
     description: 'The directory of static files to upload'
     required: true
+  githubToken:
+    description: 'Github API key from the action to use. e.g ${{ secrets.GITHUB_TOKEN }}'
+    required: true
+
 outputs:
   url:
     description: 'Cloudflare Pages deployed url'

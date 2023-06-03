@@ -21,6 +21,9 @@ devDependencies:
   '@ianvs/prettier-plugin-sort-imports':
     specifier: 4.0.1
     version: 4.0.1(prettier@2.8.8)
+  '@octokit/webhooks-types':
+    specifier: 7.0.2
+    version: 7.0.2
   '@tsconfig/node16':
     specifier: 1.0.4
     version: 1.0.4
@@ -1036,6 +1039,10 @@ packages:
     dependencies:
       '@octokit/openapi-types': 12.11.0
     dev: false
+
+  /@octokit/webhooks-types@7.0.2:
+    resolution: {integrity: sha512-lmxpnApoRaj8AEtHXp6Dso4IMHTL+YOphjCYYbu2G6BbXiqaO6tPQF5tO14ItpLkiwbgBiTj2m4xWGRkjAcT2A==}
+    dev: true
 
   /@polka/url@1.0.0-next.21:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
