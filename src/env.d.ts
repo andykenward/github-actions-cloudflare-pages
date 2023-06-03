@@ -43,5 +43,18 @@ declare namespace NodeJS {
      * Example:`/github/workflow/event.json`.
      */
     GITHUB_EVENT_PATH: string
+
+    /**
+     * The path to a temporary directory on the runner.
+     * This directory is emptied at the beginning and end of each job.
+     * Note that files will not be removed if the runner's user account does not
+     *  have permission to delete them.
+     *
+     * Example: `D:\a\_temp`.
+     */
+    RUNNER_TEMP: string
+
+    CLOUDFLARE_ACCOUNT_ID: string
+    CLOUDFLARE_API_TOKEN: string
   }
 }
