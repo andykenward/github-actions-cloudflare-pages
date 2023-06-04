@@ -4,7 +4,7 @@
     "checkJs": true,
     "noEmit": true,
     "verbatimModuleSyntax": true,
-    "moduleResolution": "node16"
+    "resolveJsonModule": true
   },
   "exclude": ["dist", "node_modules"],
   "ts-node": {

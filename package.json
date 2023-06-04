@@ -6,12 +6,14 @@
   "type": "module",
   "exports": "./dist/index.js",
   "scripts": {
-    "dev": "node -r dotenv/config --loader ts-node/esm ./src/index.ts",
+    "dev": "pnpm run ts-node --require dotenv/config src/index.ts",
     "start": "node -r dotenv/config ./dist/index.js",
     "build": "node ./esbuild.config.mjs",
     "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node16.20.0 --format=esm --legal-comments=external --minify --sourcemap --analyze --outfile=dist/index.js",
     "tsc:check": "tsc --noEmit --checkJs",
     "tsc:ls": "pnpm run tsc:check -- --listFilesOnly",
+    "tsc:ts-node-config": "tsc --showConfig > tsconfig.tsnode.json",
+    "ts-node": "ts-node-esm --project tsconfig.tsnode.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -22,7 +24,8 @@
     "test:ci": "vitest run",
     "test:ui": "vitest --ui",
     "all": "pnpm run tsc:check && pnpm run format && pnpm run lint:ls && pnpm run test:ci && pnpm run build",
-    "act:d": "act -j delete --secret-file .env"
+    "act:d": "act -j delete --secret-file .env",
+    "download-webhook-examples": "pnpm run ts-node -T bin/download-webhook-examples.ts"
   },
   "repository": {
     "type": "git",
@@ -49,9 +52,12 @@
   "devDependencies": {
     "@cloudflare/types": "6.21.13",
     "@ianvs/prettier-plugin-sort-imports": "4.0.1",
+    "@octokit/core": "4.2.1",
+    "@octokit/webhooks-schemas": "7.0.2",
     "@octokit/webhooks-types": "7.0.2",
     "@tsconfig/node16": "1.0.4",
     "@types/eslint": "8.40.0",
+    "@types/json-schema": "7.0.12",
     "@types/node": "16.18.34",
     "@types/prettier": "2.7.3",
     "@typescript-eslint/eslint-plugin": "5.59.8",

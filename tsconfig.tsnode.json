@@ -1,0 +1,59 @@
+{
+    "compilerOptions": {
+        "lib": [
+            "es2023"
+        ],
+        "module": "es2022",
+        "target": "es2022",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "nodenext",
+        "verbatimModuleSyntax": true,
+        "noEmit": true,
+        "resolveJsonModule": true
+    },
+    "files": [
+        "./vitest.config.ts",
+        "./vitest.setup.ts",
+        "./__mocks__/@actions/core/index.ts",
+        "./__mocks__/wrangler/index.ts",
+        "./bin/download-webhook-examples.ts",
+        "./bin/generate-event-names.ts",
+        "./src/constants.ts",
+        "./src/env.d.ts",
+        "./src/index.ts",
+        "./src/main.ts",
+        "./src/__tests__/index.test.ts",
+        "./src/__tests__/main.test.ts",
+        "./src/__tests__/cloudflare/api/endpoints.test.ts",
+        "./src/__tests__/cloudflare/api/fetch-error.test.ts",
+        "./src/__tests__/cloudflare/api/fetch-result.test.ts",
+        "./src/__tests__/cloudflare/project/create-deployment.test.ts",
+        "./src/__tests__/cloudflare/project/get-project.test.ts",
+        "./src/__tests__/github/context.test.ts",
+        "./src/__tests__/helpers/inputs.ts",
+        "./src/cloudflare/types.ts",
+        "./src/cloudflare/api/endpoints.ts",
+        "./src/cloudflare/api/fetch-error.ts",
+        "./src/cloudflare/api/fetch-result.ts",
+        "./src/cloudflare/api/parse-error.ts",
+        "./src/cloudflare/api/__mocks__/endpoints.ts",
+        "./src/cloudflare/api/__mocks__/fetch-result.ts",
+        "./src/cloudflare/api/__mocks__/responses/200.ts",
+        "./src/cloudflare/api/__mocks__/responses/401.ts",
+        "./src/cloudflare/api/__mocks__/responses/404.ts",
+        "./src/cloudflare/project/create-deployment.ts",
+        "./src/cloudflare/project/get-project.ts",
+        "./src/cloudflare/project/__mocks__/get-project.ts",
+        "./src/cloudflare/project/__mocks__/responses/200.ts",
+        "./src/github/context.ts",
+        "./src/github/__mocks__/context.ts",
+        "./src/github/generated/event-names.ts"
+    ],
+    "exclude": [
+        "dist",
+        "node_modules"
+    ]
+}
