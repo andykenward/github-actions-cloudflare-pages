@@ -8,6 +8,7 @@
     "esbenp.prettier-vscode",
     "yoavbls.pretty-ts-errors",
     "redhat.vscode-yaml",
-    "dotenv.dotenv-vscode"
+    "dotenv.dotenv-vscode",
+    "github.copilot"
   ]
 }

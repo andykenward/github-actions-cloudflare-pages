@@ -14,7 +14,8 @@
 				"GitHub.vscode-pull-request-github",
 				"yoavbls.pretty-ts-errors",
 				"redhat.vscode-yaml",
-				"dotenv.dotenv-vscode"
+				"dotenv.dotenv-vscode",
+				"GitHub.copilot"
 			]
 		}
 	},
