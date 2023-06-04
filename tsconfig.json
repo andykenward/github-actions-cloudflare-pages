@@ -1,9 +1,12 @@
 {
-  "extends": "@tsconfig/node16/tsconfig.json",
+  "extends": [
+    "@tsconfig/node18/tsconfig.json",
+    "@tsconfig/esm/tsconfig.json"
+    // "@tsconfig/strictest/tsconfig.json"
+  ],
   "compilerOptions": {
-    "checkJs": true,
     "noEmit": true,
-    "verbatimModuleSyntax": true,
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true
   },
   "exclude": ["dist", "node_modules"],

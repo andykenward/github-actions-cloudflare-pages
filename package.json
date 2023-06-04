@@ -9,7 +9,7 @@
     "dev": "pnpm run ts-node --require dotenv/config src/index.ts",
     "start": "node -r dotenv/config ./dist/index.js",
     "build": "node ./esbuild.config.mjs",
-    "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node16.20.0 --format=esm --legal-comments=external --minify --sourcemap --analyze --outfile=dist/index.js",
+    "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node16.20.0 --format=esm --legal-comments=external --minify --sourcemap --analyze --outfile=dist/index.js --tree-shaking=true",
     "tsc:check": "tsc --noEmit --checkJs",
     "tsc:ls": "pnpm run tsc:check -- --listFilesOnly",
     "tsc:ts-node-config": "tsc --showConfig > tsconfig.tsnode.json",
@@ -45,7 +45,6 @@
   "packageManager": "pnpm@8.3.1",
   "dependencies": {
     "@actions/core": "1.10.0",
-    "@actions/github": "5.1.1",
     "undici": "5.22.1",
     "wrangler": "3.0.1"
   },
@@ -55,7 +54,8 @@
     "@octokit/core": "4.2.1",
     "@octokit/webhooks-schemas": "7.0.2",
     "@octokit/webhooks-types": "7.0.2",
-    "@tsconfig/node16": "1.0.4",
+    "@tsconfig/esm": "1.0.3",
+    "@tsconfig/node18": "2.0.1",
     "@types/eslint": "8.40.0",
     "@types/json-schema": "7.0.12",
     "@types/node": "16.18.34",

@@ -14,6 +14,7 @@ await esbuild.build({
   logLevel: 'info',
   minify: true,
   external: ['wrangler', 'esbuild'],
+  treeShaking: true,
   banner: {
     /**
      * Adding banner js import fixes the error of
