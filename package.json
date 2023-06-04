@@ -25,6 +25,7 @@
     "test:ui": "vitest --ui",
     "all": "pnpm run tsc:check && pnpm run format && pnpm run lint:ls && pnpm run test:ci && pnpm run build",
     "act:d": "act -j delete --secret-file .env",
+    "generate-webhook-types": "pnpm run ts-node -T bin/generate-event-names.ts",
     "download-webhook-examples": "pnpm run ts-node -T bin/download-webhook-examples.ts"
   },
   "repository": {
@@ -50,7 +51,7 @@
   },
   "devDependencies": {
     "@cloudflare/types": "6.21.13",
-    "@ianvs/prettier-plugin-sort-imports": "4.0.1",
+    "@ianvs/prettier-plugin-sort-imports": "4.0.2",
     "@octokit/core": "4.2.1",
     "@octokit/webhooks-schemas": "7.0.2",
     "@octokit/webhooks-types": "7.0.2",
