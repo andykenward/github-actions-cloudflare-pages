@@ -42,7 +42,14 @@ declare namespace NodeJS {
      *
      * Example:`/github/workflow/event.json`.
      */
-    GITHUB_EVENT_PATH: string
+    GITHUB_EVENT_PATH?: string
+
+    /**
+     * The owner and repository name.
+     *
+     * Example: `octocat/Hello-World`.
+     */
+    GITHUB_REPOSITORY?: string
 
     /**
      * The path to a temporary directory on the runner.

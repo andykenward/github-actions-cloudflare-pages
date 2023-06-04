@@ -1,11 +1,15 @@
 /* eslint-disable no-console */
 
-import {getGitHubContext} from './github/context.js'
+import {useContext} from './github/context.js'
 
 export function run() {
-  const context = getGitHubContext()
+  const context = useContext()
 
   console.dir(context)
+
+  if (context.eventName === 'pull_request') {
+    console.dir(context.payload.pull_request)
+  }
 
   // const branch: string =
   //   process.env.GITHUB_HEAD_REF ||

@@ -4,3 +4,4 @@ package.json
 pnpm-lock.yaml
 example/
 payload-examples/
+tsconfig.tsnode.json

@@ -7,6 +7,7 @@ import {run} from '../main.js'
 vi.mock('@actions/core')
 vi.mock('wrangler')
 vi.mock('../cloudflare/project/get-project')
+vi.mock('../github/context')
 
 describe.skip('main', () => {
   test('can mock project response', async () => {
