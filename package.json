@@ -11,7 +11,8 @@
     "build": "node ./esbuild.config.mjs",
     "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node16.20.0 --format=esm --legal-comments=external --minify --sourcemap --analyze --outfile=dist/index.js --tree-shaking=true",
     "tsc:check": "tsc --noEmit --checkJs",
-    "tsc:ls": "pnpm run tsc:check -- --listFilesOnly",
+    "tsc:watch": "pnpm run tsc:check --watch",
+    "tsc:ls": "pnpm run tsc:check --listFilesOnly",
     "tsc:ts-node-config": "tsc --showConfig > tsconfig.tsnode.json",
     "ts-node": "ts-node-esm --project tsconfig.tsnode.json",
     "format": "prettier --write .",
@@ -25,7 +26,7 @@
     "test:ui": "vitest --ui",
     "all": "pnpm run tsc:check && pnpm run format && pnpm run lint:ls && pnpm run test:ci && pnpm run build",
     "act:d": "act -j delete --secret-file .env",
-    "generate-webhook-types": "pnpm run ts-node -T bin/generate-event-names.ts",
+    "codegen": "pnpm run ts-node -T bin/codegens.ts",
     "download-webhook-examples": "pnpm run ts-node -T bin/download-webhook-examples.ts"
   },
   "repository": {
@@ -43,7 +44,7 @@
     "node": "^18.16.0",
     "pnpm": "^8"
   },
-  "packageManager": "pnpm@8.3.1",
+  "packageManager": "pnpm@8.6.1",
   "dependencies": {
     "@actions/core": "1.10.0",
     "undici": "5.22.1",
