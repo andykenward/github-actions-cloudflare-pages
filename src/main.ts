@@ -1,14 +1,15 @@
 /* eslint-disable no-console */
 
-import {useContext} from './github/context.js'
+import {useContextEvent} from './github/context.js'
 
 export function run() {
-  const context = useContext()
+  const event = useContextEvent()
 
-  console.dir(context)
-
-  if (context.eventName === 'pull_request') {
-    console.dir(context.payload.pull_request)
+  if (event.eventName === 'pull_request') {
+    console.dir(event.payload.pull_request)
+  } else {
+    console.log('not a pull request')
+    console.log(JSON.stringify(event))
   }
 
   // const branch: string =

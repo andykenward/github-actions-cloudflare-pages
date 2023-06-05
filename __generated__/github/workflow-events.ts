@@ -49,6 +49,7 @@ import type {
   RepositoryEvent,
   RepositoryImportEvent,
   RepositoryVulnerabilityAlertEvent,
+  Schema,
   SecretScanningAlertEvent,
   SecretScanningAlertLocationEvent,
   SecurityAdvisoryEvent,
@@ -128,8 +129,12 @@ export const EVENT_NAMES = [
   'workflow_job',
   'workflow_run'
 ] satisfies Array<WebhookEventName>
-export type EventNames = (typeof EVENT_NAMES)[number]
-export type Context =
+export type EventName = (typeof EVENT_NAMES)[number]
+export interface WorkflowEventBase {
+  eventName: WebhookEventName
+  payload: Schema
+}
+export type WorkflowEvent =
   | {
       eventName: 'branch_protection_rule'
       payload: BranchProtectionRuleEvent
