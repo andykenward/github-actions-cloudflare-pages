@@ -1,11 +1,5 @@
 #!/usr/bin/env ts-node-transpile-only
 
-/**
- * Script to download GitHub webhook examples JSON files
- * https://github.com/octokit/webhooks/blob/main/payload-examples/README.md
- * Make sure you have a GITHUB_TOKEN environment variable set.
- * Otherwise you will hit the GitHub API rate limit very quickly.
- */
 import 'dotenv/config.js'
 
 import {writeFile} from 'node:fs/promises'
@@ -62,7 +56,12 @@ const getWebhookExamples = async () => {
 
   return
 }
-
+/**
+ * Script to download GitHub webhook examples JSON files
+ * https://github.com/octokit/webhooks/blob/main/payload-examples/README.md
+ * Make sure you have a GITHUB_TOKEN environment variable set.
+ * Otherwise you will hit the GitHub API rate limit very quickly.
+ */
 const run = async () => {
   await getWebhookExamples().then(async json => {
     if (!json) return
