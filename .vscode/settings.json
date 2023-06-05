@@ -36,5 +36,6 @@
     "**/*.code-search": true,
     "**/dist": true,
     "**/example": true
-  }
+  },
+  "npm.packageManager": "pnpm"
 }
