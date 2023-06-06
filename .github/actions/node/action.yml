@@ -1,9 +1,0 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
-name: 'NodeJS'
-description: 'Node.js install'
-runs:
-  using: 'composite'
-  steps:
-    - uses: actions/setup-node@v3.6.0
-      with:
-        node-version: 16.x

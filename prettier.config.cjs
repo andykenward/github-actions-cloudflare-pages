@@ -9,8 +9,10 @@ const config = {
     '',
     '^@app/(.*)$',
     '',
+    '@/(.*)$',
     '^[./]'
   ],
+  importOrderTypeScriptVersion: '5.0.0',
   semi: false,
   singleQuote: true,
   trailingComma: 'none',
@@ -22,6 +24,12 @@ const config = {
       options: {
         useTabs: true,
         tabWidth: 4
+      }
+    },
+    {
+      files: ['*.ts'],
+      options: {
+        parser: 'typescript'
       }
     }
   ]

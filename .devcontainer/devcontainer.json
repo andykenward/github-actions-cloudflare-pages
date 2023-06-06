@@ -1,9 +1,9 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
-	"name": "Node.js & TypeScript",
+	"name": "Container - Cloudflare Pages Action",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/typescript-node:0-16",
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -14,7 +14,8 @@
 				"GitHub.vscode-pull-request-github",
 				"yoavbls.pretty-ts-errors",
 				"redhat.vscode-yaml",
-				"ZixuanChen.vitest-explorer"
+				"dotenv.dotenv-vscode",
+				"GitHub.copilot"
 			]
 		}
 	},
@@ -27,7 +28,17 @@
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
-	"updateContentCommand": "npm install"
+	"updateContentCommand": "pnpm install",
+	"features": {
+		"ghcr.io/devcontainers-contrib/features/act:1": {},
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+		"ghcr.io/devcontainers-contrib/features/pnpm:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "18"
+		}
+	}
 
 	// Configure tool-specific properties.
 	// "customizations": {},

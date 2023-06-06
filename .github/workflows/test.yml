@@ -16,16 +16,20 @@ jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/node
-      - uses: ./.github/actions/pnpm
-      - name: Install dependencies
-        run: pnpm install
+      - uses: actions/checkout@v3.5.2
+      - uses: unlike-ltd/github-actions/setup-pnpm@main
+        with:
+          node-version: 18.x
       - run: pnpm run all
   test: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./
+      - uses: actions/checkout@v3.5.2
+      - id: 'our-action'
+        uses: ./
         with:
-          who-to-greet: 'Tester in a GitHub workflow'
+          apiToken: ${{secrets.CLOUDFLARE_API_TOKEN}}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+          directory: 'example/dist'
+          githubToken: ${{ secrets.GITHUB_TOKEN }}

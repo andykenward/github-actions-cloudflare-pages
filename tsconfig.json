@@ -1,9 +1,28 @@
 {
-  "extends": "@tsconfig/node16/tsconfig.json",
+  "extends": [
+    "@tsconfig/node18/tsconfig.json",
+    "@tsconfig/esm/tsconfig.json"
+    // "@tsconfig/strictest/tsconfig.json"
+  ],
   "compilerOptions": {
-    "checkJs": true,
     "noEmit": true,
-    "verbatimModuleSyntax": true
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "paths": {
+      /**
+       * These have to match with vitest.config.ts alias.
+       * Otherwise vi.mock() will not resolve in __tests__.
+       */
+      "@/src/*": ["./src/*"],
+      "@/tests/*": ["./__tests__/*"],
+      "@/types/*": ["./__generated__/types/*"],
+      "@/payloads/*": ["./__generated__/payloads/*"]
+    }
   },
-  "exclude": ["dist", "lib", "node_modules"]
+  "exclude": ["dist", "example", "node_modules"],
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true,
+    "experimentalResolver": true
+  }
 }

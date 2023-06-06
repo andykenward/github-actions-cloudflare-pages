@@ -25,7 +25,10 @@ const config = {
           'error',
           {allow: ['afterEach', 'beforeEach', 'afterAll']}
         ],
-        'vitest/max-expects': 'off'
+        'vitest/max-expects': 'off',
+        'vitest/no-mocks-import': 'off',
+        'unicorn/numeric-separators-style': 'off',
+        'unicorn/no-null': 'off'
       }
     },
     {
@@ -47,7 +50,8 @@ const config = {
   plugins: ['@typescript-eslint'],
   rules: {
     'unicorn/prefer-top-level-await': 'off',
-    'unicorn/prevent-abbreviations': 'off'
+    'unicorn/prevent-abbreviations': 'off',
+    'no-console': 'error'
   }
 }
 

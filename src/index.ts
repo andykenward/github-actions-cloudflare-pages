@@ -1,3 +1,10 @@
-import {run} from './main'
+import {setFailed} from '@actions/core'
 
-run()
+import {run} from './main.js'
+
+try {
+  void run()
+} catch (error) {
+  // TODO: check setFailed
+  if (error instanceof Error) setFailed(error.message)
+}

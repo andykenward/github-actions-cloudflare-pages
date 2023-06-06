@@ -25,13 +25,11 @@ concurrency:
 jobs:
   check-dist:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/node
-      - uses: ./.github/actions/pnpm
-      - name: Install dependencies
-        run: pnpm install
+      - uses: actions/checkout@v3.5.2
+      - uses: unlike-ltd/github-actions/setup-pnpm@main
+        with:
+          node-version: 18.x
       - name: Rebuild the dist/ directory
         run: pnpm run build
 
@@ -45,7 +43,7 @@ jobs:
         id: diff
 
       # If index.js was different than expected, upload the expected version as an artifact
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v3.1.2
         if: ${{ failure() && steps.diff.conclusion == 'failure' }}
         with:
           name: dist
