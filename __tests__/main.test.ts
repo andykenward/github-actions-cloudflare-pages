@@ -1,29 +1,147 @@
-import {setOutput} from '@actions/core'
-import {describe, expect, test, vi} from 'vitest'
+import core from '@actions/core'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type SpyInstance
+} from 'vitest'
 
-import {getProject} from '@/src/cloudflare/project/get-project.js'
+import RESPONSE_NOT_FOUND from '@/payloads/api.cloudflare.com/pages/projects/project-not-found.response.json'
+import RESPONSE_PROJECT from '@/payloads/api.cloudflare.com/pages/projects/project.response.json'
+import RESPONSE_UNAUTHORIZED from '@/payloads/api.cloudflare.com/unauthorized.response.json'
+import {
+  ACTION_INPUT_ACCOUNT_ID,
+  ACTION_INPUT_API_TOKEN,
+  ACTION_INPUT_PROJECT_NAME
+} from '@/src/constants.js'
 import {run} from '@/src/main.js'
+import {getMockApi, type MockApi} from './helpers/api.js'
+import {setInputEnv} from './helpers/inputs.js'
 
-vi.mock('@actions/core')
-vi.mock('wrangler')
-vi.mock('@/src/cloudflare/project/get-project')
-vi.mock('@/src/github/context')
+const accountIdentifier = 'mock-account-id'
+const projectName = 'mock-project-name'
 
-describe.skip('main', () => {
-  test('can mock project response', async () => {
-    expect.assertions(2)
-    await expect(run()).resolves.not.toThrow()
-    expect(setOutput).toHaveBeenCalledTimes(2)
+describe('main', () => {
+  let mockApi: MockApi
+  let errorSpy: SpyInstance<
+    Parameters<typeof core.error>,
+    ReturnType<typeof core.error>
+  >
+
+  beforeEach(() => {
+    mockApi = getMockApi()
+    errorSpy = vi
+      .spyOn(core, 'error')
+      .mockImplementation((value: string | Error) => value)
   })
 
-  test('can error mock', async () => {
-    expect.assertions(1)
-    vi.mocked(getProject).mockRejectedValueOnce({message: 'mock error'})
+  afterEach(async () => {
+    await mockApi.mockAgent.close()
+  })
 
-    await expect(() => run()).rejects.toThrowErrorMatchingInlineSnapshot(`
-      {
-        "message": "mock error",
-      }
-    `)
+  describe('run', () => {
+    describe('cloudflare project', () => {
+      describe('handles resolve', () => {
+        test('200 - cloudflare project', async () => {
+          expect.assertions(1)
+
+          setInputEnv(ACTION_INPUT_ACCOUNT_ID, accountIdentifier)
+          setInputEnv(ACTION_INPUT_PROJECT_NAME, projectName)
+          setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
+          mockApi.mockPoolCloudflare
+            .intercept({
+              path: `/client/v4/accounts/${accountIdentifier}/pages/projects/${projectName}`,
+              method: `GET`
+            })
+            .reply(200, RESPONSE_PROJECT)
+
+          const main = await run()
+
+          expect(main).toMatchInlineSnapshot(`
+            {
+              "name": "NextJS Blog",
+              "subdomain": "helloworld.pages.dev",
+            }
+          `)
+          mockApi.mockAgent.assertNoPendingInterceptors()
+        })
+      })
+
+      const REQUIRED_INPUTS = [
+        ACTION_INPUT_ACCOUNT_ID,
+        ACTION_INPUT_PROJECT_NAME,
+        ACTION_INPUT_API_TOKEN
+      ] as const
+
+      const EACH_REQUIRED_INPUTS = REQUIRED_INPUTS.map(input => ({
+        expected: input,
+        inputs: REQUIRED_INPUTS.filter(a => a !== input)
+      }))
+
+      test.each(EACH_REQUIRED_INPUTS)(
+        `throws error when required input $expected is undefined`,
+        async ({expected, inputs}) => {
+          expect.assertions(1)
+
+          for (const input of inputs) {
+            setInputEnv(input, input)
+          }
+
+          await expect(() => run()).rejects.toThrow(
+            `Input required and not supplied: ${expected}`
+          )
+          mockApi.mockAgent.assertNoPendingInterceptors()
+        }
+      )
+
+      describe('handles rejected', () => {
+        test('401 - unauthorized to cloudflare', async () => {
+          expect.assertions(2)
+
+          setInputEnv(ACTION_INPUT_ACCOUNT_ID, accountIdentifier)
+          setInputEnv(ACTION_INPUT_PROJECT_NAME, projectName)
+          setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
+          mockApi.mockPoolCloudflare
+            .intercept({
+              path: `/client/v4/accounts/${accountIdentifier}/pages/projects/${projectName}`,
+              method: `GET`
+            })
+            .reply(401, RESPONSE_UNAUTHORIZED)
+
+          await expect(() => run()).rejects.toThrow(
+            `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-account-id/pages/projects/mock-project-name) failed.`
+          )
+          expect(errorSpy).toHaveBeenCalledWith(
+            'Cloudflare API: Authentication error [code: 10000]'
+          )
+          mockApi.mockAgent.assertNoPendingInterceptors()
+        })
+
+        test('404 - cloudflare project is not found', async () => {
+          expect.assertions(2)
+
+          setInputEnv(ACTION_INPUT_ACCOUNT_ID, accountIdentifier)
+          setInputEnv(ACTION_INPUT_PROJECT_NAME, projectName)
+          setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
+          mockApi.mockPoolCloudflare
+            .intercept({
+              path: `/client/v4/accounts/${accountIdentifier}/pages/projects/${projectName}`,
+              method: `GET`
+            })
+            .reply(404, RESPONSE_NOT_FOUND)
+
+          await expect(() => run()).rejects.toThrow(
+            `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-account-id/pages/projects/mock-project-name) failed.`
+          )
+          expect(errorSpy).toHaveBeenCalledWith(
+            'Cloudflare API: Project not found. The specified project name does not match any of your existing projects. [code: 8000007]'
+          )
+          mockApi.mockAgent.assertNoPendingInterceptors()
+        })
+      })
+    })
   })
 })
