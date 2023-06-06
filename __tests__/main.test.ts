@@ -1,13 +1,13 @@
 import {setOutput} from '@actions/core'
 import {describe, expect, test, vi} from 'vitest'
 
-import {getProject} from '../cloudflare/project/get-project.js'
-import {run} from '../main.js'
+import {getProject} from '@/src/cloudflare/project/get-project.js'
+import {run} from '@/src/main.js'
 
 vi.mock('@actions/core')
 vi.mock('wrangler')
-vi.mock('../cloudflare/project/get-project')
-vi.mock('../github/context')
+vi.mock('@/src/cloudflare/project/get-project')
+vi.mock('@/src/github/context')
 
 describe.skip('main', () => {
   test('can mock project response', async () => {

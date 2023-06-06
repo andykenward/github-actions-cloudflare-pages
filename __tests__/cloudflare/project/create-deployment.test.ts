@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import wrangler from 'wrangler'
 
-import {createDeployment} from '../../../cloudflare/project/create-deployment.js'
+import {createDeployment} from '@/src/cloudflare/project/create-deployment.js'
 import {
   ACTION_INPUT_ACCOUNT_ID,
   ACTION_INPUT_API_TOKEN,
@@ -9,8 +9,8 @@ import {
   ACTION_INPUT_PROJECT_NAME,
   CLOUDFLARE_ACCOUNT_ID,
   CLOUDFLARE_API_TOKEN
-} from '../../../constants.js'
-import {setInputEnv} from '../../helpers/inputs.js'
+} from '@/src/constants.js'
+import {setInputEnv} from '@/tests/helpers/inputs.js'
 
 const REQUIRED_INPUTS = [
   ACTION_INPUT_ACCOUNT_ID,

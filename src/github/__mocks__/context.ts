@@ -21,3 +21,7 @@ export const useContext = vi
       repo: 'cloudflare-pages-action'
     }
   })
+
+export const useContextEvent = vi
+  .fn<never, ReturnType<typeof Context.useContextEvent>>()
+  .mockReturnValue(Context.useContext().event)

@@ -1,8 +1,8 @@
 import core from '@actions/core'
 import {beforeEach, describe, expect, test, vi, type SpyInstance} from 'vitest'
 
-import {throwFetchError} from '../../../cloudflare/api/fetch-error.js'
-import type {FetchResult} from '../../../cloudflare/types.js'
+import {throwFetchError} from '@/src/cloudflare/api/fetch-error.js'
+import type {FetchResult} from '@/src/cloudflare/types.js'
 
 const RESOURCE_URL = `https://api.cloudflare.com/path`
 

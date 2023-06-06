@@ -1,7 +1,4 @@
-import type {
-  EventName,
-  WorkflowEvent
-} from '../../../__generated__/github/workflow-events.js'
+import type {EventName, WorkflowEvent} from '@/types/github/workflow-events.js'
 
 /**
  * Extracts a workflow event from the WorkflowEvent Union using the eventName property.

@@ -2,13 +2,13 @@ import core from '@actions/core'
 import {MockAgent, setGlobalDispatcher, type Interceptable} from 'undici'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
-import {API_RESPONSE_OK} from '../../../cloudflare/api/__mocks__/responses/200.js'
-import {API_RESPONSE_UNAUTHORIZED} from '../../../cloudflare/api/__mocks__/responses/401.js'
-import {API_RESPONSE_NOT_FOUND} from '../../../cloudflare/api/__mocks__/responses/404.js'
-import {fetchResult} from '../../../cloudflare/api/fetch-result.js'
-import type {FetchResult} from '../../../cloudflare/types.js'
-import {ACTION_INPUT_API_TOKEN} from '../../../constants.js'
-import {setInputEnv, unsetInputEnv} from '../../helpers/inputs.js'
+import {API_RESPONSE_OK} from '@/src/cloudflare/api/__mocks__/responses/200.js'
+import {API_RESPONSE_UNAUTHORIZED} from '@/src/cloudflare/api/__mocks__/responses/401.js'
+import {API_RESPONSE_NOT_FOUND} from '@/src/cloudflare/api/__mocks__/responses/404.js'
+import {fetchResult} from '@/src/cloudflare/api/fetch-result.js'
+import type {FetchResult} from '@/src/cloudflare/types.js'
+import {ACTION_INPUT_API_TOKEN} from '@/src/constants.js'
+import {setInputEnv, unsetInputEnv} from '@/tests/helpers/inputs.js'
 
 const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
 const RESOURCE_URL_PATH = `/client/v4/accounts`

@@ -1,8 +1,6 @@
-import {strict as assert} from 'node:assert'
-
 import {describe, expect, test} from 'vitest'
 
-import {useContext} from '../../github/context.js'
+import {useContext} from '@/src/github/context.js'
 
 describe('getGitHubContext', () => {
   test('returns eventName ', () => {
@@ -11,7 +9,7 @@ describe('getGitHubContext', () => {
     process.env.GITHUB_EVENT_PATH =
       'payload-examples/api.github.com/pull_request/opened.payload.json'
 
-    expect.assertions(4)
+    expect.assertions(5)
 
     const context = useContext()
 
@@ -26,6 +24,6 @@ describe('getGitHubContext', () => {
     expect(context.event.payload).not.toBeUndefined()
     expect(context.event.payload).toMatchSnapshot()
 
-    assert.equal(context.event.eventName, 'pull_request')
+    expect(context.event.eventName).toStrictEqual('pull_request')
   })
 })
