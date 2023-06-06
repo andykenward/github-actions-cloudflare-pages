@@ -133,7 +133,7 @@ const run = async () => {
   const text = await prettier.resolveConfig(import.meta.url).then(options => {
     return prettier.format(ts, options || undefined)
   })
-  const DIR = '__generated__/github'
+  const DIR = '__generated__/types/github'
   if (!existsSync(DIR)) {
     await mkdir(DIR, {recursive: true})
   }

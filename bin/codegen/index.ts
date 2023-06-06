@@ -1,1 +1,1 @@
-import './types-github-workflow-events.js'
+import './types/github-workflow-events.js'

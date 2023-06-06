@@ -5,3 +5,4 @@ pnpm-lock.yaml
 example/
 payload-examples/
 tsconfig.tsnode.json
+__generated__/

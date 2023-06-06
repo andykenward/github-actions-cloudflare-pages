@@ -15,7 +15,7 @@
        */
       "@/src/*": ["./src/*"],
       "@/tests/*": ["./__tests__/*"],
-      "@/types/*": ["./__generated__/*"]
+      "@/types/*": ["./__generated__/types/*"]
     }
   },
   "exclude": ["dist", "example", "node_modules"],
