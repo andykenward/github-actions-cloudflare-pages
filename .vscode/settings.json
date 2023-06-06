@@ -35,7 +35,9 @@
     "**/node_modules": true,
     "**/*.code-search": true,
     "**/dist": true,
-    "**/example": true
+    "**/example": true,
+    "**/__generated__/payloads": true,
+    "pnpm-lock.yaml": true
   },
   "npm.packageManager": "pnpm"
 }
