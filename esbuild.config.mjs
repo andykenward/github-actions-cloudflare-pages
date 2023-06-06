@@ -7,6 +7,7 @@ await esbuild.build({
   bundle: true,
   outdir: './dist',
   format: 'esm',
+  keepNames: true,
   /**
    * This has to be node 16 instead of node 18 because GitHub Actions doesn't support node 18 yet.
    */
@@ -15,7 +16,7 @@ await esbuild.build({
   sourcemap: true,
   legalComments: 'external',
   logLevel: 'info',
-  minify: true,
+  minify: false,
   external: ['wrangler'],
   treeShaking: true,
   banner: {
