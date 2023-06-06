@@ -27,7 +27,7 @@
     "all": "pnpm run codegen && pnpm run tsc:check && pnpm run format && pnpm run lint:ls && pnpm run test:ci && pnpm run build",
     "act:d": "act -j delete --secret-file .env",
     "codegen": "pnpm run ts-node -T bin/codegen/index.ts",
-    "download-webhook-examples": "pnpm run ts-node -T bin/download-webhook-examples.ts"
+    "download": "pnpm run ts-node -T bin/download/index.ts"
   },
   "repository": {
     "type": "git",

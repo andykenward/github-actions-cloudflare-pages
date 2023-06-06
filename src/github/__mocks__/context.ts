@@ -1,6 +1,6 @@
 import {vi} from 'vitest'
 
-import PAYLOAD from '../../../payload-examples/api.github.com/pull_request/opened.payload.json'
+import PAYLOAD from '@/payloads/api.github.com/pull_request/opened.payload.json'
 import * as Context from '../context.js'
 import type {WorkflowEventExtract} from '../workflow-event/types.js'
 

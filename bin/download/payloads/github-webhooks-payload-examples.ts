@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node-transpile-only
 
-import 'dotenv/config.js'
+import 'dotenv/config'
 
 import {writeFile} from 'node:fs/promises'
 
@@ -10,7 +10,11 @@ const octokit = new Octokit({
   auth: process.env['GITHUB_TOKEN']
 })
 
-const PATH_PULL_REQUEST = `payload-examples/api.github.com/pull_request`
+const FOLDER_READ_WRITE_PULL_REQUEST = `api.github.com/pull_request`
+
+const PATH_READ = `payload-examples/${FOLDER_READ_WRITE_PULL_REQUEST}`
+
+const PATH_WRITE = `__generated__/payloads/${FOLDER_READ_WRITE_PULL_REQUEST}`
 
 const getWebhookExamples = async () => {
   /**
@@ -21,7 +25,7 @@ const getWebhookExamples = async () => {
     {
       owner: 'octokit',
       repo: 'webhooks',
-      path: PATH_PULL_REQUEST
+      path: PATH_READ
     }
   )
 
@@ -68,7 +72,7 @@ const run = async () => {
     for (const data of json) {
       if (Array.isArray(data) || data.type !== 'file') return
 
-      const filename = `${PATH_PULL_REQUEST}/${data.name}`
+      const filename = `${PATH_WRITE}/${data.name}`
       // eslint-disable-next-line no-console
       console.log(filename)
       /**

@@ -7,7 +7,7 @@ describe('getGitHubContext', () => {
     process.env.GITHUB_EVENT_NAME = 'pull_request'
     process.env.GITHUB_REPOSITORY = 'unlike-ltd/cloudflare-pages-action'
     process.env.GITHUB_EVENT_PATH =
-      'payload-examples/api.github.com/pull_request/opened.payload.json'
+      '__generated__/payloads/api.github.com/pull_request/opened.payload.json'
 
     expect.assertions(5)
 

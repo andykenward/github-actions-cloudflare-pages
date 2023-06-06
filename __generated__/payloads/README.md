@@ -7,7 +7,7 @@ You can update these example files by running the below command.
 **Make sure you have a `GITHUB_TOKEN` in your `.env`. Otherwise you will hit the GitHub API rate limit very quickly.**
 
 ```bash
-pnpm run download-webhook-examples
+pnpm run download
 ```
 
-See [../bin/download-webhook-examples.ts](../bin/download-webhook-exanples.ts)
+See [../bin/download/payloads](../bin/download/payloads)
