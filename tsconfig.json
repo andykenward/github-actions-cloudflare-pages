@@ -16,7 +16,8 @@
       "@/src/*": ["./src/*"],
       "@/tests/*": ["./__tests__/*"],
       "@/types/*": ["./__generated__/types/*"],
-      "@/payloads/*": ["./__generated__/payloads/*"]
+      "@/payloads/*": ["./__generated__/payloads/*"],
+      "@/responses/*": ["./__generated__/responses/*"]
     }
   },
   "exclude": ["dist", "example", "node_modules"],

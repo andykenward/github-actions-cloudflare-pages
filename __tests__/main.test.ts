@@ -9,9 +9,9 @@ import {
   type SpyInstance
 } from 'vitest'
 
-import RESPONSE_NOT_FOUND from '@/payloads/api.cloudflare.com/pages/projects/project-not-found.response.json'
-import RESPONSE_PROJECT from '@/payloads/api.cloudflare.com/pages/projects/project.response.json'
-import RESPONSE_UNAUTHORIZED from '@/payloads/api.cloudflare.com/unauthorized.response.json'
+import RESPONSE_NOT_FOUND from '@/responses/api.cloudflare.com/pages/projects/project-not-found.response.json'
+import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
+import RESPONSE_UNAUTHORIZED from '@/responses/api.cloudflare.com/unauthorized.response.json'
 import {
   ACTION_INPUT_ACCOUNT_ID,
   ACTION_INPUT_API_TOKEN,
@@ -21,8 +21,9 @@ import {run} from '@/src/main.js'
 import {getMockApi, type MockApi} from './helpers/api.js'
 import {setInputEnv} from './helpers/inputs.js'
 
-const accountIdentifier = 'mock-account-id'
-const projectName = 'mock-project-name'
+const MOCK_ACCOUNT_ID = 'mock-account-id'
+const MOCK_PROJECT_NAME = 'mock-project-name'
+const MOCK_API_TOKEN = 'mock-api-token'
 
 describe('main', () => {
   let mockApi: MockApi
@@ -48,12 +49,12 @@ describe('main', () => {
         test('200 - cloudflare project', async () => {
           expect.assertions(1)
 
-          setInputEnv(ACTION_INPUT_ACCOUNT_ID, accountIdentifier)
-          setInputEnv(ACTION_INPUT_PROJECT_NAME, projectName)
-          setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
+          setInputEnv(ACTION_INPUT_ACCOUNT_ID, MOCK_ACCOUNT_ID)
+          setInputEnv(ACTION_INPUT_PROJECT_NAME, MOCK_PROJECT_NAME)
+          setInputEnv(ACTION_INPUT_API_TOKEN, MOCK_API_TOKEN)
           mockApi.mockPoolCloudflare
             .intercept({
-              path: `/client/v4/accounts/${accountIdentifier}/pages/projects/${projectName}`,
+              path: `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`,
               method: `GET`
             })
             .reply(200, RESPONSE_PROJECT)
@@ -101,12 +102,12 @@ describe('main', () => {
         test('401 - unauthorized to cloudflare', async () => {
           expect.assertions(2)
 
-          setInputEnv(ACTION_INPUT_ACCOUNT_ID, accountIdentifier)
-          setInputEnv(ACTION_INPUT_PROJECT_NAME, projectName)
-          setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
+          setInputEnv(ACTION_INPUT_ACCOUNT_ID, MOCK_ACCOUNT_ID)
+          setInputEnv(ACTION_INPUT_PROJECT_NAME, MOCK_PROJECT_NAME)
+          setInputEnv(ACTION_INPUT_API_TOKEN, MOCK_API_TOKEN)
           mockApi.mockPoolCloudflare
             .intercept({
-              path: `/client/v4/accounts/${accountIdentifier}/pages/projects/${projectName}`,
+              path: `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`,
               method: `GET`
             })
             .reply(401, RESPONSE_UNAUTHORIZED)
@@ -123,12 +124,12 @@ describe('main', () => {
         test('404 - cloudflare project is not found', async () => {
           expect.assertions(2)
 
-          setInputEnv(ACTION_INPUT_ACCOUNT_ID, accountIdentifier)
-          setInputEnv(ACTION_INPUT_PROJECT_NAME, projectName)
+          setInputEnv(ACTION_INPUT_ACCOUNT_ID, MOCK_ACCOUNT_ID)
+          setInputEnv(ACTION_INPUT_PROJECT_NAME, MOCK_PROJECT_NAME)
           setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
           mockApi.mockPoolCloudflare
             .intercept({
-              path: `/client/v4/accounts/${accountIdentifier}/pages/projects/${projectName}`,
+              path: `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`,
               method: `GET`
             })
             .reply(404, RESPONSE_NOT_FOUND)

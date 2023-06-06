@@ -27,7 +27,8 @@ export default defineConfig({
       '@/src/': `${resolve(process.cwd(), 'src')}/`,
       '@/tests/': `${resolve(process.cwd(), '__tests__')}/`,
       '@/types/': `${resolve(process.cwd(), '__generated__/types')}/`,
-      '@/payloads/': `${resolve(process.cwd(), '__generated__/payloads')}/`
+      '@/payloads/': `${resolve(process.cwd(), '__generated__/payloads')}/`,
+      '@/responses/': `${resolve(process.cwd(), '__generated__/responses')}/`
     }
   }
 })
