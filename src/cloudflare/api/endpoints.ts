@@ -1,4 +1,4 @@
-import {getInput} from '@actions/core'
+import {getInput} from '@unlike/github-actions-core'
 
 import {
   ACTION_INPUT_ACCOUNT_ID,

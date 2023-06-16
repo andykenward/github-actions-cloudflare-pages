@@ -1,8 +1,9 @@
 import {vi} from 'vitest'
 
 import PAYLOAD from '@/payloads/api.github.com/pull_request/opened.payload.json'
-import * as Context from '../context.js'
+
 import type {WorkflowEventExtract} from '../workflow-event/types.js'
+import * as Context from '../context.js'
 
 process.env.GITHUB_EVENT_NAME = 'pull_request'
 process.env.GITHUB_REPOSITORY = 'unlike-ltd/cloudflare-pages-action'

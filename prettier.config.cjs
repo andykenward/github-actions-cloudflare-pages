@@ -2,17 +2,23 @@
 const config = {
   plugins: [require.resolve('@ianvs/prettier-plugin-sort-imports')],
   importOrder: [
-    '', // If you want a gap at the top after top-of-file-comments, put a separator here!
+    '',
+    '<TYPES>',
+    '',
     '<BUILTIN_MODULES>',
     '',
     '<THIRD_PARTY_MODULES>',
     '',
-    '^@app/(.*)$',
+    '<TYPES>^(@api|@app|@assets|@ui)(/.*)$',
+    '^(@api|@app|@assets|@ui)(/.*)$',
     '',
+    '<TYPES>@/(.*)$',
     '@/(.*)$',
+    '',
+    '<TYPES>^[./]',
     '^[./]'
   ],
-  importOrderTypeScriptVersion: '5.0.0',
+  importOrderTypeScriptVersion: '5.1.3',
   semi: false,
   singleQuote: true,
   trailingComma: 'none',

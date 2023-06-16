@@ -1,8 +1,10 @@
-import {getInput} from '@actions/core'
-import {fetch, type RequestInit} from 'undici'
+import type {RequestInit} from 'undici'
 
-import {ACTION_INPUT_API_TOKEN} from '../../constants.js'
+import {getInput} from '@unlike/github-actions-core'
+import {fetch} from 'undici'
+
 import type {FetchResult} from '../types.js'
+import {ACTION_INPUT_API_TOKEN} from '../../constants.js'
 import {throwFetchError} from './fetch-error.js'
 
 export async function fetchResult<ResponseType>(

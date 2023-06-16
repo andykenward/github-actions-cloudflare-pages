@@ -8,15 +8,18 @@ import {defaultExclude, defineConfig} from 'vitest/config'
 
 export default defineConfig({
   test: {
+    environment: 'node',
     setupFiles: ['vitest.setup.ts'],
     exclude: [
       ...defaultExclude,
       '**/.{devcontainer,github,vscode}/**',
       '**/{bin,dist,example,payload-example}/**',
       '**/*.config.*',
-      '**/{vitest}.setup.*'
+      '**/{vitest}.setup.*',
+      '__tests__/helpers/**'
     ],
-    clearMocks: true
+    clearMocks: true,
+    restoreMocks: false
   },
   resolve: {
     alias: {

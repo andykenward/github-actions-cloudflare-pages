@@ -46,7 +46,7 @@
   },
   "packageManager": "pnpm@8.6.1",
   "dependencies": {
-    "@actions/core": "1.10.0",
+    "@unlike/github-actions-core": "0.0.3",
     "undici": "5.22.1",
     "wrangler": "3.0.1"
   },

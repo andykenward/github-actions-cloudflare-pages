@@ -1,13 +1,5 @@
-import core from '@actions/core'
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-  type SpyInstance
-} from 'vitest'
+import * as core from '@unlike/github-actions-core'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import RESPONSE_NOT_FOUND from '@/responses/api.cloudflare.com/pages/projects/project-not-found.response.json'
 import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
@@ -18,25 +10,21 @@ import {
   ACTION_INPUT_PROJECT_NAME
 } from '@/src/constants.js'
 import {run} from '@/src/main.js'
-import {getMockApi, type MockApi} from './helpers/api.js'
+
+import type {MockApi} from './helpers/api.js'
+import {getMockApi} from './helpers/api.js'
 import {setInputEnv} from './helpers/inputs.js'
 
 const MOCK_ACCOUNT_ID = 'mock-account-id'
 const MOCK_PROJECT_NAME = 'mock-project-name'
 const MOCK_API_TOKEN = 'mock-api-token'
 
+vi.mock('@unlike/github-actions-core')
 describe('main', () => {
   let mockApi: MockApi
-  let errorSpy: SpyInstance<
-    Parameters<typeof core.error>,
-    ReturnType<typeof core.error>
-  >
 
   beforeEach(() => {
     mockApi = getMockApi()
-    errorSpy = vi
-      .spyOn(core, 'error')
-      .mockImplementation((value: string | Error) => value)
   })
 
   afterEach(async () => {
@@ -115,7 +103,7 @@ describe('main', () => {
           await expect(() => run()).rejects.toThrow(
             `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-account-id/pages/projects/mock-project-name) failed.`
           )
-          expect(errorSpy).toHaveBeenCalledWith(
+          expect(core.error).toHaveBeenCalledWith(
             'Cloudflare API: Authentication error [code: 10000]'
           )
           mockApi.mockAgent.assertNoPendingInterceptors()
@@ -137,7 +125,7 @@ describe('main', () => {
           await expect(() => run()).rejects.toThrow(
             `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-account-id/pages/projects/mock-project-name) failed.`
           )
-          expect(errorSpy).toHaveBeenCalledWith(
+          expect(core.error).toHaveBeenCalledWith(
             'Cloudflare API: Project not found. The specified project name does not match any of your existing projects. [code: 8000007]'
           )
           mockApi.mockAgent.assertNoPendingInterceptors()

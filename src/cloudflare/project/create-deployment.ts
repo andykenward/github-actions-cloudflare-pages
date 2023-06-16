@@ -1,5 +1,6 @@
-import {getInput} from '@actions/core'
 import type {Deployment} from '@cloudflare/types'
+
+import {getInput} from '@unlike/github-actions-core'
 import wrangler from 'wrangler'
 
 import {
@@ -35,8 +36,6 @@ export const createDeployment = async () => {
 
   process.env[CLOUDFLARE_API_TOKEN] = apiToken
   process.env[CLOUDFLARE_ACCOUNT_ID] = accountId
-
-  wrangler.unstable_pages.deploy
 
   const deployment: Deployment = await wrangler.unstable_pages.deploy({
     accountId,

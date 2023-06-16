@@ -25,7 +25,6 @@ const EACH_REQUIRED_INPUTS = REQUIRED_INPUTS.map(input => ({
 }))
 
 vi.mock('wrangler')
-
 describe('create-deployment', () => {
   beforeEach(() => {
     process.env['GITHUB_HEAD_REF'] = 'mock-branch'
@@ -49,6 +48,9 @@ describe('create-deployment', () => {
 
   test('sets Cloudflare env so wrangler works', async () => {
     expect.assertions(7)
+    // vi.mocked(wrangler.unstable_pages.deploy).mockResolvedValue({
+    //   id: 'deploy-id'
+    // } as Deployment)
 
     for (const input of REQUIRED_INPUTS) {
       setInputEnv(input, `mock-${input}`)

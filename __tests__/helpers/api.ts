@@ -1,4 +1,6 @@
-import {MockAgent, setGlobalDispatcher, type Interceptable} from 'undici'
+import type {Interceptable} from 'undici'
+
+import {MockAgent, setGlobalDispatcher} from 'undici'
 
 export const getMockApi = (): {
   mockAgent: MockAgent

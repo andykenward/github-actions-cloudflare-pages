@@ -1,4 +1,4 @@
-import {setFailed} from '@actions/core'
+import {setFailed} from '@unlike/github-actions-core'
 
 import {run} from './main.js'
 

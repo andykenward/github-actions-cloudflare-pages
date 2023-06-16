@@ -2,7 +2,9 @@ import {strict as assert} from 'node:assert'
 import {existsSync, readFileSync} from 'node:fs'
 import {EOL} from 'node:os'
 
-import {EVENT_NAMES, type EventName} from '@/types/github/workflow-events.js'
+import type {EventName} from '@/types/github/workflow-events.js'
+import {EVENT_NAMES} from '@/types/github/workflow-events.js'
+
 import type {WorkflowEventExtract, WorkflowEventPayload} from './types.js'
 
 /**

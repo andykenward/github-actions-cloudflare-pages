@@ -1,23 +1,13 @@
-import core from '@actions/core'
-import {beforeEach, describe, expect, test, vi, type SpyInstance} from 'vitest'
+import * as core from '@unlike/github-actions-core'
+import {describe, expect, test, vi} from 'vitest'
 
-import {throwFetchError} from '@/src/cloudflare/api/fetch-error.js'
 import type {FetchResult} from '@/src/cloudflare/types.js'
+import {throwFetchError} from '@/src/cloudflare/api/fetch-error.js'
 
 const RESOURCE_URL = `https://api.cloudflare.com/path`
 
+vi.mock('@unlike/github-actions-core')
 describe('throwFetchError', () => {
-  let errorSpy: SpyInstance<
-    Parameters<typeof core.error>,
-    ReturnType<typeof core.error>
-  >
-
-  beforeEach(() => {
-    errorSpy = vi
-      .spyOn(core, 'error')
-      .mockImplementation((value: string | Error) => value)
-  })
-
   test('throws parsed error with notes', () => {
     const ERRORS = {
       success: false,
@@ -35,8 +25,8 @@ describe('throwFetchError', () => {
       '"A request to the Cloudflare API (https://api.cloudflare.com/path) failed."'
     )
 
-    expect(errorSpy).toHaveBeenCalledTimes(1)
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(core.error).toHaveBeenCalledTimes(1)
+    expect(core.error).toHaveBeenCalledWith(
       `Cloudflare API: Authentication error [code: 10000]`
     )
   })
@@ -62,12 +52,12 @@ describe('throwFetchError', () => {
       '"A request to the Cloudflare API (https://api.cloudflare.com/path) failed."'
     )
 
-    expect(errorSpy).toHaveBeenCalledTimes(2)
-    expect(errorSpy).toHaveBeenNthCalledWith(
+    expect(core.error).toHaveBeenCalledTimes(2)
+    expect(core.error).toHaveBeenNthCalledWith(
       1,
       `Cloudflare API: Authentication error [code: 10000]`
     )
-    expect(errorSpy).toHaveBeenNthCalledWith(
+    expect(core.error).toHaveBeenNthCalledWith(
       2,
       `Cloudflare API: Another error [code: 20000]`
     )

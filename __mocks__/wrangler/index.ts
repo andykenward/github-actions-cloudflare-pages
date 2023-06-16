@@ -1,4 +1,5 @@
 import type {Deployment} from '@cloudflare/types'
+
 import {vi} from 'vitest'
 import wrangler from 'wrangler'
 

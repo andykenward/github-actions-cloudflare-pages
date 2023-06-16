@@ -1,10 +1,11 @@
 #!/usr/bin/env ts-node-transpile-only
+import type {JSONSchema7} from 'json-schema'
+
 import {strict as assert} from 'node:assert'
 import {existsSync} from 'node:fs'
 import {mkdir, writeFile} from 'node:fs/promises'
 import {createRequire} from 'node:module'
 
-import type {JSONSchema7} from 'json-schema'
 import prettier from 'prettier'
 
 const require = createRequire(import.meta.url)

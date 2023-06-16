@@ -1,4 +1,4 @@
-import core from '@actions/core'
+import {error as coreError} from '@unlike/github-actions-core'
 
 import type {FetchError, FetchResult} from '../types.js'
 import {ParseError} from './parse-error.js'
@@ -27,7 +27,7 @@ export function throwFetchError(
   if (error.notes?.length > 0) {
     error.notes.map(note => {
       // GitHub Action annotation
-      core.error(`Cloudflare API: ${note.text}`)
+      coreError(`Cloudflare API: ${note.text}`)
     })
   }
   throw error
