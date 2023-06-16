@@ -4,6 +4,7 @@
   "eslint.enable": true,
   "eslint.validate": ["javascript", "typescript"],
   "prettier.enable": true,
+  "prettier.prettierPath": "node_modules/prettier",
   "terminal.integrated.defaultProfile.linux": "zsh",
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.associations": {
