@@ -1,8 +1,8 @@
 {
-  "name": "typescript-action",
+  "name": "github-actions-cloudflare-pages",
   "version": "0.0.0",
   "private": true,
-  "description": "TypeScript template action",
+  "description": "A Github Action to deploy to Cloudflare Pages",
   "type": "module",
   "exports": "./dist/index.js",
   "scripts": {
@@ -31,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/unlike-ltd/cloudflare-pages-action.git"
+    "url": "git+https://github.com/unlike-ltd/github-actions-cloudflare-pages.git"
   },
   "keywords": [
     "actions",

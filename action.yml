@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 
-name: 'Hello World'
-description: 'Greet someone and record the time'
+name: 'GitHub Action for Cloudflare Pages'
+description: 'Deploy to Cloudflare Pages'
 inputs:
   apiToken:
     description: 'Cloudflare API Token'
