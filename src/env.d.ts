@@ -18,7 +18,7 @@ declare namespace NodeJS {
      *
      * Example: `feature-branch-1`.
      */
-    GITHUB_REF_NAME: string
+    GITHUB_REF_NAME?: string
 
     /**
      * The commit SHA that triggered the workflow. The value of this commit SHA

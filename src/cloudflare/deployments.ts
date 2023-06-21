@@ -50,8 +50,7 @@ export const createDeployment = async () => {
    * is not undefined.
    * https://github.com/cloudflare/workers-sdk/blob/a728876e607635081cd1ed00d06b7af86e7efd49/packages/wrangler/src/api/pages/deploy.tsx#L133-L136
    */
-  const branch: string =
-    process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME
+  const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME
   const commitHash = process.env.GITHUB_SHA
 
   process.env[CLOUDFLARE_API_TOKEN] = apiToken

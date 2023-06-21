@@ -81,6 +81,9 @@ describe('deployments', () => {
       test('throws error when branch is undefined', async () => {
         // Set required inputs
         setRequiredInputEnv()
+        // For CI test runner we have to delete the env vars
+        delete process.env.GITHUB_HEAD_REF
+        delete process.env.GITHUB_REF_NAME
 
         expect(process.env.GITHUB_HEAD_REF).toBeUndefined()
         expect(process.env.GITHUB_REF_NAME).toBeUndefined()
@@ -143,7 +146,7 @@ describe('deployments', () => {
           ],
           'mock-directory',
           'mock-projectName',
-          'mock-github-ref-name',
+          'mock-github-head-ref',
           'mock-github-sha'
         )
         expect(execa.$).toHaveBeenCalledTimes(1)
