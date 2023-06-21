@@ -1231,7 +1231,7 @@ var require_util = __commonJS({
     var { InvalidArgumentError } = require_errors();
     var { Blob: Blob2 } = __require("buffer");
     var nodeUtil = __require("util");
-    var { stringify: stringify2 } = __require("querystring");
+    var { stringify } = __require("querystring");
     var [nodeMajor, nodeMinor] = process.versions.node.split(".").map((v) => Number(v));
     function nop() {
     }
@@ -1248,7 +1248,7 @@ var require_util = __commonJS({
       if (url2.includes("?") || url2.includes("#")) {
         throw new Error('Query params cannot be passed when url already contains "?" or "#".');
       }
-      const stringified = stringify2(queryParams);
+      const stringified = stringify(queryParams);
       if (stringified) {
         url2 += "?" + stringified;
       }
@@ -5680,9 +5680,9 @@ var require_util2 = __commonJS({
     var { isBlobLike, toUSVString, ReadableStreamFrom } = require_util();
     var assert = __require("assert");
     var { isUint8Array } = __require("util/types");
-    var crypto3;
+    var crypto;
     try {
-      crypto3 = __require("crypto");
+      crypto = __require("crypto");
     } catch {
     }
     function responseURL(response) {
@@ -5955,7 +5955,7 @@ var require_util2 = __commonJS({
     }
     __name(isURLPotentiallyTrustworthy, "isURLPotentiallyTrustworthy");
     function bytesMatch(bytes, metadataList) {
-      if (crypto3 === void 0) {
+      if (crypto === void 0) {
         return true;
       }
       const parsedMetadata = parseMetadata(metadataList);
@@ -5971,7 +5971,7 @@ var require_util2 = __commonJS({
       for (const item of metadata) {
         const algorithm = item.algo;
         const expectedValue = item.hash;
-        const actualValue = crypto3.createHash(algorithm).update(bytes).digest("base64");
+        const actualValue = crypto.createHash(algorithm).update(bytes).digest("base64");
         if (actualValue === expectedValue) {
           return true;
         }
@@ -5983,7 +5983,7 @@ var require_util2 = __commonJS({
     function parseMetadata(metadata) {
       const result = [];
       let empty = true;
-      const supportedHashes = crypto3.getHashes();
+      const supportedHashes = crypto.getHashes();
       for (const token of metadata.split(" ")) {
         empty = false;
         const parsedToken = parseHashWithOptions.exec(token);
@@ -17014,7 +17014,7 @@ var require_util6 = __commonJS({
       }
     }
     __name(validateCookieMaxAge, "validateCookieMaxAge");
-    function stringify2(cookie) {
+    function stringify(cookie) {
       if (cookie.name.length === 0) {
         return null;
       }
@@ -17062,7 +17062,7 @@ var require_util6 = __commonJS({
       }
       return out.join("; ");
     }
-    __name(stringify2, "stringify");
+    __name(stringify, "stringify");
     var kHeadersListNode;
     function getHeadersList(headers) {
       if (headers[kHeadersList]) {
@@ -17081,7 +17081,7 @@ var require_util6 = __commonJS({
     __name(getHeadersList, "getHeadersList");
     module.exports = {
       isCTLExcludingHtab,
-      stringify: stringify2,
+      stringify,
       getHeadersList
     };
   }
@@ -17234,7 +17234,7 @@ var require_cookies = __commonJS({
   "node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/cookies/index.js"(exports, module) {
     "use strict";
     var { parseSetCookie } = require_parse2();
-    var { stringify: stringify2, getHeadersList } = require_util6();
+    var { stringify, getHeadersList } = require_util6();
     var { webidl } = require_webidl();
     var { Headers } = require_headers();
     function getCookies(headers) {
@@ -17279,9 +17279,9 @@ var require_cookies = __commonJS({
       webidl.argumentLengthCheck(arguments, 2, { header: "setCookie" });
       webidl.brandCheck(headers, Headers, { strict: false });
       cookie = webidl.converters.Cookie(cookie);
-      const str = stringify2(cookie);
+      const str = stringify(cookie);
       if (str) {
-        headers.append("Set-Cookie", stringify2(cookie));
+        headers.append("Set-Cookie", stringify(cookie));
       }
     }
     __name(setCookie, "setCookie");
@@ -18765,13 +18765,13 @@ var require_undici = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.3/node_modules/@unlike/github-actions-core/dist/esm/variables.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.4/node_modules/@unlike/github-actions-core/dist/esm/variables.js
 import { EOL as EOL3 } from "node:os";
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.3/node_modules/@unlike/github-actions-core/dist/esm/lib/command.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.4/node_modules/@unlike/github-actions-core/dist/esm/lib/command.js
 import { EOL } from "node:os";
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.3/node_modules/@unlike/github-actions-core/dist/esm/lib/utils.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.4/node_modules/@unlike/github-actions-core/dist/esm/lib/utils.js
 var __defProp2 = Object.defineProperty;
 var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
 var toCommandValue = /* @__PURE__ */ __name2((input) => {
@@ -18796,7 +18796,7 @@ var toCommandProperties = /* @__PURE__ */ __name2((annotationProperties) => {
   };
 }, "toCommandProperties");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.3/node_modules/@unlike/github-actions-core/dist/esm/lib/command.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.4/node_modules/@unlike/github-actions-core/dist/esm/lib/command.js
 var __defProp3 = Object.defineProperty;
 var __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
 var issueCommand = /* @__PURE__ */ __name3((command, properties, message) => {
@@ -18845,7 +18845,7 @@ _command = new WeakMap();
 _message = new WeakMap();
 _properties = new WeakMap();
 __name(_Command, "Command");
-__name3(Command, "Command");
+__name3(_Command, "Command");
 function escapeData(s) {
   return toCommandValue(s).replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
 }
@@ -18857,79 +18857,10 @@ function escapeProperty(s) {
 __name(escapeProperty, "escapeProperty");
 __name3(escapeProperty, "escapeProperty");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.3/node_modules/@unlike/github-actions-core/dist/esm/lib/file-command.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.4/node_modules/@unlike/github-actions-core/dist/esm/lib/file-command.js
+import { randomUUID as uuidv4 } from "node:crypto";
 import { appendFileSync, existsSync } from "node:fs";
 import { EOL as EOL2 } from "node:os";
-
-// node_modules/.pnpm/uuid@9.0.0/node_modules/uuid/dist/esm-node/rng.js
-import crypto from "crypto";
-var rnds8Pool = new Uint8Array(256);
-var poolPtr = rnds8Pool.length;
-function rng() {
-  if (poolPtr > rnds8Pool.length - 16) {
-    crypto.randomFillSync(rnds8Pool);
-    poolPtr = 0;
-  }
-  return rnds8Pool.slice(poolPtr, poolPtr += 16);
-}
-__name(rng, "rng");
-
-// node_modules/.pnpm/uuid@9.0.0/node_modules/uuid/dist/esm-node/regex.js
-var regex_default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
-
-// node_modules/.pnpm/uuid@9.0.0/node_modules/uuid/dist/esm-node/validate.js
-function validate(uuid) {
-  return typeof uuid === "string" && regex_default.test(uuid);
-}
-__name(validate, "validate");
-var validate_default = validate;
-
-// node_modules/.pnpm/uuid@9.0.0/node_modules/uuid/dist/esm-node/stringify.js
-var byteToHex = [];
-for (let i = 0; i < 256; ++i) {
-  byteToHex.push((i + 256).toString(16).slice(1));
-}
-function unsafeStringify(arr, offset = 0) {
-  return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
-}
-__name(unsafeStringify, "unsafeStringify");
-function stringify(arr, offset = 0) {
-  const uuid = unsafeStringify(arr, offset);
-  if (!validate_default(uuid)) {
-    throw TypeError("Stringified UUID is invalid");
-  }
-  return uuid;
-}
-__name(stringify, "stringify");
-
-// node_modules/.pnpm/uuid@9.0.0/node_modules/uuid/dist/esm-node/native.js
-import crypto2 from "crypto";
-var native_default = {
-  randomUUID: crypto2.randomUUID
-};
-
-// node_modules/.pnpm/uuid@9.0.0/node_modules/uuid/dist/esm-node/v4.js
-function v4(options, buf, offset) {
-  if (native_default.randomUUID && !buf && !options) {
-    return native_default.randomUUID();
-  }
-  options = options || {};
-  const rnds = options.random || (options.rng || rng)();
-  rnds[6] = rnds[6] & 15 | 64;
-  rnds[8] = rnds[8] & 63 | 128;
-  if (buf) {
-    offset = offset || 0;
-    for (let i = 0; i < 16; ++i) {
-      buf[offset + i] = rnds[i];
-    }
-    return buf;
-  }
-  return unsafeStringify(rnds);
-}
-__name(v4, "v4");
-var v4_default = v4;
-
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.3/node_modules/@unlike/github-actions-core/dist/esm/lib/file-command.js
 var __defProp4 = Object.defineProperty;
 var __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
 var issueFileCommand = /* @__PURE__ */ __name4((command, message) => {
@@ -18947,7 +18878,7 @@ var issueFileCommand = /* @__PURE__ */ __name4((command, message) => {
   });
 }, "issueFileCommand");
 var prepareKeyValueMessage = /* @__PURE__ */ __name4((key, value) => {
-  const delimiter = `ghadelimiter_${v4_default()}`;
+  const delimiter = `ghadelimiter_${uuidv4()}`;
   const convertedValue = toCommandValue(value);
   if (key.includes(delimiter)) {
     throw new Error(
@@ -18962,7 +18893,7 @@ var prepareKeyValueMessage = /* @__PURE__ */ __name4((key, value) => {
   return `${key}<<${delimiter}${EOL2}${convertedValue}${EOL2}${delimiter}`;
 }, "prepareKeyValueMessage");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.3/node_modules/@unlike/github-actions-core/dist/esm/variables.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.4/node_modules/@unlike/github-actions-core/dist/esm/variables.js
 var __defProp5 = Object.defineProperty;
 var __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
 var getInput = /* @__PURE__ */ __name5((name, options) => {
@@ -18984,14 +18915,14 @@ var setOutput = /* @__PURE__ */ __name5((name, value) => {
   issueCommand("set-output", { name }, toCommandValue(value));
 }, "setOutput");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.3/node_modules/@unlike/github-actions-core/dist/esm/types.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.4/node_modules/@unlike/github-actions-core/dist/esm/types.js
 var ExitCode = /* @__PURE__ */ ((ExitCode2) => {
   ExitCode2[ExitCode2["Success"] = 0] = "Success";
   ExitCode2[ExitCode2["Failure"] = 1] = "Failure";
   return ExitCode2;
 })(ExitCode || {});
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.3/node_modules/@unlike/github-actions-core/dist/esm/errors.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.4/node_modules/@unlike/github-actions-core/dist/esm/errors.js
 var __defProp6 = Object.defineProperty;
 var __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
 var error = /* @__PURE__ */ __name6((message, properties = {}) => {

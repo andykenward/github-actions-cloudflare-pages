@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@unlike/github-actions-core':
-    specifier: 0.0.3
-    version: 0.0.3
+    specifier: 0.0.4
+    version: 0.0.4
   execa:
     specifier: 7.1.1
     version: 7.1.1
@@ -1432,12 +1432,11 @@ packages:
       eslint-visitor-keys: 3.4.1
     dev: true
 
-  /@unlike/github-actions-core@0.0.3:
-    resolution: {integrity: sha512-UeZTV83SjGfZS0ntz3Op0DzmZIjGOtve3h9ckLf2hNuOLBN6WJfbRaQNv/+69Vxm7/RuXrmIKyJKAgMoVYqO0A==}
+  /@unlike/github-actions-core@0.0.4:
+    resolution: {integrity: sha512-5QWHf/WbOQY4/M20H0aEZDpKc/lJfNUFzJh2bNDSazPZwBxqgpTk2mpicDW3AReSznmadJlTF4l5tTPhOV977w==}
     engines: {node: '>=v16.20.0'}
     dependencies:
       '@actions/http-client': 2.1.0
-      uuid: 9.0.0
     dev: false
 
   /@vitest/expect@0.32.1:
@@ -3568,11 +3567,6 @@ packages:
 
   /util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
-    dev: false
-
-  /uuid@9.0.0:
-    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
-    hasBin: true
     dev: false
 
   /v8-compile-cache-lib@3.0.1:
