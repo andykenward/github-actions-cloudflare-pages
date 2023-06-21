@@ -1,8 +1,7 @@
-import type {Deployment} from '@cloudflare/types'
-
-import {getInput} from '@unlike/github-actions-core'
+import {getInput, setOutput} from '@unlike/github-actions-core'
 import {$} from 'execa'
 
+import type {PagesDeployment} from './types.js'
 import {
   ACTION_INPUT_ACCOUNT_ID,
   ACTION_INPUT_API_TOKEN,
@@ -14,15 +13,21 @@ import {
 import {getCloudflareApiEndpoint} from './api/endpoints.js'
 import {fetchResult} from './api/fetch-result.js'
 
-const getDeployments = async (): Promise<Array<Deployment>> => {
+const ERROR_KEY = `Create Deployment:`
+
+const getDeployments = async (): Promise<Array<PagesDeployment>> => {
   const url = getCloudflareApiEndpoint('deployments')
 
-  const result = await fetchResult<Array<Deployment>>(url)
+  const result = await fetchResult<Array<PagesDeployment>>(url)
 
   return result
 }
 
-const ERROR_KEY = `Create Deployment:`
+export const getDeploymentAlias = (deployment: PagesDeployment): string => {
+  return deployment.aliases && deployment.aliases.length > 0
+    ? deployment.aliases[0]
+    : deployment.url
+}
 
 export const createDeployment = async () => {
   const accountId = getInput(ACTION_INPUT_ACCOUNT_ID, {
@@ -64,10 +69,31 @@ export const createDeployment = async () => {
     /**
      * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
      */
-    await $`npx wrangler pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`
+    await $`npx wrangler@3.1.1 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`
 
     // get deployment
-    const [deployment] = await getDeployments()
+    const deployments = await getDeployments()
+
+    /**
+     * Get the latest deployment by commitHash.
+     */
+    const deployment = deployments.find(
+      deployment =>
+        deployment.deployment_trigger.metadata.commit_hash === commitHash
+    )
+
+    if (deployment === undefined) {
+      throw new Error(
+        `${ERROR_KEY} could not find deployment with commitHash: ${commitHash}`
+      )
+    }
+
+    setOutput('id', deployment.id)
+    setOutput('url', deployment.url)
+    setOutput('environment', deployment.environment)
+
+    const alias: string = getDeploymentAlias(deployment)
+    setOutput('alias', alias)
 
     return deployment
   } catch (error) {

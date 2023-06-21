@@ -20,10 +20,14 @@ inputs:
     required: true
 
 outputs:
+  id:
+    description: 'Cloudflare Pages deployed id'
   url:
     description: 'Cloudflare Pages deployed url'
   environment:
-    description: 'Cloudflare Pages deployed environment'
+    description: 'Cloudflare Pages deployed environment "production" or "preview"'
+  alias:
+    description: 'Cloudflare Pages deployed alias. Fallsback to deployed url if deployed alias is null'
 
 runs:
   using: 'node16'

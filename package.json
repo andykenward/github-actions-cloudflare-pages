@@ -49,7 +49,7 @@
     "@unlike/github-actions-core": "0.0.3",
     "execa": "7.1.1",
     "undici": "5.22.1",
-    "wrangler": "3.0.1"
+    "wrangler": "3.1.1"
   },
   "devDependencies": {
     "@cloudflare/types": "6.21.13",

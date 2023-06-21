@@ -1,8 +1,10 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`createDeployment > api calls > handles success 1`] = `
+exports[`deployments > createDeployment > api calls > handles success 1`] = `
 {
-  "aliases": null,
+  "aliases": [
+    "https://unknown-branch.cloudflare-pages-action-a5z.pages.dev",
+  ],
   "build_config": {
     "build_command": null,
     "destination_dir": null,
@@ -18,7 +20,7 @@ exports[`createDeployment > api calls > handles success 1`] = `
     "metadata": {
       "branch": "main",
       "commit_dirty": true,
-      "commit_hash": "26033f2997180e3931562c16788ef74937d3334d",
+      "commit_hash": "mock-github-sha",
       "commit_message": "chore(deps-dev): update eslint packages",
     },
     "type": "ad_hoc",

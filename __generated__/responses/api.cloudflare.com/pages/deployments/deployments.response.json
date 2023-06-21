@@ -19,7 +19,7 @@
                 "type": "ad_hoc",
                 "metadata": {
                     "branch": "main",
-                    "commit_hash": "26033f2997180e3931562c16788ef74937d3334d",
+                    "commit_hash": "mock-github-sha",
                     "commit_message": "chore(deps-dev): update eslint packages",
                     "commit_dirty": true
                 }
@@ -68,7 +68,7 @@
             "compatibility_flags": [],
             "build_image_major_version": 1,
             "usage_model": null,
-            "aliases": null,
+            "aliases": ["https://unknown-branch.cloudflare-pages-action-a5z.pages.dev"],
             "is_skipped": false,
             "production_branch": "main"
         },
