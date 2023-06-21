@@ -23,20 +23,18 @@ export async function fetchResult<ResponseType>(
     }
   }
 
-  const response = await fetch(resource, {
+  const response = (await fetch(resource, {
     method,
     ...initFetch,
     signal: abortSignal
-  })
+  }).then(response => response.json())) as FetchResult<ResponseType>
 
-  const json = (await response.json()) as FetchResult<ResponseType>
-
-  if (json.success) {
-    if (json.result === null || json.result === undefined) {
+  if (response.success) {
+    if (response.result === null || response.result === undefined) {
       throw new Error(`Cloudflare API: response missing 'result'`)
     }
-    return json.result
+    return response.result
   } else {
-    throwFetchError(resource, json)
+    throwFetchError(resource, response)
   }
 }
