@@ -1,6 +1,5 @@
 {
   "recommendations": [
-    "johnpapa.vscode-peacock",
     "dbaeumer.vscode-eslint",
     "github.vscode-github-actions",
     "github.vscode-pull-request-github",
@@ -8,7 +7,6 @@
     "esbenp.prettier-vscode",
     "yoavbls.pretty-ts-errors",
     "redhat.vscode-yaml",
-    "dotenv.dotenv-vscode",
     "github.copilot"
   ]
 }
