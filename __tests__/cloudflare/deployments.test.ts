@@ -128,10 +128,11 @@ describe('createDeployment', () => {
         `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-accountId/pages/projects/mock-projectName/deployments) failed.`
       )
       expect(mock$).toHaveBeenCalledTimes(1)
+      mockApi.mockAgent.assertNoPendingInterceptors()
     })
 
     test('handles success', async () => {
-      expect.assertions(1)
+      expect.assertions(2)
       mock$.mockResolvedValue({stdout: 'mock-deployment-id'})
       mockApi.mockPoolCloudflare
         .intercept({
@@ -146,6 +147,7 @@ describe('createDeployment', () => {
       expect(deployment.id).toMatchInlineSnapshot(
         '"206e215c-33b3-4ce4-adf4-7fc6c9b65483"'
       )
+      mockApi.mockAgent.assertNoPendingInterceptors()
     })
   })
 })
