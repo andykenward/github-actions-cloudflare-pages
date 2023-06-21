@@ -1,3 +1,4 @@
+import * as execa from 'execa'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 import RESPONSE_NOT_FOUND_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments-not-found.response.json'
@@ -18,14 +19,7 @@ const EACH_REQUIRED_INPUTS = REQUIRED_INPUTS.map(input => ({
   inputs: REQUIRED_INPUTS.filter(a => a !== input)
 }))
 
-const mock$ = vi.fn()
-
-vi.mock('execa', () => ({
-  get $() {
-    return mock$
-  }
-}))
-
+vi.mock('execa')
 describe('createDeployment', () => {
   describe('environment variables', () => {
     test.each(EACH_REQUIRED_INPUTS)(
@@ -39,7 +33,7 @@ describe('createDeployment', () => {
           `Input required and not supplied: ${expected}`
         )
 
-        expect(mock$).not.toHaveBeenCalled()
+        expect(execa.$).not.toHaveBeenCalled()
       }
     )
 
@@ -56,7 +50,7 @@ describe('createDeployment', () => {
 
       expect(process.env.GITHUB_HEAD_REF).toBeUndefined()
       expect(process.env.GITHUB_REF_NAME).toBeUndefined()
-      expect(mock$).not.toHaveBeenCalled()
+      expect(execa.$).not.toHaveBeenCalled()
     })
 
     test('throws error when commitHash is undefined', async () => {
@@ -70,7 +64,7 @@ describe('createDeployment', () => {
       await expect(createDeployment()).rejects.toThrow(
         `Create Deployment: commitHash is undefined`
       )
-      expect(mock$).not.toHaveBeenCalled()
+      expect(execa.$).not.toHaveBeenCalled()
       expect(process.env.GITHUB_SHA).toBeUndefined()
     })
   })
@@ -88,7 +82,7 @@ describe('createDeployment', () => {
     test('handles thrown error from wrangler deploy', async () => {
       expect.assertions(7)
       // Mock $ execa rejects
-      mock$.mockRejectedValue({stderr: 'Oh no!'})
+      vi.mocked(execa.$).mockRejectedValue({stderr: 'Oh no!'})
 
       // Expect Cloudflare Api Token and Account Id to be undefined.
       expect(process.env[CLOUDFLARE_API_TOKEN]).toBeUndefined()
@@ -96,7 +90,7 @@ describe('createDeployment', () => {
 
       await expect(createDeployment()).rejects.toThrow(`Oh no!`)
 
-      expect(mock$).toHaveBeenCalledWith(
+      expect(execa.$).toHaveBeenCalledWith(
         [
           'npx wrangler pages deploy ',
           ' --project-name=',
@@ -109,14 +103,24 @@ describe('createDeployment', () => {
         'mock-github-ref-name',
         'mock-github-sha'
       )
-      expect(mock$).toHaveBeenCalledTimes(1)
+      expect(execa.$).toHaveBeenCalledTimes(1)
       expect(process.env[CLOUDFLARE_API_TOKEN]).toStrictEqual('mock-apiToken')
       expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toStrictEqual('mock-accountId')
     })
 
     test('handles thrown error from getDeployments', async () => {
       expect.assertions(2)
-      mock$.mockResolvedValue({stdout: 'mock-deployment-id'})
+      vi.mocked(execa.$).mockResolvedValue({
+        isCanceled: false,
+        command: '',
+        escapedCommand: '',
+        exitCode: 0,
+        stdout: 'success',
+        stderr: '',
+        failed: false,
+        timedOut: false,
+        killed: false
+      })
       mockApi.mockPoolCloudflare
         .intercept({
           path: `/client/v4/accounts/mock-accountId/pages/projects/mock-projectName/deployments`,
@@ -127,13 +131,23 @@ describe('createDeployment', () => {
       await expect(createDeployment()).rejects.toThrow(
         `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-accountId/pages/projects/mock-projectName/deployments) failed.`
       )
-      expect(mock$).toHaveBeenCalledTimes(1)
+      expect(execa.$).toHaveBeenCalledTimes(1)
       mockApi.mockAgent.assertNoPendingInterceptors()
     })
 
     test('handles success', async () => {
       expect.assertions(2)
-      mock$.mockResolvedValue({stdout: 'mock-deployment-id'})
+      vi.mocked(execa.$).mockResolvedValue({
+        isCanceled: false,
+        command: '',
+        escapedCommand: '',
+        exitCode: 0,
+        stdout: 'success',
+        stderr: '',
+        failed: false,
+        timedOut: false,
+        killed: false
+      })
       mockApi.mockPoolCloudflare
         .intercept({
           path: `/client/v4/accounts/mock-accountId/pages/projects/mock-projectName/deployments`,
