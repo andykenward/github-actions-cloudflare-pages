@@ -15,7 +15,7 @@ const getPayload = (): unknown => {
     if (existsSync(process.env.GITHUB_EVENT_PATH)) {
       return JSON.parse(
         readFileSync(process.env.GITHUB_EVENT_PATH, {encoding: 'utf8'})
-      ) as unknown
+      )
     } else {
       const path = process.env.GITHUB_EVENT_PATH
       process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${EOL}`)
