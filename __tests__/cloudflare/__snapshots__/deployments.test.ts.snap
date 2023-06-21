@@ -1,0 +1,76 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`createDeployment > api calls > handles success 1`] = `
+{
+  "aliases": null,
+  "build_config": {
+    "build_command": null,
+    "destination_dir": null,
+    "root_dir": null,
+    "web_analytics_tag": null,
+    "web_analytics_token": null,
+  },
+  "build_image_major_version": 1,
+  "compatibility_date": "2023-06-02",
+  "compatibility_flags": [],
+  "created_on": "2023-06-16T18:41:19.07168Z",
+  "deployment_trigger": {
+    "metadata": {
+      "branch": "main",
+      "commit_dirty": true,
+      "commit_hash": "26033f2997180e3931562c16788ef74937d3334d",
+      "commit_message": "chore(deps-dev): update eslint packages",
+    },
+    "type": "ad_hoc",
+  },
+  "env_vars": {},
+  "environment": "production",
+  "id": "206e215c-33b3-4ce4-adf4-7fc6c9b65483",
+  "is_skipped": false,
+  "latest_stage": {
+    "ended_on": "2023-06-16T18:41:21.226094Z",
+    "name": "deploy",
+    "started_on": null,
+    "status": "success",
+  },
+  "modified_on": "2023-06-16T18:41:21.226094Z",
+  "production_branch": "main",
+  "project_id": "48ddb51b-4568-4f38-94de-10614c2fa270",
+  "project_name": "cloudflare-pages-action",
+  "short_id": "206e215c",
+  "stages": [
+    {
+      "ended_on": null,
+      "name": "queued",
+      "started_on": "2023-06-16T18:41:19.07168Z",
+      "status": "active",
+    },
+    {
+      "ended_on": null,
+      "name": "initialize",
+      "started_on": null,
+      "status": "idle",
+    },
+    {
+      "ended_on": null,
+      "name": "clone_repo",
+      "started_on": null,
+      "status": "idle",
+    },
+    {
+      "ended_on": null,
+      "name": "build",
+      "started_on": null,
+      "status": "idle",
+    },
+    {
+      "ended_on": "2023-06-16T18:41:21.226094Z",
+      "name": "deploy",
+      "started_on": null,
+      "status": "success",
+    },
+  ],
+  "url": "https://206e215c.cloudflare-pages-action-a5z.pages.dev",
+  "usage_model": null,
+}
+`;

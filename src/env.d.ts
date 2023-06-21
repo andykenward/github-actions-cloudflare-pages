@@ -27,7 +27,7 @@ declare namespace NodeJS {
      *
      * Example: `ffac537e6cbbf934b08745a378932722df287a53`.
      */
-    GITHUB_SHA: string
+    GITHUB_SHA?: string
 
     /**
      * The name of the event that triggered the workflow.
@@ -59,9 +59,16 @@ declare namespace NodeJS {
      *
      * Example: `D:\a\_temp`.
      */
-    RUNNER_TEMP: string
+    RUNNER_TEMP?: string
 
-    CLOUDFLARE_ACCOUNT_ID: string
-    CLOUDFLARE_API_TOKEN: string
+    CLOUDFLARE_ACCOUNT_ID?: string
+    CLOUDFLARE_API_TOKEN?: string
+
+    /** Action Inputs */
+    INPUT_API_TOKEN?: string
+    INPUT_ACCOUNT_ID?: string
+    INPUT_PROJECT_NAME?: string
+    INPUT_DIRECTORY?: string
+    // INPUT_GITHUB_TOKEN?: string
   }
 }

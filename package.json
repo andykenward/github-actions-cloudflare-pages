@@ -47,6 +47,7 @@
   "packageManager": "pnpm@8.6.1",
   "dependencies": {
     "@unlike/github-actions-core": "0.0.3",
+    "execa": "7.1.1",
     "undici": "5.22.1",
     "wrangler": "3.0.1"
   },
@@ -72,7 +73,6 @@
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-unicorn": "47.0.0",
     "eslint-plugin-vitest": "0.2.6",
-    "execa": "7.1.1",
     "prettier": "2.8.8",
     "ts-node": "10.9.1",
     "typescript": "5.1.3",
