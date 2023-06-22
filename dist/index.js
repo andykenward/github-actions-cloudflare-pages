@@ -20599,7 +20599,7 @@ var createDeployment = /* @__PURE__ */ __name(async () => {
       ],
       [
         "Commit Hash:",
-        `<a href='https://github.com/${repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
+        `<a href='https://github.com/${repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}'><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
       ],
       [
         "Commit Message:",

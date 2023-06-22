@@ -266,7 +266,7 @@ describe('deployments', () => {
           ],
           [
             'Commit Hash:',
-            `<a href='https://github.com/mock-owner/mock-github-repository/commit/mock-github-sha><code>mock-github-sha</code></a>`
+            `<a href='https://github.com/mock-owner/mock-github-repository/commit/mock-github-sha'><code>mock-github-sha</code></a>`
           ],
           ['Commit Message:', `chore(deps-dev): update eslint packages`],
           ['Status:', `<strong>SUCCESS</strong>`],
