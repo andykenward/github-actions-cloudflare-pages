@@ -96,6 +96,8 @@ export const createDeployment = async () => {
 
     const deployStage = deployment.stages.find(stage => stage.name === 'deploy')
 
+    const repo = process.env.GITHUB_REPOSITORY || ''
+
     await summary.addHeading('Cloudflare Pages Deployment').write()
     await summary.addBreak().write()
     await summary
@@ -111,13 +113,22 @@ export const createDeployment = async () => {
           }
         ],
         ['Environment:', deployment.environment],
-        ['Branch:', deployment.deployment_trigger.metadata.branch],
-        ['Commit Hash:', deployment.deployment_trigger.metadata.commit_hash],
+        [
+          'Branch:',
+          `<a href='https://github.com/${repo}/tree/${deployment.deployment_trigger.metadata.branch}'><code>${deployment.deployment_trigger.metadata.branch}</code></a>`
+        ],
+        [
+          'Commit Hash:',
+          `<a href='https://github.com/${repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
+        ],
         [
           'Commit Message:',
           deployment.deployment_trigger.metadata.commit_message
         ],
-        ['Status:', deployStage?.status || `unknown`],
+        [
+          'Status:',
+          `<strong>${deployStage?.status.toUpperCase() || `UNKNOWN`}</strong>`
+        ],
         ['Preview URL:', `<a href='${deployment.url}'>${deployment.url}</a>`],
         ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`]
       ])

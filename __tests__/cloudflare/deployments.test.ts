@@ -260,10 +260,16 @@ describe('deployments', () => {
             }
           ],
           ['Environment:', `production`],
-          ['Branch:', `main`],
-          ['Commit Hash:', `mock-github-sha`],
+          [
+            'Branch:',
+            `<a href='https://github.com/mock-owner/mock-github-repository/tree/main'><code>main</code></a>`
+          ],
+          [
+            'Commit Hash:',
+            `<a href='https://github.com/mock-owner/mock-github-repository/commit/mock-github-sha><code>mock-github-sha</code></a>`
+          ],
           ['Commit Message:', `chore(deps-dev): update eslint packages`],
-          ['Status:', 'success'],
+          ['Status:', `<strong>SUCCESS</strong>`],
           [
             'Preview URL:',
             `<a href='https://206e215c.cloudflare-pages-action-a5z.pages.dev'>https://206e215c.cloudflare-pages-action-a5z.pages.dev</a>`
