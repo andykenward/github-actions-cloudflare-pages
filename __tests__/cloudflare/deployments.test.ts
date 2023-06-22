@@ -61,6 +61,8 @@ describe('deployments', () => {
   describe('createDeployment', () => {
     const spySetOutput = vi.mocked(core.setOutput)
     const spySummaryAddTable = vi.spyOn(core.summary, 'addTable')
+    const spySummaryAddHeading = vi.spyOn(core.summary, 'addHeading')
+    const spySummaryAddBreak = vi.spyOn(core.summary, 'addBreak')
 
     describe('environment variables', () => {
       test.each(EACH_REQUIRED_INPUTS)(
@@ -192,7 +194,7 @@ describe('deployments', () => {
       })
 
       test('handles success', async () => {
-        expect.assertions(8)
+        expect.assertions(11)
         vi.mocked(execa.$).mockResolvedValue({
           isCanceled: false,
           command: '',
@@ -239,6 +241,13 @@ describe('deployments', () => {
           'alias',
           'https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
         )
+
+        expect(spySummaryAddHeading).toHaveBeenCalledWith(
+          `Cloudflare Pages Deployment`
+        )
+        expect(spySummaryAddBreak).toHaveBeenCalledTimes(1)
+
+        expect(spySummaryAddTable).toHaveBeenCalledTimes(1)
         expect(spySummaryAddTable).toHaveBeenCalledWith([
           [
             {
@@ -250,14 +259,18 @@ describe('deployments', () => {
               header: true
             }
           ],
+          ['Environment:', `production`],
+          ['Branch:', `main`],
+          ['Commit Hash:', `mock-github-sha`],
+          ['Commit Message:', `chore(deps-dev): update eslint packages`],
           ['Status:', 'success'],
           [
             'Preview URL:',
-            'https://206e215c.cloudflare-pages-action-a5z.pages.dev'
+            `<a href='https://206e215c.cloudflare-pages-action-a5z.pages.dev'>https://206e215c.cloudflare-pages-action-a5z.pages.dev</a>`
           ],
           [
             'Branch Preview URL:',
-            'https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
+            `<a href='https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'>https://unknown-branch.cloudflare-pages-action-a5z.pages.dev</a>`
           ]
         ])
         mockApi.mockAgent.assertNoPendingInterceptors()

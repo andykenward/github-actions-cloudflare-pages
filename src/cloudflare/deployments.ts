@@ -96,6 +96,8 @@ export const createDeployment = async () => {
 
     const deployStage = deployment.stages.find(stage => stage.name === 'deploy')
 
+    await summary.addHeading('Cloudflare Pages Deployment').write()
+    await summary.addBreak().write()
     await summary
       .addTable([
         [
@@ -108,9 +110,16 @@ export const createDeployment = async () => {
             header: true
           }
         ],
+        ['Environment:', deployment.environment],
+        ['Branch:', deployment.deployment_trigger.metadata.branch],
+        ['Commit Hash:', deployment.deployment_trigger.metadata.commit_hash],
+        [
+          'Commit Message:',
+          deployment.deployment_trigger.metadata.commit_message
+        ],
         ['Status:', deployStage?.status || `unknown`],
-        ['Preview URL:', deployment.url],
-        ['Branch Preview URL:', alias]
+        ['Preview URL:', `<a href='${deployment.url}'>${deployment.url}</a>`],
+        ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`]
       ])
       .write()
 
