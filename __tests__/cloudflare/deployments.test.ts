@@ -60,6 +60,7 @@ describe('deployments', () => {
 
   describe('createDeployment', () => {
     const spySetOutput = vi.mocked(core.setOutput)
+    const spySummaryAddTable = vi.spyOn(core.summary, 'addTable')
 
     describe('environment variables', () => {
       test.each(EACH_REQUIRED_INPUTS)(
@@ -75,6 +76,7 @@ describe('deployments', () => {
 
           expect(execa.$).not.toHaveBeenCalled()
           expect(spySetOutput).not.toHaveBeenCalled()
+          expect(spySummaryAddTable).not.toHaveBeenCalled()
         }
       )
 
@@ -96,10 +98,11 @@ describe('deployments', () => {
         expect(process.env.GITHUB_REF_NAME).toBeUndefined()
         expect(execa.$).not.toHaveBeenCalled()
         expect(spySetOutput).not.toHaveBeenCalled()
+        expect(spySummaryAddTable).not.toHaveBeenCalled()
       })
 
       test('throws error when commitHash is undefined', async () => {
-        expect.assertions(5)
+        expect.assertions(6)
         setRequiredInputEnv()
         setTestEnvVars()
         delete process.env.GITHUB_SHA
@@ -112,6 +115,7 @@ describe('deployments', () => {
         expect(execa.$).not.toHaveBeenCalled()
         expect(process.env.GITHUB_SHA).toBeUndefined()
         expect(spySetOutput).not.toHaveBeenCalled()
+        expect(spySummaryAddTable).not.toHaveBeenCalled()
       })
     })
 
@@ -126,7 +130,7 @@ describe('deployments', () => {
       })
 
       test('handles thrown error from wrangler deploy', async () => {
-        expect.assertions(8)
+        expect.assertions(9)
         // Mock $ execa rejects
         vi.mocked(execa.$).mockRejectedValue({stderr: 'Oh no!'})
 
@@ -155,10 +159,11 @@ describe('deployments', () => {
           'mock-accountId'
         )
         expect(spySetOutput).not.toHaveBeenCalled()
+        expect(spySummaryAddTable).not.toHaveBeenCalled()
       })
 
       test('handles thrown error from getDeployments', async () => {
-        expect.assertions(3)
+        expect.assertions(4)
         vi.mocked(execa.$).mockResolvedValue({
           isCanceled: false,
           command: '',
@@ -183,10 +188,11 @@ describe('deployments', () => {
         expect(execa.$).toHaveBeenCalledTimes(1)
         expect(spySetOutput).not.toHaveBeenCalled()
         mockApi.mockAgent.assertNoPendingInterceptors()
+        expect(spySummaryAddTable).not.toHaveBeenCalled()
       })
 
       test('handles success', async () => {
-        expect.assertions(7)
+        expect.assertions(8)
         vi.mocked(execa.$).mockResolvedValue({
           isCanceled: false,
           command: '',
@@ -233,7 +239,27 @@ describe('deployments', () => {
           'alias',
           'https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
         )
-
+        expect(spySummaryAddTable).toHaveBeenCalledWith([
+          [
+            {
+              data: 'Name',
+              header: true
+            },
+            {
+              data: 'Result',
+              header: true
+            }
+          ],
+          ['Status:', 'success'],
+          [
+            'Preview URL:',
+            'https://206e215c.cloudflare-pages-action-a5z.pages.dev'
+          ],
+          [
+            'Branch Preview URL:',
+            'https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
+          ]
+        ])
         mockApi.mockAgent.assertNoPendingInterceptors()
       })
     })

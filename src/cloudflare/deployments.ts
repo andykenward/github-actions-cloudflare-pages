@@ -1,4 +1,4 @@
-import {getInput, setOutput} from '@unlike/github-actions-core'
+import {getInput, setOutput, summary} from '@unlike/github-actions-core'
 import {$} from 'execa'
 
 import type {PagesDeployment} from './types.js'
@@ -93,6 +93,26 @@ export const createDeployment = async () => {
 
     const alias: string = getDeploymentAlias(deployment)
     setOutput('alias', alias)
+
+    const deployStage = deployment.stages.find(stage => stage.name === 'deploy')
+
+    await summary
+      .addTable([
+        [
+          {
+            data: 'Name',
+            header: true
+          },
+          {
+            data: 'Result',
+            header: true
+          }
+        ],
+        ['Status:', deployStage?.status || `unknown`],
+        ['Preview URL:', deployment.url],
+        ['Branch Preview URL:', alias]
+      ])
+      .write()
 
     return deployment
   } catch (error) {

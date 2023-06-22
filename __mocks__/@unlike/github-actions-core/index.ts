@@ -9,3 +9,7 @@ export const getInput = vi.fn<
 export const setOutput = vi.fn()
 
 export const error = vi.fn()
+
+export const summary = core.summary
+summary.addTable = vi.fn().mockReturnValue(summary)
+summary.write = vi.fn()

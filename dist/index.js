@@ -9098,7 +9098,7 @@ var require_client = __commonJS({
     };
     var Client = _Client;
     __name(_Client, "Client");
-    var constants3 = require_constants2();
+    var constants4 = require_constants2();
     var createRedirectInterceptor = require_redirectInterceptor();
     var EMPTY_BUF = Buffer.alloc(0);
     async function lazyllhttp() {
@@ -9166,7 +9166,7 @@ var require_client = __commonJS({
       constructor(client, socket, { exports: exports2 }) {
         assert(Number.isFinite(client[kMaxHeadersSize]) && client[kMaxHeadersSize] > 0);
         this.llhttp = exports2;
-        this.ptr = this.llhttp.llhttp_alloc(constants3.TYPE.RESPONSE);
+        this.ptr = this.llhttp.llhttp_alloc(constants4.TYPE.RESPONSE);
         this.client = client;
         this.socket = socket;
         this.timeout = null;
@@ -9258,19 +9258,19 @@ var require_client = __commonJS({
             currentBufferRef = null;
           }
           const offset = llhttp.llhttp_get_error_pos(this.ptr) - currentBufferPtr;
-          if (ret === constants3.ERROR.PAUSED_UPGRADE) {
+          if (ret === constants4.ERROR.PAUSED_UPGRADE) {
             this.onUpgrade(data.slice(offset));
-          } else if (ret === constants3.ERROR.PAUSED) {
+          } else if (ret === constants4.ERROR.PAUSED) {
             this.paused = true;
             socket.unshift(data.slice(offset));
-          } else if (ret !== constants3.ERROR.OK) {
+          } else if (ret !== constants4.ERROR.OK) {
             const ptr = llhttp.llhttp_get_error_reason(this.ptr);
             let message = "";
             if (ptr) {
               const len = new Uint8Array(llhttp.memory.buffer, ptr).indexOf(0);
               message = "Response does not match the HTTP/1.1 protocol (" + Buffer.from(llhttp.memory.buffer, ptr, len).toString() + ")";
             }
-            throw new HTTPParserError(message, constants3.ERROR[ret], data.slice(offset));
+            throw new HTTPParserError(message, constants4.ERROR[ret], data.slice(offset));
           }
         } catch (err) {
           util.destroy(socket, err);
@@ -9443,7 +9443,7 @@ var require_client = __commonJS({
           socket[kBlocking] = false;
           resume(client);
         }
-        return pause ? constants3.ERROR.PAUSED : 0;
+        return pause ? constants4.ERROR.PAUSED : 0;
       }
       onBody(buf) {
         const { client, socket, statusCode, maxResponseSize } = this;
@@ -9466,7 +9466,7 @@ var require_client = __commonJS({
         this.bytesRead += buf.length;
         try {
           if (request.onData(buf) === false) {
-            return constants3.ERROR.PAUSED;
+            return constants4.ERROR.PAUSED;
           }
         } catch (err) {
           util.destroy(socket, err);
@@ -9509,13 +9509,13 @@ var require_client = __commonJS({
         if (socket[kWriting]) {
           assert.strictEqual(client[kRunning], 0);
           util.destroy(socket, new InformationalError("reset"));
-          return constants3.ERROR.PAUSED;
+          return constants4.ERROR.PAUSED;
         } else if (!shouldKeepAlive) {
           util.destroy(socket, new InformationalError("reset"));
-          return constants3.ERROR.PAUSED;
+          return constants4.ERROR.PAUSED;
         } else if (socket[kReset] && client[kRunning] === 0) {
           util.destroy(socket, new InformationalError("reset"));
-          return constants3.ERROR.PAUSED;
+          return constants4.ERROR.PAUSED;
         } else if (client[kPipelining] === 1) {
           setImmediate(resume, client);
         } else {
@@ -18937,6 +18937,286 @@ var setFailed = /* @__PURE__ */ __name6((message) => {
   error(message);
 }, "setFailed");
 
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.4/node_modules/@unlike/github-actions-core/dist/esm/lib/summary.js
+import { constants, promises } from "node:fs";
+import { EOL as EOL4 } from "node:os";
+var __defProp7 = Object.defineProperty;
+var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
+var { access, appendFile, writeFile } = promises;
+var SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
+var _buffer, _filePath, _fileSummaryPath, fileSummaryPath_fn, _wrap, wrap_fn;
+var _Summary = class {
+  constructor() {
+    /**
+     * Finds the summary file path from the environment, rejects if env var is not found or file does not exist
+     * Also checks r/w permissions.
+     *
+     * @returns step summary file path
+     */
+    __privateAdd(this, _fileSummaryPath);
+    /**
+     * Wraps content in an HTML tag, adding any HTML attributes
+     *
+     * @param {string} tag HTML tag to wrap
+     * @param {string | null} content content within the tag
+     * @param {[attribute: string]: string} attrs key-value list of HTML attributes to add
+     *
+     * @returns {string} content wrapped in HTML element
+     */
+    __privateAdd(this, _wrap);
+    __privateAdd(this, _buffer, void 0);
+    __privateAdd(this, _filePath, void 0);
+    __privateSet(this, _buffer, "");
+  }
+  /**
+   * Writes text in the buffer to the summary buffer file and empties buffer. Will append by default.
+   *
+   * @param {SummaryWriteOptions} [options] (optional) options for write operation
+   *
+   * @returns {Promise<Summary>} summary instance
+   */
+  async write(options) {
+    const overwrite = !!options?.overwrite;
+    const filePath = await __privateMethod(this, _fileSummaryPath, fileSummaryPath_fn).call(this);
+    const writeFunc = overwrite ? writeFile : appendFile;
+    await writeFunc(filePath, __privateGet(this, _buffer), { encoding: "utf8" });
+    return this.emptyBuffer();
+  }
+  /**
+   * Clears the summary buffer and wipes the summary file
+   *
+   * @returns {Summary} summary instance
+   */
+  async clear() {
+    return this.emptyBuffer().write({ overwrite: true });
+  }
+  /**
+   * Returns the current summary buffer as a string
+   *
+   * @returns {string} string of summary buffer
+   */
+  stringify() {
+    return __privateGet(this, _buffer);
+  }
+  /**
+   * If the summary buffer is empty
+   *
+   * @returns {boolen} true if the buffer is empty
+   */
+  isEmptyBuffer() {
+    return __privateGet(this, _buffer).length === 0;
+  }
+  /**
+   * Resets the summary buffer without writing to summary file
+   *
+   * @returns {Summary} summary instance
+   */
+  emptyBuffer() {
+    __privateSet(this, _buffer, "");
+    return this;
+  }
+  /**
+   * Adds raw text to the summary buffer
+   *
+   * @param {string} text content to add
+   * @param {boolean} [addEOL=false] (optional) append an EOL to the raw text (default: false)
+   *
+   * @returns {Summary} summary instance
+   */
+  addRaw(text, addEOL = false) {
+    __privateSet(this, _buffer, __privateGet(this, _buffer) + text);
+    return addEOL ? this.addEOL() : this;
+  }
+  /**
+   * Adds the operating system-specific end-of-line marker to the buffer
+   *
+   * @returns {Summary} summary instance
+   */
+  addEOL() {
+    return this.addRaw(EOL4);
+  }
+  /**
+   * Adds an HTML codeblock to the summary buffer
+   *
+   * @param {string} code content to render within fenced code block
+   * @param {string} lang (optional) language to syntax highlight code
+   *
+   * @returns {Summary} summary instance
+   */
+  addCodeBlock(code, lang) {
+    const attrs = {
+      ...lang && { lang }
+    };
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "pre", __privateMethod(this, _wrap, wrap_fn).call(this, "code", code), attrs);
+    return this.addRaw(element).addEOL();
+  }
+  /**
+   * Adds an HTML list to the summary buffer
+   *
+   * @param {string[]} items list of items to render
+   * @param {boolean} [ordered=false] (optional) if the rendered list should be ordered or not (default: false)
+   *
+   * @returns {Summary} summary instance
+   */
+  addList(items, ordered = false) {
+    const tag = ordered ? "ol" : "ul";
+    const listItems = items.map((item) => __privateMethod(this, _wrap, wrap_fn).call(this, "li", item)).join("");
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, tag, listItems);
+    return this.addRaw(element).addEOL();
+  }
+  /**
+   * Adds an HTML table to the summary buffer
+   *
+   * @param {SummaryTableCell[]} rows table rows
+   *
+   * @returns {Summary} summary instance
+   */
+  addTable(rows) {
+    const tableBody = rows.map((row) => {
+      const cells = row.map((cell) => {
+        if (typeof cell === "string") {
+          return __privateMethod(this, _wrap, wrap_fn).call(this, "td", cell);
+        }
+        const { header, data, colspan, rowspan } = cell;
+        const tag = header ? "th" : "td";
+        const attrs = {
+          ...colspan && { colspan },
+          ...rowspan && { rowspan }
+        };
+        return __privateMethod(this, _wrap, wrap_fn).call(this, tag, data, attrs);
+      }).join("");
+      return __privateMethod(this, _wrap, wrap_fn).call(this, "tr", cells);
+    }).join("");
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "table", tableBody);
+    return this.addRaw(element).addEOL();
+  }
+  /**
+   * Adds a collapsable HTML details element to the summary buffer
+   *
+   * @param {string} label text for the closed state
+   * @param {string} content collapsable content
+   *
+   * @returns {Summary} summary instance
+   */
+  addDetails(label, content) {
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "details", __privateMethod(this, _wrap, wrap_fn).call(this, "summary", label) + content);
+    return this.addRaw(element).addEOL();
+  }
+  /**
+   * Adds an HTML image tag to the summary buffer
+   *
+   * @param {string} src path to the image you to embed
+   * @param {string} alt text description of the image
+   * @param {SummaryImageOptions} options (optional) addition image attributes
+   *
+   * @returns {Summary} summary instance
+   */
+  addImage(src, alt, options) {
+    const { width, height } = options || {};
+    const attrs = {
+      ...width && { width },
+      ...height && { height }
+    };
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "img", null, { src, alt, ...attrs });
+    return this.addRaw(element).addEOL();
+  }
+  /**
+   * Adds an HTML section heading element
+   *
+   * @param {string} text heading text
+   * @param {number | string} [level=1] (optional) the heading level, default: 1
+   *
+   * @returns {Summary} summary instance
+   */
+  addHeading(text, level) {
+    const tag = `h${level}`;
+    const allowedTag = ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tag) ? tag : "h1";
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, allowedTag, text);
+    return this.addRaw(element).addEOL();
+  }
+  /**
+   * Adds an HTML thematic break (<hr>) to the summary buffer
+   *
+   * @returns {Summary} summary instance
+   */
+  addSeparator() {
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "hr", null);
+    return this.addRaw(element).addEOL();
+  }
+  /**
+   * Adds an HTML line break (<br>) to the summary buffer
+   *
+   * @returns {Summary} summary instance
+   */
+  addBreak() {
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "br", null);
+    return this.addRaw(element).addEOL();
+  }
+  /**
+   * Adds an HTML blockquote to the summary buffer
+   *
+   * @param {string} text quote text
+   * @param {string} cite (optional) citation url
+   *
+   * @returns {Summary} summary instance
+   */
+  addQuote(text, cite) {
+    const attrs = {
+      ...cite && { cite }
+    };
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "blockquote", text, attrs);
+    return this.addRaw(element).addEOL();
+  }
+  /**
+   * Adds an HTML anchor tag to the summary buffer
+   *
+   * @param {string} text link text/content
+   * @param {string} href hyperlink
+   *
+   * @returns {Summary} summary instance
+   */
+  addLink(text, href) {
+    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "a", text, { href });
+    return this.addRaw(element).addEOL();
+  }
+};
+var Summary = _Summary;
+_buffer = new WeakMap();
+_filePath = new WeakMap();
+_fileSummaryPath = new WeakSet();
+fileSummaryPath_fn = /* @__PURE__ */ __name(async function() {
+  if (__privateGet(this, _filePath)) {
+    return __privateGet(this, _filePath);
+  }
+  const pathFromEnv = process.env[SUMMARY_ENV_VAR];
+  if (!pathFromEnv) {
+    throw new Error(
+      `Unable to find environment variable for $${SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`
+    );
+  }
+  try {
+    await access(pathFromEnv, constants.R_OK | constants.W_OK);
+  } catch {
+    throw new Error(
+      `Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`
+    );
+  }
+  __privateSet(this, _filePath, pathFromEnv);
+  return __privateGet(this, _filePath);
+}, "#fileSummaryPath");
+_wrap = new WeakSet();
+wrap_fn = /* @__PURE__ */ __name(function(tag, content, attrs = {}) {
+  const htmlAttrs = Object.entries(attrs).map(([key, value]) => ` ${key}="${value}"`).join("");
+  if (!content) {
+    return `<${tag}${htmlAttrs}>`;
+  }
+  return `<${tag}${htmlAttrs}>${content}</${tag}>`;
+}, "#wrap");
+__name(_Summary, "Summary");
+__name7(_Summary, "Summary");
+var _summary = new Summary();
+var summary = _summary;
+
 // node_modules/.pnpm/execa@7.1.1/node_modules/execa/index.js
 var import_cross_spawn = __toESM(require_cross_spawn(), 1);
 import { Buffer as Buffer3 } from "node:buffer";
@@ -19083,7 +19363,7 @@ onetime.callCount = (function_) => {
 var onetime_default = onetime;
 
 // node_modules/.pnpm/human-signals@4.3.1/node_modules/human-signals/build/src/main.js
-import { constants as constants2 } from "node:os";
+import { constants as constants3 } from "node:os";
 
 // node_modules/.pnpm/human-signals@4.3.1/node_modules/human-signals/build/src/realtime.js
 var getRealtimeSignals = /* @__PURE__ */ __name(() => {
@@ -19101,7 +19381,7 @@ var SIGRTMIN = 34;
 var SIGRTMAX = 64;
 
 // node_modules/.pnpm/human-signals@4.3.1/node_modules/human-signals/build/src/signals.js
-import { constants } from "node:os";
+import { constants as constants2 } from "node:os";
 
 // node_modules/.pnpm/human-signals@4.3.1/node_modules/human-signals/build/src/core.js
 var SIGNALS = [
@@ -19392,7 +19672,7 @@ var normalizeSignal = /* @__PURE__ */ __name(({
 }) => {
   const {
     signals: { [name]: constantSignal }
-  } = constants;
+  } = constants2;
   const supported = constantSignal !== void 0;
   const number = supported ? constantSignal : defaultNumber;
   return { name, number, description, supported, action, forced, standard };
@@ -19438,7 +19718,7 @@ var getSignalByNumber = /* @__PURE__ */ __name((number, signals) => {
   };
 }, "getSignalByNumber");
 var findSignalByNumber = /* @__PURE__ */ __name((number, signals) => {
-  const signal = signals.find(({ name }) => constants2.signals[name] === number);
+  const signal = signals.find(({ name }) => constants3.signals[name] === number);
   if (signal !== void 0) {
     return signal;
   }
@@ -20297,6 +20577,22 @@ var createDeployment = /* @__PURE__ */ __name(async () => {
     setOutput("environment", deployment.environment);
     const alias = getDeploymentAlias(deployment);
     setOutput("alias", alias);
+    const deployStage = deployment.stages.find((stage) => stage.name === "deploy");
+    await summary.addTable([
+      [
+        {
+          data: "Name",
+          header: true
+        },
+        {
+          data: "Result",
+          header: true
+        }
+      ],
+      ["Status:", deployStage?.status || `unknown`],
+      ["Preview URL:", deployment.url],
+      ["Branch Preview URL:", alias]
+    ]).write();
     return deployment;
   } catch (error2) {
     if (error2 instanceof Error) {
