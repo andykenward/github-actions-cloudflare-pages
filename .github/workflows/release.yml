@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: release
+
+on:
+  workflow_run:
+    workflows:
+      - 'build-test'
+    branches:
+      - main
+    types:
+      - completed
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    if: ${{ github.repository == 'unlike-ltd/github-actions-cloudflare-pages' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.5.3
+      - name: Setup Node.js Pnpm & install dependencies
+        uses: unlike-ltd/github-actions/setup-pnpm@main
+        with:
+          node-version: 18.x
+      - name: Create Release Pull Request
+        id: changesets
+        uses: changesets/action@v1.4.5
+        with:
+          publish: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
