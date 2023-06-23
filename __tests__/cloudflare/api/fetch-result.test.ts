@@ -1,16 +1,14 @@
-import type {Interceptable} from 'undici'
-
 import * as core from '@unlike/github-actions-core'
-import {MockAgent, setGlobalDispatcher} from 'undici'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {FetchResult} from '@/src/cloudflare/types.js'
-import {API_RESPONSE_OK} from '@/src/cloudflare/api/__mocks__/responses/200.js'
-import {API_RESPONSE_UNAUTHORIZED} from '@/src/cloudflare/api/__mocks__/responses/401.js'
-import {API_RESPONSE_NOT_FOUND} from '@/src/cloudflare/api/__mocks__/responses/404.js'
+import RESPONSE_NOT_FOUND from '@/responses/api.cloudflare.com/pages/projects/project-not-found.response.json'
+import RESPONSE_OK from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
+import RESPONSE_UNAUTHORIZED from '@/responses/api.cloudflare.com/unauthorized.response.json'
 import {fetchResult} from '@/src/cloudflare/api/fetch-result.js'
 import {ACTION_INPUT_API_TOKEN} from '@/src/constants.js'
-import {setInputEnv, unsetInputEnv} from '@/tests/helpers/inputs.js'
+import {getMockApi} from '@/tests/helpers/api.js'
+import {setRequiredInputEnv, unsetInputEnv} from '@/tests/helpers/inputs.js'
 
 const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
 const RESOURCE_URL_PATH = `/client/v4/accounts`
@@ -19,21 +17,15 @@ const RESOURCE_URL = `${RESOURCE_URL_DOMAIN}${RESOURCE_URL_PATH}`
 vi.mock('@unlike/github-actions-core')
 describe('api', () => {
   describe('fetchResult', () => {
-    /** Mock Fetch request that use undici. */
-    let mockAgent: MockAgent
-    let mockPoolCloudflare: Interceptable
+    let mockApi: ReturnType<typeof getMockApi>
 
     beforeEach(() => {
-      setInputEnv(ACTION_INPUT_API_TOKEN, 'mock-api-token')
-
-      mockAgent = new MockAgent()
-      mockAgent.disableNetConnect() // prevent actual requests
-      setGlobalDispatcher(mockAgent) // enabled the mock client to intercept requests
-      mockPoolCloudflare = mockAgent.get(RESOURCE_URL_DOMAIN)
+      setRequiredInputEnv()
+      mockApi = getMockApi()
     })
 
     afterEach(async () => {
-      await mockAgent.close()
+      await mockApi.mockAgent.close()
     })
 
     test(`throws error if ${ACTION_INPUT_API_TOKEN} undefined`, async () => {
@@ -48,18 +40,14 @@ describe('api', () => {
     test('handles 200 response OK', async () => {
       expect.assertions(2)
 
-      mockPoolCloudflare
+      mockApi.mockPoolCloudflare
         .intercept({
           path: RESOURCE_URL_PATH,
           method: `GET`
         })
-        .reply<FetchResult<{id: string}>>(200, API_RESPONSE_OK)
+        .reply<FetchResult<{id: string}>>(200, RESPONSE_OK)
 
-      await expect(fetchResult(RESOURCE_URL)).resolves.toMatchInlineSnapshot(`
-        {
-          "id": "mock-id",
-        }
-      `)
+      await expect(fetchResult(RESOURCE_URL)).resolves.toMatchSnapshot()
       expect(core.error).not.toHaveBeenCalled()
     })
 
@@ -68,12 +56,12 @@ describe('api', () => {
         .spyOn(core, 'error')
         .mockImplementation((value: string | Error) => value)
 
-      mockPoolCloudflare
+      mockApi.mockPoolCloudflare
         .intercept({
           path: RESOURCE_URL_PATH,
           method: `GET`
         })
-        .reply<FetchResult<null>>(404, API_RESPONSE_NOT_FOUND)
+        .reply<FetchResult<null>>(404, RESPONSE_NOT_FOUND)
 
       await expect(
         fetchResult(RESOURCE_URL)
@@ -86,12 +74,12 @@ describe('api', () => {
     })
 
     test('handles unauthorized 401 response', async () => {
-      mockPoolCloudflare
+      mockApi.mockPoolCloudflare
         .intercept({
           path: RESOURCE_URL_PATH,
           method: `GET`
         })
-        .reply<FetchResult>(401, API_RESPONSE_UNAUTHORIZED)
+        .reply<FetchResult>(401, RESPONSE_UNAUTHORIZED)
 
       await expect(
         fetchResult(RESOURCE_URL)
@@ -103,7 +91,7 @@ describe('api', () => {
     test.each([{result: null}, {result: undefined}])(
       `handles response result of $result with thrown error`,
       async ({result}) => {
-        mockPoolCloudflare
+        mockApi.mockPoolCloudflare
           .intercept({
             path: RESOURCE_URL_PATH,
             method: `GET`

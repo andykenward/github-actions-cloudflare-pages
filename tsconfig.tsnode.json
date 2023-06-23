@@ -21,15 +21,21 @@
                 "./__tests__/*"
             ],
             "@/types/*": [
-                "./__generated__/*"
+                "./__generated__/types/*"
+            ],
+            "@/payloads/*": [
+                "./__generated__/payloads/*"
+            ],
+            "@/responses/*": [
+                "./__generated__/responses/*"
             ]
         }
     },
     "files": [
         "./vitest.config.ts",
         "./vitest.setup.ts",
-        "./__generated__/github/workflow-events.ts",
-        "./__mocks__/@actions/core/index.ts",
+        "./__generated__/types/github/workflow-events.ts",
+        "./__mocks__/@unlike/github-actions-core/index.ts",
         "./__mocks__/wrangler/index.ts",
         "./__tests__/index.test.ts",
         "./__tests__/main.test.ts",
@@ -37,12 +43,13 @@
         "./__tests__/cloudflare/api/fetch-error.test.ts",
         "./__tests__/cloudflare/api/fetch-result.test.ts",
         "./__tests__/cloudflare/project/create-deployment.test.ts",
-        "./__tests__/cloudflare/project/get-project.test.ts",
         "./__tests__/github/context.test.ts",
+        "./__tests__/helpers/api.ts",
         "./__tests__/helpers/inputs.ts",
-        "./bin/download-webhook-examples.ts",
         "./bin/codegen/index.ts",
-        "./bin/codegen/types-github-workflow-events.ts",
+        "./bin/codegen/types/github-workflow-events.ts",
+        "./bin/download/index.ts",
+        "./bin/download/payloads/github-webhooks-payload-examples.ts",
         "./src/constants.ts",
         "./src/env.d.ts",
         "./src/index.ts",
@@ -58,9 +65,8 @@
         "./src/cloudflare/api/__mocks__/responses/401.ts",
         "./src/cloudflare/api/__mocks__/responses/404.ts",
         "./src/cloudflare/project/create-deployment.ts",
+        "./src/cloudflare/project/get-deployment.ts",
         "./src/cloudflare/project/get-project.ts",
-        "./src/cloudflare/project/__mocks__/get-project.ts",
-        "./src/cloudflare/project/__mocks__/responses/200.ts",
         "./src/github/context.ts",
         "./src/github/__mocks__/context.ts",
         "./src/github/workflow-event/types.ts",

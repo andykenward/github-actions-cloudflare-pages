@@ -18,7 +18,7 @@ declare namespace NodeJS {
      *
      * Example: `feature-branch-1`.
      */
-    GITHUB_REF_NAME: string
+    GITHUB_REF_NAME?: string
 
     /**
      * The commit SHA that triggered the workflow. The value of this commit SHA
@@ -59,9 +59,16 @@ declare namespace NodeJS {
      *
      * Example: `D:\a\_temp`.
      */
-    RUNNER_TEMP: string
+    RUNNER_TEMP?: string
 
-    CLOUDFLARE_ACCOUNT_ID: string
-    CLOUDFLARE_API_TOKEN: string
+    CLOUDFLARE_ACCOUNT_ID?: string
+    CLOUDFLARE_API_TOKEN?: string
+
+    /** Action Inputs */
+    INPUT_API_TOKEN?: string
+    INPUT_ACCOUNT_ID?: string
+    INPUT_PROJECT_NAME?: string
+    INPUT_DIRECTORY?: string
+    // INPUT_GITHUB_TOKEN?: string
   }
 }
