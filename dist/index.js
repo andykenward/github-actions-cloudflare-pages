@@ -626,7 +626,7 @@ var require_signal_exit = __commonJS({
         };
       };
     } else {
-      assert = __require("assert");
+      assert2 = __require("assert");
       signals = require_signals();
       isWin = /^win/i.test(process5.platform);
       EE = __require("events");
@@ -649,7 +649,7 @@ var require_signal_exit = __commonJS({
           return function() {
           };
         }
-        assert.equal(typeof cb, "function", "a callback must be provided for exit handler");
+        assert2.equal(typeof cb, "function", "a callback must be provided for exit handler");
         if (loaded === false) {
           load();
         }
@@ -755,7 +755,7 @@ var require_signal_exit = __commonJS({
         }
       }, "processEmit");
     }
-    var assert;
+    var assert2;
     var signals;
     var isWin;
     var EE;
@@ -1223,7 +1223,7 @@ var require_errors = __commonJS({
 var require_util = __commonJS({
   "node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/core/util.js"(exports, module) {
     "use strict";
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { kDestroyed, kBodyUsed } = require_symbols();
     var { IncomingMessage } = __require("http");
     var stream = __require("stream");
@@ -1310,7 +1310,7 @@ var require_util = __commonJS({
     function getHostname(host) {
       if (host[0] === "[") {
         const idx2 = host.indexOf("]");
-        assert(idx2 !== -1);
+        assert2(idx2 !== -1);
         return host.substr(1, idx2 - 1);
       }
       const idx = host.indexOf(":");
@@ -1323,7 +1323,7 @@ var require_util = __commonJS({
       if (!host) {
         return null;
       }
-      assert.strictEqual(typeof host, "string");
+      assert2.strictEqual(typeof host, "string");
       const servername = getHostname(host);
       if (net.isIP(servername)) {
         return "";
@@ -5678,7 +5678,7 @@ var require_util2 = __commonJS({
     var { getGlobalOrigin } = require_global();
     var { performance: performance2 } = __require("perf_hooks");
     var { isBlobLike, toUSVString, ReadableStreamFrom } = require_util();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { isUint8Array } = __require("util/types");
     var crypto;
     try {
@@ -5868,7 +5868,7 @@ var require_util2 = __commonJS({
     __name(clonePolicyContainer, "clonePolicyContainer");
     function determineRequestsReferrer(request) {
       const policy = request.referrerPolicy;
-      assert(policy);
+      assert2(policy);
       let referrerSource = null;
       if (request.referrer === "client") {
         const globalOrigin = getGlobalOrigin();
@@ -5913,7 +5913,7 @@ var require_util2 = __commonJS({
     }
     __name(determineRequestsReferrer, "determineRequestsReferrer");
     function stripURLForReferrer(url2, originOnly) {
-      assert(url2 instanceof URL);
+      assert2(url2 instanceof URL);
       if (url2.protocol === "file:" || url2.protocol === "about:" || url2.protocol === "blank:") {
         return "no-referrer";
       }
@@ -6041,7 +6041,7 @@ var require_util2 = __commonJS({
       if (result === void 0) {
         throw new TypeError("Value is not JSON serializable");
       }
-      assert(typeof result === "string");
+      assert2(typeof result === "string");
       return result;
     }
     __name(serializeJavascriptValueToJSONString, "serializeJavascriptValueToJSONString");
@@ -6137,7 +6137,7 @@ var require_util2 = __commonJS({
     __name(readableStreamClose, "readableStreamClose");
     function isomorphicEncode(input) {
       for (let i = 0; i < input.length; i++) {
-        assert(input.charCodeAt(i) <= 255);
+        assert2(input.charCodeAt(i) <= 255);
       }
       return input;
     }
@@ -6168,7 +6168,7 @@ var require_util2 = __commonJS({
     }
     __name(readAllBytes, "readAllBytes");
     function urlIsLocal(url2) {
-      assert("protocol" in url2);
+      assert2("protocol" in url2);
       const protocol = url2.protocol;
       return protocol === "about:" || protocol === "blob:" || protocol === "data:";
     }
@@ -6181,7 +6181,7 @@ var require_util2 = __commonJS({
     }
     __name(urlHasHttpsScheme, "urlHasHttpsScheme");
     function urlIsHttpHttpsScheme(url2) {
-      assert("protocol" in url2);
+      assert2("protocol" in url2);
       const protocol = url2.protocol;
       return protocol === "http:" || protocol === "https:";
     }
@@ -6623,7 +6623,7 @@ var require_webidl = __commonJS({
 // node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/fetch/dataURL.js
 var require_dataURL = __commonJS({
   "node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/fetch/dataURL.js"(exports, module) {
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { atob: atob2 } = __require("buffer");
     var { isomorphicDecode } = require_util2();
     var encoder = new TextEncoder();
@@ -6631,7 +6631,7 @@ var require_dataURL = __commonJS({
     var HTTP_WHITESPACE_REGEX = /(\u000A|\u000D|\u0009|\u0020)/;
     var HTTP_QUOTED_STRING_TOKENS = /[\u0009|\u0020-\u007E|\u0080-\u00FF]/;
     function dataURLProcessor(dataURL) {
-      assert(dataURL.protocol === "data:");
+      assert2(dataURL.protocol === "data:");
       let input = URLSerializer(dataURL, true);
       input = input.slice(5);
       const position = { position: 0 };
@@ -6828,7 +6828,7 @@ var require_dataURL = __commonJS({
     function collectAnHTTPQuotedString(input, position, extractValue) {
       const positionStart = position.position;
       let value = "";
-      assert(input[position.position] === '"');
+      assert2(input[position.position] === '"');
       position.position++;
       while (true) {
         value += collectASequenceOfCodePoints(
@@ -6849,7 +6849,7 @@ var require_dataURL = __commonJS({
           value += input[position.position];
           position.position++;
         } else {
-          assert(quoteOrBackslash === '"');
+          assert2(quoteOrBackslash === '"');
           break;
         }
       }
@@ -6860,7 +6860,7 @@ var require_dataURL = __commonJS({
     }
     __name(collectAnHTTPQuotedString, "collectAnHTTPQuotedString");
     function serializeAMimeType(mimeType) {
-      assert(mimeType !== "failure");
+      assert2(mimeType !== "failure");
       const { parameters, essence } = mimeType;
       let serialization = essence;
       for (let [name, value] of parameters.entries()) {
@@ -7297,7 +7297,7 @@ var require_body = __commonJS({
     var { DOMException: DOMException2, structuredClone } = require_constants();
     var { Blob: Blob2, File: NativeFile } = __require("buffer");
     var { kBodyUsed } = require_symbols();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { isErrored } = require_util();
     var { isUint8Array, isArrayBuffer } = __require("util/types");
     var { File: UndiciFile } = require_file();
@@ -7326,7 +7326,7 @@ var require_body = __commonJS({
           type: void 0
         });
       }
-      assert(isReadableStreamLike(stream));
+      assert2(isReadableStreamLike(stream));
       let action = null;
       let source = null;
       let length = null;
@@ -7444,8 +7444,8 @@ Content-Type: ${value.type || "application/octet-stream"}\r
         ReadableStream = __require("stream/web").ReadableStream;
       }
       if (object instanceof ReadableStream) {
-        assert(!util.isDisturbed(object), "The body has already been consumed.");
-        assert(!object.locked, "The stream is locked.");
+        assert2(!util.isDisturbed(object), "The body has already been consumed.");
+        assert2(!object.locked, "The stream is locked.");
       }
       return extractBody(object, keepalive);
     }
@@ -7671,7 +7671,7 @@ var require_request = __commonJS({
       InvalidArgumentError,
       NotSupportedError
     } = require_errors();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var util = require_util();
     var tokenRegExp = /^[\^_`a-zA-Z\-0-9!#$%&'*+.|~]+$/;
     var headerCharRegex = /[^\t\x20-\x7e\x80-\xff]/;
@@ -7823,30 +7823,30 @@ var require_request = __commonJS({
         }
       }
       onConnect(abort) {
-        assert(!this.aborted);
-        assert(!this.completed);
+        assert2(!this.aborted);
+        assert2(!this.completed);
         return this[kHandler].onConnect(abort);
       }
       onHeaders(statusCode, headers, resume, statusText) {
-        assert(!this.aborted);
-        assert(!this.completed);
+        assert2(!this.aborted);
+        assert2(!this.completed);
         if (channels.headers.hasSubscribers) {
           channels.headers.publish({ request: this, response: { statusCode, headers, statusText } });
         }
         return this[kHandler].onHeaders(statusCode, headers, resume, statusText);
       }
       onData(chunk) {
-        assert(!this.aborted);
-        assert(!this.completed);
+        assert2(!this.aborted);
+        assert2(!this.completed);
         return this[kHandler].onData(chunk);
       }
       onUpgrade(statusCode, headers, socket) {
-        assert(!this.aborted);
-        assert(!this.completed);
+        assert2(!this.aborted);
+        assert2(!this.completed);
         return this[kHandler].onUpgrade(statusCode, headers, socket);
       }
       onComplete(trailers) {
-        assert(!this.aborted);
+        assert2(!this.aborted);
         this.completed = true;
         if (channels.trailers.hasSubscribers) {
           channels.trailers.publish({ request: this, trailers });
@@ -8125,7 +8125,7 @@ var require_connect = __commonJS({
   "node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/core/connect.js"(exports, module) {
     "use strict";
     var net = __require("net");
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var util = require_util();
     var { InvalidArgumentError, ConnectTimeoutError } = require_errors();
     var tls;
@@ -8200,7 +8200,7 @@ var require_connect = __commonJS({
           servername = servername || options.servername || util.getServerName(host) || null;
           const sessionKey = servername || hostname;
           const session = sessionCache.get(sessionKey) || null;
-          assert(sessionKey);
+          assert2(sessionKey);
           socket = tls.connect({
             highWaterMark: 16384,
             // TLS in node can't have bigger HWM anyway...
@@ -8217,7 +8217,7 @@ var require_connect = __commonJS({
             sessionCache.set(sessionKey, session2);
           });
         } else {
-          assert(!httpSocket, "httpSocket can only be sent on TLS update");
+          assert2(!httpSocket, "httpSocket can only be sent on TLS update");
           socket = net.connect({
             highWaterMark: 64 * 1024,
             // Same as nodejs fs streams.
@@ -8630,7 +8630,7 @@ var require_RedirectHandler = __commonJS({
     "use strict";
     var util = require_util();
     var { kBodyUsed } = require_symbols();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { InvalidArgumentError } = require_errors();
     var EE = __require("events");
     var redirectableStatusCodes = [300, 301, 302, 303, 307, 308];
@@ -8641,7 +8641,7 @@ var require_RedirectHandler = __commonJS({
         this[kBodyUsed] = false;
       }
       async *[Symbol.asyncIterator]() {
-        assert(!this[kBodyUsed], "disturbed");
+        assert2(!this[kBodyUsed], "disturbed");
         this[kBodyUsed] = true;
         yield* this[kBody];
       }
@@ -8664,7 +8664,7 @@ var require_RedirectHandler = __commonJS({
         if (util.isStream(this.opts.body)) {
           if (util.bodyLength(this.opts.body) === 0) {
             this.opts.body.on("data", function() {
-              assert(false);
+              assert2(false);
             });
           }
           if (typeof this.opts.body.readableDidRead !== "boolean") {
@@ -8762,7 +8762,7 @@ var require_RedirectHandler = __commonJS({
           }
         }
       } else {
-        assert(headers == null, "headers must be an object or an array");
+        assert2(headers == null, "headers must be an object or an array");
       }
       return ret;
     }
@@ -8812,7 +8812,7 @@ var require_llhttp_simd_wasm = __commonJS({
 var require_client = __commonJS({
   "node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/client.js"(exports, module) {
     "use strict";
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var net = __require("net");
     var util = require_util();
     var timers = require_timers();
@@ -9116,35 +9116,35 @@ var require_client = __commonJS({
             return 0;
           },
           wasm_on_status: (p, at, len) => {
-            assert.strictEqual(currentParser.ptr, p);
+            assert2.strictEqual(currentParser.ptr, p);
             const start = at - currentBufferPtr + currentBufferRef.byteOffset;
             return currentParser.onStatus(new FastBuffer(currentBufferRef.buffer, start, len)) || 0;
           },
           wasm_on_message_begin: (p) => {
-            assert.strictEqual(currentParser.ptr, p);
+            assert2.strictEqual(currentParser.ptr, p);
             return currentParser.onMessageBegin() || 0;
           },
           wasm_on_header_field: (p, at, len) => {
-            assert.strictEqual(currentParser.ptr, p);
+            assert2.strictEqual(currentParser.ptr, p);
             const start = at - currentBufferPtr + currentBufferRef.byteOffset;
             return currentParser.onHeaderField(new FastBuffer(currentBufferRef.buffer, start, len)) || 0;
           },
           wasm_on_header_value: (p, at, len) => {
-            assert.strictEqual(currentParser.ptr, p);
+            assert2.strictEqual(currentParser.ptr, p);
             const start = at - currentBufferPtr + currentBufferRef.byteOffset;
             return currentParser.onHeaderValue(new FastBuffer(currentBufferRef.buffer, start, len)) || 0;
           },
           wasm_on_headers_complete: (p, statusCode, upgrade, shouldKeepAlive) => {
-            assert.strictEqual(currentParser.ptr, p);
+            assert2.strictEqual(currentParser.ptr, p);
             return currentParser.onHeadersComplete(statusCode, Boolean(upgrade), Boolean(shouldKeepAlive)) || 0;
           },
           wasm_on_body: (p, at, len) => {
-            assert.strictEqual(currentParser.ptr, p);
+            assert2.strictEqual(currentParser.ptr, p);
             const start = at - currentBufferPtr + currentBufferRef.byteOffset;
             return currentParser.onBody(new FastBuffer(currentBufferRef.buffer, start, len)) || 0;
           },
           wasm_on_message_complete: (p) => {
-            assert.strictEqual(currentParser.ptr, p);
+            assert2.strictEqual(currentParser.ptr, p);
             return currentParser.onMessageComplete() || 0;
           }
           /* eslint-enable camelcase */
@@ -9164,7 +9164,7 @@ var require_client = __commonJS({
     var TIMEOUT_IDLE = 3;
     var _Parser = class {
       constructor(client, socket, { exports: exports2 }) {
-        assert(Number.isFinite(client[kMaxHeadersSize]) && client[kMaxHeadersSize] > 0);
+        assert2(Number.isFinite(client[kMaxHeadersSize]) && client[kMaxHeadersSize] > 0);
         this.llhttp = exports2;
         this.ptr = this.llhttp.llhttp_alloc(constants4.TYPE.RESPONSE);
         this.client = client;
@@ -9210,10 +9210,10 @@ var require_client = __commonJS({
         if (this.socket.destroyed || !this.paused) {
           return;
         }
-        assert(this.ptr != null);
-        assert(currentParser == null);
+        assert2(this.ptr != null);
+        assert2(currentParser == null);
         this.llhttp.llhttp_resume(this.ptr);
-        assert(this.timeoutType === TIMEOUT_BODY);
+        assert2(this.timeoutType === TIMEOUT_BODY);
         if (this.timeout) {
           if (this.timeout.refresh) {
             this.timeout.refresh();
@@ -9233,9 +9233,9 @@ var require_client = __commonJS({
         }
       }
       execute(data) {
-        assert(this.ptr != null);
-        assert(currentParser == null);
-        assert(!this.paused);
+        assert2(this.ptr != null);
+        assert2(currentParser == null);
+        assert2(!this.paused);
         const { socket, llhttp } = this;
         if (data.length > currentBufferSize) {
           if (currentBufferPtr) {
@@ -9277,8 +9277,8 @@ var require_client = __commonJS({
         }
       }
       destroy() {
-        assert(this.ptr != null);
-        assert(currentParser == null);
+        assert2(this.ptr != null);
+        assert2(currentParser == null);
         this.llhttp.llhttp_free(this.ptr);
         this.ptr = null;
         timers.clearTimeout(this.timeout);
@@ -9335,17 +9335,17 @@ var require_client = __commonJS({
       }
       onUpgrade(head) {
         const { upgrade, client, socket, headers, statusCode } = this;
-        assert(upgrade);
+        assert2(upgrade);
         const request = client[kQueue][client[kRunningIdx]];
-        assert(request);
-        assert(!socket.destroyed);
-        assert(socket === client[kSocket]);
-        assert(!this.paused);
-        assert(request.upgrade || request.method === "CONNECT");
+        assert2(request);
+        assert2(!socket.destroyed);
+        assert2(socket === client[kSocket]);
+        assert2(!this.paused);
+        assert2(request.upgrade || request.method === "CONNECT");
         this.statusCode = null;
         this.statusText = "";
         this.shouldKeepAlive = null;
-        assert(this.headers.length % 2 === 0);
+        assert2(this.headers.length % 2 === 0);
         this.headers = [];
         this.headersSize = 0;
         socket.unshift(head);
@@ -9373,8 +9373,8 @@ var require_client = __commonJS({
         if (!request) {
           return -1;
         }
-        assert(!this.upgrade);
-        assert(this.statusCode < 200);
+        assert2(!this.upgrade);
+        assert2(this.statusCode < 200);
         if (statusCode === 100) {
           util.destroy(socket, new SocketError("bad response", util.getSocketInfo(socket)));
           return -1;
@@ -9383,7 +9383,7 @@ var require_client = __commonJS({
           util.destroy(socket, new SocketError("bad upgrade", util.getSocketInfo(socket)));
           return -1;
         }
-        assert.strictEqual(this.timeoutType, TIMEOUT_HEADERS);
+        assert2.strictEqual(this.timeoutType, TIMEOUT_HEADERS);
         this.statusCode = statusCode;
         this.shouldKeepAlive = shouldKeepAlive || // Override llhttp value which does not allow keepAlive for HEAD.
         request.method === "HEAD" && !socket[kReset] && this.connection.toLowerCase() === "keep-alive";
@@ -9396,16 +9396,16 @@ var require_client = __commonJS({
           }
         }
         if (request.method === "CONNECT") {
-          assert(client[kRunning] === 1);
+          assert2(client[kRunning] === 1);
           this.upgrade = true;
           return 2;
         }
         if (upgrade) {
-          assert(client[kRunning] === 1);
+          assert2(client[kRunning] === 1);
           this.upgrade = true;
           return 2;
         }
-        assert(this.headers.length % 2 === 0);
+        assert2(this.headers.length % 2 === 0);
         this.headers = [];
         this.headersSize = 0;
         if (this.shouldKeepAlive && client[kPipelining]) {
@@ -9451,14 +9451,14 @@ var require_client = __commonJS({
           return -1;
         }
         const request = client[kQueue][client[kRunningIdx]];
-        assert(request);
-        assert.strictEqual(this.timeoutType, TIMEOUT_BODY);
+        assert2(request);
+        assert2.strictEqual(this.timeoutType, TIMEOUT_BODY);
         if (this.timeout) {
           if (this.timeout.refresh) {
             this.timeout.refresh();
           }
         }
-        assert(statusCode >= 200);
+        assert2(statusCode >= 200);
         if (maxResponseSize > -1 && this.bytesRead + buf.length > maxResponseSize) {
           util.destroy(socket, new ResponseExceededMaxSizeError());
           return -1;
@@ -9482,15 +9482,15 @@ var require_client = __commonJS({
           return;
         }
         const request = client[kQueue][client[kRunningIdx]];
-        assert(request);
-        assert(statusCode >= 100);
+        assert2(request);
+        assert2(statusCode >= 100);
         this.statusCode = null;
         this.statusText = "";
         this.bytesRead = 0;
         this.contentLength = "";
         this.keepAlive = "";
         this.connection = "";
-        assert(this.headers.length % 2 === 0);
+        assert2(this.headers.length % 2 === 0);
         this.headers = [];
         this.headersSize = 0;
         if (statusCode < 200) {
@@ -9507,7 +9507,7 @@ var require_client = __commonJS({
         }
         client[kQueue][client[kRunningIdx]++] = null;
         if (socket[kWriting]) {
-          assert.strictEqual(client[kRunning], 0);
+          assert2.strictEqual(client[kRunning], 0);
           util.destroy(socket, new InformationalError("reset"));
           return constants4.ERROR.PAUSED;
         } else if (!shouldKeepAlive) {
@@ -9529,7 +9529,7 @@ var require_client = __commonJS({
       const { socket, timeoutType, client } = parser;
       if (timeoutType === TIMEOUT_HEADERS) {
         if (!socket[kWriting] || socket.writableNeedDrain || client[kRunning] > 1) {
-          assert(!parser.paused, "cannot be paused while waiting for headers");
+          assert2(!parser.paused, "cannot be paused while waiting for headers");
           util.destroy(socket, new HeadersTimeoutError());
         }
       } else if (timeoutType === TIMEOUT_BODY) {
@@ -9537,7 +9537,7 @@ var require_client = __commonJS({
           util.destroy(socket, new BodyTimeoutError());
         }
       } else if (timeoutType === TIMEOUT_IDLE) {
-        assert(client[kRunning] === 0 && client[kKeepAliveTimeoutValue]);
+        assert2(client[kRunning] === 0 && client[kKeepAliveTimeoutValue]);
         util.destroy(socket, new InformationalError("socket idle timeout"));
       }
     }
@@ -9549,7 +9549,7 @@ var require_client = __commonJS({
     __name(onSocketReadable, "onSocketReadable");
     function onSocketError(err) {
       const { [kParser]: parser } = this;
-      assert(err.code !== "ERR_TLS_CERT_ALTNAME_INVALID");
+      assert2(err.code !== "ERR_TLS_CERT_ALTNAME_INVALID");
       if (err.code === "ECONNRESET" && parser.statusCode && !parser.shouldKeepAlive) {
         parser.onMessageComplete();
         return;
@@ -9560,13 +9560,13 @@ var require_client = __commonJS({
     __name(onSocketError, "onSocketError");
     function onError(client, err) {
       if (client[kRunning] === 0 && err.code !== "UND_ERR_INFO" && err.code !== "UND_ERR_SOCKET") {
-        assert(client[kPendingIdx] === client[kRunningIdx]);
+        assert2(client[kPendingIdx] === client[kRunningIdx]);
         const requests = client[kQueue].splice(client[kRunningIdx]);
         for (let i = 0; i < requests.length; i++) {
           const request = requests[i];
           errorRequest(client, request, err);
         }
-        assert(client[kSize] === 0);
+        assert2(client[kSize] === 0);
       }
     }
     __name(onError, "onError");
@@ -9589,7 +9589,7 @@ var require_client = __commonJS({
       const err = this[kError] || new SocketError("closed", util.getSocketInfo(this));
       client[kSocket] = null;
       if (client.destroyed) {
-        assert(client[kPending] === 0);
+        assert2(client[kPending] === 0);
         const requests = client[kQueue].splice(client[kRunningIdx]);
         for (let i = 0; i < requests.length; i++) {
           const request = requests[i];
@@ -9601,20 +9601,20 @@ var require_client = __commonJS({
         errorRequest(client, request, err);
       }
       client[kPendingIdx] = client[kRunningIdx];
-      assert(client[kRunning] === 0);
+      assert2(client[kRunning] === 0);
       client.emit("disconnect", client[kUrl], [client], err);
       resume(client);
     }
     __name(onSocketClose, "onSocketClose");
     async function connect(client) {
-      assert(!client[kConnecting]);
-      assert(!client[kSocket]);
+      assert2(!client[kConnecting]);
+      assert2(!client[kSocket]);
       let { host, hostname, protocol, port } = client[kUrl];
       if (hostname[0] === "[") {
         const idx = hostname.indexOf("]");
-        assert(idx !== -1);
+        assert2(idx !== -1);
         const ip = hostname.substr(1, idx - 1);
-        assert(net.isIP(ip));
+        assert2(net.isIP(ip));
         hostname = ip;
       }
       client[kConnecting] = true;
@@ -9658,7 +9658,7 @@ var require_client = __commonJS({
           llhttpPromise = null;
         }
         client[kConnecting] = false;
-        assert(socket);
+        assert2(socket);
         socket[kNoRef] = false;
         socket[kWriting] = false;
         socket[kReset] = false;
@@ -9705,7 +9705,7 @@ var require_client = __commonJS({
           });
         }
         if (err.code === "ERR_TLS_CERT_ALTNAME_INVALID") {
-          assert(client[kRunning] === 0);
+          assert2(client[kRunning] === 0);
           while (client[kPending] > 0 && client[kQueue][client[kPendingIdx]].servername === client[kServerName]) {
             const request = client[kQueue][client[kPendingIdx]++];
             errorRequest(client, request, err);
@@ -9740,7 +9740,7 @@ var require_client = __commonJS({
     function _resume(client, sync) {
       while (true) {
         if (client.destroyed) {
-          assert(client[kPending] === 0);
+          assert2(client[kPending] === 0);
           return;
         }
         if (client[kClosedResolve] && !client[kSize]) {
@@ -9820,7 +9820,7 @@ var require_client = __commonJS({
             "data",
             /* istanbul ignore next */
             function() {
-              assert(false);
+              assert2(false);
             }
           ).on("error", function(err) {
             errorRequest(client, request, err);
@@ -9919,13 +9919,13 @@ upgrade: ${upgrade}\r
 \r
 `, "latin1");
         } else {
-          assert(contentLength === null, "no body must not have content length");
+          assert2(contentLength === null, "no body must not have content length");
           socket.write(`${header}\r
 `, "latin1");
         }
         request.onRequestSent();
       } else if (util.isBuffer(body)) {
-        assert(contentLength === body.byteLength, "buffer body must have content length");
+        assert2(contentLength === body.byteLength, "buffer body must have content length");
         socket.cork();
         socket.write(`${header}content-length: ${contentLength}\r
 \r
@@ -9948,13 +9948,13 @@ upgrade: ${upgrade}\r
       } else if (util.isIterable(body)) {
         writeIterable({ body, client, request, socket, contentLength, header, expectsPayload });
       } else {
-        assert(false);
+        assert2(false);
       }
       return true;
     }
     __name(write, "write");
     function writeStream({ body, client, request, socket, contentLength, header, expectsPayload }) {
-      assert(contentLength !== 0 || client[kRunning] === 0, "stream body cannot be pipelined");
+      assert2(contentLength !== 0 || client[kRunning] === 0, "stream body cannot be pipelined");
       let finished = false;
       const writer = new AsyncWriter({ socket, request, contentLength, client, expectsPayload, header });
       const onData = /* @__PURE__ */ __name(function(chunk) {
@@ -9985,7 +9985,7 @@ upgrade: ${upgrade}\r
           return;
         }
         finished = true;
-        assert(socket.destroyed || socket[kWriting] && client[kRunning] <= 1);
+        assert2(socket.destroyed || socket[kWriting] && client[kRunning] <= 1);
         socket.off("drain", onDrain).off("error", onFinished);
         body.removeListener("data", onData).removeListener("end", onFinished).removeListener("error", onFinished).removeListener("close", onAbort);
         if (!err) {
@@ -10010,7 +10010,7 @@ upgrade: ${upgrade}\r
     }
     __name(writeStream, "writeStream");
     async function writeBlob({ body, client, request, socket, contentLength, header, expectsPayload }) {
-      assert(contentLength === body.size, "blob body must have content length");
+      assert2(contentLength === body.size, "blob body must have content length");
       try {
         if (contentLength != null && contentLength !== body.size) {
           throw new RequestContentLengthMismatchError();
@@ -10034,7 +10034,7 @@ upgrade: ${upgrade}\r
     }
     __name(writeBlob, "writeBlob");
     async function writeIterable({ body, client, request, socket, contentLength, header, expectsPayload }) {
-      assert(contentLength !== 0 || client[kRunning] === 0, "iterator body cannot be pipelined");
+      assert2(contentLength !== 0 || client[kRunning] === 0, "iterator body cannot be pipelined");
       let callback = null;
       function onDrain() {
         if (callback) {
@@ -10045,7 +10045,7 @@ upgrade: ${upgrade}\r
       }
       __name(onDrain, "onDrain");
       const waitForDrain = /* @__PURE__ */ __name(() => new Promise((resolve, reject) => {
-        assert(callback === null);
+        assert2(callback === null);
         if (socket[kError]) {
           reject(socket[kError]);
         } else {
@@ -10172,7 +10172,7 @@ ${len.toString(16)}\r
         const { socket, client } = this;
         socket[kWriting] = false;
         if (err) {
-          assert(client[kRunning] <= 1, "pipeline should only contain this request");
+          assert2(client[kRunning] <= 1, "pipeline should only contain this request");
           util.destroy(socket, err);
         }
       }
@@ -10182,7 +10182,7 @@ ${len.toString(16)}\r
     function errorRequest(client, request, err) {
       try {
         request.onError(err);
-        assert(request.aborted);
+        assert2(request.aborted);
       } catch (err2) {
         client.emit("error", err2);
       }
@@ -10829,7 +10829,7 @@ var require_agent = __commonJS({
 var require_readable = __commonJS({
   "node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/api/readable.js"(exports, module) {
     "use strict";
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { Readable } = __require("stream");
     var { RequestAbortedError, NotSupportedError, InvalidArgumentError } = require_errors();
     var util = require_util();
@@ -10937,7 +10937,7 @@ var require_readable = __commonJS({
           this[kBody] = ReadableStreamFrom(this);
           if (this[kConsume]) {
             this[kBody].getReader();
-            assert(this[kBody].locked);
+            assert2(this[kBody].locked);
           }
         }
         return this[kBody];
@@ -10984,7 +10984,7 @@ var require_readable = __commonJS({
       if (isUnusable(stream)) {
         throw new TypeError("unusable");
       }
-      assert(!stream[kConsume]);
+      assert2(!stream[kConsume]);
       return new Promise((resolve, reject) => {
         stream[kConsume] = {
           type,
@@ -11080,13 +11080,13 @@ var require_readable = __commonJS({
 // node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/api/util.js
 var require_util3 = __commonJS({
   "node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/api/util.js"(exports, module) {
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var {
       ResponseStatusCodeError
     } = require_errors();
     var { toUSVString } = require_util();
     async function getResolveErrorBodyCallback({ callback, body, contentType, statusCode, statusMessage, headers }) {
-      assert(body);
+      assert2(body);
       let chunks = [];
       let limit = 0;
       for await (const chunk of body) {
@@ -11520,7 +11520,7 @@ var require_api_pipeline = __commonJS({
     var util = require_util();
     var { AsyncResource } = __require("async_hooks");
     var { addSignal, removeSignal } = require_abort_signal();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var kResume = Symbol("resume");
     var _PipelineRequest = class extends Readable {
       constructor() {
@@ -11624,7 +11624,7 @@ var require_api_pipeline = __commonJS({
       }
       onConnect(abort, context) {
         const { ret, res } = this;
-        assert(!res, "pipeline cannot be retried");
+        assert2(!res, "pipeline cannot be retried");
         if (ret.destroyed) {
           throw new RequestAbortedError();
         }
@@ -11716,7 +11716,7 @@ var require_api_upgrade = __commonJS({
     var { AsyncResource } = __require("async_hooks");
     var util = require_util();
     var { addSignal, removeSignal } = require_abort_signal();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var _UpgradeHandler = class extends AsyncResource {
       constructor(opts, callback) {
         if (!opts || typeof opts !== "object") {
@@ -11749,7 +11749,7 @@ var require_api_upgrade = __commonJS({
       }
       onUpgrade(statusCode, rawHeaders, socket) {
         const { callback, opaque, context } = this;
-        assert.strictEqual(statusCode, 101);
+        assert2.strictEqual(statusCode, 101);
         removeSignal(this);
         this.callback = null;
         const headers = this.responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
@@ -12978,7 +12978,7 @@ var require_headers = __commonJS({
       isValidHeaderValue
     } = require_util2();
     var { webidl } = require_webidl();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var kHeadersMap = Symbol("headers map");
     var kHeadersSortedMap = Symbol("headers map sorted");
     function headerValueNormalize(potentialValue) {
@@ -13229,7 +13229,7 @@ var require_headers = __commonJS({
               headers.push([name, value2]);
             }
           } else {
-            assert(value !== null);
+            assert2(value !== null);
             headers.push([name, value]);
           }
         }
@@ -13350,7 +13350,7 @@ var require_response = __commonJS({
     var { getGlobalOrigin } = require_global();
     var { URLSerializer } = require_dataURL();
     var { kHeadersList } = require_symbols();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { types } = __require("util");
     var ReadableStream = globalThis.ReadableStream || __require("stream/web").ReadableStream;
     var _Response = class {
@@ -13570,7 +13570,7 @@ var require_response = __commonJS({
           return p in state ? state[p] : target[p];
         },
         set(target, p, value) {
-          assert(!(p in state));
+          assert2(!(p in state));
           target[p] = value;
           return true;
         }
@@ -13605,12 +13605,12 @@ var require_response = __commonJS({
           body: null
         });
       } else {
-        assert(false);
+        assert2(false);
       }
     }
     __name(filterResponse, "filterResponse");
     function makeAppropriateNetworkError(fetchParams) {
-      assert(isCancelled(fetchParams));
+      assert2(isCancelled(fetchParams));
       return isAborted(fetchParams) ? makeNetworkError(new DOMException2("The operation was aborted.", "AbortError")) : makeNetworkError("Request was cancelled.");
     }
     __name(makeAppropriateNetworkError, "makeAppropriateNetworkError");
@@ -13739,7 +13739,7 @@ var require_request2 = __commonJS({
     var { getGlobalOrigin } = require_global();
     var { URLSerializer } = require_dataURL();
     var { kHeadersList } = require_symbols();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { getMaxListeners, setMaxListeners, getEventListeners, defaultMaxListeners } = __require("events");
     var TransformStream = globalThis.TransformStream;
     var kInit = Symbol("init");
@@ -13784,7 +13784,7 @@ var require_request2 = __commonJS({
           request = makeRequest({ urlList: [parsedURL] });
           fallbackMode = "cors";
         } else {
-          assert(input instanceof _Request);
+          assert2(input instanceof _Request);
           request = input[kState];
           signal = input[kSignal];
         }
@@ -14394,7 +14394,7 @@ var require_fetch = __commonJS({
       urlHasHttpsScheme
     } = require_util2();
     var { kState, kHeaders, kGuard, kRealm } = require_symbols2();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { safelyExtractBody } = require_body();
     var {
       redirectStatus,
@@ -14614,7 +14614,7 @@ var require_fetch = __commonJS({
         taskDestination,
         crossOriginIsolatedCapability
       };
-      assert(!request.body || request.body.stream);
+      assert2(!request.body || request.body.stream);
       if (request.window === "client") {
         request.window = request.client?.globalObject?.constructor?.name === "Window" ? request.client : "no-window";
       }
@@ -14708,7 +14708,7 @@ var require_fetch = __commonJS({
         } else if (request.responseTainting === "opaque") {
           response = filterResponse(response, "opaque");
         } else {
-          assert(false);
+          assert2(false);
         }
       }
       let internalResponse = response.status === 0 ? response : response.internalResponse;
@@ -14903,7 +14903,7 @@ var require_fetch = __commonJS({
         } else if (request.redirect === "follow") {
           response = await httpRedirectFetch(fetchParams, response);
         } else {
-          assert(false);
+          assert2(false);
         }
       }
       response.timingInfo = timingInfo;
@@ -14954,7 +14954,7 @@ var require_fetch = __commonJS({
         request.headersList.delete("authorization");
       }
       if (request.body != null) {
-        assert(request.body.source != null);
+        assert2(request.body.source != null);
         request.body = safelyExtractBody(request.body.source)[0];
       }
       const timingInfo = fetchParams.timingInfo;
@@ -15088,7 +15088,7 @@ var require_fetch = __commonJS({
     }
     __name(httpNetworkOrCacheFetch, "httpNetworkOrCacheFetch");
     async function httpNetworkFetch(fetchParams, includeCredentials = false, forceNewConnection = false) {
-      assert(!fetchParams.controller.connection || fetchParams.controller.connection.destroyed);
+      assert2(!fetchParams.controller.connection || fetchParams.controller.connection.destroyed);
       fetchParams.controller.connection = {
         abort: null,
         destroyed: false,
@@ -16217,7 +16217,7 @@ var require_symbols4 = __commonJS({
 var require_util5 = __commonJS({
   "node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/cache/util.js"(exports, module) {
     "use strict";
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { URLSerializer } = require_dataURL();
     var { isValidHeaderName } = require_util2();
     function urlEquals(A, B, excludeFragment = false) {
@@ -16227,7 +16227,7 @@ var require_util5 = __commonJS({
     }
     __name(urlEquals, "urlEquals");
     function fieldValues(header) {
-      assert(header !== null);
+      assert2(header !== null);
       const values = [];
       for (let value of header.split(",")) {
         value = value.trim();
@@ -16262,7 +16262,7 @@ var require_cache = __commonJS({
     var { kState, kHeaders, kGuard, kRealm } = require_symbols2();
     var { fetching } = require_fetch();
     var { urlIsHttpHttpsScheme, createDeferredPromise, readAllBytes } = require_util2();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { getGlobalDispatcher } = require_global2();
     var _relevantRequestResponseList, _batchCacheOperations, batchCacheOperations_fn, _queryCache, queryCache_fn, _requestMatchesCachedItem, requestMatchesCachedItem_fn;
     var _Cache = class {
@@ -16552,7 +16552,7 @@ var require_cache = __commonJS({
             return false;
           }
         } else {
-          assert(typeof request === "string");
+          assert2(typeof request === "string");
           r = new Request(request)[kState];
         }
         const operations = [];
@@ -16661,7 +16661,7 @@ var require_cache = __commonJS({
             }
             for (const requestResponse of requestResponses) {
               const idx = cache.indexOf(requestResponse);
-              assert(idx !== -1);
+              assert2(idx !== -1);
               cache.splice(idx, 1);
             }
           } else if (operation.type === "put") {
@@ -16693,7 +16693,7 @@ var require_cache = __commonJS({
             requestResponses = __privateMethod(this, _queryCache, queryCache_fn).call(this, operation.request);
             for (const requestResponse of requestResponses) {
               const idx = cache.indexOf(requestResponse);
-              assert(idx !== -1);
+              assert2(idx !== -1);
               cache.splice(idx, 1);
             }
             cache.push([operation.request, operation.response]);
@@ -16923,7 +16923,7 @@ var require_constants3 = __commonJS({
 var require_util6 = __commonJS({
   "node_modules/.pnpm/undici@5.22.1/node_modules/undici/lib/cookies/util.js"(exports, module) {
     "use strict";
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     var { kHeadersList } = require_symbols();
     function isCTLExcludingHtab(value) {
       if (value.length === 0) {
@@ -17072,10 +17072,10 @@ var require_util6 = __commonJS({
         kHeadersListNode = Object.getOwnPropertySymbols(headers).find(
           (symbol) => symbol.description === "headers list"
         );
-        assert(kHeadersListNode, "Headers cannot be parsed");
+        assert2(kHeadersListNode, "Headers cannot be parsed");
       }
       const headersList = headers[kHeadersListNode];
-      assert(headersList);
+      assert2(headersList);
       return headersList;
     }
     __name(getHeadersList, "getHeadersList");
@@ -17094,7 +17094,7 @@ var require_parse2 = __commonJS({
     var { maxNameValuePairSize, maxAttributeValueSize } = require_constants3();
     var { isCTLExcludingHtab } = require_util6();
     var { collectASequenceOfCodePointsFast } = require_dataURL();
-    var assert = __require("assert");
+    var assert2 = __require("assert");
     function parseSetCookie(header) {
       if (isCTLExcludingHtab(header)) {
         return null;
@@ -17137,7 +17137,7 @@ var require_parse2 = __commonJS({
       if (unparsedAttributes.length === 0) {
         return cookieAttributeList;
       }
-      assert(unparsedAttributes[0] === ";");
+      assert2(unparsedAttributes[0] === ";");
       unparsedAttributes = unparsedAttributes.slice(1);
       let cookieAv = "";
       if (unparsedAttributes.includes(";")) {
@@ -20438,6 +20438,136 @@ var ACTION_INPUT_DIRECTORY = "directory";
 var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
 var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
 
+// src/github/workflow-event/workflow-event.ts
+import { strict as assert } from "node:assert";
+import { existsSync as existsSync2, readFileSync as readFileSync2 } from "node:fs";
+import { EOL as EOL5 } from "node:os";
+
+// __generated__/types/github/workflow-events.ts
+var EVENT_NAMES = [
+  "branch_protection_rule",
+  "check_run",
+  "check_suite",
+  "code_scanning_alert",
+  "commit_comment",
+  "create",
+  "delete",
+  "dependabot_alert",
+  "deploy_key",
+  "deployment",
+  "deployment_protection_rule",
+  "deployment_status",
+  "discussion",
+  "discussion_comment",
+  "fork",
+  "github_app_authorization",
+  "gollum",
+  "installation",
+  "installation_repositories",
+  "installation_target",
+  "issue_comment",
+  "issues",
+  "label",
+  "marketplace_purchase",
+  "member",
+  "membership",
+  "merge_group",
+  "meta",
+  "milestone",
+  "org_block",
+  "organization",
+  "package",
+  "page_build",
+  "ping",
+  "project",
+  "project_card",
+  "project_column",
+  "projects_v2_item",
+  "public",
+  "pull_request",
+  "pull_request_review",
+  "pull_request_review_comment",
+  "pull_request_review_thread",
+  "push",
+  "registry_package",
+  "release",
+  "repository",
+  "repository_dispatch",
+  "repository_import",
+  "repository_vulnerability_alert",
+  "secret_scanning_alert",
+  "secret_scanning_alert_location",
+  "security_advisory",
+  "sponsorship",
+  "star",
+  "status",
+  "team",
+  "team_add",
+  "watch",
+  "workflow_dispatch",
+  "workflow_job",
+  "workflow_run"
+];
+
+// src/github/workflow-event/workflow-event.ts
+var getPayload = /* @__PURE__ */ __name(() => {
+  if (process.env.GITHUB_EVENT_PATH) {
+    if (existsSync2(process.env.GITHUB_EVENT_PATH)) {
+      return JSON.parse(
+        readFileSync2(process.env.GITHUB_EVENT_PATH, { encoding: "utf8" })
+      );
+    } else {
+      const path3 = process.env.GITHUB_EVENT_PATH;
+      process.stdout.write(`GITHUB_EVENT_PATH ${path3} does not exist${EOL5}`);
+    }
+  }
+}, "getPayload");
+var getWorkflowEvent = /* @__PURE__ */ __name(() => {
+  const eventName = process.env.GITHUB_EVENT_NAME;
+  assert(
+    EVENT_NAMES.includes(eventName),
+    `eventName ${eventName} is not supported`
+  );
+  const payload = getPayload();
+  return {
+    eventName,
+    payload
+  };
+}, "getWorkflowEvent");
+
+// src/github/context.ts
+var getGitHubContext = /* @__PURE__ */ __name(() => {
+  const event = getWorkflowEvent();
+  const repo = getRepo();
+  const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
+  const sha = process.env.GITHUB_SHA;
+  return {
+    event,
+    repo,
+    branch,
+    sha
+  };
+}, "getGitHubContext");
+var getRepo = /* @__PURE__ */ __name(() => {
+  if (process.env.GITHUB_REPOSITORY) {
+    const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+    if (owner === void 0 || repo === void 0) {
+      throw new Error("no repo");
+    }
+    return { owner, repo };
+  }
+  throw new Error(
+    "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+  );
+}, "getRepo");
+var _context;
+var useContext = /* @__PURE__ */ __name(() => {
+  if (!_context) {
+    _context = getGitHubContext();
+  }
+  return _context;
+}, "useContext");
+
 // src/cloudflare/api/endpoints.ts
 var API_ENDPOINT = `https://api.cloudflare.com`;
 var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path3) => {
@@ -20551,15 +20681,11 @@ var createDeployment = /* @__PURE__ */ __name(async () => {
   const apiToken = getInput(ACTION_INPUT_API_TOKEN, {
     required: true
   });
-  const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
-  const commitHash = process.env.GITHUB_SHA;
   process.env[CLOUDFLARE_API_TOKEN] = apiToken;
   process.env[CLOUDFLARE_ACCOUNT_ID] = accountId;
+  const { repo, branch, sha: commitHash } = useContext();
   if (branch === void 0) {
     throw new Error(`${ERROR_KEY} branch is undefined`);
-  }
-  if (commitHash === void 0) {
-    throw new Error(`${ERROR_KEY} commitHash is undefined`);
   }
   try {
     await $`npx wrangler@3.1.1 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
@@ -20578,7 +20704,6 @@ var createDeployment = /* @__PURE__ */ __name(async () => {
     const alias = getDeploymentAlias(deployment);
     setOutput("alias", alias);
     const deployStage = deployment.stages.find((stage) => stage.name === "deploy");
-    const repo = process.env.GITHUB_REPOSITORY || "";
     await summary.addHeading("Cloudflare Pages Deployment").write();
     await summary.addBreak().write();
     await summary.addTable([
@@ -20595,11 +20720,11 @@ var createDeployment = /* @__PURE__ */ __name(async () => {
       ["Environment:", deployment.environment],
       [
         "Branch:",
-        `<a href='https://github.com/${repo}/tree/${deployment.deployment_trigger.metadata.branch}'><code>${deployment.deployment_trigger.metadata.branch}</code></a>`
+        `<a href='https://github.com/${repo.owner}/${repo.repo}/tree/${deployment.deployment_trigger.metadata.branch}'><code>${deployment.deployment_trigger.metadata.branch}</code></a>`
       ],
       [
         "Commit Hash:",
-        `<a href='https://github.com/${repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}'><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
+        `<a href='https://github.com/${repo.owner}/${repo.repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}'><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
       ],
       [
         "Commit Message:",

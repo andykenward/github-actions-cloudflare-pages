@@ -4,26 +4,22 @@ import {useContext} from '@/src/github/context.js'
 
 describe('getGitHubContext', () => {
   test('returns eventName ', () => {
-    process.env.GITHUB_EVENT_NAME = 'pull_request'
-    process.env.GITHUB_REPOSITORY = 'unlike-ltd/cloudflare-pages-action'
-    process.env.GITHUB_EVENT_PATH =
-      '__generated__/payloads/api.github.com/pull_request/opened.payload.json'
+    const {repo, event, branch, sha} = useContext()
 
-    expect.assertions(5)
-
-    const context = useContext()
-
-    expect(context.event.eventName).toBe('pull_request')
-    expect(context.repo).toMatchInlineSnapshot(`
+    /** Repo */
+    expect(repo).toMatchInlineSnapshot(`
       {
-        "owner": "unlike-ltd",
-        "repo": "cloudflare-pages-action",
+        "owner": "mock-owner",
+        "repo": "mock-github-repository",
       }
     `)
 
-    expect(context.event.payload).not.toBeUndefined()
-    expect(context.event.payload).toMatchSnapshot()
+    /** Event */
+    expect(event.payload).not.toBeUndefined()
+    expect(event.payload).toMatchSnapshot()
+    expect(event.eventName).toStrictEqual('pull_request')
 
-    expect(context.event.eventName).toStrictEqual('pull_request')
+    expect(branch).toStrictEqual(`mock-github-head-ref`)
+    expect(sha).toStrictEqual(`mock-github-sha`)
   })
 })

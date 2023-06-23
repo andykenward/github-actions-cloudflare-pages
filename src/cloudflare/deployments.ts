@@ -10,6 +10,7 @@ import {
   CLOUDFLARE_ACCOUNT_ID,
   CLOUDFLARE_API_TOKEN
 } from '../constants.js'
+import {useContext} from '../github/context.js'
 import {getCloudflareApiEndpoint} from './api/endpoints.js'
 import {fetchResult} from './api/fetch-result.js'
 
@@ -43,25 +44,13 @@ export const createDeployment = async () => {
     required: true
   })
 
-  /**
-   * Depending on what event triggers the action.
-   * The GITHUB_HEAD_REF may be undefined so we fallback to GITHUB_REF_NAME.
-   * It checks `branch` against the `project.production_branch` if `branch`
-   * is not undefined.
-   * https://github.com/cloudflare/workers-sdk/blob/a728876e607635081cd1ed00d06b7af86e7efd49/packages/wrangler/src/api/pages/deploy.tsx#L133-L136
-   */
-  const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME
-  const commitHash = process.env.GITHUB_SHA
-
   process.env[CLOUDFLARE_API_TOKEN] = apiToken
   process.env[CLOUDFLARE_ACCOUNT_ID] = accountId
 
+  const {repo, branch, sha: commitHash} = useContext()
+
   if (branch === undefined) {
     throw new Error(`${ERROR_KEY} branch is undefined`)
-  }
-
-  if (commitHash === undefined) {
-    throw new Error(`${ERROR_KEY} commitHash is undefined`)
   }
 
   try {
@@ -70,12 +59,10 @@ export const createDeployment = async () => {
      */
     await $`npx wrangler@3.1.1 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`
 
-    // get deployment
-    const deployments = await getDeployments()
-
     /**
      * Get the latest deployment by commitHash.
      */
+    const deployments = await getDeployments()
     const deployment = deployments.find(
       deployment =>
         deployment.deployment_trigger.metadata.commit_hash === commitHash
@@ -96,8 +83,6 @@ export const createDeployment = async () => {
 
     const deployStage = deployment.stages.find(stage => stage.name === 'deploy')
 
-    const repo = process.env.GITHUB_REPOSITORY || ''
-
     await summary.addHeading('Cloudflare Pages Deployment').write()
     await summary.addBreak().write()
     await summary
@@ -115,11 +100,11 @@ export const createDeployment = async () => {
         ['Environment:', deployment.environment],
         [
           'Branch:',
-          `<a href='https://github.com/${repo}/tree/${deployment.deployment_trigger.metadata.branch}'><code>${deployment.deployment_trigger.metadata.branch}</code></a>`
+          `<a href='https://github.com/${repo.owner}/${repo.repo}/tree/${deployment.deployment_trigger.metadata.branch}'><code>${deployment.deployment_trigger.metadata.branch}</code></a>`
         ],
         [
           'Commit Hash:',
-          `<a href='https://github.com/${repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}'><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
+          `<a href='https://github.com/${repo.owner}/${repo.repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}'><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
         ],
         [
           'Commit Message:',
