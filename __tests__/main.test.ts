@@ -8,8 +8,7 @@ import {
   getMockApi,
   MOCK_API_PATH,
   MOCK_API_PATH_DEPLOYMENTS,
-  setRequiredInputEnv,
-  setTestEnvVars
+  setRequiredInputEnv
 } from '@/tests/helpers/index.js'
 
 vi.mock('@unlike/github-actions-core')
@@ -21,7 +20,6 @@ describe('main', () => {
   beforeEach(() => {
     mockApi = getMockApi()
     setRequiredInputEnv()
-    setTestEnvVars()
   })
 
   afterEach(async () => {

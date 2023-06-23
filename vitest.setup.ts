@@ -1,5 +1,7 @@
 import {afterEach, beforeEach} from 'vitest'
 
+import {setTestEnvVars} from './__tests__/helpers/index.js'
+
 /** So we can reset process.env between tests */
 const env: NodeJS.ProcessEnv = process.env
 
@@ -9,6 +11,7 @@ beforeEach(() => {
    * This is used by `core.getInput()`.
    */
   process.env = {...env}
+  setTestEnvVars()
 })
 afterEach(() => {
   /**

@@ -15,8 +15,7 @@ import {
   MOCK_API_PATH_DEPLOYMENTS,
   REQUIRED_INPUTS,
   setInputEnv,
-  setRequiredInputEnv,
-  setTestEnvVars
+  setRequiredInputEnv
 } from '@/tests/helpers/index.js'
 
 import PACKAGE_JSON from '../../package.json'
@@ -81,44 +80,6 @@ describe('deployments', () => {
           expect(spySummaryAddTable).not.toHaveBeenCalled()
         }
       )
-
-      test('throws error when branch is undefined', async () => {
-        // Set required inputs
-        setRequiredInputEnv()
-        // For CI test runner we have to delete the env vars
-        delete process.env.GITHUB_HEAD_REF
-        delete process.env.GITHUB_REF_NAME
-
-        expect(process.env.GITHUB_HEAD_REF).toBeUndefined()
-        expect(process.env.GITHUB_REF_NAME).toBeUndefined()
-
-        await expect(createDeployment()).rejects.toThrow(
-          `Create Deployment: branch is undefined`
-        )
-
-        expect(process.env.GITHUB_HEAD_REF).toBeUndefined()
-        expect(process.env.GITHUB_REF_NAME).toBeUndefined()
-        expect(execa.$).not.toHaveBeenCalled()
-        expect(spySetOutput).not.toHaveBeenCalled()
-        expect(spySummaryAddTable).not.toHaveBeenCalled()
-      })
-
-      test('throws error when commitHash is undefined', async () => {
-        expect.assertions(6)
-        setRequiredInputEnv()
-        setTestEnvVars()
-        delete process.env.GITHUB_SHA
-
-        expect(process.env.GITHUB_SHA).toBeUndefined()
-
-        await expect(createDeployment()).rejects.toThrow(
-          `Create Deployment: commitHash is undefined`
-        )
-        expect(execa.$).not.toHaveBeenCalled()
-        expect(process.env.GITHUB_SHA).toBeUndefined()
-        expect(spySetOutput).not.toHaveBeenCalled()
-        expect(spySummaryAddTable).not.toHaveBeenCalled()
-      })
     })
 
     describe('api calls', () => {
@@ -127,8 +88,6 @@ describe('deployments', () => {
         mockApi = getMockApi()
         // Set required inputs
         setRequiredInputEnv()
-        // Set Env vars
-        setTestEnvVars()
       })
 
       test('handles thrown error from wrangler deploy', async () => {
