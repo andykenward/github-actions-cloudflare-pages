@@ -2,6 +2,9 @@
 
 name: 'GitHub Action for Cloudflare Pages'
 description: 'Deploy to Cloudflare Pages'
+branding:
+  icon: 'upload-cloud'
+  color: 'orange'
 inputs:
   apiToken:
     description: 'Cloudflare API Token'
