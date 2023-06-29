@@ -33,5 +33,5 @@ outputs:
     description: 'Cloudflare Pages deployed alias. Fallsback to deployed url if deployed alias is null'
 
 runs:
-  using: 'node16'
+  using: 'node18'
   main: 'dist/index.js'

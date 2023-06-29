@@ -1,13 +1,9 @@
 {
-  "extends": [
-    "@tsconfig/node18/tsconfig.json",
-    "@tsconfig/esm/tsconfig.json"
-    // "@tsconfig/strictest/tsconfig.json"
-  ],
+  "extends": "@tsconfig/node18/tsconfig.json",
+
   "compilerOptions": {
     "verbatimModuleSyntax": true,
     "noEmit": true,
-    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "paths": {
       /**

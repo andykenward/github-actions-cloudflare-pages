@@ -11,7 +11,7 @@ await esbuild.build({
   /**
    * This has to be node 16 instead of node 18 because GitHub Actions doesn't support node 18 yet.
    */
-  target: 'node16.20.0',
+  target: 'node18',
   platform: 'node',
   sourcemap: true,
   legalComments: 'external',
