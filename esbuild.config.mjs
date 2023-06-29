@@ -17,7 +17,7 @@ await esbuild.build({
   legalComments: 'external',
   logLevel: 'info',
   minify: false,
-  external: ['wrangler'],
+  external: ['wrangler', 'undici'],
   treeShaking: true,
   banner: {
     /**

@@ -1,7 +1,6 @@
 import type {RequestInit} from 'undici'
 
 import {getInput} from '@unlike/github-actions-core'
-import {fetch} from 'undici'
 
 import type {FetchResult} from '../types.js'
 import {ACTION_INPUT_API_TOKEN} from '../../constants.js'
