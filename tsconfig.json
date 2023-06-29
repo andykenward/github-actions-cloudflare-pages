@@ -1,6 +1,5 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
-
   "compilerOptions": {
     "verbatimModuleSyntax": true,
     "noEmit": true,
