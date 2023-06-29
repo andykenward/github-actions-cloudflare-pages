@@ -40,9 +40,6 @@ devDependencies:
   '@total-typescript/ts-reset':
     specifier: 0.4.2
     version: 0.4.2
-  '@tsconfig/esm':
-    specifier: 1.0.3
-    version: 1.0.3
   '@tsconfig/node18':
     specifier: 18.2.0
     version: 18.2.0
@@ -1449,10 +1446,6 @@ packages:
 
   /@total-typescript/ts-reset@0.4.2:
     resolution: {integrity: sha512-vqd7ZUDSrXFVT1n8b2kc3LnklncDQFPvR58yUS1kEP23/nHPAO9l1lMjUfnPrXYYk4Hj54rrLKMW5ipwk7k09A==}
-    dev: true
-
-  /@tsconfig/esm@1.0.3:
-    resolution: {integrity: sha512-Gp56rIc3R8ab032nXMUitmc7YIb4nAi8DQ6Qt47tuL0Ssn9LIOm+o2FQmqPu3jX4z0TsqgzWwkmVygxcq+yHYg==}
     dev: true
 
   /@tsconfig/node10@1.0.9:
