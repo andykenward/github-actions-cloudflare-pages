@@ -11,7 +11,7 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 }) : x)(function(x) {
   if (typeof require !== "undefined")
     return require.apply(this, arguments);
-  throw new Error('Dynamic require of "' + x + '" is not supported');
+  throw Error('Dynamic require of "' + x + '" is not supported');
 });
 var __commonJS = (cb, mod) => function __require2() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
@@ -32,28 +32,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
-};
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
 
 // node_modules/.pnpm/isexe@2.0.0/node_modules/isexe/windows.js
 var require_windows = __commonJS({
@@ -826,14 +804,15 @@ var require_get_stream = __commonJS({
     var { promisify } = __require("util");
     var bufferStream = require_buffer_stream();
     var streamPipelinePromisified = promisify(stream.pipeline);
-    var _MaxBufferError = class extends Error {
+    var MaxBufferError = class extends Error {
+      static {
+        __name(this, "MaxBufferError");
+      }
       constructor() {
         super("maxBuffer exceeded");
         this.name = "MaxBufferError";
       }
     };
-    var MaxBufferError = _MaxBufferError;
-    __name(_MaxBufferError, "MaxBufferError");
     async function getStream2(inputStream, options) {
       if (!inputStream) {
         throw new Error("Expected a stream");
@@ -957,27 +936,32 @@ var issueCommand = /* @__PURE__ */ __name3((command, properties, message) => {
   process.stdout.write(cmd.toString() + EOL);
 }, "issueCommand");
 var CMD_STRING = "::";
-var _command, _message, _properties;
-var _Command = class {
+var Command = class {
+  static {
+    __name(this, "Command");
+  }
+  static {
+    __name3(this, "Command");
+  }
+  #command;
+  #message;
+  #properties;
   constructor(command, properties, message) {
-    __privateAdd(this, _command, void 0);
-    __privateAdd(this, _message, void 0);
-    __privateAdd(this, _properties, void 0);
     if (!command) {
       command = "missing.command";
     }
-    __privateSet(this, _command, command);
-    __privateSet(this, _properties, properties);
-    __privateSet(this, _message, message);
+    this.#command = command;
+    this.#properties = properties;
+    this.#message = message;
   }
   toString() {
-    let cmdStr = CMD_STRING + __privateGet(this, _command);
-    if (__privateGet(this, _properties) && Object.keys(__privateGet(this, _properties)).length > 0) {
+    let cmdStr = CMD_STRING + this.#command;
+    if (this.#properties && Object.keys(this.#properties).length > 0) {
       cmdStr += " ";
       let first = true;
-      for (const key in __privateGet(this, _properties)) {
-        if (__privateGet(this, _properties).hasOwnProperty(key)) {
-          const val = __privateGet(this, _properties)[key];
+      for (const key in this.#properties) {
+        if (this.#properties.hasOwnProperty(key)) {
+          const val = this.#properties[key];
           if (val) {
             if (first) {
               first = false;
@@ -989,16 +973,10 @@ var _Command = class {
         }
       }
     }
-    cmdStr += `${CMD_STRING}${escapeData(__privateGet(this, _message))}`;
+    cmdStr += `${CMD_STRING}${escapeData(this.#message)}`;
     return cmdStr;
   }
 };
-var Command = _Command;
-_command = new WeakMap();
-_message = new WeakMap();
-_properties = new WeakMap();
-__name(_Command, "Command");
-__name3(_Command, "Command");
 function escapeData(s) {
   return toCommandValue(s).replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
 }
@@ -1108,29 +1086,59 @@ var __defProp8 = Object.defineProperty;
 var __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
 var { access, appendFile, writeFile } = promises;
 var SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
-var _buffer, _filePath, _fileSummaryPath, fileSummaryPath_fn, _wrap, wrap_fn;
-var _Summary = class {
+var Summary = class {
+  static {
+    __name(this, "Summary");
+  }
+  static {
+    __name8(this, "Summary");
+  }
+  #buffer;
+  #filePath;
   constructor() {
-    /**
-     * Finds the summary file path from the environment, rejects if env var is not found or file does not exist
-     * Also checks r/w permissions.
-     *
-     * @returns step summary file path
-     */
-    __privateAdd(this, _fileSummaryPath);
-    /**
-     * Wraps content in an HTML tag, adding any HTML attributes
-     *
-     * @param {string} tag HTML tag to wrap
-     * @param {string | null} content content within the tag
-     * @param {[attribute: string]: string} attrs key-value list of HTML attributes to add
-     *
-     * @returns {string} content wrapped in HTML element
-     */
-    __privateAdd(this, _wrap);
-    __privateAdd(this, _buffer, void 0);
-    __privateAdd(this, _filePath, void 0);
-    __privateSet(this, _buffer, "");
+    this.#buffer = "";
+  }
+  /**
+   * Finds the summary file path from the environment, rejects if env var is not found or file does not exist
+   * Also checks r/w permissions.
+   *
+   * @returns step summary file path
+   */
+  async #fileSummaryPath() {
+    if (this.#filePath) {
+      return this.#filePath;
+    }
+    const pathFromEnv = process.env[SUMMARY_ENV_VAR];
+    if (!pathFromEnv) {
+      throw new Error(
+        `Unable to find environment variable for $${SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`
+      );
+    }
+    try {
+      await access(pathFromEnv, constants.R_OK | constants.W_OK);
+    } catch {
+      throw new Error(
+        `Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`
+      );
+    }
+    this.#filePath = pathFromEnv;
+    return this.#filePath;
+  }
+  /**
+   * Wraps content in an HTML tag, adding any HTML attributes
+   *
+   * @param {string} tag HTML tag to wrap
+   * @param {string | null} content content within the tag
+   * @param {[attribute: string]: string} attrs key-value list of HTML attributes to add
+   *
+   * @returns {string} content wrapped in HTML element
+   */
+  #wrap(tag, content, attrs = {}) {
+    const htmlAttrs = Object.entries(attrs).map(([key, value]) => ` ${key}="${value}"`).join("");
+    if (!content) {
+      return `<${tag}${htmlAttrs}>`;
+    }
+    return `<${tag}${htmlAttrs}>${content}</${tag}>`;
   }
   /**
    * Writes text in the buffer to the summary buffer file and empties buffer. Will append by default.
@@ -1141,9 +1149,9 @@ var _Summary = class {
    */
   async write(options) {
     const overwrite = !!options?.overwrite;
-    const filePath = await __privateMethod(this, _fileSummaryPath, fileSummaryPath_fn).call(this);
+    const filePath = await this.#fileSummaryPath();
     const writeFunc = overwrite ? writeFile : appendFile;
-    await writeFunc(filePath, __privateGet(this, _buffer), { encoding: "utf8" });
+    await writeFunc(filePath, this.#buffer, { encoding: "utf8" });
     return this.emptyBuffer();
   }
   /**
@@ -1160,7 +1168,7 @@ var _Summary = class {
    * @returns {string} string of summary buffer
    */
   stringify() {
-    return __privateGet(this, _buffer);
+    return this.#buffer;
   }
   /**
    * If the summary buffer is empty
@@ -1168,7 +1176,7 @@ var _Summary = class {
    * @returns {boolen} true if the buffer is empty
    */
   isEmptyBuffer() {
-    return __privateGet(this, _buffer).length === 0;
+    return this.#buffer.length === 0;
   }
   /**
    * Resets the summary buffer without writing to summary file
@@ -1176,7 +1184,7 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   emptyBuffer() {
-    __privateSet(this, _buffer, "");
+    this.#buffer = "";
     return this;
   }
   /**
@@ -1188,7 +1196,7 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addRaw(text, addEOL = false) {
-    __privateSet(this, _buffer, __privateGet(this, _buffer) + text);
+    this.#buffer += text;
     return addEOL ? this.addEOL() : this;
   }
   /**
@@ -1211,7 +1219,7 @@ var _Summary = class {
     const attrs = {
       ...lang && { lang }
     };
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "pre", __privateMethod(this, _wrap, wrap_fn).call(this, "code", code), attrs);
+    const element = this.#wrap("pre", this.#wrap("code", code), attrs);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1224,8 +1232,8 @@ var _Summary = class {
    */
   addList(items, ordered = false) {
     const tag = ordered ? "ol" : "ul";
-    const listItems = items.map((item) => __privateMethod(this, _wrap, wrap_fn).call(this, "li", item)).join("");
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, tag, listItems);
+    const listItems = items.map((item) => this.#wrap("li", item)).join("");
+    const element = this.#wrap(tag, listItems);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1239,7 +1247,7 @@ var _Summary = class {
     const tableBody = rows.map((row) => {
       const cells = row.map((cell) => {
         if (typeof cell === "string") {
-          return __privateMethod(this, _wrap, wrap_fn).call(this, "td", cell);
+          return this.#wrap("td", cell);
         }
         const { header, data, colspan, rowspan } = cell;
         const tag = header ? "th" : "td";
@@ -1247,11 +1255,11 @@ var _Summary = class {
           ...colspan && { colspan },
           ...rowspan && { rowspan }
         };
-        return __privateMethod(this, _wrap, wrap_fn).call(this, tag, data, attrs);
+        return this.#wrap(tag, data, attrs);
       }).join("");
-      return __privateMethod(this, _wrap, wrap_fn).call(this, "tr", cells);
+      return this.#wrap("tr", cells);
     }).join("");
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "table", tableBody);
+    const element = this.#wrap("table", tableBody);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1263,7 +1271,10 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addDetails(label, content) {
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "details", __privateMethod(this, _wrap, wrap_fn).call(this, "summary", label) + content);
+    const element = this.#wrap(
+      "details",
+      this.#wrap("summary", label) + content
+    );
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1281,7 +1292,7 @@ var _Summary = class {
       ...width && { width },
       ...height && { height }
     };
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "img", null, { src, alt, ...attrs });
+    const element = this.#wrap("img", null, { src, alt, ...attrs });
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1295,7 +1306,7 @@ var _Summary = class {
   addHeading(text, level) {
     const tag = `h${level}`;
     const allowedTag = ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tag) ? tag : "h1";
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, allowedTag, text);
+    const element = this.#wrap(allowedTag, text);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1304,7 +1315,7 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addSeparator() {
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "hr", null);
+    const element = this.#wrap("hr", null);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1313,7 +1324,7 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addBreak() {
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "br", null);
+    const element = this.#wrap("br", null);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1328,7 +1339,7 @@ var _Summary = class {
     const attrs = {
       ...cite && { cite }
     };
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "blockquote", text, attrs);
+    const element = this.#wrap("blockquote", text, attrs);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1340,44 +1351,10 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addLink(text, href) {
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "a", text, { href });
+    const element = this.#wrap("a", text, { href });
     return this.addRaw(element).addEOL();
   }
 };
-var Summary = _Summary;
-_buffer = new WeakMap();
-_filePath = new WeakMap();
-_fileSummaryPath = new WeakSet();
-fileSummaryPath_fn = /* @__PURE__ */ __name(async function() {
-  if (__privateGet(this, _filePath)) {
-    return __privateGet(this, _filePath);
-  }
-  const pathFromEnv = process.env[SUMMARY_ENV_VAR];
-  if (!pathFromEnv) {
-    throw new Error(
-      `Unable to find environment variable for $${SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`
-    );
-  }
-  try {
-    await access(pathFromEnv, constants.R_OK | constants.W_OK);
-  } catch {
-    throw new Error(
-      `Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`
-    );
-  }
-  __privateSet(this, _filePath, pathFromEnv);
-  return __privateGet(this, _filePath);
-}, "#fileSummaryPath");
-_wrap = new WeakSet();
-wrap_fn = /* @__PURE__ */ __name(function(tag, content, attrs = {}) {
-  const htmlAttrs = Object.entries(attrs).map(([key, value]) => ` ${key}="${value}"`).join("");
-  if (!content) {
-    return `<${tag}${htmlAttrs}>`;
-  }
-  return `<${tag}${htmlAttrs}>${content}</${tag}>`;
-}, "#wrap");
-__name(_Summary, "Summary");
-__name8(_Summary, "Summary");
 var _summary = new Summary();
 var summary = _summary;
 
@@ -1983,19 +1960,6 @@ var normalizeStdio = /* @__PURE__ */ __name((options) => {
   const length = Math.max(stdio.length, aliases.length);
   return Array.from({ length }, (value, index) => stdio[index]);
 }, "normalizeStdio");
-var normalizeStdioNode = /* @__PURE__ */ __name((options) => {
-  const stdio = normalizeStdio(options);
-  if (stdio === "ipc") {
-    return "ipc";
-  }
-  if (stdio === void 0 || typeof stdio === "string") {
-    return [stdio, stdio, stdio, "ipc"];
-  }
-  if (stdio.includes("ipc")) {
-    return stdio;
-  }
-  return [...stdio, "ipc"];
-}, "normalizeStdioNode");
 
 // node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/kill.js
 var import_signal_exit = __toESM(require_signal_exit(), 1);
@@ -2084,18 +2048,6 @@ function isWritableStream(stream) {
   return isStream(stream) && stream.writable !== false && typeof stream._write === "function" && typeof stream._writableState === "object";
 }
 __name(isWritableStream, "isWritableStream");
-function isReadableStream(stream) {
-  return isStream(stream) && stream.readable !== false && typeof stream._read === "function" && typeof stream._readableState === "object";
-}
-__name(isReadableStream, "isReadableStream");
-function isDuplexStream(stream) {
-  return isWritableStream(stream) && isReadableStream(stream);
-}
-__name(isDuplexStream, "isDuplexStream");
-function isTransformStream(stream) {
-  return isDuplexStream(stream) && typeof stream._transform === "function";
-}
-__name(isTransformStream, "isTransformStream");
 
 // node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/pipe.js
 var isExecaChildProcess = /* @__PURE__ */ __name((target) => target instanceof ChildProcess && typeof target.then === "function", "isExecaChildProcess");
@@ -2266,18 +2218,6 @@ var escapeArg = /* @__PURE__ */ __name((arg) => {
 var joinCommand = /* @__PURE__ */ __name((file, args) => normalizeArgs(file, args).join(" "), "joinCommand");
 var getEscapedCommand = /* @__PURE__ */ __name((file, args) => normalizeArgs(file, args).map((arg) => escapeArg(arg)).join(" "), "getEscapedCommand");
 var SPACES_REGEXP = / +/g;
-var parseCommand = /* @__PURE__ */ __name((command) => {
-  const tokens = [];
-  for (const token of command.trim().split(SPACES_REGEXP)) {
-    const previousToken = tokens[tokens.length - 1];
-    if (previousToken && previousToken.endsWith("\\")) {
-      tokens[tokens.length - 1] = `${previousToken.slice(0, -1)} ${token}`;
-    } else {
-      tokens.push(token);
-    }
-  }
-  return tokens;
-}, "parseCommand");
 var parseExpression = /* @__PURE__ */ __name((expression) => {
   const typeOfExpression = typeof expression;
   if (typeOfExpression === "string") {
@@ -2554,45 +2494,6 @@ function create$(options) {
 }
 __name(create$, "create$");
 var $ = create$();
-function execaCommand(command, options) {
-  const [file, ...args] = parseCommand(command);
-  return execa(file, args, options);
-}
-__name(execaCommand, "execaCommand");
-function execaCommandSync(command, options) {
-  const [file, ...args] = parseCommand(command);
-  return execaSync(file, args, options);
-}
-__name(execaCommandSync, "execaCommandSync");
-function execaNode(scriptPath, args, options = {}) {
-  if (args && !Array.isArray(args) && typeof args === "object") {
-    options = args;
-    args = [];
-  }
-  const stdio = normalizeStdioNode(options);
-  const defaultExecArgv = process4.execArgv.filter((arg) => !arg.startsWith("--inspect"));
-  const {
-    nodePath = process4.execPath,
-    nodeOptions = defaultExecArgv
-  } = options;
-  return execa(
-    nodePath,
-    [
-      ...nodeOptions,
-      scriptPath,
-      ...Array.isArray(args) ? args : []
-    ],
-    {
-      ...options,
-      stdin: void 0,
-      stdout: void 0,
-      stderr: void 0,
-      stdio,
-      shell: false
-    }
-  );
-}
-__name(execaNode, "execaNode");
 
 // src/constants.ts
 var ACTION_INPUT_ACCOUNT_ID = "accountId";
@@ -2757,7 +2658,10 @@ var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path3) => {
 }, "getCloudflareApiEndpoint");
 
 // src/cloudflare/api/parse-error.ts
-var _ParseError = class extends Error {
+var ParseError = class extends Error {
+  static {
+    __name(this, "ParseError");
+  }
   text;
   notes;
   location;
@@ -2771,8 +2675,6 @@ var _ParseError = class extends Error {
     this.kind = kind ?? "error";
   }
 };
-var ParseError = _ParseError;
-__name(_ParseError, "ParseError");
 
 // src/cloudflare/api/fetch-error.ts
 function throwFetchError(resource, response) {
@@ -2928,19 +2830,20 @@ var getProject = /* @__PURE__ */ __name(async () => {
 }, "getProject");
 
 // __generated__/gql/graphql.ts
-var _TypedDocumentString = class extends String {
+var TypedDocumentString = class extends String {
   constructor(value, __meta__) {
     super(value);
     this.value = value;
     this.__meta__ = __meta__;
+  }
+  static {
+    __name(this, "TypedDocumentString");
   }
   __apiType;
   toString() {
     return this.value;
   }
 };
-var TypedDocumentString = _TypedDocumentString;
-__name(_TypedDocumentString, "TypedDocumentString");
 var FilesDocument = new TypedDocumentString(`
     query Files($owner: String!, $repo: String!, $path: String!) {
   repository(owner: $owner, name: $repo) {
