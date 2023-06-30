@@ -20,8 +20,8 @@ devDependencies:
     specifier: 2.26.1
     version: 2.26.1
   '@cloudflare/types':
-    specifier: 6.21.13
-    version: 6.21.13
+    specifier: 6.21.15
+    version: 6.21.15
   '@graphql-codegen/cli':
     specifier: 4.0.1
     version: 4.0.1(@babel/core@7.22.5)(@types/node@18.16.16)(graphql@16.7.1)
@@ -938,8 +938,8 @@ packages:
       mime: 3.0.0
     dev: false
 
-  /@cloudflare/types@6.21.13:
-    resolution: {integrity: sha512-l/wPFUbK8Aa2ntA02oVaxf+fR1gTuy8YneWQD5uhgY5MfSIv0FAto/ormb9Y3icdSO3z4MlbYDjOC68zoN9/og==}
+  /@cloudflare/types@6.21.15:
+    resolution: {integrity: sha512-Tl9enzHReD99/zlb1PKqCtuhAK9GiQBiUcFmYAywnIXcR8kIQ6Zs4KSyBWLt7ygEoftTV62P3YwfkZa8Qjc91g==}
     peerDependencies:
       react: ^15.0.0-0 || ^16.0.0-0 || ^17.0.0-0
     peerDependenciesMeta:
