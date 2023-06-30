@@ -5,7 +5,7 @@
 import {createDeployment} from './cloudflare/deployments.js'
 import {getProject} from './cloudflare/project/get-project.js'
 import {useContextEvent} from './github/context.js'
-import {createEnvironment} from './github/environment.js'
+import {checkEnvironment} from './github/environment.js'
 
 export async function run() {
   /**
@@ -18,7 +18,8 @@ export async function run() {
   const {eventName} = useContextEvent()
 
   if (eventName === 'pull_request') {
-    const environment = await createEnvironment()
+    const environment = await checkEnvironment()
+    console.log(environment)
     // github deployment
   }
 

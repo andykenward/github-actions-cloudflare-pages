@@ -28144,6 +28144,15 @@ export type CreateEnvironmentMutationVariables = Exact<{
 
 export type CreateEnvironmentMutation = { createEnvironment?: { environment?: { name: string, id: string } | null } | null };
 
+export type GetEnvironmentQueryVariables = Exact<{
+  owner: Scalars['String']['input'];
+  repo: Scalars['String']['input'];
+  environment_name: Scalars['String']['input'];
+}>;
+
+
+export type GetEnvironmentQuery = { repository?: { environment?: { name: string, id: string } | null } | null };
+
 export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
@@ -28193,3 +28202,13 @@ export const CreateEnvironmentDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateEnvironmentMutation, CreateEnvironmentMutationVariables>;
+export const GetEnvironmentDocument = new TypedDocumentString(`
+    query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!) {
+  repository(owner: $owner, name: $repo) {
+    environment(name: $environment_name) {
+      name
+      id
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<GetEnvironmentQuery, GetEnvironmentQueryVariables>;

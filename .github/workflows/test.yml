@@ -36,3 +36,4 @@ jobs:
           projectName: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           directory: 'example/dist'
           githubToken: ${{ secrets.GITHUB_TOKEN }}
+          github-environment: 'preview'

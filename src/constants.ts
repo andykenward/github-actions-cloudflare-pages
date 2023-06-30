@@ -11,6 +11,7 @@ export const ACTION_INPUT_API_TOKEN = 'apiToken'
 /** GitHub Action Input key = Directory of static files to upload */
 export const ACTION_INPUT_DIRECTORY = 'directory'
 export const ACTION_INPUT_GITHUB_TOKEN = 'githubToken'
+export const ACTION_INPUT_GITHUB_ENVIRONMENT = 'github-environment'
 /**
  * Environment variables
  */

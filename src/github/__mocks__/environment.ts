@@ -6,3 +6,8 @@ export const createEnvironment = vi.fn().mockResolvedValue({
   name: 'unlike-dev (Preview)',
   id: 'EN_kwDOJn0nrM5D_l8n'
 } satisfies Environment)
+
+export const checkEnvironment = vi.fn().mockResolvedValue({
+  name: 'unlike-dev (Preview)',
+  id: 'EN_kwDOJn0nrM5D_l8n'
+} satisfies Environment)

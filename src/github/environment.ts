@@ -1,7 +1,8 @@
-import {error, notice} from '@unlike/github-actions-core'
+import {error, getInput, notice} from '@unlike/github-actions-core'
 
 import {graphql} from '@/gql/gql.js'
 
+import {ACTION_INPUT_GITHUB_ENVIRONMENT} from '../constants.js'
 import {request} from './api/client.js'
 import {useContext} from './context.js'
 
@@ -48,22 +49,50 @@ export const createEnvironment = async () => {
   return environment.data.createEnvironment?.environment
 }
 
-export type Environment = Awaited<ReturnType<typeof createEnvironment>>
+export const QueryGetEnvironment = graphql(/* GraphQL */ `
+  query GetEnvironment(
+    $owner: String!
+    $repo: String!
+    $environment_name: String!
+  ) {
+    repository(owner: $owner, name: $repo) {
+      environment(name: $environment_name) {
+        name
+        id
+      }
+    }
+  }
+`)
 
-// export const QueryGetEnvironment = graphql(/* GraphQL */ `
-//   query Environment(
-//     $owner: String!
-//     $repo: String!
-//     $environment_name: String!
-//   ) {
-//     repository(owner: $owner, name: $repo) {
-//       environment(name: $environment_name) {
-//         name
-//         id
-//       }
-//     }
-//   }
-// `)
 /**
- * TODO: @andykenward https://docs.github.com/en/graphql/reference/mutations#deleteenvironment
+ * CheckEnvironment will check if the environment exists and if it does not it
+ * will error to the users to create the environment themselves.
  */
+export const checkEnvironment = async () => {
+  const environmentName = getInput(ACTION_INPUT_GITHUB_ENVIRONMENT, {
+    required: true
+  })
+  const {repo} = useContext()
+
+  const environment = await request(
+    QueryGetEnvironment,
+    {
+      owner: repo.owner,
+      repo: repo.repo,
+      environment_name: environmentName
+    },
+    {errorThrows: false}
+  )
+
+  if (environment.errors) {
+    error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`)
+  }
+
+  if (!environment.data.repository?.environment) {
+    notice(`GitHub Environment: Not created for ${environmentName}`)
+  }
+
+  return environment.data.repository?.environment
+}
+
+export type Environment = Awaited<ReturnType<typeof checkEnvironment>>

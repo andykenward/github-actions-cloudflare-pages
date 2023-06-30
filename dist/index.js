@@ -2501,6 +2501,7 @@ var ACTION_INPUT_PROJECT_NAME = "projectName";
 var ACTION_INPUT_API_TOKEN = "apiToken";
 var ACTION_INPUT_DIRECTORY = "directory";
 var ACTION_INPUT_GITHUB_TOKEN = "githubToken";
+var ACTION_INPUT_GITHUB_ENVIRONMENT = "github-environment";
 var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
 var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
 
@@ -2880,11 +2881,22 @@ var CreateEnvironmentDocument = new TypedDocumentString(`
   }
 }
     `);
+var GetEnvironmentDocument = new TypedDocumentString(`
+    query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!) {
+  repository(owner: $owner, name: $repo) {
+    environment(name: $environment_name) {
+      name
+      id
+    }
+  }
+}
+    `);
 
 // __generated__/gql/gql.ts
 var documents = {
   "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
-  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        name\n        id\n      }\n    }\n  }\n": CreateEnvironmentDocument
+  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        name\n        id\n      }\n    }\n  }\n": CreateEnvironmentDocument,
+  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        name\n        id\n      }\n    }\n  }\n": GetEnvironmentDocument
 };
 function graphql(source) {
   return documents[source] ?? {};
@@ -2926,26 +2938,45 @@ var MutationCreateEnvironment = graphql(
   }
 `
 );
-var createEnvironment = /* @__PURE__ */ __name(async () => {
-  const { branch, repo } = useContext();
-  if (!branch)
-    throw new Error("branch is required");
+var QueryGetEnvironment = graphql(
+  /* GraphQL */
+  `
+  query GetEnvironment(
+    $owner: String!
+    $repo: String!
+    $environment_name: String!
+  ) {
+    repository(owner: $owner, name: $repo) {
+      environment(name: $environment_name) {
+        name
+        id
+      }
+    }
+  }
+`
+);
+var checkEnvironment = /* @__PURE__ */ __name(async () => {
+  const environmentName = getInput(ACTION_INPUT_GITHUB_ENVIRONMENT, {
+    required: true
+  });
+  const { repo } = useContext();
   const environment = await request(
-    MutationCreateEnvironment,
+    QueryGetEnvironment,
     {
-      repositoryId: repo.id,
-      name: branch
+      owner: repo.owner,
+      repo: repo.repo,
+      environment_name: environmentName
     },
     { errorThrows: false }
   );
   if (environment.errors) {
     error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
   }
-  if (!environment.data.createEnvironment?.environment) {
-    notice("GitHub Environment: Not created");
+  if (!environment.data.repository?.environment) {
+    notice(`GitHub Environment: Not created for ${environmentName}`);
   }
-  return environment.data.createEnvironment?.environment;
-}, "createEnvironment");
+  return environment.data.repository?.environment;
+}, "checkEnvironment");
 
 // src/main.ts
 async function run() {
@@ -2953,7 +2984,7 @@ async function run() {
   const deployment = await createDeployment();
   const { eventName } = useContextEvent();
   if (eventName === "pull_request") {
-    const environment = await createEnvironment();
+    const environment = await checkEnvironment();
   }
   return { name, subdomain, url: deployment.url };
 }
