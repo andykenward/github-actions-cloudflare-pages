@@ -2604,7 +2604,25 @@ var getWorkflowEvent = /* @__PURE__ */ __name(() => {
 // src/github/context.ts
 var getGitHubContext = /* @__PURE__ */ __name(() => {
   const event = getWorkflowEvent();
-  const repo = getRepo();
+  const repo = (() => {
+    if (process.env.GITHUB_REPOSITORY) {
+      const [owner, repo2] = process.env.GITHUB_REPOSITORY.split("/");
+      if (owner === void 0 || repo2 === void 0) {
+        throw new Error("no repo");
+      }
+      let id;
+      if ("repository" in event.payload) {
+        id = event.payload.repository?.node_id;
+      }
+      if (!id) {
+        throw new Error("context.repo no repo id in payload");
+      }
+      return { owner, repo: repo2, id };
+    }
+    throw new Error(
+      "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+    );
+  })();
   const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
   const sha = process.env.GITHUB_SHA;
   const ref = process.env.GITHUB_REF;
@@ -2618,22 +2636,6 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
     ref
   };
 }, "getGitHubContext");
-var getRepo = /* @__PURE__ */ __name(() => {
-  if (process.env.GITHUB_REPOSITORY) {
-    const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
-    const id = process.env.GITHUB_REPOSITORY_ID;
-    if (owner === void 0 || repo === void 0) {
-      throw new Error("no repo");
-    }
-    if (!id) {
-      throw new Error("no repo id");
-    }
-    return { owner, repo, id };
-  }
-  throw new Error(
-    "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-  );
-}, "getRepo");
 var _context;
 var useContext = /* @__PURE__ */ __name(() => {
   if (!_context) {

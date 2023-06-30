@@ -37,7 +37,7 @@ describe('environment', () => {
           body: JSON.stringify({
             query: MutationCreateEnvironment.toString(),
             variables: {
-              repositoryId: TEST_ENV_VARS.GITHUB_REPOSITORY_ID,
+              repositoryId: `MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=`,
               name: TEST_ENV_VARS.GITHUB_HEAD_REF as string
             } satisfies CreateEnvironmentMutationVariables
           })
@@ -73,7 +73,7 @@ describe('environment', () => {
           body: JSON.stringify({
             query: MutationCreateEnvironment.toString(),
             variables: {
-              repositoryId: TEST_ENV_VARS.GITHUB_REPOSITORY_ID,
+              repositoryId: `MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=`,
               name: TEST_ENV_VARS.GITHUB_HEAD_REF
             }
           })

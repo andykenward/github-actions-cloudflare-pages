@@ -76,6 +76,7 @@ declare namespace NodeJS {
 
     /**
      * The ID of the repository.
+     * This is the Database ID and not the ID needed for Graphql queries.
      *
      * Example: 123456789. Note that this is different from the repository name.
      */

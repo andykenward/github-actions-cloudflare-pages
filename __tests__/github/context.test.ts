@@ -9,7 +9,7 @@ describe('getGitHubContext', () => {
     /** Repo */
     expect(repo).toMatchInlineSnapshot(`
       {
-        "id": "R_kgDOJn0nrA",
+        "id": "MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=",
         "owner": "unlike-ltd",
         "repo": "github-actions-cloudflare-pages",
       }
