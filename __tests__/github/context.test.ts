@@ -4,13 +4,14 @@ import {useContext} from '@/src/github/context.js'
 
 describe('getGitHubContext', () => {
   test('returns eventName ', () => {
-    const {repo, event, branch, sha} = useContext()
+    const {repo, event, branch, sha, graphqlEndpoint, ref} = useContext()
 
     /** Repo */
     expect(repo).toMatchInlineSnapshot(`
       {
-        "owner": "mock-owner",
-        "repo": "mock-github-repository",
+        "id": "R_kgDOJn0nrA",
+        "owner": "unlike-ltd",
+        "repo": "github-actions-cloudflare-pages",
       }
     `)
 
@@ -21,5 +22,7 @@ describe('getGitHubContext', () => {
 
     expect(branch).toStrictEqual(`mock-github-head-ref`)
     expect(sha).toStrictEqual(`mock-github-sha`)
+    expect(graphqlEndpoint).toStrictEqual(`https://api.github.com/graphql`)
+    expect(ref).toStrictEqual(`mock-github-ref`)
   })
 })

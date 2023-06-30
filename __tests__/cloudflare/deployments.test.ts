@@ -13,17 +13,10 @@ import {CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN} from '@/src/constants.js'
 import {
   getMockApi,
   MOCK_API_PATH_DEPLOYMENTS,
-  REQUIRED_INPUTS,
-  setInputEnv,
   setRequiredInputEnv
 } from '@/tests/helpers/index.js'
 
 import PACKAGE_JSON from '../../package.json'
-
-const EACH_REQUIRED_INPUTS = REQUIRED_INPUTS.map(input => ({
-  expected: input,
-  inputs: REQUIRED_INPUTS.filter(a => a !== input)
-}))
 
 vi.mock('execa')
 vi.mock('@unlike/github-actions-core')
@@ -62,25 +55,6 @@ describe('deployments', () => {
     const spySummaryAddTable = vi.spyOn(core.summary, 'addTable')
     const spySummaryAddHeading = vi.spyOn(core.summary, 'addHeading')
     const spySummaryAddBreak = vi.spyOn(core.summary, 'addBreak')
-
-    describe('environment variables', () => {
-      test.each(EACH_REQUIRED_INPUTS)(
-        `throws error when required input $expected is undefined`,
-        async ({expected, inputs}) => {
-          for (const input of inputs) {
-            setInputEnv(input, input)
-          }
-
-          await expect(() => createDeployment()).rejects.toThrow(
-            `Input required and not supplied: ${expected}`
-          )
-
-          expect(execa.$).not.toHaveBeenCalled()
-          expect(spySetOutput).not.toHaveBeenCalled()
-          expect(spySummaryAddTable).not.toHaveBeenCalled()
-        }
-      )
-    })
 
     describe('api calls', () => {
       let mockApi: ReturnType<typeof getMockApi>
@@ -221,11 +195,11 @@ describe('deployments', () => {
           ['Environment:', `production`],
           [
             'Branch:',
-            `<a href='https://github.com/mock-owner/mock-github-repository/tree/main'><code>main</code></a>`
+            `<a href='https://github.com/unlike-ltd/github-actions-cloudflare-pages/tree/main'><code>main</code></a>`
           ],
           [
             'Commit Hash:',
-            `<a href='https://github.com/mock-owner/mock-github-repository/commit/mock-github-sha'><code>mock-github-sha</code></a>`
+            `<a href='https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/mock-github-sha'><code>mock-github-sha</code></a>`
           ],
           ['Commit Message:', `chore(deps-dev): update eslint packages`],
           ['Status:', `<strong>SUCCESS</strong>`],

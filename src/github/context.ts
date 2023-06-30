@@ -5,7 +5,7 @@ type Context = {
    * The event that triggered the workflow run.
    */
   event: ReturnType<typeof getWorkflowEvent>
-  repo: {owner: string; repo: string}
+  repo: {owner: string; repo: string; id: string}
   /**
    * The branch or tag ref that triggered the workflow run.
    */
@@ -22,6 +22,11 @@ type Context = {
    * Returns the GraphQL API URL. For example: https://api.github.com/graphql.
    */
   graphqlEndpoint: string
+
+  /**
+   * refs/heads/feature-branch-1.
+   */
+  ref: string
 }
 
 const getGitHubContext = (): Context => {
@@ -36,6 +41,8 @@ const getGitHubContext = (): Context => {
 
   const sha = process.env.GITHUB_SHA
 
+  const ref = process.env.GITHUB_REF
+
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
 
   return {
@@ -43,17 +50,22 @@ const getGitHubContext = (): Context => {
     repo,
     branch,
     sha,
-    graphqlEndpoint
+    graphqlEndpoint,
+    ref
   }
 }
 
 const getRepo = (): Context['repo'] => {
   if (process.env.GITHUB_REPOSITORY) {
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
+    const id = process.env.GITHUB_REPOSITORY_ID
     if (owner === undefined || repo === undefined) {
       throw new Error('no repo')
     }
-    return {owner, repo}
+    if (!id) {
+      throw new Error('no repo id')
+    }
+    return {owner, repo, id}
   }
 
   throw new Error(

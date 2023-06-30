@@ -1090,11 +1090,22 @@ var setFailed = /* @__PURE__ */ __name6((message) => {
   error(message);
 }, "setFailed");
 
+// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/logging.js
+var __defProp7 = Object.defineProperty;
+var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
+var notice = /* @__PURE__ */ __name7((message, properties = {}) => {
+  issueCommand(
+    "notice",
+    toCommandProperties(properties),
+    message instanceof Error ? message.toString() : message
+  );
+}, "notice");
+
 // node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/lib/summary.js
 import { constants, promises } from "node:fs";
 import { EOL as EOL4 } from "node:os";
-var __defProp7 = Object.defineProperty;
-var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
+var __defProp8 = Object.defineProperty;
+var __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
 var { access, appendFile, writeFile } = promises;
 var SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
 var _buffer, _filePath, _fileSummaryPath, fileSummaryPath_fn, _wrap, wrap_fn;
@@ -1366,7 +1377,7 @@ wrap_fn = /* @__PURE__ */ __name(function(tag, content, attrs = {}) {
   return `<${tag}${htmlAttrs}>${content}</${tag}>`;
 }, "#wrap");
 __name(_Summary, "Summary");
-__name7(_Summary, "Summary");
+__name8(_Summary, "Summary");
 var _summary = new Summary();
 var summary = _summary;
 
@@ -2588,6 +2599,7 @@ var ACTION_INPUT_ACCOUNT_ID = "accountId";
 var ACTION_INPUT_PROJECT_NAME = "projectName";
 var ACTION_INPUT_API_TOKEN = "apiToken";
 var ACTION_INPUT_DIRECTORY = "directory";
+var ACTION_INPUT_GITHUB_TOKEN = "githubToken";
 var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
 var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
 
@@ -2694,20 +2706,28 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
   const repo = getRepo();
   const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
   const sha = process.env.GITHUB_SHA;
+  const ref = process.env.GITHUB_REF;
+  const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL;
   return {
     event,
     repo,
     branch,
-    sha
+    sha,
+    graphqlEndpoint,
+    ref
   };
 }, "getGitHubContext");
 var getRepo = /* @__PURE__ */ __name(() => {
   if (process.env.GITHUB_REPOSITORY) {
     const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+    const id = process.env.GITHUB_REPOSITORY_ID;
     if (owner === void 0 || repo === void 0) {
       throw new Error("no repo");
     }
-    return { owner, repo };
+    if (!id) {
+      throw new Error("no repo id");
+    }
+    return { owner, repo, id };
   }
   throw new Error(
     "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
@@ -2720,6 +2740,7 @@ var useContext = /* @__PURE__ */ __name(() => {
   }
   return _context;
 }, "useContext");
+var useContextEvent = /* @__PURE__ */ __name(() => useContext().event, "useContextEvent");
 
 // src/cloudflare/api/endpoints.ts
 var API_ENDPOINT = `https://api.cloudflare.com`;
@@ -2906,10 +2927,129 @@ var getProject = /* @__PURE__ */ __name(async () => {
   return result;
 }, "getProject");
 
+// __generated__/gql/graphql.ts
+var _TypedDocumentString = class extends String {
+  constructor(value, __meta__) {
+    super(value);
+    this.value = value;
+    this.__meta__ = __meta__;
+  }
+  __apiType;
+  toString() {
+    return this.value;
+  }
+};
+var TypedDocumentString = _TypedDocumentString;
+__name(_TypedDocumentString, "TypedDocumentString");
+var FilesDocument = new TypedDocumentString(`
+    query Files($owner: String!, $repo: String!, $path: String!) {
+  repository(owner: $owner, name: $repo) {
+    object(expression: $path) {
+      __typename
+      ... on Tree {
+        entries {
+          name
+          type
+          language {
+            name
+          }
+          object {
+            __typename
+            ... on Blob {
+              text
+            }
+          }
+        }
+      }
+    }
+  }
+}
+    `);
+var CreateEnvironmentDocument = new TypedDocumentString(`
+    mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
+  createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+    environment {
+      name
+      id
+    }
+  }
+}
+    `);
+
+// __generated__/gql/gql.ts
+var documents = {
+  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
+  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        name\n        id\n      }\n    }\n  }\n": CreateEnvironmentDocument
+};
+function graphql(source) {
+  return documents[source] ?? {};
+}
+__name(graphql, "graphql");
+
+// src/github/api/client.ts
+var request = /* @__PURE__ */ __name(async (query, variables = /* @__PURE__ */ Object.create(null), options) => {
+  const { errorThrows } = { errorThrows: true, ...options };
+  const token = getInput(ACTION_INPUT_GITHUB_TOKEN, { required: true });
+  const { graphqlEndpoint } = useContext();
+  return fetch(graphqlEndpoint, {
+    method: "POST",
+    headers: {
+      authorization: `bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/vnd.github.flash-preview+json"
+    },
+    body: JSON.stringify({ query: query.toString(), variables })
+  }).then((res) => res.json()).then((res) => {
+    if (res.errors && errorThrows) {
+      throw new Error(JSON.stringify(res.errors));
+    }
+    return res;
+  });
+}, "request");
+
+// src/github/environment.ts
+var MutationCreateEnvironment = graphql(
+  /* GraphQL */
+  `
+  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
+    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+      environment {
+        name
+        id
+      }
+    }
+  }
+`
+);
+var createEnvironment = /* @__PURE__ */ __name(async () => {
+  const { branch, repo } = useContext();
+  if (!branch)
+    throw new Error("branch is required");
+  const environment = await request(
+    MutationCreateEnvironment,
+    {
+      repositoryId: repo.id,
+      name: branch
+    },
+    { errorThrows: false }
+  );
+  if (environment.errors) {
+    error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
+  }
+  if (!environment.data.createEnvironment?.environment) {
+    notice("GitHub Environment: Not created");
+  }
+  return environment.data.createEnvironment?.environment;
+}, "createEnvironment");
+
 // src/main.ts
 async function run() {
   const { name, subdomain } = await getProject();
   const deployment = await createDeployment();
+  const { eventName } = useContextEvent();
+  if (eventName === "pull_request") {
+    const environment = await createEnvironment();
+  }
   return { name, subdomain, url: deployment.url };
 }
 __name(run, "run");

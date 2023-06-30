@@ -5,15 +5,18 @@ import {MockAgent, setGlobalDispatcher} from 'undici'
 export const getMockApi = (): {
   mockAgent: MockAgent
   mockPoolCloudflare: Interceptable
+  mockPoolGitHub: Interceptable
 } => {
   const mockAgent = new MockAgent()
   mockAgent.disableNetConnect() // prevent actual requests
   setGlobalDispatcher(mockAgent) // enabled the mock client to intercept requests
   const mockPoolCloudflare = mockAgent.get(`https://api.cloudflare.com`)
+  const mockPoolGitHub = mockAgent.get(`https://api.github.com`)
 
   return {
     mockAgent,
-    mockPoolCloudflare
+    mockPoolCloudflare,
+    mockPoolGitHub
   }
 }
 export type MockApi = ReturnType<typeof getMockApi>

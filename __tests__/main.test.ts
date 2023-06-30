@@ -13,6 +13,7 @@ import {
 
 vi.mock('@unlike/github-actions-core')
 vi.mock('execa')
+vi.mock('@/src/github/environment.js')
 describe('main', () => {
   let mockApi: ReturnType<typeof getMockApi>
   const spySetOutput = vi.mocked(core.setOutput)

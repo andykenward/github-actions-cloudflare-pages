@@ -1,4 +1,5 @@
 // @ts-check
+
 /** @type {import('@graphql-codegen/cli').CodegenConfig } */
 const config = {
   overwrite: true,
@@ -6,11 +7,15 @@ const config = {
   documents: ['./src/**/*.{graphql,js,ts}', './bin/**/*.{graphql,js,ts}'],
   emitLegacyCommonJSImports: false,
   generates: {
-    '__generated__/types/graphql-operations.ts': {
-      plugins: ['typescript', 'typescript-operations', 'typed-document-node'],
+    '__generated__/gql/': {
+      preset: 'client',
       config: {
         useTypeImports: true,
-        immutableTypes: true
+        immutableTypes: true,
+        dedupeFragments: true,
+        useExplicitTyping: true,
+        skipTypename: true,
+        documentMode: 'string'
         // flattenGeneratedTypes: true
       }
     }

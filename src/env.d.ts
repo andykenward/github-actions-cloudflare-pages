@@ -12,6 +12,22 @@ declare namespace NodeJS {
      * Example: `feature-branch-1`.
      */
     GITHUB_HEAD_REF?: string
+
+    /**
+     * The fully-formed ref of the branch or tag that triggered the workflow run.
+     * For workflows triggered by push, this is the branch or tag ref that was
+     * pushed. For workflows triggered by pull_request, this is the pull request
+     * merge branch. For workflows triggered by release, this is the release tag
+     * created. For other triggers, this is the branch or tag ref that triggered
+     * the workflow run. This is only set if a branch or tag is available for
+     * the event type. The ref given is fully-formed, meaning that for branches
+     * the format is refs/heads/<branch_name>, for pull requests it is
+     * refs/pull/<pr_number>/merge, and for tags it is refs/tags/<tag_name>.
+     *
+     * Example, refs/heads/feature-branch-1.
+     */
+    GITHUB_REF: string
+
     /**
      * The short ref name of the branch or tag that triggered the workflow
      * run. This value matches the branch or tag name shown on GitHub.
@@ -45,7 +61,9 @@ declare namespace NodeJS {
     GITHUB_EVENT_PATH?: string
 
     /**
-     * Returns the GraphQL API URL. For example: https://api.github.com/graphql.
+     * Returns the GraphQL API URL.
+     *
+     * Example: https://api.github.com/graphql.
      */
     GITHUB_GRAPHQL_URL: string
 
@@ -54,7 +72,14 @@ declare namespace NodeJS {
      *
      * Example: `octocat/Hello-World`.
      */
-    GITHUB_REPOSITORY?: string
+    GITHUB_REPOSITORY: string
+
+    /**
+     * The ID of the repository.
+     *
+     * Example: 123456789. Note that this is different from the repository name.
+     */
+    GITHUB_REPOSITORY_ID: string
 
     /**
      * The path to a temporary directory on the runner.

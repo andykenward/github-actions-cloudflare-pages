@@ -1,13 +1,12 @@
 #!/usr/bin/env ts-node-transpile-only
+import type {
+  FilesQuery,
+  FilesQueryVariables
+} from '../../../__generated__/gql/graphql.js'
 
 import 'dotenv/config'
 
 import {writeFile} from 'node:fs/promises'
-
-import type {
-  FilesQuery,
-  FilesQueryVariables
-} from '../../../__generated__/types/graphql-operations.js'
 
 const OWNER = 'octokit'
 const REPO = 'webhooks'
@@ -48,8 +47,8 @@ const getWebhookExamples = async () => {
       query Files($owner: String!, $repo: String!, $path: String!) {
         repository(owner: $owner, name: $repo) {
           object(expression: $path) {
+            __typename
             ... on Tree {
-              __typename
               entries {
                 name
                 type
@@ -57,8 +56,8 @@ const getWebhookExamples = async () => {
                   name
                 }
                 object {
+                  __typename
                   ... on Blob {
-                    __typename
                     text
                   }
                 }
