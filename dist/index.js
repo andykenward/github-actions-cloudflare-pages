@@ -2501,7 +2501,7 @@ var ACTION_INPUT_PROJECT_NAME = "projectName";
 var ACTION_INPUT_API_TOKEN = "apiToken";
 var ACTION_INPUT_DIRECTORY = "directory";
 var ACTION_INPUT_GITHUB_TOKEN = "githubToken";
-var ACTION_INPUT_GITHUB_ENVIRONMENT = "github-environment";
+var ACTION_INPUT_GITHUB_ENVIRONMENT = "github environment";
 var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
 var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
 
@@ -2985,6 +2985,7 @@ async function run() {
   const { eventName } = useContextEvent();
   if (eventName === "pull_request") {
     const environment = await checkEnvironment();
+    console.log(environment);
   }
   return { name, subdomain, url: deployment.url };
 }
