@@ -45,6 +45,11 @@ declare namespace NodeJS {
     GITHUB_EVENT_PATH?: string
 
     /**
+     * Returns the GraphQL API URL. For example: https://api.github.com/graphql.
+     */
+    GITHUB_GRAPHQL_URL: string
+
+    /**
      * The owner and repository name.
      *
      * Example: `octocat/Hello-World`.

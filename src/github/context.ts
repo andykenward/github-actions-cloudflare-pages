@@ -18,6 +18,10 @@ type Context = {
    * Example: `ffac537e6cbbf934b08745a378932722df287a53`.
    */
   sha: string
+  /**
+   * Returns the GraphQL API URL. For example: https://api.github.com/graphql.
+   */
+  graphqlEndpoint: string
 }
 
 const getGitHubContext = (): Context => {
@@ -32,11 +36,14 @@ const getGitHubContext = (): Context => {
 
   const sha = process.env.GITHUB_SHA
 
+  const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
+
   return {
     event,
     repo,
     branch,
-    sha
+    sha,
+    graphqlEndpoint
   }
 }
 

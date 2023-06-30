@@ -26,7 +26,8 @@
     "test:ui": "vitest --ui",
     "all": "pnpm run codegen && pnpm run tsc:check && pnpm run format && pnpm run lint:ls && pnpm run test:ci && pnpm run build",
     "act:d": "act -j delete --secret-file .env",
-    "codegen": "pnpm run ts-node -T bin/codegen/index.ts",
+    "codegen": "graphql-codegen-esm --config graphql.config.js",
+    "codegen:events": "pnpm run ts-node -T bin/codegen/index.ts",
     "download": "pnpm run ts-node -T bin/download/index.ts",
     "changeset": "changeset",
     "version": "changeset version",
@@ -45,9 +46,9 @@
   "license": "MIT",
   "engines": {
     "node": "^18.16.0",
-    "pnpm": "^8.6.1"
+    "pnpm": "^8.6.5"
   },
-  "packageManager": "pnpm@8.6.1",
+  "packageManager": "pnpm@8.6.5",
   "dependencies": {
     "@unlike/github-actions-core": "0.0.6",
     "execa": "7.1.1",
@@ -56,8 +57,12 @@
   "devDependencies": {
     "@changesets/cli": "2.26.1",
     "@cloudflare/types": "6.21.13",
+    "@graphql-codegen/cli": "4.0.1",
+    "@graphql-codegen/typed-document-node": "5.0.1",
+    "@graphql-codegen/typescript": "4.0.1",
+    "@graphql-codegen/typescript-operations": "4.0.1",
     "@ianvs/prettier-plugin-sort-imports": "4.0.2",
-    "@octokit/core": "4.2.1",
+    "@octokit/graphql-schema": "14.13.1",
     "@octokit/webhooks-schemas": "7.0.3",
     "@octokit/webhooks-types": "7.0.3",
     "@total-typescript/ts-reset": "0.4.2",
@@ -75,6 +80,8 @@
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-unicorn": "47.0.0",
     "eslint-plugin-vitest": "0.2.6",
+    "graphql": "16.7.1",
+    "graphql-tag": "2.12.6",
     "prettier": "2.8.8",
     "ts-node": "10.9.1",
     "typescript": "5.1.3",

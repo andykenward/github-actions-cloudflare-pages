@@ -8,8 +8,6 @@ import {createRequire} from 'node:module'
 
 import prettier from 'prettier'
 
-const require = createRequire(import.meta.url)
-
 interface Schema extends JSONSchema7 {
   oneOf: Array<JSONSchema7 & Required<Pick<JSONSchema7, '$ref'>>>
 }
@@ -17,7 +15,9 @@ interface Schema extends JSONSchema7 {
  * assert {type: 'json'} isn't supported by some tooling
  */
 // import schema from '@octokit/webhooks-schemas/schema.json' assert {type: 'json'}
-const schema = require('@octokit/webhooks-schemas') as Schema
+const schema = createRequire(import.meta.url)(
+  '@octokit/webhooks-schemas'
+) as Schema
 
 export const capitalize = (str: string) => {
   assert.ok(str.length > 0 && str[0], 'unable to capitalize string')

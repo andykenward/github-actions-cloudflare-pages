@@ -5,7 +5,8 @@ export const TEST_ENV_VARS: NodeJS.ProcessEnv = {
   GITHUB_EVENT_NAME: 'pull_request',
   GITHUB_REPOSITORY: 'mock-owner/mock-github-repository',
   GITHUB_EVENT_PATH:
-    '__generated__/payloads/api.github.com/pull_request/opened.payload.json'
+    '__generated__/payloads/api.github.com/pull_request/opened.payload.json',
+  GITHUB_GRAPHQL_URL: 'https://api.github.com/graphql'
 }
 
 export const setTestEnvVars = () => {
