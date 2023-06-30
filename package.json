@@ -9,7 +9,7 @@
     "dev": "pnpm run ts-node --require dotenv/config src/index.ts",
     "start": "node -r dotenv/config ./dist/index.js",
     "build": "node ./esbuild.config.mjs",
-    "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node16.20.0 --format=esm --legal-comments=external --minify --sourcemap --analyze --outfile=dist/index.js --tree-shaking=true",
+    "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=esm --keep-names --legal-comments=external  --sourcemap --analyze --outfile=dist/index.js --tree-shaking=true",
     "tsc:check": "tsc --noEmit --checkJs",
     "tsc:watch": "pnpm run tsc:check --watch",
     "tsc:ls": "pnpm run tsc:check --listFilesOnly",
