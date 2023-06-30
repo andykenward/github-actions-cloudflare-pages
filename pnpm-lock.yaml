@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@unlike/github-actions-core':
-    specifier: 0.0.6
-    version: 0.0.6
+    specifier: 0.1.0
+    version: 0.1.0
   execa:
     specifier: 7.1.1
     version: 7.1.1
@@ -2735,9 +2735,9 @@ packages:
       eslint-visitor-keys: 3.4.1
     dev: true
 
-  /@unlike/github-actions-core@0.0.6:
-    resolution: {integrity: sha512-J7+xHHZJcgmdh6wbjiyjnRe7N8NOFKidkLI66+4tufGPXcPt2OZgYOoSOc7+J3jNe997/meJhMjj0B5OQRy3FQ==}
-    engines: {node: '>=v16.20.0'}
+  /@unlike/github-actions-core@0.1.0:
+    resolution: {integrity: sha512-ZvkgLE2q24kNGYHFV1mZmS+Ah9hgWmOuZokJof9xropzNty/H3/qIiEYxL/MW1xQbJH9q2PssWpJ8BghL2gD9A==}
+    engines: {node: '>=18.16.1'}
     dependencies:
       '@actions/http-client': 2.1.0
     dev: false
