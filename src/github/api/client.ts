@@ -18,7 +18,7 @@ export type GraphqlResponse<T = unknown> = {
   data: T
   errors?: GitHubGraphQLError[]
 }
-type Variables = Record<string, unknown>
+export type Variables = Record<string, unknown>
 
 type Options = {
   /**
@@ -32,15 +32,20 @@ type Options = {
 // | DocumentNode
 // | TypedDocumentNode<TData, TVariables>
 
+export type RequestParams<TData, TVariables> = {
+  query: string | TypedDocumentString<TData, TVariables>
+  variables?: TVariables
+  options?: Options
+}
+
 export const request = async <
   TData = unknown,
   TVariables extends Variables = Variables
 >(
-  query: string | TypedDocumentString<TData, TVariables>,
-  variables: TVariables = Object.create(null),
-  options?: Options
+  params: RequestParams<TData, TVariables>
 ): Promise<GraphqlResponse<TData>> => {
-  const {errorThrows} = {errorThrows: true, ...options}
+  const {query, variables, options} = params
+  const {errorThrows} = options || {errorThrows: true}
   const token = getInput(ACTION_INPUT_GITHUB_TOKEN, {required: true})
 
   const {graphqlEndpoint} = useContext()

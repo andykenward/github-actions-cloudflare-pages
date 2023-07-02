@@ -2904,8 +2904,9 @@ function graphql(source) {
 __name(graphql, "graphql");
 
 // src/github/api/client.ts
-var request = /* @__PURE__ */ __name(async (query, variables = /* @__PURE__ */ Object.create(null), options) => {
-  const { errorThrows } = { errorThrows: true, ...options };
+var request = /* @__PURE__ */ __name(async (params) => {
+  const { query, variables, options } = params;
+  const { errorThrows } = options || { errorThrows: true };
   const token = getInput(ACTION_INPUT_GITHUB_TOKEN, { required: true });
   const { graphqlEndpoint } = useContext();
   return fetch(graphqlEndpoint, {
@@ -2960,15 +2961,17 @@ var checkEnvironment = /* @__PURE__ */ __name(async () => {
     required: true
   });
   const { repo } = useContext();
-  const environment = await request(
-    QueryGetEnvironment,
-    {
+  const environment = await request({
+    query: QueryGetEnvironment,
+    variables: {
       owner: repo.owner,
       repo: repo.repo,
       environment_name: environmentName
     },
-    { errorThrows: false }
-  );
+    options: {
+      errorThrows: false
+    }
+  });
   if (environment.errors) {
     error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
   }

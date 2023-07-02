@@ -1,13 +1,14 @@
-import * as core from '@unlike/github-actions-core'
+import {setOutput} from '@unlike/github-actions-core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
+import type {MockApi} from '@/tests/helpers/index.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json'
 import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
 import {run} from '@/src/main.js'
 import {
-  getMockApi,
   MOCK_API_PATH,
   MOCK_API_PATH_DEPLOYMENTS,
+  setMockApi,
   setRequiredInputEnv
 } from '@/tests/helpers/index.js'
 
@@ -15,11 +16,11 @@ vi.mock('@unlike/github-actions-core')
 vi.mock('execa')
 vi.mock('@/src/github/environment.js')
 describe('main', () => {
-  let mockApi: ReturnType<typeof getMockApi>
-  const spySetOutput = vi.mocked(core.setOutput)
+  let mockApi: MockApi
+  const spySetOutput = vi.mocked(setOutput)
 
   beforeEach(() => {
-    mockApi = getMockApi()
+    mockApi = setMockApi()
     setRequiredInputEnv()
   })
 
@@ -30,18 +31,12 @@ describe('main', () => {
   describe('run', () => {
     describe('handles resolve', () => {
       beforeEach(() => {
-        mockApi.mockPoolCloudflare
-          .intercept({
-            path: MOCK_API_PATH,
-            method: `GET`
-          })
-          .reply(200, RESPONSE_PROJECT)
-        mockApi.mockPoolCloudflare
-          .intercept({
-            path: MOCK_API_PATH_DEPLOYMENTS,
-            method: `GET`
-          })
-          .reply(200, RESPONSE_DEPLOYMENTS)
+        mockApi.interceptCloudflare(MOCK_API_PATH, RESPONSE_PROJECT, 200)
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENTS,
+          RESPONSE_DEPLOYMENTS,
+          200
+        )
       })
 
       test('success', async () => {

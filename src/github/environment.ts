@@ -8,6 +8,9 @@ import {useContext} from './context.js'
 
 /**
  * MutationCreateEnvironment will either return the environment if it exists or create it.
+ * GITHUB_TOKEN Action permissions don't allow for creating environments.
+ * @see {@link https://docs.github.com/en/actions/security-guides/automatic-token-authentication#granting-additional-permissions | Granting additional permissions}
+ * @see {@link https://docs.github.com/en/graphql/reference/mutations#createenvironment | `createEnvironment`}
  */
 export const MutationCreateEnvironment = graphql(/* GraphQL */ `
   mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
@@ -25,14 +28,16 @@ export const createEnvironment = async () => {
 
   if (!branch) throw new Error('branch is required')
 
-  const environment = await request(
-    MutationCreateEnvironment,
-    {
+  const environment = await request({
+    query: MutationCreateEnvironment,
+    variables: {
       repositoryId: repo.id,
       name: branch
     },
-    {errorThrows: false}
-  )
+    options: {
+      errorThrows: false
+    }
+  })
 
   if (environment.errors) {
     error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`)
@@ -41,10 +46,6 @@ export const createEnvironment = async () => {
   if (!environment.data.createEnvironment?.environment) {
     notice('GitHub Environment: Not created')
   }
-
-  /**
-   * TODO: @andykenward save environment id as artifact to then delete it later
-   */
 
   return environment.data.createEnvironment?.environment
 }
@@ -74,15 +75,17 @@ export const checkEnvironment = async () => {
   })
   const {repo} = useContext()
 
-  const environment = await request(
-    QueryGetEnvironment,
-    {
+  const environment = await request({
+    query: QueryGetEnvironment,
+    variables: {
       owner: repo.owner,
       repo: repo.repo,
       environment_name: environmentName
     },
-    {errorThrows: false}
-  )
+    options: {
+      errorThrows: false
+    }
+  })
 
   if (environment.errors) {
     error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`)
