@@ -35,8 +35,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/unlike-ltd/github-actions-cloudflare-pages.git"
+    "url": "https://github.com/unlike-ltd/github-actions-cloudflare-pages.git"
   },
+  "bugs": "https://github.com/unlike-ltd/github-actions-cloudflare-pages/issues",
   "keywords": [
     "actions",
     "node",
