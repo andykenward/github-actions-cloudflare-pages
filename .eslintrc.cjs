@@ -7,13 +7,19 @@ const config = {
     es2021: true,
     node: true
   },
+  plugins: ['@typescript-eslint'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    // 'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:unicorn/all',
     'prettier'
   ],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    project: true,
+    tsconfigRootDir: __dirname
+  },
   overrides: [
     {
       files: ['*.test.ts'],
@@ -41,13 +47,6 @@ const config = {
       }
     }
   ],
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    sourceType: 'module',
-    project: true,
-    tsconfigRootDir: '__dirname'
-  },
-  plugins: ['@typescript-eslint'],
   rules: {
     'unicorn/prefer-top-level-await': 'off',
     'unicorn/prevent-abbreviations': 'off',
