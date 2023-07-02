@@ -12,9 +12,11 @@ interface Schema extends JSONSchema7 {
   oneOf: Array<JSONSchema7 & Required<Pick<JSONSchema7, '$ref'>>>
 }
 /**
- * assert {type: 'json'} isn't supported by some tooling
+ * The assert for importing JSON files isn't supported by some tooling at the moment.
+ * ```
+ * import schema from '@octokit/webhooks-schemas/schema.json' assert {type: 'json'}
+ * ```
  */
-// import schema from '@octokit/webhooks-schemas/schema.json' assert {type: 'json'}
 const schema = createRequire(import.meta.url)(
   '@octokit/webhooks-schemas'
 ) as Schema
