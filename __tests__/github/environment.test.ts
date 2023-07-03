@@ -123,7 +123,8 @@ describe('environment', () => {
           variables: {
             owner: 'unlike-ltd',
             repo: 'github-actions-cloudflare-pages',
-            environment_name: 'mock-github-environment'
+            environment_name: 'mock-github-environment',
+            qualifiedName: 'mock-github-head-ref'
           }
         },
         {
@@ -132,6 +133,11 @@ describe('environment', () => {
               environment: {
                 name: 'unlike-dev (Preview)',
                 id: 'EN_kwDOJn0nrM5D_l8n'
+              },
+              ref: {
+                id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk=',
+                name: 'mock-github-head-ref',
+                prefix: 'ref/head'
               }
             }
           }
@@ -146,6 +152,7 @@ describe('environment', () => {
         {
           "id": "EN_kwDOJn0nrM5D_l8n",
           "name": "unlike-dev (Preview)",
+          "refId": "MDg6Q2hlY2tSdW4xMjM0NTY3ODk=",
         }
       `)
     })
@@ -157,7 +164,8 @@ describe('environment', () => {
           variables: {
             owner: 'unlike-ltd',
             repo: 'github-actions-cloudflare-pages',
-            environment_name: 'mock-github-environment'
+            environment_name: 'mock-github-environment',
+            qualifiedName: 'mock-github-head-ref'
           }
         },
         {
@@ -182,7 +190,10 @@ describe('environment', () => {
         }
       )
 
-      const environment = await checkEnvironment()
+      // const environment = await checkEnvironment()
+      await expect(checkEnvironment).rejects.toThrow(
+        `GitHub Environment: Not created for mock-github-environment`
+      )
 
       expect(error).toHaveBeenCalledWith(
         `GitHub Environment: Errors - ${JSON.stringify([
@@ -199,10 +210,10 @@ describe('environment', () => {
           }
         ])}`
       )
-      expect(notice).toHaveBeenCalledWith(
-        'GitHub Environment: Not created for mock-github-environment'
-      )
-      expect(environment).toBeNull()
+      // expect(notice).toHaveBeenCalledWith(
+      //   'GitHub Environment: Not created for mock-github-environment'
+      // )
+      // expect(environment).toBeNull()
     })
   })
 })

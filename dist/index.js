@@ -1068,22 +1068,11 @@ var setFailed = /* @__PURE__ */ __name6((message) => {
   error(message);
 }, "setFailed");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/logging.js
-var __defProp7 = Object.defineProperty;
-var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
-var notice = /* @__PURE__ */ __name7((message, properties = {}) => {
-  issueCommand(
-    "notice",
-    toCommandProperties(properties),
-    message instanceof Error ? message.toString() : message
-  );
-}, "notice");
-
 // node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/lib/summary.js
 import { constants, promises } from "node:fs";
 import { EOL as EOL4 } from "node:os";
-var __defProp8 = Object.defineProperty;
-var __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
+var __defProp7 = Object.defineProperty;
+var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
 var { access, appendFile, writeFile } = promises;
 var SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
 var Summary = class {
@@ -1091,7 +1080,7 @@ var Summary = class {
     __name(this, "Summary");
   }
   static {
-    __name8(this, "Summary");
+    __name7(this, "Summary");
   }
   #buffer;
   #filePath;
@@ -2626,14 +2615,17 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
   })();
   const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
   const sha = process.env.GITHUB_SHA;
-  const ref = branch || process.env.GITHUB_REF;
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL;
-  console.log("GITHUB_HEAD_RED:", process.env.GITHUB_HEAD_REF);
-  console.log("GITHUB_REF_NAME:", process.env.GITHUB_REF_NAME);
-  console.log("GITHUB_REF:", process.env.GITHUB_REF);
-  console.log("BRANCH", branch);
-  console.log("REF", ref);
-  console.dir(event.payload, { depth: null });
+  let ref = process.env.GITHUB_HEAD_REF;
+  if (!ref) {
+    if ("ref" in event.payload) {
+      ref = event.payload.ref;
+    } else if (event.eventName === "pull_request") {
+      ref = event.payload.pull_request.head.ref;
+    }
+    if (!ref)
+      throw new Error("context: no ref");
+  }
   return {
     event,
     repo,
@@ -2641,7 +2633,6 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
     sha,
     graphqlEndpoint,
     ref
-    // refId
   };
 }, "getGitHubContext");
 var _context;
@@ -2897,10 +2888,15 @@ var CreateEnvironmentDocument = new TypedDocumentString(`
   id
 }`);
 var GetEnvironmentDocument = new TypedDocumentString(`
-    query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!) {
+    query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!, $qualifiedName: String!) {
   repository(owner: $owner, name: $repo) {
     environment(name: $environment_name) {
       ...EnvironmentFragment
+    }
+    ref(qualifiedName: $qualifiedName) {
+      id
+      name
+      prefix
     }
   }
 }
@@ -2936,7 +2932,7 @@ var documents = {
   "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
   "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
   "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
-  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": GetEnvironmentDocument
+  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": GetEnvironmentDocument
 };
 function graphql(source) {
   return documents[source] ?? {};
@@ -2972,10 +2968,16 @@ var QueryGetEnvironment = graphql(
     $owner: String!
     $repo: String!
     $environment_name: String!
+    $qualifiedName: String!
   ) {
     repository(owner: $owner, name: $repo) {
       environment(name: $environment_name) {
         ...EnvironmentFragment
+      }
+      ref(qualifiedName: $qualifiedName) {
+        id
+        name
+        prefix
       }
     }
   }
@@ -2985,13 +2987,14 @@ var checkEnvironment = /* @__PURE__ */ __name(async () => {
   const environmentName = getInput(ACTION_INPUT_GITHUB_ENVIRONMENT, {
     required: true
   });
-  const { repo } = useContext();
+  const { repo, ref } = useContext();
   const environment = await request({
     query: QueryGetEnvironment,
     variables: {
       owner: repo.owner,
       repo: repo.repo,
-      environment_name: environmentName
+      environment_name: environmentName,
+      qualifiedName: ref
     },
     options: {
       errorThrows: false
@@ -3001,9 +3004,15 @@ var checkEnvironment = /* @__PURE__ */ __name(async () => {
     error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
   }
   if (!environment.data.repository?.environment) {
-    notice(`GitHub Environment: Not created for ${environmentName}`);
+    throw new Error(`GitHub Environment: Not created for ${environmentName}`);
   }
-  return environment.data.repository?.environment;
+  if (!environment.data.repository?.ref?.id) {
+    throw new Error(`GitHub Environment: No ref id ${environmentName}`);
+  }
+  return {
+    ...environment.data.repository.environment,
+    refId: environment.data.repository?.ref?.id
+  };
 }, "checkEnvironment");
 
 // src/github/deployment.ts
@@ -3053,24 +3062,24 @@ mutation CreateDeploymentStatus(
 }`;
 var createGitHubDeployment = /* @__PURE__ */ __name(async (cloudflareDeployment) => {
   const gitHubEnvironment = await checkEnvironment();
-  if (!gitHubEnvironment)
+  if (!gitHubEnvironment) {
     throw new Error("GitHub Deployment: GitHub Environment is required");
+  }
+  const gitHubEnvironmentName = gitHubEnvironment.name;
+  const gitHubEnvironmentRefId = gitHubEnvironment.refId;
+  const { repo } = useContext();
   const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
     required: true
   });
   const projectName = getInput(ACTION_INPUT_PROJECT_NAME, { required: true });
   const pagesDeploymentId = cloudflareDeployment.id;
   const pagesDeploymentUrl = cloudflareDeployment.url;
-  const { repo, ref } = useContext();
-  if (!gitHubEnvironment)
-    throw new Error("gitHubEnvironment is required");
-  const gitHubEnvironmentName = gitHubEnvironment.name;
   const deployment = await request({
     query: MutationCreateDeployment,
     variables: {
       repositoryId: repo.id,
       environmentName: gitHubEnvironmentName,
-      refId: ref
+      refId: gitHubEnvironmentRefId
     }
   });
   const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id;

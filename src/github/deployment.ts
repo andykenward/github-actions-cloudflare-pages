@@ -114,20 +114,20 @@ export const createGitHubDeployment = async (
   cloudflareDeployment: PagesDeployment
 ) => {
   const gitHubEnvironment = await checkEnvironment()
-  if (!gitHubEnvironment)
+  if (!gitHubEnvironment) {
     throw new Error('GitHub Deployment: GitHub Environment is required')
+  }
+  const gitHubEnvironmentName = gitHubEnvironment.name
+  const gitHubEnvironmentRefId = gitHubEnvironment.refId
+  const {repo} = useContext()
 
+  // Cloudflare
   const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
     required: true
   })
   const projectName = getInput(ACTION_INPUT_PROJECT_NAME, {required: true})
   const pagesDeploymentId = cloudflareDeployment.id
   const pagesDeploymentUrl = cloudflareDeployment.url
-
-  const {repo, ref} = useContext()
-
-  if (!gitHubEnvironment) throw new Error('gitHubEnvironment is required')
-  const gitHubEnvironmentName = gitHubEnvironment.name
 
   // Create GitHub Deployment
   const deployment = await request<
@@ -138,7 +138,7 @@ export const createGitHubDeployment = async (
     variables: {
       repositoryId: repo.id,
       environmentName: gitHubEnvironmentName,
-      refId: ref
+      refId: gitHubEnvironmentRefId
     }
   })
 

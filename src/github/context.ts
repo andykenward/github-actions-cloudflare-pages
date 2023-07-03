@@ -29,8 +29,6 @@ interface Context {
    * refs/heads/feature-branch-1.
    */
   ref: string
-
-  // refId: string
 }
 
 const getGitHubContext = (): Context => {
@@ -67,25 +65,17 @@ const getGitHubContext = (): Context => {
 
   const sha = process.env.GITHUB_SHA
 
-  const ref = branch || process.env.GITHUB_REF
-
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
 
-  // let refId
-  // if (event.eventName === 'pull_request') {
-  //   refId = event.payload.pull_request.node_id
-  // }
-  // if (event.eventName === 'push') {
-  //   refId = event.payload.
-  // }
-
-  console.log('GITHUB_HEAD_RED:', process.env.GITHUB_HEAD_REF)
-  console.log('GITHUB_REF_NAME:', process.env.GITHUB_REF_NAME)
-  console.log('GITHUB_REF:', process.env.GITHUB_REF)
-  console.log('BRANCH', branch)
-  console.log('REF', ref)
-  // eslint-disable-next-line unicorn/no-null
-  console.dir(event.payload, {depth: null})
+  let ref = process.env.GITHUB_HEAD_REF
+  if (!ref) {
+    if ('ref' in event.payload) {
+      ref = event.payload.ref // refs/heads/feature-branch-1
+    } else if (event.eventName === 'pull_request') {
+      ref = event.payload.pull_request.head.ref // andykenward/issue18
+    }
+    if (!ref) throw new Error('context: no ref')
+  }
 
   return {
     event,
@@ -94,7 +84,6 @@ const getGitHubContext = (): Context => {
     sha,
     graphqlEndpoint,
     ref
-    // refId
   }
 }
 

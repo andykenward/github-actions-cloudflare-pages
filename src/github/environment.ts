@@ -61,10 +61,16 @@ export const QueryGetEnvironment = graphql(/* GraphQL */ `
     $owner: String!
     $repo: String!
     $environment_name: String!
+    $qualifiedName: String!
   ) {
     repository(owner: $owner, name: $repo) {
       environment(name: $environment_name) {
         ...EnvironmentFragment
+      }
+      ref(qualifiedName: $qualifiedName) {
+        id
+        name
+        prefix
       }
     }
   }
@@ -78,14 +84,15 @@ export const checkEnvironment = async () => {
   const environmentName = getInput(ACTION_INPUT_GITHUB_ENVIRONMENT, {
     required: true
   })
-  const {repo} = useContext()
+  const {repo, ref} = useContext()
 
   const environment = await request({
     query: QueryGetEnvironment,
     variables: {
       owner: repo.owner,
       repo: repo.repo,
-      environment_name: environmentName
+      environment_name: environmentName,
+      qualifiedName: ref
     },
     options: {
       errorThrows: false
@@ -97,10 +104,17 @@ export const checkEnvironment = async () => {
   }
 
   if (!environment.data.repository?.environment) {
-    notice(`GitHub Environment: Not created for ${environmentName}`)
+    throw new Error(`GitHub Environment: Not created for ${environmentName}`)
   }
 
-  return environment.data.repository?.environment
+  if (!environment.data.repository?.ref?.id) {
+    throw new Error(`GitHub Environment: No ref id ${environmentName}`)
+  }
+
+  return {
+    ...environment.data.repository.environment,
+    refId: environment.data.repository?.ref?.id
+  }
 }
 
 export type Environment = Awaited<ReturnType<typeof checkEnvironment>>
