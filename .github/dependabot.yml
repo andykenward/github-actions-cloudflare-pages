@@ -6,3 +6,34 @@ updates:
     directory: /
     schedule:
       interval: daily
+    groups:
+      graphql:
+        patterns:
+          - '@graphql-codegen/*'
+          - '@graphql-typed-document-node/*'
+          - 'graphql'
+          - 'graphql-tag'
+      vitest:
+        patterns:
+          - '@vitest*'
+          - 'vitest'
+      eslint:
+        patterns:
+          - '@typescript-eslint/*'
+          - 'eslint'
+          - 'eslint-config-*'
+          - 'eslint-plugin-*'
+        exclude-patterns:
+          - 'eslint-config-prettier'
+      prettier:
+        patterns:
+          - 'prettier'
+          - 'eslint-config-prettier'
+          - '@ianvs/prettier-plugin-sort-imports'
+      octokit:
+        patterns:
+          - '@octokit/*'
+      cloudflare:
+        patterns:
+          - '@cloudflare/*'
+          - 'wrangler'
