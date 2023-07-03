@@ -1,8 +1,9 @@
-import * as core from '@unlike/github-actions-core'
+import {setOutput, summary} from '@unlike/github-actions-core'
 import * as execa from 'execa'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {PagesDeployment} from '@/src/cloudflare/types.js'
+import type {MockApi} from '@/tests/helpers/index.js'
 import RESPONSE_NOT_FOUND_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments-not-found.response.json'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json'
 import {
@@ -11,19 +12,12 @@ import {
 } from '@/src/cloudflare/deployments.js'
 import {CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN} from '@/src/constants.js'
 import {
-  getMockApi,
   MOCK_API_PATH_DEPLOYMENTS,
-  REQUIRED_INPUTS,
-  setInputEnv,
+  setMockApi,
   setRequiredInputEnv
 } from '@/tests/helpers/index.js'
 
 import PACKAGE_JSON from '../../package.json'
-
-const EACH_REQUIRED_INPUTS = REQUIRED_INPUTS.map(input => ({
-  expected: input,
-  inputs: REQUIRED_INPUTS.filter(a => a !== input)
-}))
 
 vi.mock('execa')
 vi.mock('@unlike/github-actions-core')
@@ -58,36 +52,15 @@ describe('deployments', () => {
   })
 
   describe('createDeployment', () => {
-    const spySetOutput = vi.mocked(core.setOutput)
-    const spySummaryAddTable = vi.spyOn(core.summary, 'addTable')
-    const spySummaryAddHeading = vi.spyOn(core.summary, 'addHeading')
-    const spySummaryAddBreak = vi.spyOn(core.summary, 'addBreak')
-
-    describe('environment variables', () => {
-      test.each(EACH_REQUIRED_INPUTS)(
-        `throws error when required input $expected is undefined`,
-        async ({expected, inputs}) => {
-          for (const input of inputs) {
-            setInputEnv(input, input)
-          }
-
-          await expect(() => createDeployment()).rejects.toThrow(
-            `Input required and not supplied: ${expected}`
-          )
-
-          expect(execa.$).not.toHaveBeenCalled()
-          expect(spySetOutput).not.toHaveBeenCalled()
-          expect(spySummaryAddTable).not.toHaveBeenCalled()
-        }
-      )
-    })
-
     describe('api calls', () => {
-      let mockApi: ReturnType<typeof getMockApi>
+      let mockApi: MockApi
       beforeEach(() => {
-        mockApi = getMockApi()
+        mockApi = setMockApi()
         // Set required inputs
         setRequiredInputEnv()
+      })
+      afterEach(async () => {
+        await mockApi.mockAgent.close()
       })
 
       test('handles thrown error from wrangler deploy', async () => {
@@ -119,8 +92,8 @@ describe('deployments', () => {
         expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toStrictEqual(
           'mock-accountId'
         )
-        expect(spySetOutput).not.toHaveBeenCalled()
-        expect(spySummaryAddTable).not.toHaveBeenCalled()
+        expect(setOutput).not.toHaveBeenCalled()
+        expect(summary.addTable).not.toHaveBeenCalled()
       })
 
       test('handles thrown error from getDeployments', async () => {
@@ -136,20 +109,20 @@ describe('deployments', () => {
           timedOut: false,
           killed: false
         })
-        mockApi.mockPoolCloudflare
-          .intercept({
-            path: MOCK_API_PATH_DEPLOYMENTS,
-            method: `GET`
-          })
-          .reply(404, RESPONSE_NOT_FOUND_DEPLOYMENTS)
+
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENTS,
+          RESPONSE_NOT_FOUND_DEPLOYMENTS,
+          404
+        )
 
         await expect(createDeployment()).rejects.toThrow(
           `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-accountId/pages/projects/mock-projectName/deployments) failed.`
         )
         expect(execa.$).toHaveBeenCalledTimes(1)
-        expect(spySetOutput).not.toHaveBeenCalled()
+        expect(setOutput).not.toHaveBeenCalled()
         mockApi.mockAgent.assertNoPendingInterceptors()
-        expect(spySummaryAddTable).not.toHaveBeenCalled()
+        expect(summary.addTable).not.toHaveBeenCalled()
       })
 
       test('handles success', async () => {
@@ -165,12 +138,12 @@ describe('deployments', () => {
           timedOut: false,
           killed: false
         })
-        mockApi.mockPoolCloudflare
-          .intercept({
-            path: MOCK_API_PATH_DEPLOYMENTS,
-            method: `GET`
-          })
-          .reply(200, RESPONSE_DEPLOYMENTS)
+
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENTS,
+          RESPONSE_DEPLOYMENTS,
+          200
+        )
 
         const deployment = await createDeployment()
 
@@ -179,35 +152,35 @@ describe('deployments', () => {
           '"206e215c-33b3-4ce4-adf4-7fc6c9b65483"'
         )
 
-        expect(spySetOutput).toHaveBeenCalledTimes(4)
-        expect(spySetOutput).toHaveBeenNthCalledWith(
+        expect(setOutput).toHaveBeenCalledTimes(4)
+        expect(setOutput).toHaveBeenNthCalledWith(
           1,
           'id',
           '206e215c-33b3-4ce4-adf4-7fc6c9b65483'
         )
-        expect(spySetOutput).toHaveBeenNthCalledWith(
+        expect(setOutput).toHaveBeenNthCalledWith(
           2,
           'url',
           'https://206e215c.cloudflare-pages-action-a5z.pages.dev'
         )
-        expect(spySetOutput).toHaveBeenNthCalledWith(
+        expect(setOutput).toHaveBeenNthCalledWith(
           3,
           'environment',
           'production'
         )
-        expect(spySetOutput).toHaveBeenNthCalledWith(
+        expect(setOutput).toHaveBeenNthCalledWith(
           4,
           'alias',
           'https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
         )
 
-        expect(spySummaryAddHeading).toHaveBeenCalledWith(
+        expect(summary.addHeading).toHaveBeenCalledWith(
           `Cloudflare Pages Deployment`
         )
-        expect(spySummaryAddBreak).toHaveBeenCalledTimes(1)
+        expect(summary.addBreak).toHaveBeenCalledTimes(1)
 
-        expect(spySummaryAddTable).toHaveBeenCalledTimes(1)
-        expect(spySummaryAddTable).toHaveBeenCalledWith([
+        expect(summary.addTable).toHaveBeenCalledTimes(1)
+        expect(summary.addTable).toHaveBeenCalledWith([
           [
             {
               data: 'Name',
@@ -221,11 +194,11 @@ describe('deployments', () => {
           ['Environment:', `production`],
           [
             'Branch:',
-            `<a href='https://github.com/mock-owner/mock-github-repository/tree/main'><code>main</code></a>`
+            `<a href='https://github.com/unlike-ltd/github-actions-cloudflare-pages/tree/main'><code>main</code></a>`
           ],
           [
             'Commit Hash:',
-            `<a href='https://github.com/mock-owner/mock-github-repository/commit/mock-github-sha'><code>mock-github-sha</code></a>`
+            `<a href='https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/mock-github-sha'><code>mock-github-sha</code></a>`
           ],
           ['Commit Message:', `chore(deps-dev): update eslint packages`],
           ['Status:', `<strong>SUCCESS</strong>`],

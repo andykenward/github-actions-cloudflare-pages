@@ -36,7 +36,7 @@ jobs:
         uses: github/codeql-action/init@v2.20.1
         with:
           languages: ${{ matrix.language }}
-      - uses: unlike-ltd/github-actions/setup-pnpm@main
+      - uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
         with:
           node-version: 18.x
       - name: Rebuild the dist/ directory

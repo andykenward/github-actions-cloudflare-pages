@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 
-name: 'build-test'
-on: # rebuild any PRs and main branch changes
+name: test
+on:
   pull_request:
   push:
     branches:
@@ -13,15 +13,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build: # make sure build/ci work properly
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.5.2
-      - uses: unlike-ltd/github-actions/setup-pnpm@main
+      - uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
         with:
           node-version: 18.x
-      - run: pnpm run all
-  test: # make sure the action works on a clean machine without building
+      - name: Lint
+        run: pnpm run lint
+      - name: Test
+        run: pnpm run test:ci
+  action:
+    permissions:
+      contents: read
+      deployments: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.5.2
@@ -33,3 +39,4 @@ jobs:
           projectName: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           directory: 'example/dist'
           githubToken: ${{ secrets.GITHUB_TOKEN }}
+          github-environment: 'preview'

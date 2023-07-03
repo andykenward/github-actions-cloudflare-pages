@@ -7,6 +7,7 @@ const config = {
     es2021: true,
     node: true
   },
+  plugins: ['@typescript-eslint'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
@@ -14,6 +15,11 @@ const config = {
     'plugin:unicorn/all',
     'prettier'
   ],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    project: true,
+    tsconfigRootDir: __dirname
+  },
   overrides: [
     {
       files: ['*.test.ts'],
@@ -28,7 +34,8 @@ const config = {
         'vitest/max-expects': 'off',
         'vitest/no-mocks-import': 'off',
         'unicorn/numeric-separators-style': 'off',
-        'unicorn/no-null': 'off'
+        'unicorn/no-null': 'off',
+        '@typescript-eslint/unbound-method': 'off'
       }
     },
     {
@@ -41,13 +48,6 @@ const config = {
       }
     }
   ],
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    sourceType: 'module',
-    project: true,
-    tsconfigRootDir: '__dirname'
-  },
-  plugins: ['@typescript-eslint'],
   rules: {
     'unicorn/prefer-top-level-await': 'off',
     'unicorn/prevent-abbreviations': 'off',

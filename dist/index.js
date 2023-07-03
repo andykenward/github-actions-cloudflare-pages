@@ -11,7 +11,7 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 }) : x)(function(x) {
   if (typeof require !== "undefined")
     return require.apply(this, arguments);
-  throw new Error('Dynamic require of "' + x + '" is not supported');
+  throw Error('Dynamic require of "' + x + '" is not supported');
 });
 var __commonJS = (cb, mod) => function __require2() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
@@ -32,28 +32,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
-};
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck(obj, member, "access private method");
-  return method;
-};
 
 // node_modules/.pnpm/isexe@2.0.0/node_modules/isexe/windows.js
 var require_windows = __commonJS({
@@ -826,14 +804,15 @@ var require_get_stream = __commonJS({
     var { promisify } = __require("util");
     var bufferStream = require_buffer_stream();
     var streamPipelinePromisified = promisify(stream.pipeline);
-    var _MaxBufferError = class extends Error {
+    var MaxBufferError = class extends Error {
+      static {
+        __name(this, "MaxBufferError");
+      }
       constructor() {
         super("maxBuffer exceeded");
         this.name = "MaxBufferError";
       }
     };
-    var MaxBufferError = _MaxBufferError;
-    __name(_MaxBufferError, "MaxBufferError");
     async function getStream2(inputStream, options) {
       if (!inputStream) {
         throw new Error("Expected a stream");
@@ -918,13 +897,13 @@ var require_merge_stream = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/variables.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/variables.js
 import { EOL as EOL3 } from "node:os";
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/lib/command.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/lib/command.js
 import { EOL } from "node:os";
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/lib/utils.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/lib/utils.js
 var __defProp2 = Object.defineProperty;
 var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
 var toCommandValue = /* @__PURE__ */ __name2((input) => {
@@ -949,7 +928,7 @@ var toCommandProperties = /* @__PURE__ */ __name2((annotationProperties) => {
   };
 }, "toCommandProperties");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/lib/command.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/lib/command.js
 var __defProp3 = Object.defineProperty;
 var __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
 var issueCommand = /* @__PURE__ */ __name3((command, properties, message) => {
@@ -957,27 +936,32 @@ var issueCommand = /* @__PURE__ */ __name3((command, properties, message) => {
   process.stdout.write(cmd.toString() + EOL);
 }, "issueCommand");
 var CMD_STRING = "::";
-var _command, _message, _properties;
-var _Command = class {
+var Command = class {
+  static {
+    __name(this, "Command");
+  }
+  static {
+    __name3(this, "Command");
+  }
+  #command;
+  #message;
+  #properties;
   constructor(command, properties, message) {
-    __privateAdd(this, _command, void 0);
-    __privateAdd(this, _message, void 0);
-    __privateAdd(this, _properties, void 0);
     if (!command) {
       command = "missing.command";
     }
-    __privateSet(this, _command, command);
-    __privateSet(this, _properties, properties);
-    __privateSet(this, _message, message);
+    this.#command = command;
+    this.#properties = properties;
+    this.#message = message;
   }
   toString() {
-    let cmdStr = CMD_STRING + __privateGet(this, _command);
-    if (__privateGet(this, _properties) && Object.keys(__privateGet(this, _properties)).length > 0) {
+    let cmdStr = CMD_STRING + this.#command;
+    if (this.#properties && Object.keys(this.#properties).length > 0) {
       cmdStr += " ";
       let first = true;
-      for (const key in __privateGet(this, _properties)) {
-        if (__privateGet(this, _properties).hasOwnProperty(key)) {
-          const val = __privateGet(this, _properties)[key];
+      for (const key in this.#properties) {
+        if (this.#properties.hasOwnProperty(key)) {
+          const val = this.#properties[key];
           if (val) {
             if (first) {
               first = false;
@@ -989,16 +973,10 @@ var _Command = class {
         }
       }
     }
-    cmdStr += `${CMD_STRING}${escapeData(__privateGet(this, _message))}`;
+    cmdStr += `${CMD_STRING}${escapeData(this.#message)}`;
     return cmdStr;
   }
 };
-var Command = _Command;
-_command = new WeakMap();
-_message = new WeakMap();
-_properties = new WeakMap();
-__name(_Command, "Command");
-__name3(_Command, "Command");
 function escapeData(s) {
   return toCommandValue(s).replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
 }
@@ -1010,7 +988,7 @@ function escapeProperty(s) {
 __name(escapeProperty, "escapeProperty");
 __name3(escapeProperty, "escapeProperty");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/lib/file-command.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/lib/file-command.js
 import { randomUUID as uuidv4 } from "node:crypto";
 import { appendFileSync, existsSync } from "node:fs";
 import { EOL as EOL2 } from "node:os";
@@ -1046,7 +1024,7 @@ var prepareKeyValueMessage = /* @__PURE__ */ __name4((key, value) => {
   return `${key}<<${delimiter}${EOL2}${convertedValue}${EOL2}${delimiter}`;
 }, "prepareKeyValueMessage");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/variables.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/variables.js
 var __defProp5 = Object.defineProperty;
 var __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
 var getInput = /* @__PURE__ */ __name5((name, options) => {
@@ -1068,14 +1046,14 @@ var setOutput = /* @__PURE__ */ __name5((name, value) => {
   issueCommand("set-output", { name }, toCommandValue(value));
 }, "setOutput");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/types.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/types.js
 var ExitCode = /* @__PURE__ */ ((ExitCode2) => {
   ExitCode2[ExitCode2["Success"] = 0] = "Success";
   ExitCode2[ExitCode2["Failure"] = 1] = "Failure";
   return ExitCode2;
 })(ExitCode || {});
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/errors.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/errors.js
 var __defProp6 = Object.defineProperty;
 var __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
 var error = /* @__PURE__ */ __name6((message, properties = {}) => {
@@ -1090,36 +1068,66 @@ var setFailed = /* @__PURE__ */ __name6((message) => {
   error(message);
 }, "setFailed");
 
-// node_modules/.pnpm/@unlike+github-actions-core@0.0.6/node_modules/@unlike/github-actions-core/dist/esm/lib/summary.js
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/lib/summary.js
 import { constants, promises } from "node:fs";
 import { EOL as EOL4 } from "node:os";
 var __defProp7 = Object.defineProperty;
 var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
 var { access, appendFile, writeFile } = promises;
 var SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
-var _buffer, _filePath, _fileSummaryPath, fileSummaryPath_fn, _wrap, wrap_fn;
-var _Summary = class {
+var Summary = class {
+  static {
+    __name(this, "Summary");
+  }
+  static {
+    __name7(this, "Summary");
+  }
+  #buffer;
+  #filePath;
   constructor() {
-    /**
-     * Finds the summary file path from the environment, rejects if env var is not found or file does not exist
-     * Also checks r/w permissions.
-     *
-     * @returns step summary file path
-     */
-    __privateAdd(this, _fileSummaryPath);
-    /**
-     * Wraps content in an HTML tag, adding any HTML attributes
-     *
-     * @param {string} tag HTML tag to wrap
-     * @param {string | null} content content within the tag
-     * @param {[attribute: string]: string} attrs key-value list of HTML attributes to add
-     *
-     * @returns {string} content wrapped in HTML element
-     */
-    __privateAdd(this, _wrap);
-    __privateAdd(this, _buffer, void 0);
-    __privateAdd(this, _filePath, void 0);
-    __privateSet(this, _buffer, "");
+    this.#buffer = "";
+  }
+  /**
+   * Finds the summary file path from the environment, rejects if env var is not found or file does not exist
+   * Also checks r/w permissions.
+   *
+   * @returns step summary file path
+   */
+  async #fileSummaryPath() {
+    if (this.#filePath) {
+      return this.#filePath;
+    }
+    const pathFromEnv = process.env[SUMMARY_ENV_VAR];
+    if (!pathFromEnv) {
+      throw new Error(
+        `Unable to find environment variable for $${SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`
+      );
+    }
+    try {
+      await access(pathFromEnv, constants.R_OK | constants.W_OK);
+    } catch {
+      throw new Error(
+        `Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`
+      );
+    }
+    this.#filePath = pathFromEnv;
+    return this.#filePath;
+  }
+  /**
+   * Wraps content in an HTML tag, adding any HTML attributes
+   *
+   * @param {string} tag HTML tag to wrap
+   * @param {string | null} content content within the tag
+   * @param {[attribute: string]: string} attrs key-value list of HTML attributes to add
+   *
+   * @returns {string} content wrapped in HTML element
+   */
+  #wrap(tag, content, attrs = {}) {
+    const htmlAttrs = Object.entries(attrs).map(([key, value]) => ` ${key}="${value}"`).join("");
+    if (!content) {
+      return `<${tag}${htmlAttrs}>`;
+    }
+    return `<${tag}${htmlAttrs}>${content}</${tag}>`;
   }
   /**
    * Writes text in the buffer to the summary buffer file and empties buffer. Will append by default.
@@ -1130,9 +1138,9 @@ var _Summary = class {
    */
   async write(options) {
     const overwrite = !!options?.overwrite;
-    const filePath = await __privateMethod(this, _fileSummaryPath, fileSummaryPath_fn).call(this);
+    const filePath = await this.#fileSummaryPath();
     const writeFunc = overwrite ? writeFile : appendFile;
-    await writeFunc(filePath, __privateGet(this, _buffer), { encoding: "utf8" });
+    await writeFunc(filePath, this.#buffer, { encoding: "utf8" });
     return this.emptyBuffer();
   }
   /**
@@ -1149,7 +1157,7 @@ var _Summary = class {
    * @returns {string} string of summary buffer
    */
   stringify() {
-    return __privateGet(this, _buffer);
+    return this.#buffer;
   }
   /**
    * If the summary buffer is empty
@@ -1157,7 +1165,7 @@ var _Summary = class {
    * @returns {boolen} true if the buffer is empty
    */
   isEmptyBuffer() {
-    return __privateGet(this, _buffer).length === 0;
+    return this.#buffer.length === 0;
   }
   /**
    * Resets the summary buffer without writing to summary file
@@ -1165,7 +1173,7 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   emptyBuffer() {
-    __privateSet(this, _buffer, "");
+    this.#buffer = "";
     return this;
   }
   /**
@@ -1177,7 +1185,7 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addRaw(text, addEOL = false) {
-    __privateSet(this, _buffer, __privateGet(this, _buffer) + text);
+    this.#buffer += text;
     return addEOL ? this.addEOL() : this;
   }
   /**
@@ -1200,7 +1208,7 @@ var _Summary = class {
     const attrs = {
       ...lang && { lang }
     };
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "pre", __privateMethod(this, _wrap, wrap_fn).call(this, "code", code), attrs);
+    const element = this.#wrap("pre", this.#wrap("code", code), attrs);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1213,8 +1221,8 @@ var _Summary = class {
    */
   addList(items, ordered = false) {
     const tag = ordered ? "ol" : "ul";
-    const listItems = items.map((item) => __privateMethod(this, _wrap, wrap_fn).call(this, "li", item)).join("");
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, tag, listItems);
+    const listItems = items.map((item) => this.#wrap("li", item)).join("");
+    const element = this.#wrap(tag, listItems);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1228,7 +1236,7 @@ var _Summary = class {
     const tableBody = rows.map((row) => {
       const cells = row.map((cell) => {
         if (typeof cell === "string") {
-          return __privateMethod(this, _wrap, wrap_fn).call(this, "td", cell);
+          return this.#wrap("td", cell);
         }
         const { header, data, colspan, rowspan } = cell;
         const tag = header ? "th" : "td";
@@ -1236,11 +1244,11 @@ var _Summary = class {
           ...colspan && { colspan },
           ...rowspan && { rowspan }
         };
-        return __privateMethod(this, _wrap, wrap_fn).call(this, tag, data, attrs);
+        return this.#wrap(tag, data, attrs);
       }).join("");
-      return __privateMethod(this, _wrap, wrap_fn).call(this, "tr", cells);
+      return this.#wrap("tr", cells);
     }).join("");
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "table", tableBody);
+    const element = this.#wrap("table", tableBody);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1252,7 +1260,10 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addDetails(label, content) {
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "details", __privateMethod(this, _wrap, wrap_fn).call(this, "summary", label) + content);
+    const element = this.#wrap(
+      "details",
+      this.#wrap("summary", label) + content
+    );
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1270,7 +1281,7 @@ var _Summary = class {
       ...width && { width },
       ...height && { height }
     };
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "img", null, { src, alt, ...attrs });
+    const element = this.#wrap("img", null, { src, alt, ...attrs });
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1284,7 +1295,7 @@ var _Summary = class {
   addHeading(text, level) {
     const tag = `h${level}`;
     const allowedTag = ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tag) ? tag : "h1";
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, allowedTag, text);
+    const element = this.#wrap(allowedTag, text);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1293,7 +1304,7 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addSeparator() {
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "hr", null);
+    const element = this.#wrap("hr", null);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1302,7 +1313,7 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addBreak() {
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "br", null);
+    const element = this.#wrap("br", null);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1317,7 +1328,7 @@ var _Summary = class {
     const attrs = {
       ...cite && { cite }
     };
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "blockquote", text, attrs);
+    const element = this.#wrap("blockquote", text, attrs);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -1329,44 +1340,10 @@ var _Summary = class {
    * @returns {Summary} summary instance
    */
   addLink(text, href) {
-    const element = __privateMethod(this, _wrap, wrap_fn).call(this, "a", text, { href });
+    const element = this.#wrap("a", text, { href });
     return this.addRaw(element).addEOL();
   }
 };
-var Summary = _Summary;
-_buffer = new WeakMap();
-_filePath = new WeakMap();
-_fileSummaryPath = new WeakSet();
-fileSummaryPath_fn = /* @__PURE__ */ __name(async function() {
-  if (__privateGet(this, _filePath)) {
-    return __privateGet(this, _filePath);
-  }
-  const pathFromEnv = process.env[SUMMARY_ENV_VAR];
-  if (!pathFromEnv) {
-    throw new Error(
-      `Unable to find environment variable for $${SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`
-    );
-  }
-  try {
-    await access(pathFromEnv, constants.R_OK | constants.W_OK);
-  } catch {
-    throw new Error(
-      `Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`
-    );
-  }
-  __privateSet(this, _filePath, pathFromEnv);
-  return __privateGet(this, _filePath);
-}, "#fileSummaryPath");
-_wrap = new WeakSet();
-wrap_fn = /* @__PURE__ */ __name(function(tag, content, attrs = {}) {
-  const htmlAttrs = Object.entries(attrs).map(([key, value]) => ` ${key}="${value}"`).join("");
-  if (!content) {
-    return `<${tag}${htmlAttrs}>`;
-  }
-  return `<${tag}${htmlAttrs}>${content}</${tag}>`;
-}, "#wrap");
-__name(_Summary, "Summary");
-__name7(_Summary, "Summary");
 var _summary = new Summary();
 var summary = _summary;
 
@@ -1972,19 +1949,6 @@ var normalizeStdio = /* @__PURE__ */ __name((options) => {
   const length = Math.max(stdio.length, aliases.length);
   return Array.from({ length }, (value, index) => stdio[index]);
 }, "normalizeStdio");
-var normalizeStdioNode = /* @__PURE__ */ __name((options) => {
-  const stdio = normalizeStdio(options);
-  if (stdio === "ipc") {
-    return "ipc";
-  }
-  if (stdio === void 0 || typeof stdio === "string") {
-    return [stdio, stdio, stdio, "ipc"];
-  }
-  if (stdio.includes("ipc")) {
-    return stdio;
-  }
-  return [...stdio, "ipc"];
-}, "normalizeStdioNode");
 
 // node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/kill.js
 var import_signal_exit = __toESM(require_signal_exit(), 1);
@@ -2073,18 +2037,6 @@ function isWritableStream(stream) {
   return isStream(stream) && stream.writable !== false && typeof stream._write === "function" && typeof stream._writableState === "object";
 }
 __name(isWritableStream, "isWritableStream");
-function isReadableStream(stream) {
-  return isStream(stream) && stream.readable !== false && typeof stream._read === "function" && typeof stream._readableState === "object";
-}
-__name(isReadableStream, "isReadableStream");
-function isDuplexStream(stream) {
-  return isWritableStream(stream) && isReadableStream(stream);
-}
-__name(isDuplexStream, "isDuplexStream");
-function isTransformStream(stream) {
-  return isDuplexStream(stream) && typeof stream._transform === "function";
-}
-__name(isTransformStream, "isTransformStream");
 
 // node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/pipe.js
 var isExecaChildProcess = /* @__PURE__ */ __name((target) => target instanceof ChildProcess && typeof target.then === "function", "isExecaChildProcess");
@@ -2255,18 +2207,6 @@ var escapeArg = /* @__PURE__ */ __name((arg) => {
 var joinCommand = /* @__PURE__ */ __name((file, args) => normalizeArgs(file, args).join(" "), "joinCommand");
 var getEscapedCommand = /* @__PURE__ */ __name((file, args) => normalizeArgs(file, args).map((arg) => escapeArg(arg)).join(" "), "getEscapedCommand");
 var SPACES_REGEXP = / +/g;
-var parseCommand = /* @__PURE__ */ __name((command) => {
-  const tokens = [];
-  for (const token of command.trim().split(SPACES_REGEXP)) {
-    const previousToken = tokens[tokens.length - 1];
-    if (previousToken && previousToken.endsWith("\\")) {
-      tokens[tokens.length - 1] = `${previousToken.slice(0, -1)} ${token}`;
-    } else {
-      tokens.push(token);
-    }
-  }
-  return tokens;
-}, "parseCommand");
 var parseExpression = /* @__PURE__ */ __name((expression) => {
   const typeOfExpression = typeof expression;
   if (typeOfExpression === "string") {
@@ -2543,51 +2483,14 @@ function create$(options) {
 }
 __name(create$, "create$");
 var $ = create$();
-function execaCommand(command, options) {
-  const [file, ...args] = parseCommand(command);
-  return execa(file, args, options);
-}
-__name(execaCommand, "execaCommand");
-function execaCommandSync(command, options) {
-  const [file, ...args] = parseCommand(command);
-  return execaSync(file, args, options);
-}
-__name(execaCommandSync, "execaCommandSync");
-function execaNode(scriptPath, args, options = {}) {
-  if (args && !Array.isArray(args) && typeof args === "object") {
-    options = args;
-    args = [];
-  }
-  const stdio = normalizeStdioNode(options);
-  const defaultExecArgv = process4.execArgv.filter((arg) => !arg.startsWith("--inspect"));
-  const {
-    nodePath = process4.execPath,
-    nodeOptions = defaultExecArgv
-  } = options;
-  return execa(
-    nodePath,
-    [
-      ...nodeOptions,
-      scriptPath,
-      ...Array.isArray(args) ? args : []
-    ],
-    {
-      ...options,
-      stdin: void 0,
-      stdout: void 0,
-      stderr: void 0,
-      stdio,
-      shell: false
-    }
-  );
-}
-__name(execaNode, "execaNode");
 
 // src/constants.ts
 var ACTION_INPUT_ACCOUNT_ID = "accountId";
 var ACTION_INPUT_PROJECT_NAME = "projectName";
 var ACTION_INPUT_API_TOKEN = "apiToken";
 var ACTION_INPUT_DIRECTORY = "directory";
+var ACTION_INPUT_GITHUB_TOKEN = "githubToken";
+var ACTION_INPUT_GITHUB_ENVIRONMENT = "github environment";
 var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
 var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
 
@@ -2691,28 +2594,47 @@ var getWorkflowEvent = /* @__PURE__ */ __name(() => {
 // src/github/context.ts
 var getGitHubContext = /* @__PURE__ */ __name(() => {
   const event = getWorkflowEvent();
-  const repo = getRepo();
+  const repo = (() => {
+    if (process.env.GITHUB_REPOSITORY) {
+      const [owner, repo2] = process.env.GITHUB_REPOSITORY.split("/");
+      if (owner === void 0 || repo2 === void 0) {
+        throw new Error("no repo");
+      }
+      let id;
+      if ("repository" in event.payload) {
+        id = event.payload.repository?.node_id;
+      }
+      if (!id) {
+        throw new Error("context.repo no repo id in payload");
+      }
+      return { owner, repo: repo2, id };
+    }
+    throw new Error(
+      "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+    );
+  })();
   const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
   const sha = process.env.GITHUB_SHA;
+  const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL;
+  let ref = process.env.GITHUB_HEAD_REF;
+  if (!ref) {
+    if ("ref" in event.payload) {
+      ref = event.payload.ref;
+    } else if (event.eventName === "pull_request") {
+      ref = event.payload.pull_request.head.ref;
+    }
+    if (!ref)
+      throw new Error("context: no ref");
+  }
   return {
     event,
     repo,
     branch,
-    sha
+    sha,
+    graphqlEndpoint,
+    ref
   };
 }, "getGitHubContext");
-var getRepo = /* @__PURE__ */ __name(() => {
-  if (process.env.GITHUB_REPOSITORY) {
-    const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
-    if (owner === void 0 || repo === void 0) {
-      throw new Error("no repo");
-    }
-    return { owner, repo };
-  }
-  throw new Error(
-    "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-  );
-}, "getRepo");
 var _context;
 var useContext = /* @__PURE__ */ __name(() => {
   if (!_context) {
@@ -2720,6 +2642,7 @@ var useContext = /* @__PURE__ */ __name(() => {
   }
   return _context;
 }, "useContext");
+var useContextEvent = /* @__PURE__ */ __name(() => useContext().event, "useContextEvent");
 
 // src/cloudflare/api/endpoints.ts
 var API_ENDPOINT = `https://api.cloudflare.com`;
@@ -2736,7 +2659,10 @@ var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path3) => {
 }, "getCloudflareApiEndpoint");
 
 // src/cloudflare/api/parse-error.ts
-var _ParseError = class extends Error {
+var ParseError = class extends Error {
+  static {
+    __name(this, "ParseError");
+  }
   text;
   notes;
   location;
@@ -2750,8 +2676,6 @@ var _ParseError = class extends Error {
     this.kind = kind ?? "error";
   }
 };
-var ParseError = _ParseError;
-__name(_ParseError, "ParseError");
 
 // src/cloudflare/api/fetch-error.ts
 function throwFetchError(resource, response) {
@@ -2906,11 +2830,295 @@ var getProject = /* @__PURE__ */ __name(async () => {
   return result;
 }, "getProject");
 
+// __generated__/gql/graphql.ts
+var TypedDocumentString = class extends String {
+  constructor(value, __meta__) {
+    super(value);
+    this.value = value;
+    this.__meta__ = __meta__;
+  }
+  static {
+    __name(this, "TypedDocumentString");
+  }
+  __apiType;
+  toString() {
+    return this.value;
+  }
+};
+var EnvironmentFragmentFragmentDoc = new TypedDocumentString(`
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}
+    `, { "fragmentName": "EnvironmentFragment" });
+var FilesDocument = new TypedDocumentString(`
+    query Files($owner: String!, $repo: String!, $path: String!) {
+  repository(owner: $owner, name: $repo) {
+    object(expression: $path) {
+      __typename
+      ... on Tree {
+        entries {
+          name
+          type
+          language {
+            name
+          }
+          object {
+            __typename
+            ... on Blob {
+              text
+            }
+          }
+        }
+      }
+    }
+  }
+}
+    `);
+var CreateEnvironmentDocument = new TypedDocumentString(`
+    mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
+  createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+    environment {
+      ...EnvironmentFragment
+    }
+  }
+}
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}`);
+var GetEnvironmentDocument = new TypedDocumentString(`
+    query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!, $qualifiedName: String!) {
+  repository(owner: $owner, name: $repo) {
+    environment(name: $environment_name) {
+      ...EnvironmentFragment
+    }
+    ref(qualifiedName: $qualifiedName) {
+      id
+      name
+      prefix
+    }
+  }
+}
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}`);
+
+// src/github/api/client.ts
+var request = /* @__PURE__ */ __name(async (params) => {
+  const { query, variables, options } = params;
+  const { errorThrows } = options || { errorThrows: true };
+  const token = getInput(ACTION_INPUT_GITHUB_TOKEN, { required: true });
+  const { graphqlEndpoint } = useContext();
+  return fetch(graphqlEndpoint, {
+    method: "POST",
+    headers: {
+      authorization: `bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/vnd.github.flash-preview+json"
+    },
+    body: JSON.stringify({ query: query.toString(), variables })
+  }).then((res) => res.json()).then((res) => {
+    if (res.errors && errorThrows) {
+      throw new Error(JSON.stringify(res.errors));
+    }
+    return res;
+  });
+}, "request");
+
+// __generated__/gql/gql.ts
+var documents = {
+  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
+  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
+  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
+  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": GetEnvironmentDocument
+};
+function graphql(source) {
+  return documents[source] ?? {};
+}
+__name(graphql, "graphql");
+
+// src/github/environment.ts
+var EnvironmentFragment = graphql(
+  /* GraphQL */
+  `
+  fragment EnvironmentFragment on Environment {
+    name
+    id
+  }
+`
+);
+var MutationCreateEnvironment = graphql(
+  /* GraphQL */
+  `
+  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
+    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+      environment {
+        ...EnvironmentFragment
+      }
+    }
+  }
+`
+);
+var QueryGetEnvironment = graphql(
+  /* GraphQL */
+  `
+  query GetEnvironment(
+    $owner: String!
+    $repo: String!
+    $environment_name: String!
+    $qualifiedName: String!
+  ) {
+    repository(owner: $owner, name: $repo) {
+      environment(name: $environment_name) {
+        ...EnvironmentFragment
+      }
+      ref(qualifiedName: $qualifiedName) {
+        id
+        name
+        prefix
+      }
+    }
+  }
+`
+);
+var checkEnvironment = /* @__PURE__ */ __name(async () => {
+  const environmentName = getInput(ACTION_INPUT_GITHUB_ENVIRONMENT, {
+    required: true
+  });
+  const { repo, ref } = useContext();
+  const environment = await request({
+    query: QueryGetEnvironment,
+    variables: {
+      owner: repo.owner,
+      repo: repo.repo,
+      environment_name: environmentName,
+      qualifiedName: ref
+    },
+    options: {
+      errorThrows: false
+    }
+  });
+  if (environment.errors) {
+    error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
+  }
+  if (!environment.data.repository?.environment) {
+    throw new Error(`GitHub Environment: Not created for ${environmentName}`);
+  }
+  if (!environment.data.repository?.ref?.id) {
+    throw new Error(`GitHub Environment: No ref id ${environmentName}`);
+  }
+  return {
+    ...environment.data.repository.environment,
+    refId: environment.data.repository?.ref?.id
+  };
+}, "checkEnvironment");
+
+// src/github/deployment.ts
+var MutationCreateDeployment = `
+mutation CreateDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!) {
+    createDeployment(input: {
+        autoMerge: false,
+        description: "Deployed from GitHub Actions",
+        environment: $environmentName,
+        refId: $refId,
+        repositoryId: $repositoryId
+        requiredContexts: []
+    }) {
+      deployment {
+        id
+        environment
+        state
+      }
+    }
+  }
+`;
+var MutationCreateDeploymentStatus = `
+  mutation CreateDeploymentStatus(
+    $deploymentId: ID!
+    $environment: String
+    $environmentUrl: String!
+    $logUrl: String!
+    $state: DeploymentStatusState!
+  ) {
+    createDeploymentStatus(
+      input: {
+        autoInactive: false
+        deploymentId: $deploymentId
+        environment: $environment
+        environmentUrl: $environmentUrl
+        logUrl: $logUrl
+        state: $state
+      }
+    ) {
+      deploymentStatus {
+        createdAt
+        deployment {
+          id
+          environment
+          state
+        }
+        state
+        environmentUrl
+      }
+    }
+  }
+`;
+var createGitHubDeployment = /* @__PURE__ */ __name(async (cloudflareDeployment) => {
+  const gitHubEnvironment = await checkEnvironment();
+  if (!gitHubEnvironment) {
+    throw new Error("GitHub Deployment: GitHub Environment is required");
+  }
+  const gitHubEnvironmentName = gitHubEnvironment.name;
+  const gitHubEnvironmentRefId = gitHubEnvironment.refId;
+  const { repo } = useContext();
+  const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
+    required: true
+  });
+  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, { required: true });
+  const pagesDeploymentId = cloudflareDeployment.id;
+  const pagesDeploymentUrl = cloudflareDeployment.url;
+  const deployment = await request({
+    query: MutationCreateDeployment,
+    variables: {
+      repositoryId: repo.id,
+      environmentName: gitHubEnvironmentName,
+      refId: gitHubEnvironmentRefId
+    }
+  });
+  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id;
+  if (!gitHubDeploymentId) {
+    throw new Error("deployment id not found");
+  }
+  const updateDeployment = await request({
+    query: MutationCreateDeploymentStatus,
+    variables: {
+      environment: gitHubEnvironmentName,
+      deploymentId: gitHubDeploymentId,
+      environmentUrl: pagesDeploymentUrl,
+      logUrl: `https://dash.cloudflare.com/${accountIdentifier}/pages/view/${projectName}/${pagesDeploymentId}`,
+      state: "SUCCESS" /* Success */
+    }
+  });
+  console.dir(updateDeployment);
+}, "createGitHubDeployment");
+
 // src/main.ts
 async function run() {
   const { name, subdomain } = await getProject();
-  const deployment = await createDeployment();
-  return { name, subdomain, url: deployment.url };
+  const cloudflareDeployment = await createDeployment();
+  const { eventName, payload } = useContextEvent();
+  if (eventName === "pull_request") {
+    if (payload.action === "closed") {
+      console.dir(payload);
+      return;
+    }
+    const environment = await checkEnvironment();
+    console.log(environment);
+    await createGitHubDeployment(cloudflareDeployment);
+  }
+  return { name, subdomain, url: cloudflareDeployment.url };
 }
 __name(run, "run");
 

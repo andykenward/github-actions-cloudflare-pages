@@ -21,6 +21,9 @@ inputs:
   githubToken:
     description: 'Github API key'
     required: true
+  github-environment:
+    description: 'The name of the GitHub environment to deploy to'
+    required: true
 
 outputs:
   id:
@@ -52,3 +55,4 @@ runs:
         INPUT_PROJECTNAME: ${{ inputs.projectName }}
         INPUT_DIRECTORY: ${{ inputs.directory }}
         INPUT_GITHUBTOKEN: ${{ inputs.githubToken }}
+        INPUT_GITHUB_ENVIRONMENT: ${{ inputs.github-environment }}

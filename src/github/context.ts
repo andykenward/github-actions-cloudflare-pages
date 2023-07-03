@@ -1,11 +1,13 @@
+/* eslint-disable no-console */
+
 import {getWorkflowEvent} from './workflow-event/workflow-event.js'
 
-type Context = {
+interface Context {
   /**
    * The event that triggered the workflow run.
    */
   event: ReturnType<typeof getWorkflowEvent>
-  repo: {owner: string; repo: string}
+  repo: {owner: string; repo: string; id: string}
   /**
    * The branch or tag ref that triggered the workflow run.
    */
@@ -18,11 +20,42 @@ type Context = {
    * Example: `ffac537e6cbbf934b08745a378932722df287a53`.
    */
   sha: string
+  /**
+   * Returns the GraphQL API URL. For example: https://api.github.com/graphql.
+   */
+  graphqlEndpoint: string
+
+  /**
+   * refs/heads/feature-branch-1.
+   */
+  ref: string
 }
 
 const getGitHubContext = (): Context => {
   const event = getWorkflowEvent()
-  const repo = getRepo()
+
+  const repo = ((): Context['repo'] => {
+    if (process.env.GITHUB_REPOSITORY) {
+      const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
+
+      if (owner === undefined || repo === undefined) {
+        throw new Error('no repo')
+      }
+
+      let id
+      if ('repository' in event.payload) {
+        id = event.payload.repository?.node_id
+      }
+      if (!id) {
+        throw new Error('context.repo no repo id in payload')
+      }
+      return {owner, repo, id}
+    }
+
+    throw new Error(
+      "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+    )
+  })()
 
   /**
    * Depending on what event triggers the action.
@@ -32,26 +65,26 @@ const getGitHubContext = (): Context => {
 
   const sha = process.env.GITHUB_SHA
 
+  const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
+
+  let ref = process.env.GITHUB_HEAD_REF
+  if (!ref) {
+    if ('ref' in event.payload) {
+      ref = event.payload.ref // refs/heads/feature-branch-1
+    } else if (event.eventName === 'pull_request') {
+      ref = event.payload.pull_request.head.ref // andykenward/issue18
+    }
+    if (!ref) throw new Error('context: no ref')
+  }
+
   return {
     event,
     repo,
     branch,
-    sha
+    sha,
+    graphqlEndpoint,
+    ref
   }
-}
-
-const getRepo = (): Context['repo'] => {
-  if (process.env.GITHUB_REPOSITORY) {
-    const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
-    if (owner === undefined || repo === undefined) {
-      throw new Error('no repo')
-    }
-    return {owner, repo}
-  }
-
-  throw new Error(
-    "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-  )
 }
 
 type UseContext = ReturnType<typeof getGitHubContext>
