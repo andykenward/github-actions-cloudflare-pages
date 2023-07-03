@@ -2847,6 +2847,12 @@ var TypedDocumentString = class extends String {
     return this.value;
   }
 };
+var EnvironmentFragmentFragmentDoc = new TypedDocumentString(`
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}
+    `, { "fragmentName": "EnvironmentFragment" });
 var FilesDocument = new TypedDocumentString(`
     query Files($owner: String!, $repo: String!, $path: String!) {
   repository(owner: $owner, name: $repo) {
@@ -2875,28 +2881,33 @@ var CreateEnvironmentDocument = new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
   createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
     environment {
-      name
-      id
+      ...EnvironmentFragment
     }
   }
 }
-    `);
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}`);
 var GetEnvironmentDocument = new TypedDocumentString(`
     query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!) {
   repository(owner: $owner, name: $repo) {
     environment(name: $environment_name) {
-      name
-      id
+      ...EnvironmentFragment
     }
   }
 }
-    `);
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}`);
 
 // __generated__/gql/gql.ts
 var documents = {
   "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
-  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        name\n        id\n      }\n    }\n  }\n": CreateEnvironmentDocument,
-  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        name\n        id\n      }\n    }\n  }\n": GetEnvironmentDocument
+  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
+  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
+  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": GetEnvironmentDocument
 };
 function graphql(source) {
   return documents[source] ?? {};
@@ -2926,14 +2937,22 @@ var request = /* @__PURE__ */ __name(async (params) => {
 }, "request");
 
 // src/github/environment.ts
+var EnvironmentFragment = graphql(
+  /* GraphQL */
+  `
+  fragment EnvironmentFragment on Environment {
+    name
+    id
+  }
+`
+);
 var MutationCreateEnvironment = graphql(
   /* GraphQL */
   `
   mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
     createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
       environment {
-        name
-        id
+        ...EnvironmentFragment
       }
     }
   }
@@ -2949,8 +2968,7 @@ var QueryGetEnvironment = graphql(
   ) {
     repository(owner: $owner, name: $repo) {
       environment(name: $environment_name) {
-        name
-        id
+        ...EnvironmentFragment
       }
     }
   }

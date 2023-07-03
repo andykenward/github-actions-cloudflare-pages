@@ -6,6 +6,13 @@ import {ACTION_INPUT_GITHUB_ENVIRONMENT} from '../constants.js'
 import {request} from './api/client.js'
 import {useContext} from './context.js'
 
+export const EnvironmentFragment = graphql(/* GraphQL */ `
+  fragment EnvironmentFragment on Environment {
+    name
+    id
+  }
+`)
+
 /**
  * MutationCreateEnvironment will either return the environment if it exists or create it.
  * GITHUB_TOKEN Action permissions don't allow for creating environments.
@@ -16,8 +23,7 @@ export const MutationCreateEnvironment = graphql(/* GraphQL */ `
   mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
     createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
       environment {
-        name
-        id
+        ...EnvironmentFragment
       }
     }
   }
@@ -58,8 +64,7 @@ export const QueryGetEnvironment = graphql(/* GraphQL */ `
   ) {
     repository(owner: $owner, name: $repo) {
       environment(name: $environment_name) {
-        name
-        id
+        ...EnvironmentFragment
       }
     }
   }

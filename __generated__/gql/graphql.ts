@@ -28136,6 +28136,8 @@ export type FilesQueryVariables = Exact<{
 
 export type FilesQuery = { repository?: { object?: { __typename: 'Blob' } | { __typename: 'Commit' } | { __typename: 'Tag' } | { __typename: 'Tree', entries?: Array<{ name: string, type: string, language?: { name: string } | null, object?: { __typename: 'Blob', text?: string | null } | { __typename: 'Commit' } | { __typename: 'Tag' } | { __typename: 'Tree' } | null }> | null } | null } | null };
 
+export type EnvironmentFragmentFragment = { name: string, id: string };
+
 export type CreateEnvironmentMutationVariables = Exact<{
   repositoryId: Scalars['ID']['input'];
   name: Scalars['String']['input'];
@@ -28167,7 +28169,12 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
-
+export const EnvironmentFragmentFragmentDoc = new TypedDocumentString(`
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}
+    `, {"fragmentName":"EnvironmentFragment"}) as unknown as TypedDocumentString<EnvironmentFragmentFragment, unknown>;
 export const FilesDocument = new TypedDocumentString(`
     query Files($owner: String!, $repo: String!, $path: String!) {
   repository(owner: $owner, name: $repo) {
@@ -28196,19 +28203,23 @@ export const CreateEnvironmentDocument = new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
   createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
     environment {
-      name
-      id
+      ...EnvironmentFragment
     }
   }
 }
-    `) as unknown as TypedDocumentString<CreateEnvironmentMutation, CreateEnvironmentMutationVariables>;
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}`) as unknown as TypedDocumentString<CreateEnvironmentMutation, CreateEnvironmentMutationVariables>;
 export const GetEnvironmentDocument = new TypedDocumentString(`
     query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!) {
   repository(owner: $owner, name: $repo) {
     environment(name: $environment_name) {
-      name
-      id
+      ...EnvironmentFragment
     }
   }
 }
-    `) as unknown as TypedDocumentString<GetEnvironmentQuery, GetEnvironmentQueryVariables>;
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}`) as unknown as TypedDocumentString<GetEnvironmentQuery, GetEnvironmentQueryVariables>;

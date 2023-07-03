@@ -17,6 +17,9 @@ const config = {
         skipTypename: true,
         documentMode: 'string'
         // flattenGeneratedTypes: true
+      },
+      presetConfig: {
+        fragmentMasking: false
       }
     }
   }
