@@ -7,6 +7,8 @@
     "esbenp.prettier-vscode",
     "yoavbls.pretty-ts-errors",
     "redhat.vscode-yaml",
-    "github.copilot"
+    "github.copilot",
+    "graphql.vscode-graphql-syntax",
+    "graphql.vscode-graphql"
   ]
 }

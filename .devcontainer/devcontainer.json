@@ -15,7 +15,8 @@
 				"yoavbls.pretty-ts-errors",
 				"redhat.vscode-yaml",
 				"GitHub.copilot",
-				"GraphQL.vscode-graphql"
+				"GraphQL.vscode-graphql",
+				"GraphQL.vscode-graphql-syntax"
 			]
 		}
 	},
