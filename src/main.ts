@@ -16,9 +16,15 @@ export async function run() {
 
   const cloudflareDeployment = await createDeployment()
 
-  const {eventName} = useContextEvent()
+  const {eventName, payload} = useContextEvent()
 
   if (eventName === 'pull_request') {
+    if (payload.action === 'closed') {
+      console.dir(payload)
+      // Should delete deployments?
+      return
+    }
+
     const environment = await checkEnvironment()
     console.log(environment)
 

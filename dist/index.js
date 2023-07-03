@@ -3108,8 +3108,12 @@ var createGitHubDeployment = /* @__PURE__ */ __name(async (cloudflareDeployment)
 async function run() {
   const { name, subdomain } = await getProject();
   const cloudflareDeployment = await createDeployment();
-  const { eventName } = useContextEvent();
+  const { eventName, payload } = useContextEvent();
   if (eventName === "pull_request") {
+    if (payload.action === "closed") {
+      console.dir(payload);
+      return;
+    }
     const environment = await checkEnvironment();
     console.log(environment);
     await createGitHubDeployment(cloudflareDeployment);
