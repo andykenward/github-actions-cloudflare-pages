@@ -6,14 +6,12 @@ import type {
 
 import 'dotenv/config'
 
-import {writeFile} from 'node:fs/promises'
+import {existsSync} from 'node:fs'
+import {mkdir, writeFile} from 'node:fs/promises'
 
 const OWNER = 'octokit'
 const REPO = 'webhooks'
 const BRANCH = 'main:'
-const FOLDER_READ_WRITE_PULL_REQUEST = `api.github.com/pull_request`
-const PATH_READ = `${BRANCH}payload-examples/${FOLDER_READ_WRITE_PULL_REQUEST}`
-const PATH_WRITE = `__generated__/payloads/${FOLDER_READ_WRITE_PULL_REQUEST}`
 
 const API_URL = 'https://api.github.com/graphql'
 const TOKEN = process.env['GITHUB_TOKEN']
@@ -38,7 +36,9 @@ const request = async <T, V>(query: string, variables: V): Promise<T> => {
     })
 }
 
-const getWebhookExamples = async () => {
+const getWebhookExamples = async (folder: string) => {
+  const PATH_READ = `${BRANCH}payload-examples/api.github.com/${folder}`
+
   /**
    * Get all files in a directory and their blob contents
    */
@@ -98,11 +98,17 @@ const getWebhookExamples = async () => {
  * Make sure you have a GITHUB_TOKEN environment variable set.
  * Otherwise you will hit the GitHub API rate limit very quickly.
  */
-const run = async () => {
-  await getWebhookExamples().then(async json => {
+const run = async (folder: string) => {
+  await getWebhookExamples(folder).then(async json => {
     if (!json) return
     for (const data of json) {
       if (data?.object?.__typename !== 'Blob' || !data.object.text) return
+
+      const PATH_WRITE = `__generated__/payloads/api.github.com/${folder}`
+
+      if (!existsSync(PATH_WRITE)) {
+        await mkdir(PATH_WRITE, {recursive: true})
+      }
 
       const filename = `${PATH_WRITE}/${data.name}`
       // eslint-disable-next-line no-console
@@ -115,4 +121,5 @@ const run = async () => {
   })
 }
 
-void run()
+void run('pull_request')
+void run('push')
