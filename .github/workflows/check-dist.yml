@@ -8,19 +8,14 @@
 name: Check dist/
 
 on:
-  workflow_run:
-    workflows:
-      - test
-    types:
-      - completed
-  # push:
-  #   branches:
-  #     - main
-  #   paths-ignore:
-  #     - '**.md'
-  # pull_request:
-  #   paths-ignore:
-  #     - '**.md'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.md'
   workflow_dispatch:
 
 concurrency:
@@ -29,7 +24,6 @@ concurrency:
 
 jobs:
   check-dist:
-    if: ${{ github.repository == 'unlike-ltd/github-actions-cloudflare-pages' && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.5.2
