@@ -2902,18 +2902,6 @@ var GetEnvironmentDocument = new TypedDocumentString(`
   id
 }`);
 
-// __generated__/gql/gql.ts
-var documents = {
-  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
-  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
-  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
-  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": GetEnvironmentDocument
-};
-function graphql(source) {
-  return documents[source] ?? {};
-}
-__name(graphql, "graphql");
-
 // src/github/api/client.ts
 var request = /* @__PURE__ */ __name(async (params) => {
   const { query, variables, options } = params;
@@ -2935,6 +2923,18 @@ var request = /* @__PURE__ */ __name(async (params) => {
     return res;
   });
 }, "request");
+
+// __generated__/gql/gql.ts
+var documents = {
+  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
+  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
+  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
+  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": GetEnvironmentDocument
+};
+function graphql(source) {
+  return documents[source] ?? {};
+}
+__name(graphql, "graphql");
 
 // src/github/environment.ts
 var EnvironmentFragment = graphql(
@@ -2999,16 +2999,101 @@ var checkEnvironment = /* @__PURE__ */ __name(async () => {
   return environment.data.repository?.environment;
 }, "checkEnvironment");
 
+// src/github/deployment.ts
+var MutationCreateDeployment = `
+mutation CreateDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!) {
+    createDeployment(input: {
+        autoMerge: false,
+        description: "Deployed from GitHub Actions",
+        environment: $environmentName,
+        refId: $refId,
+        repositoryId: $repositoryId
+        requiredContexts: []
+    }) {
+      deployment {
+        id
+        environment
+        state
+      }
+    }
+  }
+`;
+var MutationCreateDeploymentStatus = `
+mutation CreateDeploymentStatus(
+  deploymentId: ID!
+  environment: String
+  environmentUrl: String!
+  logUrl: String!
+  state: DeploymentStatusState!) {
+  createDeploymentStatus(input: {
+    deploymentId: $deploymentId
+    environment: $environment
+    environmentUrl: $environmentUrl
+    logUrl: $logUrl
+    state: $state
+  }) {
+    deploymentStatus {
+      createdAt
+      deployment {
+        id
+        environment
+        state
+      }
+      state
+      environmentUrl
+    }
+  }
+}`;
+var createGitHubDeployment = /* @__PURE__ */ __name(async (cloudflareDeployment) => {
+  const gitHubEnvironment = await checkEnvironment();
+  if (!gitHubEnvironment)
+    throw new Error("GitHub Deployment: GitHub Environment is required");
+  const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
+    required: true
+  });
+  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, { required: true });
+  const pagesDeploymentId = cloudflareDeployment.id;
+  const pagesDeploymentUrl = cloudflareDeployment.url;
+  const { repo, ref } = useContext();
+  if (!gitHubEnvironment)
+    throw new Error("gitHubEnvironment is required");
+  const gitHubEnvironmentName = gitHubEnvironment.name;
+  const deployment = await request({
+    query: MutationCreateDeployment,
+    variables: {
+      repositoryId: repo.id,
+      environmentName: gitHubEnvironmentName,
+      refId: ref
+    }
+  });
+  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id;
+  if (!gitHubDeploymentId) {
+    throw new Error("deployment id not found");
+  }
+  const updateDeployment = await request({
+    query: MutationCreateDeploymentStatus,
+    variables: {
+      environment: gitHubEnvironmentName,
+      deploymentId: gitHubDeploymentId,
+      environmentUrl: pagesDeploymentUrl,
+      logUrl: `https://dash.cloudflare.com/${accountIdentifier}/pages/view/${projectName}/${pagesDeploymentId}`,
+      state: "SUCCESS" /* Success */
+    }
+  });
+  console.log(updateDeployment);
+}, "createGitHubDeployment");
+
 // src/main.ts
 async function run() {
   const { name, subdomain } = await getProject();
-  const deployment = await createDeployment();
+  const cloudflareDeployment = await createDeployment();
   const { eventName } = useContextEvent();
   if (eventName === "pull_request") {
     const environment = await checkEnvironment();
     console.log(environment);
+    await createGitHubDeployment(cloudflareDeployment);
   }
-  return { name, subdomain, url: deployment.url };
+  return { name, subdomain, url: cloudflareDeployment.url };
 }
 __name(run, "run");
 
