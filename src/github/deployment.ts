@@ -73,6 +73,7 @@ export const MutationCreateDeploymentStatus = `
   ) {
     createDeploymentStatus(
       input: {
+        autoInactive: false
         deploymentId: $deploymentId
         environment: $environment
         environmentUrl: $environmentUrl
@@ -166,7 +167,7 @@ export const createGitHubDeployment = async (
   })
 
   // eslint-disable-next-line no-console
-  console.log(updateDeployment)
+  console.dir(updateDeployment)
 
   //   pagesDeployment.url
   //   pagesDeployment.project_name

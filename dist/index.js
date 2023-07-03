@@ -3044,6 +3044,7 @@ var MutationCreateDeploymentStatus = `
   ) {
     createDeploymentStatus(
       input: {
+        autoInactive: false
         deploymentId: $deploymentId
         environment: $environment
         environmentUrl: $environmentUrl
@@ -3100,7 +3101,7 @@ var createGitHubDeployment = /* @__PURE__ */ __name(async (cloudflareDeployment)
       state: "SUCCESS" /* Success */
     }
   });
-  console.log(updateDeployment);
+  console.dir(updateDeployment);
 }, "createGitHubDeployment");
 
 // src/main.ts
