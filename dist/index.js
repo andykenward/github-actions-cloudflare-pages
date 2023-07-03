@@ -2626,8 +2626,14 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
   })();
   const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
   const sha = process.env.GITHUB_SHA;
-  const ref = process.env.GITHUB_REF;
+  const ref = branch || process.env.GITHUB_REF;
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL;
+  console.log("GITHUB_HEAD_RED:", process.env.GITHUB_HEAD_REF);
+  console.log("GITHUB_REF_NAME:", process.env.GITHUB_REF_NAME);
+  console.log("GITHUB_REF:", process.env.GITHUB_REF);
+  console.log("BRANCH", branch);
+  console.log("REF", ref);
+  console.dir(event.payload, { depth: null });
   return {
     event,
     repo,
@@ -2635,6 +2641,7 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
     sha,
     graphqlEndpoint,
     ref
+    // refId
   };
 }, "getGitHubContext");
 var _context;
