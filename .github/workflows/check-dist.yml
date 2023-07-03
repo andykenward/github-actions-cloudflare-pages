@@ -8,14 +8,19 @@
 name: Check dist/
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-  pull_request:
-    paths-ignore:
-      - '**.md'
+  workflow_run:
+    workflows:
+      - test
+    types:
+      - completed
+  # push:
+  #   branches:
+  #     - main
+  #   paths-ignore:
+  #     - '**.md'
+  # pull_request:
+  #   paths-ignore:
+  #     - '**.md'
   workflow_dispatch:
 
 concurrency:
@@ -24,10 +29,11 @@ concurrency:
 
 jobs:
   check-dist:
+    if: ${{ github.repository == 'unlike-ltd/github-actions-cloudflare-pages' && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.5.2
-      - uses: unlike-ltd/github-actions/setup-pnpm@main
+      - uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
         with:
           node-version: 18.x
       - name: Rebuild the dist/ directory
