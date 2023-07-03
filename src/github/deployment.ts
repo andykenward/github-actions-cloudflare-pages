@@ -64,31 +64,35 @@ type CreateDeploymentMutationVariables = Exact<{
  * @see {@link https://docs.github.com/en/graphql/reference/mutations#createdeploymentstatus | createdeploymentstatus}
  */
 export const MutationCreateDeploymentStatus = `
-mutation CreateDeploymentStatus(
-  deploymentId: ID!
-  environment: String
-  environmentUrl: String!
-  logUrl: String!
-  state: DeploymentStatusState!) {
-  createDeploymentStatus(input: {
-    deploymentId: $deploymentId
-    environment: $environment
-    environmentUrl: $environmentUrl
-    logUrl: $logUrl
-    state: $state
-  }) {
-    deploymentStatus {
-      createdAt
-      deployment {
-        id
-        environment
-        state
+  mutation CreateDeploymentStatus(
+    $deploymentId: ID!
+    $environment: String
+    $environmentUrl: String!
+    $logUrl: String!
+    $state: DeploymentStatusState!
+  ) {
+    createDeploymentStatus(
+      input: {
+        deploymentId: $deploymentId
+        environment: $environment
+        environmentUrl: $environmentUrl
+        logUrl: $logUrl
+        state: $state
       }
-      state
-      environmentUrl
+    ) {
+      deploymentStatus {
+        createdAt
+        deployment {
+          id
+          environment
+          state
+        }
+        state
+        environmentUrl
+      }
     }
   }
-}`
+`
 
 /**
  * Have to manually create type information. See above GraphQL query.

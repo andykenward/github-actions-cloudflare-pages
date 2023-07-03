@@ -3035,31 +3035,35 @@ mutation CreateDeployment($repositoryId: ID!, $environmentName: String!, $refId:
   }
 `;
 var MutationCreateDeploymentStatus = `
-mutation CreateDeploymentStatus(
-  deploymentId: ID!
-  environment: String
-  environmentUrl: String!
-  logUrl: String!
-  state: DeploymentStatusState!) {
-  createDeploymentStatus(input: {
-    deploymentId: $deploymentId
-    environment: $environment
-    environmentUrl: $environmentUrl
-    logUrl: $logUrl
-    state: $state
-  }) {
-    deploymentStatus {
-      createdAt
-      deployment {
-        id
-        environment
-        state
+  mutation CreateDeploymentStatus(
+    $deploymentId: ID!
+    $environment: String
+    $environmentUrl: String!
+    $logUrl: String!
+    $state: DeploymentStatusState!
+  ) {
+    createDeploymentStatus(
+      input: {
+        deploymentId: $deploymentId
+        environment: $environment
+        environmentUrl: $environmentUrl
+        logUrl: $logUrl
+        state: $state
       }
-      state
-      environmentUrl
+    ) {
+      deploymentStatus {
+        createdAt
+        deployment {
+          id
+          environment
+          state
+        }
+        state
+        environmentUrl
+      }
     }
   }
-}`;
+`;
 var createGitHubDeployment = /* @__PURE__ */ __name(async (cloudflareDeployment) => {
   const gitHubEnvironment = await checkEnvironment();
   if (!gitHubEnvironment) {
