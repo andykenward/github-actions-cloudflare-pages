@@ -10,6 +10,9 @@ on:
 
 jobs:
   delete:
+    permissions:
+      contents: read
+      deployments: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.5.2
@@ -18,6 +21,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: 'cloudflare-pages-action'
+          projectName: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           directory: 'example/dist'
           githubToken: ${{ secrets.GITHUB_TOKEN }}
+          github-environment: 'preview'
