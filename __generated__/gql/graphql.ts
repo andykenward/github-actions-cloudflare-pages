@@ -28136,6 +28136,14 @@ export type FilesQueryVariables = Exact<{
 
 export type FilesQuery = { repository?: { object?: { __typename: 'Blob' } | { __typename: 'Commit' } | { __typename: 'Tag' } | { __typename: 'Tree', entries?: Array<{ name: string, type: string, language?: { name: string } | null, object?: { __typename: 'Blob', text?: string | null } | { __typename: 'Commit' } | { __typename: 'Tag' } | { __typename: 'Tree' } | null }> | null } | null } | null };
 
+export type AddCommentMutationVariables = Exact<{
+  subjectId: Scalars['ID']['input'];
+  body: Scalars['String']['input'];
+}>;
+
+
+export type AddCommentMutation = { addComment?: { commentEdge?: { node?: { id: string, issue: { id: string } } | null } | null } | null };
+
 export type EnvironmentFragmentFragment = { name: string, id: string };
 
 export type CreateEnvironmentMutationVariables = Exact<{
@@ -28200,6 +28208,20 @@ export const FilesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<FilesQuery, FilesQueryVariables>;
+export const AddCommentDocument = new TypedDocumentString(`
+    mutation AddComment($subjectId: ID!, $body: String!) {
+  addComment(input: {subjectId: $subjectId, body: $body}) {
+    commentEdge {
+      node {
+        id
+        issue {
+          id
+        }
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<AddCommentMutation, AddCommentMutationVariables>;
 export const CreateEnvironmentDocument = new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
   createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {

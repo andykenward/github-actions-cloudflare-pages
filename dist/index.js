@@ -2875,6 +2875,20 @@ var FilesDocument = new TypedDocumentString(`
   }
 }
     `);
+var AddCommentDocument = new TypedDocumentString(`
+    mutation AddComment($subjectId: ID!, $body: String!) {
+  addComment(input: {subjectId: $subjectId, body: $body}) {
+    commentEdge {
+      node {
+        id
+        issue {
+          id
+        }
+      }
+    }
+  }
+}
+    `);
 var CreateEnvironmentDocument = new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
   createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
@@ -2905,6 +2919,19 @@ var GetEnvironmentDocument = new TypedDocumentString(`
   id
 }`);
 
+// __generated__/gql/gql.ts
+var documents = {
+  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
+  "\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n          issue {\n            id\n          }\n        }\n      }\n    }\n  }\n": AddCommentDocument,
+  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
+  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
+  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": GetEnvironmentDocument
+};
+function graphql(source) {
+  return documents[source] ?? {};
+}
+__name(graphql, "graphql");
+
 // src/github/api/client.ts
 var request = /* @__PURE__ */ __name(async (params) => {
   const { query, variables, options } = params;
@@ -2927,17 +2954,45 @@ var request = /* @__PURE__ */ __name(async (params) => {
   });
 }, "request");
 
-// __generated__/gql/gql.ts
-var documents = {
-  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
-  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
-  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
-  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": GetEnvironmentDocument
-};
-function graphql(source) {
-  return documents[source] ?? {};
-}
-__name(graphql, "graphql");
+// src/github/comment.ts
+var MutationAddComment = graphql(
+  /* GraphQL */
+  `
+  mutation AddComment($subjectId: ID!, $body: String!) {
+    addComment(input: {subjectId: $subjectId, body: $body}) {
+      commentEdge {
+        node {
+          id
+          issue {
+            id
+          }
+        }
+      }
+    }
+  }
+`
+);
+var addComment = /* @__PURE__ */ __name(async (deployment) => {
+  const { eventName, payload } = useContextEvent();
+  if (eventName === "pull_request") {
+    const prNodeId = payload.pull_request.node_id ?? raise("No pull request node id");
+    const { sha } = useContext();
+    const rawBody = `Cloudflare Pages Deployment
+ Environment: ${deployment.environment} 
+ Built with commit ${sha}
+ Preview URL: ${deployment.url} 
+ Branch Preview URL: ${getDeploymentAlias(deployment)}`;
+    await request({
+      query: MutationAddComment,
+      variables: {
+        subjectId: prNodeId,
+        body: rawBody
+      }
+    });
+    return;
+  }
+  throw new Error("Not a pull request");
+}, "addComment");
 
 // src/github/environment.ts
 var EnvironmentFragment = graphql(
@@ -3100,6 +3155,7 @@ async function run() {
     const { name, subdomain } = await getProject();
     const cloudflareDeployment = await createDeployment();
     await createGitHubDeployment(cloudflareDeployment);
+    await addComment(cloudflareDeployment);
     return { name, subdomain, url: cloudflareDeployment.url };
   }
 }

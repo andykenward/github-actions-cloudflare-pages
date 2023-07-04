@@ -1,9 +1,8 @@
 /* eslint-disable no-console */
 
-// import {createDeployment} from './cloudflare/project/create-deployment.js'
-
 import {createDeployment} from './cloudflare/deployments.js'
 import {getProject} from './cloudflare/project/get-project.js'
+import {addComment} from './github/comment.js'
 import {useContextEvent} from './github/context.js'
 import {createGitHubDeployment} from './github/deployment.js'
 
@@ -24,6 +23,8 @@ export async function run() {
 
     const cloudflareDeployment = await createDeployment()
     await createGitHubDeployment(cloudflareDeployment)
+
+    await addComment(cloudflareDeployment)
 
     return {name, subdomain, url: cloudflareDeployment.url}
   }
