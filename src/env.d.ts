@@ -72,7 +72,7 @@ declare namespace NodeJS {
      *
      * Example: `octocat/Hello-World`.
      */
-    GITHUB_REPOSITORY: string
+    GITHUB_REPOSITORY?: string
 
     /**
      * The ID of the repository.

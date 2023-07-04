@@ -22,3 +22,12 @@ export const getCloudflareApiEndpoint = (path?: string): string => {
 
   return new URL(input, API_ENDPOINT).toString()
 }
+
+export const getCloudflareLogEndpoint = (id: string): string => {
+  const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
+    required: true
+  })
+  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, {required: true})
+
+  return `https://dash.cloudflare.com/${accountIdentifier}/pages/view/${projectName}/${id}`
+}

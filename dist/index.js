@@ -2494,6 +2494,11 @@ var ACTION_INPUT_GITHUB_ENVIRONMENT = "github environment";
 var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
 var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
 
+// src/utils.ts
+var raise = /* @__PURE__ */ __name((message) => {
+  throw new Error(message);
+}, "raise");
+
 // src/github/workflow-event/workflow-event.ts
 import { strict as assert } from "node:assert";
 import { existsSync as existsSync2, readFileSync as readFileSync2 } from "node:fs";
@@ -2595,37 +2600,28 @@ var getWorkflowEvent = /* @__PURE__ */ __name(() => {
 var getGitHubContext = /* @__PURE__ */ __name(() => {
   const event = getWorkflowEvent();
   const repo = (() => {
-    if (process.env.GITHUB_REPOSITORY) {
-      const [owner, repo2] = process.env.GITHUB_REPOSITORY.split("/");
-      if (owner === void 0 || repo2 === void 0) {
-        throw new Error("no repo");
-      }
-      let id;
-      if ("repository" in event.payload) {
-        id = event.payload.repository?.node_id;
-      }
-      if (!id) {
-        throw new Error("context.repo no repo id in payload");
-      }
-      return { owner, repo: repo2, id };
-    }
-    throw new Error(
-      "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+    const [owner, repo2] = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split("/") : raise(
+      "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
     );
+    const node_id = "repository" in event.payload ? event.payload.repository?.node_id || raise("context.repo: no repo node_id in payload") : raise("context.repo: no repo node_id in payload");
+    return { owner, repo: repo2, node_id };
   })();
   const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
   const sha = process.env.GITHUB_SHA;
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL;
-  let ref = process.env.GITHUB_HEAD_REF;
-  if (!ref) {
-    if ("ref" in event.payload) {
-      ref = event.payload.ref;
-    } else if (event.eventName === "pull_request") {
-      ref = event.payload.pull_request.head.ref;
+  const ref = (() => {
+    let ref2 = process.env.GITHUB_HEAD_REF;
+    if (!ref2) {
+      if ("ref" in event.payload) {
+        ref2 = event.payload.ref;
+      } else if (event.eventName === "pull_request") {
+        ref2 = event.payload.pull_request.head.ref;
+      }
+      if (!ref2)
+        return raise("context: no ref");
     }
-    if (!ref)
-      throw new Error("context: no ref");
-  }
+    return ref2;
+  })();
   return {
     event,
     repo,
@@ -2637,10 +2633,7 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
 }, "getGitHubContext");
 var _context;
 var useContext = /* @__PURE__ */ __name(() => {
-  if (!_context) {
-    _context = getGitHubContext();
-  }
-  return _context;
+  return _context ?? (_context = getGitHubContext());
 }, "useContext");
 var useContextEvent = /* @__PURE__ */ __name(() => useContext().event, "useContextEvent");
 
@@ -2657,6 +2650,13 @@ var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path3) => {
   ].filter(Boolean).join("/");
   return new URL(input, API_ENDPOINT).toString();
 }, "getCloudflareApiEndpoint");
+var getCloudflareLogEndpoint = /* @__PURE__ */ __name((id) => {
+  const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
+    required: true
+  });
+  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, { required: true });
+  return `https://dash.cloudflare.com/${accountIdentifier}/pages/view/${projectName}/${id}`;
+}, "getCloudflareLogEndpoint");
 
 // src/cloudflare/api/parse-error.ts
 var ParseError = class extends Error {
@@ -3065,60 +3065,43 @@ var MutationCreateDeploymentStatus = `
     }
   }
 `;
-var createGitHubDeployment = /* @__PURE__ */ __name(async (cloudflareDeployment) => {
-  const gitHubEnvironment = await checkEnvironment();
-  if (!gitHubEnvironment) {
-    throw new Error("GitHub Deployment: GitHub Environment is required");
-  }
-  const gitHubEnvironmentName = gitHubEnvironment.name;
-  const gitHubEnvironmentRefId = gitHubEnvironment.refId;
+var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url: url2 }) => {
+  const { name, refId } = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required");
   const { repo } = useContext();
-  const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
-    required: true
-  });
-  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, { required: true });
-  const pagesDeploymentId = cloudflareDeployment.id;
-  const pagesDeploymentUrl = cloudflareDeployment.url;
   const deployment = await request({
     query: MutationCreateDeployment,
     variables: {
-      repositoryId: repo.id,
-      environmentName: gitHubEnvironmentName,
-      refId: gitHubEnvironmentRefId
+      repositoryId: repo.node_id,
+      environmentName: name,
+      refId
     }
   });
-  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id;
-  if (!gitHubDeploymentId) {
-    throw new Error("deployment id not found");
-  }
-  const updateDeployment = await request({
+  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id ?? raise("GitHub Deployment: GitHub deployment id is required");
+  await request({
     query: MutationCreateDeploymentStatus,
     variables: {
-      environment: gitHubEnvironmentName,
+      environment: name,
       deploymentId: gitHubDeploymentId,
-      environmentUrl: pagesDeploymentUrl,
-      logUrl: `https://dash.cloudflare.com/${accountIdentifier}/pages/view/${projectName}/${pagesDeploymentId}`,
+      environmentUrl: url2,
+      logUrl: getCloudflareLogEndpoint(id),
       state: "SUCCESS" /* Success */
     }
   });
-  console.dir(updateDeployment);
 }, "createGitHubDeployment");
 
 // src/main.ts
 async function run() {
-  const { name, subdomain } = await getProject();
-  const cloudflareDeployment = await createDeployment();
   const { eventName, payload } = useContextEvent();
   if (eventName === "pull_request") {
     if (payload.action === "closed") {
       console.dir(payload);
       return;
     }
-    const environment = await checkEnvironment();
-    console.log(environment);
+    const { name, subdomain } = await getProject();
+    const cloudflareDeployment = await createDeployment();
     await createGitHubDeployment(cloudflareDeployment);
+    return { name, subdomain, url: cloudflareDeployment.url };
   }
-  return { name, subdomain, url: cloudflareDeployment.url };
 }
 __name(run, "run");
 

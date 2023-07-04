@@ -37,7 +37,7 @@ export const createEnvironment = async () => {
   const environment = await request({
     query: MutationCreateEnvironment,
     variables: {
-      repositoryId: repo.id,
+      repositoryId: repo.node_id,
       name: branch
     },
     options: {
