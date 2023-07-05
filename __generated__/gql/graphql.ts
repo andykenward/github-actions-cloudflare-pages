@@ -28142,7 +28142,7 @@ export type AddCommentMutationVariables = Exact<{
 }>;
 
 
-export type AddCommentMutation = { addComment?: { commentEdge?: { node?: { id: string, issue: { id: string } } | null } | null } | null };
+export type AddCommentMutation = { addComment?: { commentEdge?: { node?: { id: string } | null } | null } | null };
 
 export type EnvironmentFragmentFragment = { name: string, id: string };
 
@@ -28214,9 +28214,6 @@ export const AddCommentDocument = new TypedDocumentString(`
     commentEdge {
       node {
         id
-        issue {
-          id
-        }
       }
     }
   }

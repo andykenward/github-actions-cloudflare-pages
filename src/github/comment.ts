@@ -12,9 +12,6 @@ export const MutationAddComment = graphql(/* GraphQL */ `
       commentEdge {
         node {
           id
-          issue {
-            id
-          }
         }
       }
     }
@@ -30,11 +27,13 @@ export const addComment = async (deployment: PagesDeployment) => {
 
     const {sha} = useContext()
 
-    const rawBody = `Cloudflare Pages Deployment\n Environment: ${
+    const rawBody = `## Cloudflare Pages Deployment\n **Environment:** ${
       deployment.environment
-    } \n Built with commit ${sha}\n Preview URL: ${
+    } \n **Project:** ${
+      deployment.project_name
+    } \n **Built with commit:** ${sha}\n **Preview URL:** ${
       deployment.url
-    } \n Branch Preview URL: ${getDeploymentAlias(deployment)}`
+    } \n **Branch Preview URL:** ${getDeploymentAlias(deployment)}`
 
     await request({
       query: MutationAddComment,
