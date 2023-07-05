@@ -16,6 +16,7 @@ vi.mock('@unlike/github-actions-core')
 vi.mock('execa')
 vi.mock('@/src/github/environment.js')
 vi.mock('@/src/github/deployment.js')
+vi.mock('@/src/github/comment.js')
 describe('main', () => {
   let mockApi: MockApi
   const spySetOutput = vi.mocked(setOutput)
@@ -26,6 +27,8 @@ describe('main', () => {
   })
 
   afterEach(async () => {
+    mockApi.mockAgent.assertNoPendingInterceptors()
+
     await mockApi.mockAgent.close()
   })
 

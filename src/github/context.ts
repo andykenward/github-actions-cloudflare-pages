@@ -1,13 +1,23 @@
 /* eslint-disable no-console */
 
+import {raise} from '../utils.js'
 import {getWorkflowEvent} from './workflow-event/workflow-event.js'
+
+interface Repo {
+  owner: string
+  repo: string
+  /**
+   * The GraphQL identifier of the repository.
+   */
+  node_id: string
+}
 
 interface Context {
   /**
    * The event that triggered the workflow run.
    */
   event: ReturnType<typeof getWorkflowEvent>
-  repo: {owner: string; repo: string; id: string}
+  repo: Repo
   /**
    * The branch or tag ref that triggered the workflow run.
    */
@@ -34,27 +44,20 @@ interface Context {
 const getGitHubContext = (): Context => {
   const event = getWorkflowEvent()
 
-  const repo = ((): Context['repo'] => {
-    if (process.env.GITHUB_REPOSITORY) {
-      const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/')
+  const repo = ((): Repo => {
+    const [owner, repo] = process.env.GITHUB_REPOSITORY
+      ? process.env.GITHUB_REPOSITORY.split('/')
+      : raise(
+          "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+        )
 
-      if (owner === undefined || repo === undefined) {
-        throw new Error('no repo')
-      }
+    const node_id =
+      'repository' in event.payload
+        ? event.payload.repository?.node_id ||
+          raise('context.repo: no repo node_id in payload')
+        : raise('context.repo: no repo node_id in payload')
 
-      let id
-      if ('repository' in event.payload) {
-        id = event.payload.repository?.node_id
-      }
-      if (!id) {
-        throw new Error('context.repo no repo id in payload')
-      }
-      return {owner, repo, id}
-    }
-
-    throw new Error(
-      "context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-    )
+    return {owner, repo, node_id}
   })()
 
   /**
@@ -67,15 +70,18 @@ const getGitHubContext = (): Context => {
 
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
 
-  let ref = process.env.GITHUB_HEAD_REF
-  if (!ref) {
-    if ('ref' in event.payload) {
-      ref = event.payload.ref // refs/heads/feature-branch-1
-    } else if (event.eventName === 'pull_request') {
-      ref = event.payload.pull_request.head.ref // andykenward/issue18
+  const ref = ((): Context['ref'] => {
+    let ref = process.env.GITHUB_HEAD_REF
+    if (!ref) {
+      if ('ref' in event.payload) {
+        ref = event.payload.ref // refs/heads/feature-branch-1
+      } else if (event.eventName === 'pull_request') {
+        ref = event.payload.pull_request.head.ref // andykenward/issue18
+      }
+      if (!ref) return raise('context: no ref')
     }
-    if (!ref) throw new Error('context: no ref')
-  }
+    return ref
+  })()
 
   return {
     event,
@@ -91,10 +97,7 @@ type UseContext = ReturnType<typeof getGitHubContext>
 
 let _context: UseContext
 export const useContext = (): UseContext => {
-  if (!_context) {
-    _context = getGitHubContext()
-  }
-  return _context
+  return _context ?? (_context = getGitHubContext())
 }
 
 export const useContextEvent = (): UseContext['event'] => useContext().event

@@ -1,5 +1,3 @@
-import {getInput} from '@unlike/github-actions-core'
-
 import type {
   Deployment,
   DeploymentStatus,
@@ -10,10 +8,8 @@ import type {
 import {DeploymentStatusState} from '@/gql/graphql.js'
 
 import type {PagesDeployment} from '../cloudflare/types.js'
-import {
-  ACTION_INPUT_ACCOUNT_ID,
-  ACTION_INPUT_PROJECT_NAME
-} from '../constants.js'
+import {getCloudflareLogEndpoint} from '../cloudflare/api/endpoints.js'
+import {raise} from '../utils.js'
 import {request} from './api/client.js'
 import {useContext} from './context.js'
 import {checkEnvironment} from './environment.js'
@@ -42,7 +38,6 @@ mutation CreateDeployment($repositoryId: ID!, $environmentName: String!, $refId:
     }
   }
 `
-
 /**
  * Have to manually create type information. See above GraphQL query.
  */
@@ -94,7 +89,6 @@ export const MutationCreateDeploymentStatus = `
     }
   }
 `
-
 /**
  * Have to manually create type information. See above GraphQL query.
  */
@@ -115,67 +109,48 @@ type CreateDeploymentStatusMutationVariables = Exact<{
   state: DeploymentStatusState
 }>
 
-export const createGitHubDeployment = async (
-  cloudflareDeployment: PagesDeployment
-) => {
-  const gitHubEnvironment = await checkEnvironment()
-  if (!gitHubEnvironment) {
-    throw new Error('GitHub Deployment: GitHub Environment is required')
-  }
-  const gitHubEnvironmentName = gitHubEnvironment.name
-  const gitHubEnvironmentRefId = gitHubEnvironment.refId
+export const createGitHubDeployment = async ({id, url}: PagesDeployment) => {
+  /**
+   * Check GitHub Environment exists to link GitHub Deployment too.
+   */
+  const {name, refId} =
+    (await checkEnvironment()) ??
+    raise('GitHub Deployment: GitHub Environment is required')
+
   const {repo} = useContext()
 
-  // Cloudflare
-  const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
-    required: true
-  })
-  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, {required: true})
-  const pagesDeploymentId = cloudflareDeployment.id
-  const pagesDeploymentUrl = cloudflareDeployment.url
-
-  // Create GitHub Deployment
+  /**
+   * Create GitHub Deployment
+   */
   const deployment = await request<
     CreateDeploymentMutation,
     CreateDeploymentMutationVariables
   >({
     query: MutationCreateDeployment,
     variables: {
-      repositoryId: repo.id,
-      environmentName: gitHubEnvironmentName,
-      refId: gitHubEnvironmentRefId
+      repositoryId: repo.node_id,
+      environmentName: name,
+      refId: refId
     }
   })
+  const gitHubDeploymentId =
+    deployment.data.createDeployment?.deployment?.id ??
+    raise('GitHub Deployment: GitHub deployment id is required')
 
-  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id
-  if (!gitHubDeploymentId) {
-    throw new Error('deployment id not found')
-  }
-
-  const updateDeployment = await request<
+  /**
+   * Update GitHub Deployment Status
+   */
+  await request<
     CreateDeploymentStatusMutation,
     CreateDeploymentStatusMutationVariables
   >({
     query: MutationCreateDeploymentStatus,
     variables: {
-      environment: gitHubEnvironmentName,
+      environment: name,
       deploymentId: gitHubDeploymentId,
-      environmentUrl: pagesDeploymentUrl,
-      logUrl: `https://dash.cloudflare.com/${accountIdentifier}/pages/view/${projectName}/${pagesDeploymentId}`,
+      environmentUrl: url,
+      logUrl: getCloudflareLogEndpoint(id),
       state: DeploymentStatusState.Success
     }
   })
-
-  // eslint-disable-next-line no-console
-  console.dir(updateDeployment)
-
-  //   pagesDeployment.url
-  //   pagesDeployment.project_name
-  //   pagesDeployment.id
-
-  //   if (deployment.data.createDeployment?.deployment.id){
-
-  // update deployment status with pages deployment url
-
-  //   log_url: `https://dash.cloudflare.com/${accountId}/pages/view/${projectName}/${deploymentId}`,
 }

@@ -28,6 +28,7 @@ describe('api', () => {
     })
 
     afterEach(async () => {
+      mockApi.mockAgent.assertNoPendingInterceptors()
       await mockApi.mockAgent.close()
     })
 
