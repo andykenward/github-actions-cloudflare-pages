@@ -25,6 +25,7 @@ describe('environment', () => {
   })
 
   afterEach(async () => {
+    mockApi.mockAgent.assertNoPendingInterceptors()
     await mockApi.mockAgent.close()
   })
 
@@ -191,8 +192,8 @@ describe('environment', () => {
       )
 
       // const environment = await checkEnvironment()
-      await expect(checkEnvironment).rejects.toThrow(
-        `GitHub Environment: Not created for mock-github-environment`
+      await expect(checkEnvironment).rejects.toThrowErrorMatchingInlineSnapshot(
+        '"GitHub Environment: Not created for mock-github-environment"'
       )
 
       expect(error).toHaveBeenCalledWith(
@@ -210,10 +211,6 @@ describe('environment', () => {
           }
         ])}`
       )
-      // expect(notice).toHaveBeenCalledWith(
-      //   'GitHub Environment: Not created for mock-github-environment'
-      // )
-      // expect(environment).toBeNull()
     })
   })
 })

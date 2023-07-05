@@ -60,6 +60,7 @@ describe('deployments', () => {
         setRequiredInputEnv()
       })
       afterEach(async () => {
+        mockApi.mockAgent.assertNoPendingInterceptors()
         await mockApi.mockAgent.close()
       })
 
@@ -72,7 +73,9 @@ describe('deployments', () => {
         expect(process.env[CLOUDFLARE_API_TOKEN]).toBeUndefined()
         expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toBeUndefined()
 
-        await expect(createDeployment()).rejects.toThrow(`Oh no!`)
+        await expect(
+          createDeployment()
+        ).rejects.toThrowErrorMatchingInlineSnapshot('"Oh no!"')
 
         expect(execa.$).toHaveBeenCalledWith(
           [
@@ -116,12 +119,13 @@ describe('deployments', () => {
           404
         )
 
-        await expect(createDeployment()).rejects.toThrow(
-          `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-accountId/pages/projects/mock-projectName/deployments) failed.`
+        await expect(
+          createDeployment()
+        ).rejects.toThrowErrorMatchingInlineSnapshot(
+          '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-accountId/pages/projects/mock-projectName/deployments) failed."'
         )
         expect(execa.$).toHaveBeenCalledTimes(1)
         expect(setOutput).not.toHaveBeenCalled()
-        mockApi.mockAgent.assertNoPendingInterceptors()
         expect(summary.addTable).not.toHaveBeenCalled()
       })
 
@@ -211,7 +215,6 @@ describe('deployments', () => {
             `<a href='https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'>https://unknown-branch.cloudflare-pages-action-a5z.pages.dev</a>`
           ]
         ])
-        mockApi.mockAgent.assertNoPendingInterceptors()
       })
     })
   })
