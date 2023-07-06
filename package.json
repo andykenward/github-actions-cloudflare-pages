@@ -46,9 +46,9 @@
   "license": "MIT",
   "engines": {
     "node": "^18.16.0",
-    "pnpm": "^8.6.5"
+    "pnpm": "^8.6.6"
   },
-  "packageManager": "pnpm@8.6.5",
+  "packageManager": "pnpm@8.6.6",
   "dependencies": {
     "@unlike/github-actions-core": "0.1.0",
     "execa": "7.1.1",
