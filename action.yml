@@ -47,7 +47,7 @@ runs:
         node-version: '18'
     - name: Action
       id: action
-      run: node ${{ github.action_path }}dist/index.js
+      run: node ${{ github.action_path }}/dist/index.js
       shell: ${{ (runner.os == 'Windows' && 'pwsh') || 'bash' }}
       env:
         INPUT_APITOKEN: ${{ inputs.apiToken }}
