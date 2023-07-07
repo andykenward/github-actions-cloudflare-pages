@@ -45,6 +45,13 @@ runs:
     - uses: actions/setup-node@v3.6.0
       with:
         node-version: '18'
+    - uses: actions/github-script@v6
+      name: Setup the Artifact API environment
+      with:
+        script: |-
+          core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env["ACTIONS_RUNTIME_TOKEN"])
+          core.exportVariable("ACTIONS_RUNTIME_URL", process.env["ACTIONS_RUNTIME_URL"])
+          core.exportVariable("GITHUB_RETENTION_DAYS", process.env["GITHUB_RETENTION_DAYS"])
     - name: Action
       id: action
       run: node ${{ github.action_path }}/dist/index.js
