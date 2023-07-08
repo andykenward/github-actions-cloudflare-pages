@@ -5,7 +5,8 @@ import {getProject} from './cloudflare/project/get-project.js'
 import {addComment} from './github/comment.js'
 import {useContextEvent} from './github/context.js'
 import {createGitHubDeployment} from './github/deployment.js'
-import {saveLogs} from './github/logs.js'
+
+// import {saveLogs} from './github/logs.js'
 
 export async function run() {
   const {eventName, payload} = useContextEvent()
@@ -25,7 +26,7 @@ export async function run() {
     const cloudflareDeployment = await createDeployment()
     const deployment = await createGitHubDeployment(cloudflareDeployment)
 
-    await saveLogs(cloudflareDeployment)
+    // await saveLogs(cloudflareDeployment)
 
     await addComment(cloudflareDeployment)
 

@@ -21,7 +21,7 @@ import {checkEnvironment} from './environment.js'
  * @see {@link https://docs.github.com/en/graphql/reference/mutations#createdeployment | createDeployment}
  */
 export const MutationCreateDeployment = `
-mutation CreateDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!) {
+mutation CreateDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!) {
     createDeployment(input: {
         autoMerge: false,
         description: "Deployed from GitHub Actions",
@@ -29,6 +29,7 @@ mutation CreateDeployment($repositoryId: ID!, $environmentName: String!, $refId:
         refId: $refId,
         repositoryId: $repositoryId
         requiredContexts: []
+        payload: $payload
     }) {
       deployment {
         id
@@ -50,6 +51,7 @@ type CreateDeploymentMutationVariables = Exact<{
   repositoryId: Scalars['ID']['input']
   environmentName: Scalars['String']['input']
   refId: Scalars['ID']['input']
+  payload: Scalars['String']['input']
 }>
 
 /**
@@ -126,6 +128,8 @@ export const createGitHubDeployment = async ({
 
   const {repo} = useContext()
 
+  const payload = JSON.stringify({cloudflare_id: id, url})
+
   /**
    * Create GitHub Deployment
    */
@@ -137,7 +141,8 @@ export const createGitHubDeployment = async ({
     variables: {
       repositoryId: repo.node_id,
       environmentName: name,
-      refId: refId
+      refId: refId,
+      payload: payload
     }
   })
   const gitHubDeploymentId =
