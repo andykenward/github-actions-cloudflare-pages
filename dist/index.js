@@ -1068,11 +1068,18 @@ var setFailed = /* @__PURE__ */ __name6((message) => {
   error(message);
 }, "setFailed");
 
+// node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/logging.js
+var __defProp7 = Object.defineProperty;
+var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
+var debug = /* @__PURE__ */ __name7((message) => {
+  issueCommand("debug", {}, message);
+}, "debug");
+
 // node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/lib/summary.js
 import { constants, promises } from "node:fs";
 import { EOL as EOL4 } from "node:os";
-var __defProp7 = Object.defineProperty;
-var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
+var __defProp8 = Object.defineProperty;
+var __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
 var { access, appendFile, writeFile } = promises;
 var SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
 var Summary = class {
@@ -1080,7 +1087,7 @@ var Summary = class {
     __name(this, "Summary");
   }
   static {
-    __name7(this, "Summary");
+    __name8(this, "Summary");
   }
   #buffer;
   #filePath;
@@ -2590,6 +2597,8 @@ var getWorkflowEvent = /* @__PURE__ */ __name(() => {
     `eventName ${eventName} is not supported`
   );
   const payload = getPayload();
+  debug(`eventName: ${eventName}`);
+  debug(`payload: ${JSON.stringify(payload)}`);
   return {
     eventName,
     payload
