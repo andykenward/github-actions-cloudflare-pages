@@ -1,3 +1,5 @@
+import {debug} from '@unlike/github-actions-core'
+
 import type {
   Deployment,
   DeploymentStatus,
@@ -11,7 +13,7 @@ import type {PagesDeployment} from '../cloudflare/types.js'
 import {getCloudflareLogEndpoint} from '../cloudflare/api/endpoints.js'
 import {raise} from '../utils.js'
 import {request} from './api/client.js'
-import {useContext} from './context.js'
+import {useContext, useContextEvent} from './context.js'
 import {checkEnvironment} from './environment.js'
 
 /**
@@ -120,7 +122,7 @@ type CreateDeploymentStatusMutationVariables = Exact<{
   state: DeploymentStatusState
 }>
 
-type Payload = {
+type DeploymentPayload = {
   cloudflareId: string
   url: string
   commentId: Scalars['ID']['input'] | undefined
@@ -133,13 +135,26 @@ export const createGitHubDeployment = async (
   /**
    * Check GitHub Environment exists to link GitHub Deployment too.
    */
-  const {name, refId} =
+  const environment =
     (await checkEnvironment()) ??
     raise('GitHub Deployment: GitHub Environment is required')
 
   const {repo} = useContext()
+  const {payload, eventName} = useContextEvent()
 
-  const payload: Payload = {cloudflareId: id, url, commentId}
+  const refId =
+    eventName === 'pull_request'
+      ? payload.pull_request.node_id
+      : environment.refId
+
+  debug(`environment.refId: ${environment.refId}`)
+  debug(`refId: ${refId}`)
+
+  const deploymentPayload: DeploymentPayload = {
+    cloudflareId: id,
+    url,
+    commentId
+  }
 
   /**
    * Create GitHub Deployment
@@ -151,9 +166,9 @@ export const createGitHubDeployment = async (
     query: MutationCreateDeployment,
     variables: {
       repositoryId: repo.node_id,
-      environmentName: name,
+      environmentName: environment.name,
       refId: refId,
-      payload: JSON.stringify(payload),
+      payload: JSON.stringify(deploymentPayload),
       description: `Cloudflare Pages Deployment: ${id}`
     }
   })
@@ -170,7 +185,7 @@ export const createGitHubDeployment = async (
   >({
     query: MutationCreateDeploymentStatus,
     variables: {
-      environment: name,
+      environment: environment.name,
       deploymentId: gitHubDeploymentId,
       environmentUrl: url,
       logUrl: getCloudflareLogEndpoint(id),
