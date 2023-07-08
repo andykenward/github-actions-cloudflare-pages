@@ -2976,11 +2976,7 @@ var addComment = /* @__PURE__ */ __name(async (deployment) => {
  **Project:** ${deployment.project_name} 
  **Built with commit:** ${sha}
  **Preview URL:** ${deployment.url} 
- **Branch Preview URL:** ${getDeploymentAlias(
-      deployment
-    )} 
- **Deployment Id:** ${deployment.id} 
- **Run Id:** ${process.env.GITHUB_RUN_ID}`;
+ **Branch Preview URL:** ${getDeploymentAlias(deployment)}`;
     await request({
       query: MutationAddComment,
       variables: {
@@ -3120,10 +3116,7 @@ var MutationCreateDeploymentStatus = `
     }
   }
 `;
-var createGitHubDeployment = /* @__PURE__ */ __name(async ({
-  id,
-  url: url2
-}) => {
+var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url: url2 }) => {
   const { name, refId } = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required");
   const { repo } = useContext();
   const payload = JSON.stringify({ cloudflare_id: id, url: url2 });
@@ -3147,7 +3140,6 @@ var createGitHubDeployment = /* @__PURE__ */ __name(async ({
       state: "SUCCESS" /* Success */
     }
   });
-  return deployment.data.createDeployment?.deployment;
 }, "createGitHubDeployment");
 
 // src/main.ts
@@ -3160,7 +3152,7 @@ async function run() {
     }
     const { name, subdomain } = await getProject();
     const cloudflareDeployment = await createDeployment();
-    const deployment = await createGitHubDeployment(cloudflareDeployment);
+    await createGitHubDeployment(cloudflareDeployment);
     await addComment(cloudflareDeployment);
     return { name, subdomain, url: cloudflareDeployment.url };
   }

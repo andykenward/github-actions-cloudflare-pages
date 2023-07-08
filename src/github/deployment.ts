@@ -111,14 +111,7 @@ type CreateDeploymentStatusMutationVariables = Exact<{
   state: DeploymentStatusState
 }>
 
-type GitHubDeployment = NonNullable<
-  CreateDeploymentMutation['createDeployment']
->['deployment']
-
-export const createGitHubDeployment = async ({
-  id,
-  url
-}: PagesDeployment): Promise<GitHubDeployment> => {
+export const createGitHubDeployment = async ({id, url}: PagesDeployment) => {
   /**
    * Check GitHub Environment exists to link GitHub Deployment too.
    */
@@ -165,6 +158,4 @@ export const createGitHubDeployment = async ({
       state: DeploymentStatusState.Success
     }
   })
-
-  return deployment.data.createDeployment?.deployment
 }

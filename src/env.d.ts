@@ -83,14 +83,6 @@ declare namespace NodeJS {
     GITHUB_REPOSITORY_ID: string
 
     /**
-     * A unique number for each workflow run within a repository.
-     * This number does not change if you re-run the workflow run.
-     *
-     * Example: 1658821493.
-     */
-    GITHUB_RUN_ID: string
-
-    /**
      * The path to a temporary directory on the runner.
      * This directory is emptied at the beginning and end of each job.
      * Note that files will not be removed if the runner's user account does not

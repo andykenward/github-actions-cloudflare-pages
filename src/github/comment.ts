@@ -33,11 +33,7 @@ export const addComment = async (deployment: PagesDeployment) => {
       deployment.project_name
     } \n **Built with commit:** ${sha}\n **Preview URL:** ${
       deployment.url
-    } \n **Branch Preview URL:** ${getDeploymentAlias(
-      deployment
-    )} \n **Deployment Id:** ${deployment.id} \n **Run Id:** ${
-      process.env.GITHUB_RUN_ID
-    }`
+    } \n **Branch Preview URL:** ${getDeploymentAlias(deployment)}`
 
     await request({
       query: MutationAddComment,

@@ -29,7 +29,6 @@ jobs:
       contents: read
       deployments: write
       pull-requests: write
-      id-token: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.5.2
