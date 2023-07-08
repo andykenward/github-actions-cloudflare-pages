@@ -21,15 +21,24 @@ import {checkEnvironment} from './environment.js'
  * @see {@link https://docs.github.com/en/graphql/reference/mutations#createdeployment | createDeployment}
  */
 export const MutationCreateDeployment = `
-mutation CreateDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!) {
-    createDeployment(input: {
-        autoMerge: false,
-        description: "Deployed from GitHub Actions",
-        environment: $environmentName,
-        refId: $refId,
+  mutation CreateDeployment(
+    $repositoryId: ID!
+    $environmentName: String!
+    $refId: ID!
+    $payload: String!
+    $description: String
+  ) {
+    createDeployment(
+      input: {
+        autoMerge: false
+        description: $description
+        environment: $environmentName
+        refId: $refId
         repositoryId: $repositoryId
         requiredContexts: []
-    }) {
+        payload: $payload
+      }
+    ) {
       deployment {
         id
         environment
@@ -50,6 +59,8 @@ type CreateDeploymentMutationVariables = Exact<{
   repositoryId: Scalars['ID']['input']
   environmentName: Scalars['String']['input']
   refId: Scalars['ID']['input']
+  payload: Scalars['String']['input']
+  description: Scalars['String']['input']
 }>
 
 /**
@@ -109,7 +120,16 @@ type CreateDeploymentStatusMutationVariables = Exact<{
   state: DeploymentStatusState
 }>
 
-export const createGitHubDeployment = async ({id, url}: PagesDeployment) => {
+type Payload = {
+  cloudflareId: string
+  url: string
+  commentId: Scalars['ID']['input'] | undefined
+}
+
+export const createGitHubDeployment = async (
+  {id, url}: PagesDeployment,
+  commentId: string | undefined
+) => {
   /**
    * Check GitHub Environment exists to link GitHub Deployment too.
    */
@@ -118,6 +138,8 @@ export const createGitHubDeployment = async ({id, url}: PagesDeployment) => {
     raise('GitHub Deployment: GitHub Environment is required')
 
   const {repo} = useContext()
+
+  const payload: Payload = {cloudflareId: id, url, commentId}
 
   /**
    * Create GitHub Deployment
@@ -130,7 +152,9 @@ export const createGitHubDeployment = async ({id, url}: PagesDeployment) => {
     variables: {
       repositoryId: repo.node_id,
       environmentName: name,
-      refId: refId
+      refId: refId,
+      payload: JSON.stringify(payload),
+      description: `Cloudflare Pages Deployment: ${id}`
     }
   })
   const gitHubDeploymentId =

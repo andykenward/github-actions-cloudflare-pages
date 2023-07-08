@@ -22,9 +22,8 @@ export async function run() {
     const {name, subdomain} = await getProject()
 
     const cloudflareDeployment = await createDeployment()
-    await createGitHubDeployment(cloudflareDeployment)
-
-    await addComment(cloudflareDeployment)
+    const commentId = await addComment(cloudflareDeployment)
+    await createGitHubDeployment(cloudflareDeployment, commentId)
 
     return {name, subdomain, url: cloudflareDeployment.url}
   }

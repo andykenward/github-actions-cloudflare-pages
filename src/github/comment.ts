@@ -18,7 +18,9 @@ export const MutationAddComment = graphql(/* GraphQL */ `
   }
 `)
 
-export const addComment = async (deployment: PagesDeployment) => {
+export const addComment = async (
+  deployment: PagesDeployment
+): Promise<string | undefined> => {
   const {eventName, payload} = useContextEvent()
 
   if (eventName === 'pull_request') {
@@ -35,14 +37,14 @@ export const addComment = async (deployment: PagesDeployment) => {
       deployment.url
     } \n **Branch Preview URL:** ${getDeploymentAlias(deployment)}`
 
-    await request({
+    const comment = await request({
       query: MutationAddComment,
       variables: {
         subjectId: prNodeId,
         body: rawBody
       }
     })
-    return
+    return comment.data.addComment?.commentEdge?.node?.id
   }
   throw new Error('Not a pull request')
 }

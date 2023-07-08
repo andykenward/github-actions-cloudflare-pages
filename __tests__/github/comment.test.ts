@@ -48,7 +48,7 @@ describe('addComment', () => {
 
     expect.assertions(1)
     const comment = await addComment(mockData)
-    expect(comment).toBeUndefined()
+    expect(comment).toBe('1')
   })
 
   const eventNames = EVENT_NAMES.filter(
