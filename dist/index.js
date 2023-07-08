@@ -3134,24 +3134,16 @@ var MutationCreateDeploymentStatus = `
   }
 `;
 var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url: url2 }, commentId) => {
-  const environment = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required");
+  const { name, refId } = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required");
   const { repo } = useContext();
-  const { payload, eventName } = useContextEvent();
-  const refId = eventName === "pull_request" ? payload.pull_request.node_id : environment.refId;
-  debug(`environment.refId: ${environment.refId}`);
-  debug(`refId: ${refId}`);
-  const deploymentPayload = {
-    cloudflareId: id,
-    url: url2,
-    commentId
-  };
+  const payload = { cloudflareId: id, url: url2, commentId };
   const deployment = await request({
     query: MutationCreateDeployment,
     variables: {
       repositoryId: repo.node_id,
-      environmentName: environment.name,
+      environmentName: name,
       refId,
-      payload: JSON.stringify(deploymentPayload),
+      payload: JSON.stringify(payload),
       description: `Cloudflare Pages Deployment: ${id}`
     }
   });
@@ -3159,7 +3151,7 @@ var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url: url2 }, co
   await request({
     query: MutationCreateDeploymentStatus,
     variables: {
-      environment: environment.name,
+      environment: name,
       deploymentId: gitHubDeploymentId,
       environmentUrl: url2,
       logUrl: getCloudflareLogEndpoint(id),
