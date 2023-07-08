@@ -3067,17 +3067,24 @@ var checkEnvironment = /* @__PURE__ */ __name(async () => {
 
 // src/github/deployment.ts
 var MutationCreateDeployment = `
-mutation CreateDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!, $description: String) {
-    createDeployment(input: {
-        autoMerge: false,
-        description: "Deployed from GitHub Actions",
-        environment: $environmentName,
-        refId: $refId,
+  mutation CreateDeployment(
+    $repositoryId: ID!
+    $environmentName: String!
+    $refId: ID!
+    $payload: String!
+    $description: String
+  ) {
+    createDeployment(
+      input: {
+        autoMerge: false
+        description: $description
+        environment: $environmentName
+        refId: $refId
         repositoryId: $repositoryId
         requiredContexts: []
         payload: $payload
-        description: $description
-    }) {
+      }
+    ) {
       deployment {
         id
         environment
