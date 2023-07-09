@@ -2,7 +2,7 @@ import {strict as assert} from 'node:assert'
 import {existsSync, readFileSync} from 'node:fs'
 import {EOL} from 'node:os'
 
-import {debug} from '@unlike/github-actions-core'
+import {debug, isDebug} from '@unlike/github-actions-core'
 
 import type {EventName} from '@/types/github/workflow-events.js'
 import {EVENT_NAMES} from '@/types/github/workflow-events.js'
@@ -35,8 +35,10 @@ export const getWorkflowEvent = () => {
   /** Assume that the payload matches the eventName */
   const payload = getPayload() as WorkflowEventPayload<typeof eventName>
 
-  debug(`eventName: ${eventName}`)
-  debug(`payload: ${JSON.stringify(payload)}`)
+  if (isDebug()) {
+    debug(`eventName: ${eventName}`)
+    debug(`payload: ${JSON.stringify(payload)}`)
+  }
 
   return {
     eventName,

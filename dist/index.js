@@ -1071,6 +1071,9 @@ var setFailed = /* @__PURE__ */ __name6((message) => {
 // node_modules/.pnpm/@unlike+github-actions-core@0.1.0/node_modules/@unlike/github-actions-core/dist/logging.js
 var __defProp7 = Object.defineProperty;
 var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
+var isDebug = /* @__PURE__ */ __name7(() => {
+  return process.env["RUNNER_DEBUG"] === "1";
+}, "isDebug");
 var debug = /* @__PURE__ */ __name7((message) => {
   issueCommand("debug", {}, message);
 }, "debug");
@@ -2597,8 +2600,10 @@ var getWorkflowEvent = /* @__PURE__ */ __name(() => {
     `eventName ${eventName} is not supported`
   );
   const payload = getPayload();
-  debug(`eventName: ${eventName}`);
-  debug(`payload: ${JSON.stringify(payload)}`);
+  if (isDebug()) {
+    debug(`eventName: ${eventName}`);
+    debug(`payload: ${JSON.stringify(payload)}`);
+  }
   return {
     eventName,
     payload
@@ -2631,7 +2636,7 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
     }
     return ref2;
   })();
-  return {
+  const context = {
     event,
     repo,
     branch,
@@ -2639,6 +2644,14 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
     graphqlEndpoint,
     ref
   };
+  if (isDebug()) {
+    const debugContext = {
+      ...context,
+      event: "will debug itself as output is large"
+    };
+    debug(`context: ${JSON.stringify(debugContext)}`);
+  }
+  return context;
 }, "getGitHubContext");
 var _context;
 var useContext = /* @__PURE__ */ __name(() => {

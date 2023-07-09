@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+import {debug, isDebug} from '@unlike/github-actions-core'
+
 import {raise} from '../utils.js'
 import {getWorkflowEvent} from './workflow-event/workflow-event.js'
 
@@ -83,7 +85,7 @@ const getGitHubContext = (): Context => {
     return ref
   })()
 
-  return {
+  const context = {
     event,
     repo,
     branch,
@@ -91,6 +93,17 @@ const getGitHubContext = (): Context => {
     graphqlEndpoint,
     ref
   }
+
+  if (isDebug()) {
+    const debugContext = {
+      ...context,
+      event: 'will debug itself as output is large'
+    }
+
+    debug(`context: ${JSON.stringify(debugContext)}`)
+  }
+
+  return context
 }
 
 type UseContext = ReturnType<typeof getGitHubContext>
