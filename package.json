@@ -50,7 +50,7 @@
   },
   "packageManager": "pnpm@8.6.6",
   "dependencies": {
-    "@octokit/core": "4.2.4",
+    "@octokit-next/core": "2.7.0",
     "@octokit/plugin-paginate-rest": "7.1.2",
     "@unlike/github-actions-core": "0.1.0",
     "execa": "7.1.1",
