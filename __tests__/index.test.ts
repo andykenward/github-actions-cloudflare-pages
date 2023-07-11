@@ -4,6 +4,6 @@ import {describe, test} from 'vitest'
 describe('build output', () => {
   test.skip('bundle runs correctly', async () => {
     // TODO: mock all endpoints for these tests
-    const main = await execaNode('./dist/index.js')
+    await execaNode('./dist/index.js')
   })
 })
