@@ -897,9 +897,9 @@ var require_merge_stream = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@octokit+plugin-paginate-rest@7.1.2_@octokit+core@4.2.4/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
+// node_modules/.pnpm/@octokit+plugin-paginate-rest@8.0.0_@octokit+core@5.0.0/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
 var require_dist_node = __commonJS({
-  "node_modules/.pnpm/@octokit+plugin-paginate-rest@7.1.2_@octokit+core@4.2.4/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js"(exports, module) {
+  "node_modules/.pnpm/@octokit+plugin-paginate-rest@8.0.0_@octokit+core@5.0.0/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js"(exports, module) {
     "use strict";
     var __defProp9 = Object.defineProperty;
     var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
@@ -926,7 +926,7 @@ var require_dist_node = __commonJS({
       paginatingEndpoints: () => paginatingEndpoints
     });
     module.exports = __toCommonJS(dist_src_exports);
-    var VERSION5 = "7.1.2";
+    var VERSION5 = "8.0.0";
     function normalizePaginatedListResponse(response) {
       if (!response.data) {
         return {
