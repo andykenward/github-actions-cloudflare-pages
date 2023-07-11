@@ -27,10 +27,14 @@ const getDeployments = async (): Promise<Array<PagesDeployment>> => {
 export const deleteDeployment = async (
   deploymentIdentifier: string
 ): Promise<boolean> => {
-  const url = getCloudflareApiEndpoint(`deployments/${deploymentIdentifier}`)
+  const url = getCloudflareApiEndpoint(
+    `deployments/${deploymentIdentifier}?force=true`
+  )
 
   try {
-    const result = await fetchResult<FetchNoResult>(url)
+    const result = await fetchResult<FetchNoResult>(url, {
+      method: 'DELETE'
+    })
 
     if (result.success === true) {
       return true

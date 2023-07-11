@@ -3150,9 +3150,13 @@ var getDeployments = /* @__PURE__ */ __name(async () => {
   return result;
 }, "getDeployments");
 var deleteDeployment = /* @__PURE__ */ __name(async (deploymentIdentifier) => {
-  const url2 = getCloudflareApiEndpoint(`deployments/${deploymentIdentifier}`);
+  const url2 = getCloudflareApiEndpoint(
+    `deployments/${deploymentIdentifier}?force=true`
+  );
   try {
-    const result = await fetchResult(url2);
+    const result = await fetchResult(url2, {
+      method: "DELETE"
+    });
     if (result.success === true) {
       return true;
     }
