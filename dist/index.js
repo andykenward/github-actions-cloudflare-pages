@@ -3117,7 +3117,7 @@ ${"  ".repeat(level)}- ${renderError(chainedError, level + 1)}`
 __name(renderError, "renderError");
 
 // src/cloudflare/api/fetch-result.ts
-async function fetchResult(resource, init = {}, queryParams, abortSignal) {
+var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams, abortSignal) => {
   const method = init.method ?? "GET";
   const apiToken = getInput(ACTION_INPUT_API_TOKEN, { required: true });
   const initFetch = {
@@ -3139,8 +3139,22 @@ async function fetchResult(resource, init = {}, queryParams, abortSignal) {
   } else {
     throwFetchError(resource, response);
   }
-}
-__name(fetchResult, "fetchResult");
+}, "fetchResult");
+var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
+  const method = init.method ?? "GET";
+  const apiToken = getInput(ACTION_INPUT_API_TOKEN, { required: true });
+  const initFetch = {
+    headers: {
+      "Content-Type": "application/json;charset=UTF-8",
+      Authorization: `Bearer ${apiToken}`
+    }
+  };
+  const response = await fetch(resource, {
+    method,
+    ...initFetch
+  }).then((response2) => response2.json());
+  return response.success;
+}, "fetchSuccess");
 
 // src/cloudflare/deployments.ts
 var ERROR_KEY = `Create Deployment:`;
@@ -3154,16 +3168,14 @@ var deleteDeployment = /* @__PURE__ */ __name(async (deploymentIdentifier) => {
     `deployments/${deploymentIdentifier}?force=true`
   );
   try {
-    const result = await fetchResult(url2, {
+    const result = await fetchSuccess(url2, {
       method: "DELETE"
     });
-    debug(`Cloudflare Delete Deployment: ${JSON.stringify(result)}`);
-    if (result.success === true) {
+    if (result === true) {
       return true;
     }
-    throw new Error("fail");
-  } catch (fetchResultError) {
-    debug(`Cloudflare Delete Deployment: ${JSON.stringify(fetchResultError)}`);
+    throw new Error("Cloudflare Delete Deployment: fail");
+  } catch {
     error(`Error deleting deployment: ${deploymentIdentifier}`);
     return false;
   }
@@ -3193,7 +3205,7 @@ var createDeployment = /* @__PURE__ */ __name(async () => {
   try {
     await $`npx wrangler@3.1.1 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
     const deployments = await getDeployments();
-    const deployment = deployments.find(
+    const deployment = deployments?.find(
       (deployment2) => deployment2.deployment_trigger.metadata.commit_hash === commitHash
     );
     if (deployment === void 0) {
@@ -4645,6 +4657,7 @@ var deleteDeployments = /* @__PURE__ */ __name(async () => {
     const deletedCloudflareDeployment = await deleteDeployment(cloudflareId);
     if (!deletedCloudflareDeployment)
       continue;
+    info(`Cloudflare Deployment Deleted: ${cloudflareId}`);
     const deletedGitHubDeployment = await request({
       query: MutationDeleteDeployment,
       variables: {
@@ -4662,6 +4675,7 @@ var deleteDeployments = /* @__PURE__ */ __name(async () => {
         )}`
       );
     }
+    info(`GitHub Deployment Deleted: ${deployment.node_id}`);
   }
 }, "deleteDeployments");
 

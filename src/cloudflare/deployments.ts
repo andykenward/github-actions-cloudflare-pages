@@ -1,13 +1,7 @@
-import {
-  debug,
-  error,
-  getInput,
-  setOutput,
-  summary
-} from '@unlike/github-actions-core'
+import {error, getInput, setOutput, summary} from '@unlike/github-actions-core'
 import {$} from 'execa'
 
-import type {FetchNoResult, PagesDeployment} from './types.js'
+import type {PagesDeployment} from './types.js'
 import {
   ACTION_INPUT_ACCOUNT_ID,
   ACTION_INPUT_API_TOKEN,
@@ -18,7 +12,7 @@ import {
 } from '../constants.js'
 import {useContext} from '../github/context.js'
 import {getCloudflareApiEndpoint} from './api/endpoints.js'
-import {fetchResult} from './api/fetch-result.js'
+import {fetchResult, fetchSuccess} from './api/fetch-result.js'
 
 const ERROR_KEY = `Create Deployment:`
 
@@ -38,18 +32,15 @@ export const deleteDeployment = async (
   )
 
   try {
-    const result = await fetchResult<FetchNoResult>(url, {
+    const result = await fetchSuccess(url, {
       method: 'DELETE'
     })
 
-    debug(`Cloudflare Delete Deployment: ${JSON.stringify(result)}`)
-
-    if (result.success === true) {
+    if (result === true) {
       return true
     }
-    throw new Error('fail')
-  } catch (fetchResultError) {
-    debug(`Cloudflare Delete Deployment: ${JSON.stringify(fetchResultError)}`)
+    throw new Error('Cloudflare Delete Deployment: fail')
+  } catch {
     error(`Error deleting deployment: ${deploymentIdentifier}`)
     return false
   }
@@ -94,7 +85,7 @@ export const createDeployment = async () => {
      * Get the latest deployment by commitHash.
      */
     const deployments = await getDeployments()
-    const deployment = deployments.find(
+    const deployment = deployments?.find(
       deployment =>
         deployment.deployment_trigger.metadata.commit_hash === commitHash
     )
