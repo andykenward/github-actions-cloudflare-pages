@@ -3157,11 +3157,13 @@ var deleteDeployment = /* @__PURE__ */ __name(async (deploymentIdentifier) => {
     const result = await fetchResult(url2, {
       method: "DELETE"
     });
+    debug(`Cloudflare Delete Deployment: ${JSON.stringify(result)}`);
     if (result.success === true) {
       return true;
     }
     throw new Error("fail");
-  } catch {
+  } catch (fetchResultError) {
+    debug(`Cloudflare Delete Deployment: ${JSON.stringify(fetchResultError)}`);
     error(`Error deleting deployment: ${deploymentIdentifier}`);
     return false;
   }
