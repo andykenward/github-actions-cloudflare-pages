@@ -6,12 +6,12 @@ import type {FetchResult} from '../types.js'
 import {ACTION_INPUT_API_TOKEN} from '../../constants.js'
 import {throwFetchError} from './fetch-error.js'
 
-export async function fetchResult<ResponseType>(
+export const fetchResult = async <ResponseType>(
   resource: string,
   init: RequestInit = {},
   queryParams?: URLSearchParams,
   abortSignal?: AbortSignal
-): Promise<ResponseType> {
+): Promise<ResponseType> => {
   const method = init.method ?? 'GET'
   const apiToken = getInput(ACTION_INPUT_API_TOKEN, {required: true})
 
@@ -36,4 +36,26 @@ export async function fetchResult<ResponseType>(
   } else {
     throwFetchError(resource, response)
   }
+}
+
+export const fetchSuccess = async (
+  resource: string,
+  init: RequestInit = {}
+): Promise<boolean> => {
+  const method = init.method ?? 'GET'
+  const apiToken = getInput(ACTION_INPUT_API_TOKEN, {required: true})
+
+  const initFetch = {
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8',
+      Authorization: `Bearer ${apiToken}`
+    }
+  }
+
+  const response = (await fetch(resource, {
+    method,
+    ...initFetch
+  }).then(response => response.json())) as FetchResult<null>
+
+  return response.success
 }

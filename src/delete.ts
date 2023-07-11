@@ -62,6 +62,7 @@ export const deleteDeployments = async () => {
      */
     const deletedCloudflareDeployment = await deleteDeployment(cloudflareId)
     if (!deletedCloudflareDeployment) continue
+    info(`Cloudflare Deployment Deleted: ${cloudflareId}`)
     /**
      * On success of Cloudflare deployment delete GitHub deployment & and comment.
      */
@@ -84,6 +85,7 @@ export const deleteDeployments = async () => {
         )}`
       )
     }
+    info(`GitHub Deployment Deleted: ${deployment.node_id}`)
     /**
      * Add comment with summary of deleted deployments etc?
      */
