@@ -2,29 +2,32 @@
 
 import {createDeployment} from './cloudflare/deployments.js'
 import {getProject} from './cloudflare/project/get-project.js'
-import {addComment} from './github/comment.js'
-import {useContextEvent} from './github/context.js'
-import {createGitHubDeployment} from './github/deployment.js'
+import {deleteDeployments} from './delete.js'
+import {
+  addComment,
+  createGitHubDeployment,
+  useContextEvent
+} from './github/index.js'
 
 export async function run() {
   const {eventName, payload} = useContextEvent()
 
-  if (eventName === 'pull_request') {
-    if (payload.action === 'closed') {
-      console.dir(payload)
-      // Should delete deployments?
-      return
-    }
-    /**
-     * Get Cloudflare project
-     */
-    // TODO: refactor into cloudflare createDeployment
-    const {name, subdomain} = await getProject()
+  /**
+   * Only support eventName push & pull_request.
+   */
+  if (eventName !== 'push' && eventName !== 'pull_request') return
 
-    const cloudflareDeployment = await createDeployment()
-    const commentId = await addComment(cloudflareDeployment)
-    await createGitHubDeployment(cloudflareDeployment, commentId)
+  /**
+   * Validate Cloudflare project
+   */
+  await getProject()
 
-    return {name, subdomain, url: cloudflareDeployment.url}
+  if (eventName === 'pull_request' && payload.action === 'closed') {
+    await deleteDeployments()
+    return
   }
+
+  const cloudflareDeployment = await createDeployment()
+  const commentId = await addComment(cloudflareDeployment)
+  await createGitHubDeployment(cloudflareDeployment, commentId)
 }

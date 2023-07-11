@@ -120,7 +120,7 @@ type CreateDeploymentStatusMutationVariables = Exact<{
   state: DeploymentStatusState
 }>
 
-type Payload = {
+export type DeploymentPayload = {
   cloudflareId: string
   url: string
   commentId: Scalars['ID']['input'] | undefined
@@ -139,7 +139,7 @@ export const createGitHubDeployment = async (
 
   const {repo} = useContext()
 
-  const payload: Payload = {cloudflareId: id, url, commentId}
+  const payload: DeploymentPayload = {cloudflareId: id, url, commentId}
 
   /**
    * Create GitHub Deployment

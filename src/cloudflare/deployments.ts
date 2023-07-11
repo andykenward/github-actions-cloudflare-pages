@@ -1,7 +1,7 @@
-import {getInput, setOutput, summary} from '@unlike/github-actions-core'
+import {error, getInput, setOutput, summary} from '@unlike/github-actions-core'
 import {$} from 'execa'
 
-import type {PagesDeployment} from './types.js'
+import type {FetchNoResult, PagesDeployment} from './types.js'
 import {
   ACTION_INPUT_ACCOUNT_ID,
   ACTION_INPUT_API_TOKEN,
@@ -22,6 +22,24 @@ const getDeployments = async (): Promise<Array<PagesDeployment>> => {
   const result = await fetchResult<Array<PagesDeployment>>(url)
 
   return result
+}
+
+export const deleteDeployment = async (
+  deploymentIdentifier: string
+): Promise<boolean> => {
+  const url = getCloudflareApiEndpoint(`deployments/${deploymentIdentifier}`)
+
+  try {
+    const result = await fetchResult<FetchNoResult>(url)
+
+    if (result.success === true) {
+      return true
+    }
+    throw new Error('fail')
+  } catch {
+    error(`Error deleting deployment: ${deploymentIdentifier}`)
+    return false
+  }
 }
 
 export const getDeploymentAlias = (deployment: PagesDeployment): string => {

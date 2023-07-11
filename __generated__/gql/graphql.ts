@@ -28133,6 +28133,20 @@ export type FilesQueryVariables = Exact<{
 
 export type FilesQuery = { repository?: { object?: { __typename: 'Blob' } | { __typename: 'Commit' } | { __typename: 'Tag' } | { __typename: 'Tree', entries?: Array<{ name: string, type: string, language?: { name: string } | null, object?: { __typename: 'Blob', text?: string | null } | { __typename: 'Commit' } | { __typename: 'Tag' } | { __typename: 'Tree' } | null }> | null } | null } | null };
 
+export type DeleteDeploymentMutationVariables = Exact<{
+  deploymentId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteDeploymentMutation = { deleteDeployment?: { clientMutationId?: string | null } | null };
+
+export type DeleteIssueCommentMutationVariables = Exact<{
+  commentId: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteIssueCommentMutation = { deleteIssueComment?: { clientMutationId?: string | null } | null };
+
 export type AddCommentMutationVariables = Exact<{
   subjectId: Scalars['ID']['input'];
   body: Scalars['String']['input'];
@@ -28205,6 +28219,20 @@ export const FilesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<FilesQuery, FilesQueryVariables>;
+export const DeleteDeploymentDocument = new TypedDocumentString(`
+    mutation DeleteDeployment($deploymentId: ID!) {
+  deleteDeployment(input: {id: $deploymentId}) {
+    clientMutationId
+  }
+}
+    `) as unknown as TypedDocumentString<DeleteDeploymentMutation, DeleteDeploymentMutationVariables>;
+export const DeleteIssueCommentDocument = new TypedDocumentString(`
+    mutation DeleteIssueComment($commentId: ID!) {
+  deleteIssueComment(input: {id: $commentId}) {
+    clientMutationId
+  }
+}
+    `) as unknown as TypedDocumentString<DeleteIssueCommentMutation, DeleteIssueCommentMutationVariables>;
 export const AddCommentDocument = new TypedDocumentString(`
     mutation AddComment($subjectId: ID!, $body: String!) {
   addComment(input: {subjectId: $subjectId, body: $body}) {

@@ -23,7 +23,7 @@ export const addComment = async (
 ): Promise<string | undefined> => {
   const {eventName, payload} = useContextEvent()
 
-  if (eventName === 'pull_request') {
+  if (eventName === 'pull_request' && payload.action !== 'closed') {
     const prNodeId =
       payload.pull_request.node_id ?? raise('No pull request node id')
 
@@ -46,5 +46,4 @@ export const addComment = async (
     })
     return comment.data.addComment?.commentEdge?.node?.id
   }
-  throw new Error('Not a pull request')
 }

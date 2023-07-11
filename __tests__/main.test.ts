@@ -48,13 +48,7 @@ describe('main', () => {
 
         const main = await run()
 
-        expect(main).toMatchInlineSnapshot(`
-          {
-            "name": "NextJS Blog",
-            "subdomain": "helloworld.pages.dev",
-            "url": "https://206e215c.cloudflare-pages-action-a5z.pages.dev",
-          }
-        `)
+        expect(main).toBeUndefined()
 
         expect(spySetOutput).toHaveBeenCalledTimes(4)
         // TODO @andykenward add checks for setOutput

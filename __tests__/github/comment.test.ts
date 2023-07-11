@@ -55,7 +55,7 @@ describe('addComment', () => {
     eventName => eventName !== 'pull_request'
   )
   test.each([eventNames])(
-    `should throw error if for eventName: %s`,
+    `should return undefined for eventName: %s`,
     async eventName => {
       expect.assertions(2)
       expect(EVENT_NAMES.includes(eventName)).toBeTruthy()
@@ -65,7 +65,7 @@ describe('addComment', () => {
         payload: {}
       } as Readonly<WorkflowEventExtract<typeof eventName>>)
 
-      await expect(addComment(mockData)).rejects.toThrow(`Not a pull request`)
+      await expect(addComment(mockData)).resolves.toBeUndefined()
     }
   )
 })

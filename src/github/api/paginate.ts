@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-
 import type {PaginatingEndpoints} from '@octokit/plugin-paginate-rest'
 
 import {Octokit} from '@octokit-next/core'
@@ -24,6 +22,7 @@ export const paginate = async <T extends keyof PaginatingEndpoints>(
   const token = getInput(ACTION_INPUT_GITHUB_TOKEN, {required: true})
 
   // TODO:@andykenward #32 fix types in @octokit-next/core or @octokit/plugin-paginate-rest . Can then remove the ts-expect-error & as Promise<PaginateResponse<T>>
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
   return new (Octokit.withPlugins([paginateRest]))({auth: token}).paginate(
     endpoint,
