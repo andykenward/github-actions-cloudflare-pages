@@ -3323,8 +3323,11 @@ var DeleteDeploymentDocument = new TypedDocumentString(`
   }
 }
     `);
-var DeleteIssueCommentDocument = new TypedDocumentString(`
-    mutation DeleteIssueComment($commentId: ID!) {
+var DeleteDeploymentAndCommentDocument = new TypedDocumentString(`
+    mutation DeleteDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
+  deleteDeployment(input: {id: $deploymentId}) {
+    clientMutationId
+  }
   deleteIssueComment(input: {id: $commentId}) {
     clientMutationId
   }
@@ -3374,7 +3377,8 @@ var GetEnvironmentDocument = new TypedDocumentString(`
 // __generated__/gql/gql.ts
 var documents = {
   "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
-  "\n  mutation DeleteDeployment($deploymentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n  }\n  mutation DeleteIssueComment($commentId: ID!) {\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n": DeleteDeploymentDocument,
+  "\n  mutation DeleteDeployment($deploymentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n  }\n": DeleteDeploymentDocument,
+  "\n  mutation DeleteDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n": DeleteDeploymentAndCommentDocument,
   "\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n        }\n      }\n    }\n  }\n": AddCommentDocument,
   "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
   "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
@@ -4629,7 +4633,15 @@ var MutationDeleteDeployment = graphql(
       clientMutationId
     }
   }
-  mutation DeleteIssueComment($commentId: ID!) {
+`
+);
+var MutationDeleteDeploymentAndComment = graphql(
+  /* GraphQL */
+  `
+  mutation DeleteDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
+    deleteDeployment(input: {id: $deploymentId}) {
+      clientMutationId
+    }
     deleteIssueComment(input: {id: $commentId}) {
       clientMutationId
     }
@@ -4679,11 +4691,19 @@ var deleteDeployments = /* @__PURE__ */ __name(async () => {
       );
       continue;
     }
-    const deletedGitHubDeployment = await request({
-      query: MutationDeleteDeployment,
+    const deletedGitHubDeployment = commentId ? await request({
+      query: MutationDeleteDeploymentAndComment,
       variables: {
         deploymentId: deployment.node_id,
         commentId
+      },
+      options: {
+        errorThrows: false
+      }
+    }) : await request({
+      query: MutationDeleteDeployment,
+      variables: {
+        deploymentId: deployment.node_id
       },
       options: {
         errorThrows: false

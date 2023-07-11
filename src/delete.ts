@@ -36,7 +36,13 @@ const MutationDeleteDeployment = graphql(/* GraphQL */ `
       clientMutationId
     }
   }
-  mutation DeleteIssueComment($commentId: ID!) {
+`)
+
+const MutationDeleteDeploymentAndComment = graphql(/* GraphQL */ `
+  mutation DeleteDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
+    deleteDeployment(input: {id: $deploymentId}) {
+      clientMutationId
+    }
     deleteIssueComment(input: {id: $commentId}) {
       clientMutationId
     }
@@ -104,16 +110,26 @@ export const deleteDeployments = async () => {
       continue
     }
 
-    const deletedGitHubDeployment = await request({
-      query: MutationDeleteDeployment,
-      variables: {
-        deploymentId: deployment.node_id,
-        commentId: commentId
-      },
-      options: {
-        errorThrows: false
-      }
-    })
+    const deletedGitHubDeployment = commentId
+      ? await request({
+          query: MutationDeleteDeploymentAndComment,
+          variables: {
+            deploymentId: deployment.node_id,
+            commentId: commentId
+          },
+          options: {
+            errorThrows: false
+          }
+        })
+      : await request({
+          query: MutationDeleteDeployment,
+          variables: {
+            deploymentId: deployment.node_id
+          },
+          options: {
+            errorThrows: false
+          }
+        })
 
     if (deletedGitHubDeployment.errors) {
       warning(

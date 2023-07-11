@@ -28252,12 +28252,13 @@ export type DeleteDeploymentMutationVariables = Exact<{
 
 export type DeleteDeploymentMutation = { deleteDeployment?: { clientMutationId?: string | null } | null };
 
-export type DeleteIssueCommentMutationVariables = Exact<{
+export type DeleteDeploymentAndCommentMutationVariables = Exact<{
+  deploymentId: Scalars['ID']['input'];
   commentId: Scalars['ID']['input'];
 }>;
 
 
-export type DeleteIssueCommentMutation = { deleteIssueComment?: { clientMutationId?: string | null } | null };
+export type DeleteDeploymentAndCommentMutation = { deleteDeployment?: { clientMutationId?: string | null } | null, deleteIssueComment?: { clientMutationId?: string | null } | null };
 
 export type AddCommentMutationVariables = Exact<{
   subjectId: Scalars['ID']['input'];
@@ -28338,13 +28339,16 @@ export const DeleteDeploymentDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DeleteDeploymentMutation, DeleteDeploymentMutationVariables>;
-export const DeleteIssueCommentDocument = new TypedDocumentString(`
-    mutation DeleteIssueComment($commentId: ID!) {
+export const DeleteDeploymentAndCommentDocument = new TypedDocumentString(`
+    mutation DeleteDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
+  deleteDeployment(input: {id: $deploymentId}) {
+    clientMutationId
+  }
   deleteIssueComment(input: {id: $commentId}) {
     clientMutationId
   }
 }
-    `) as unknown as TypedDocumentString<DeleteIssueCommentMutation, DeleteIssueCommentMutationVariables>;
+    `) as unknown as TypedDocumentString<DeleteDeploymentAndCommentMutation, DeleteDeploymentAndCommentMutationVariables>;
 export const AddCommentDocument = new TypedDocumentString(`
     mutation AddComment($subjectId: ID!, $body: String!) {
   addComment(input: {subjectId: $subjectId, body: $body}) {
