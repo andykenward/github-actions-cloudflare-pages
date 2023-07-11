@@ -31,7 +31,9 @@ describe('getCloudflareApiEndpoint', () => {
 
     const urlParams = getCloudflareApiEndpoint(`deployments/${123}?force=true`)
 
-    expect(urlParams).toMatchInlineSnapshot('"https://api.cloudflare.com/client/v4/accounts/mock-account-id/pages/projects/mock-project-name/deployments/123?force=true"')
+    expect(urlParams).toMatchInlineSnapshot(
+      '"https://api.cloudflare.com/client/v4/accounts/mock-account-id/pages/projects/mock-project-name/deployments/123?force=true"'
+    )
   })
 
   test.each([
