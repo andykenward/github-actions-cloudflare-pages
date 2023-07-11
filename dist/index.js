@@ -4653,11 +4653,32 @@ var deleteDeployments = /* @__PURE__ */ __name(async () => {
       info(`Deployment ${deployment.id} has no payload`);
       continue;
     }
-    const { cloudflareId, commentId } = payload2;
+    const { cloudflareId, commentId, url: url2 } = payload2;
     const deletedCloudflareDeployment = await deleteDeployment(cloudflareId);
     if (!deletedCloudflareDeployment)
       continue;
     info(`Cloudflare Deployment Deleted: ${cloudflareId}`);
+    const updateStatusGitHubDeployment = await request({
+      query: MutationCreateDeploymentStatus,
+      variables: {
+        environment: deployment.environment,
+        deploymentId: deployment.node_id,
+        environmentUrl: url2,
+        logUrl: getCloudflareLogEndpoint(cloudflareId),
+        state: "INACTIVE" /* Inactive */
+      },
+      options: {
+        errorThrows: false
+      }
+    });
+    if (updateStatusGitHubDeployment.errors) {
+      warning(
+        `Error updating GitHub deployment status: ${JSON.stringify(
+          updateStatusGitHubDeployment.errors
+        )}`
+      );
+      continue;
+    }
     const deletedGitHubDeployment = await request({
       query: MutationDeleteDeployment,
       variables: {
