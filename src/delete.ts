@@ -1,10 +1,21 @@
 import {info, warning} from '@unlike/github-actions-core'
 
 import {graphql} from '@/gql/gql.js'
+import {DeploymentStatusState} from '@/gql/graphql.js'
 
-import type {DeploymentPayload} from './github/index.js'
+import type {
+  CreateDeploymentStatusMutation,
+  CreateDeploymentStatusMutationVariables,
+  DeploymentPayload
+} from './github/index.js'
+import {getCloudflareLogEndpoint} from './cloudflare/api/endpoints.js'
 import {deleteDeployment} from './cloudflare/deployments.js'
-import {getDeployments, request, useContextEvent} from './github/index.js'
+import {
+  getDeployments,
+  MutationCreateDeploymentStatus,
+  request,
+  useContextEvent
+} from './github/index.js'
 
 const idDeploymentPayload = (
   payload:
@@ -55,7 +66,7 @@ export const deleteDeployments = async () => {
       continue
     }
 
-    const {cloudflareId, commentId} = payload
+    const {cloudflareId, commentId, url} = payload
 
     /**
      * Delete Cloudflare deployment
@@ -66,6 +77,32 @@ export const deleteDeployments = async () => {
     /**
      * On success of Cloudflare deployment delete GitHub deployment & and comment.
      */
+
+    const updateStatusGitHubDeployment = await request<
+      CreateDeploymentStatusMutation,
+      CreateDeploymentStatusMutationVariables
+    >({
+      query: MutationCreateDeploymentStatus,
+      variables: {
+        environment: deployment.environment,
+        deploymentId: deployment.node_id,
+        environmentUrl: url,
+        logUrl: getCloudflareLogEndpoint(cloudflareId),
+        state: DeploymentStatusState.Inactive
+      },
+      options: {
+        errorThrows: false
+      }
+    })
+
+    if (updateStatusGitHubDeployment.errors) {
+      warning(
+        `Error updating GitHub deployment status: ${JSON.stringify(
+          updateStatusGitHubDeployment.errors
+        )}`
+      )
+      continue
+    }
 
     const deletedGitHubDeployment = await request({
       query: MutationDeleteDeployment,

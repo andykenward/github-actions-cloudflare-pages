@@ -103,7 +103,7 @@ export const MutationCreateDeploymentStatus = `
 /**
  * Have to manually create type information. See above GraphQL query.
  */
-type CreateDeploymentStatusMutation = Partial<{
+export type CreateDeploymentStatusMutation = Partial<{
   createDeploymentStatus: Maybe<{
     deploymentStatus: Maybe<
       Pick<DeploymentStatus, 'environmentUrl' | 'createdAt' | 'state'> & {
@@ -112,7 +112,7 @@ type CreateDeploymentStatusMutation = Partial<{
     >
   }>
 }>
-type CreateDeploymentStatusMutationVariables = Exact<{
+export type CreateDeploymentStatusMutationVariables = Exact<{
   deploymentId: Scalars['ID']['input']
   environment: Scalars['String']['input']
   environmentUrl: Scalars['String']['input']
