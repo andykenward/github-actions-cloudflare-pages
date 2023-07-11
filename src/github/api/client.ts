@@ -11,7 +11,10 @@ import {useContext} from '../context.js'
  * https://github.com/octokit/graphql.js/blob/c067d9c5da27e0147d25fa215192f1d8be7e1b72/src/types.ts#L55C1-L72C3
  */
 export type GitHubGraphQLError = Partial<GraphQLError> & {
-  type: string | 'NOT_FOUND'
+  /**
+   * NOT_FOUND
+   */
+  type: string
 }
 
 export type GraphqlResponse<T = unknown> = {
