@@ -1,4 +1,10 @@
-import {error, getInput, setOutput, summary} from '@unlike/github-actions-core'
+import {
+  debug,
+  error,
+  getInput,
+  setOutput,
+  summary
+} from '@unlike/github-actions-core'
 import {$} from 'execa'
 
 import type {FetchNoResult, PagesDeployment} from './types.js'
@@ -36,11 +42,14 @@ export const deleteDeployment = async (
       method: 'DELETE'
     })
 
+    debug(`Cloudflare Delete Deployment: ${JSON.stringify(result)}`)
+
     if (result.success === true) {
       return true
     }
     throw new Error('fail')
-  } catch {
+  } catch (fetchResultError) {
+    debug(`Cloudflare Delete Deployment: ${JSON.stringify(fetchResultError)}`)
     error(`Error deleting deployment: ${deploymentIdentifier}`)
     return false
   }
