@@ -2883,11 +2883,11 @@ __name(create$, "create$");
 var $ = create$();
 
 // src/constants.ts
-var ACTION_INPUT_ACCOUNT_ID = "accountId";
-var ACTION_INPUT_PROJECT_NAME = "projectName";
-var ACTION_INPUT_API_TOKEN = "apiToken";
+var ACTION_INPUT_ACCOUNT_ID = "account id";
+var ACTION_INPUT_PROJECT_NAME = "project name";
+var ACTION_INPUT_API_TOKEN = "api token";
 var ACTION_INPUT_DIRECTORY = "directory";
-var ACTION_INPUT_GITHUB_TOKEN = "githubToken";
+var ACTION_INPUT_GITHUB_TOKEN = "github token";
 var ACTION_INPUT_GITHUB_ENVIRONMENT = "github environment";
 var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
 var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";

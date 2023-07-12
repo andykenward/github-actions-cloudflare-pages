@@ -5,12 +5,12 @@ import {
   ACTION_INPUT_ACCOUNT_ID,
   ACTION_INPUT_PROJECT_NAME
 } from '@/src/constants.js'
-import {setInputEnv} from '@/tests/helpers/inputs.js'
+import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 describe('getCloudflareApiEndpoint', () => {
   test('returns correct url', () => {
-    setInputEnv(ACTION_INPUT_ACCOUNT_ID, 'mock-account-id')
-    setInputEnv(ACTION_INPUT_PROJECT_NAME, 'mock-project-name')
+    stubInputEnv(ACTION_INPUT_ACCOUNT_ID, 'mock-account-id')
+    stubInputEnv(ACTION_INPUT_PROJECT_NAME, 'mock-project-name')
 
     const url = getCloudflareApiEndpoint()
 
@@ -20,8 +20,8 @@ describe('getCloudflareApiEndpoint', () => {
   })
 
   test('appends path argument', () => {
-    setInputEnv(ACTION_INPUT_ACCOUNT_ID, 'mock-account-id')
-    setInputEnv(ACTION_INPUT_PROJECT_NAME, 'mock-project-name')
+    stubInputEnv(ACTION_INPUT_ACCOUNT_ID, 'mock-account-id')
+    stubInputEnv(ACTION_INPUT_PROJECT_NAME, 'mock-project-name')
 
     const url = getCloudflareApiEndpoint('mock-deployment')
 
@@ -50,7 +50,7 @@ describe('getCloudflareApiEndpoint', () => {
   ])(
     `$input with $value throws error $expected`,
     ({input, value, expected}) => {
-      setInputEnv(input, value)
+      stubInputEnv(input, value)
 
       expect(() => getCloudflareApiEndpoint()).toThrow(
         `Input required and not supplied: ${expected}`

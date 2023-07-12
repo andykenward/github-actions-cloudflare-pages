@@ -1,22 +1,10 @@
-import {afterEach, beforeEach} from 'vitest'
+import {afterEach, beforeEach, vi} from 'vitest'
 
-import {setTestEnvVars} from './__tests__/helpers/index.js'
-
-/** So we can reset process.env between tests */
-const env: NodeJS.ProcessEnv = process.env
+import {stubTestEnvVars} from './__tests__/helpers/index.js'
 
 beforeEach(() => {
-  /**
-   * Reset process.env as GitHub Action inputs are on process.env.
-   * This is used by `core.getInput()`.
-   */
-  process.env = {...env}
-  setTestEnvVars()
+  stubTestEnvVars()
 })
 afterEach(() => {
-  /**
-   * Reset process.env as GitHub Action inputs are on process.env.
-   * This is used by `core.getInput()`.
-   */
-  process.env = {...env}
+  vi.unstubAllEnvs()
 })

@@ -1,3 +1,5 @@
+import {vi} from 'vitest'
+
 import {
   ACTION_INPUT_ACCOUNT_ID,
   ACTION_INPUT_API_TOKEN,
@@ -19,20 +21,19 @@ export const REQUIRED_INPUTS = [
 ] as const
 
 /** For `core.getInput()` */
-export const setInputEnv = (input: string, value: string): void => {
-  process.env[`${INPUT_KEY}${input.replaceAll(' ', '_')}`.toUpperCase()] = value
-}
-
-export const unsetInputEnv = (input: string): void => {
-  delete process.env[`${INPUT_KEY}${input}`.toUpperCase()]
+export const stubInputEnv = (input: string, value?: string): void => {
+  const setValue = value ?? `mock-${input.replaceAll(' ', '-')}`.toLowerCase()
+  vi.stubEnv(
+    `${INPUT_KEY}${input.replaceAll(' ', '_')}`.toUpperCase(),
+    setValue
+  )
 }
 
 /**
  * Set all required GitHub Action inputs to mock values.
  */
-export const setRequiredInputEnv = () => {
+export const stubRequiredInputEnv = () => {
   for (const input of REQUIRED_INPUTS) {
-    const value = `mock-${input.replaceAll(' ', '-')}`
-    setInputEnv(input, value)
+    stubInputEnv(input)
   }
 }
