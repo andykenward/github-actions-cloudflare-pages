@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: deploy
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  cloudflare-pages-deploy:
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v3.5.3
+      - id: 'cloudflare-pages'
+        uses: ./
+        with:
+          cloudflare-api-token: ${{secrets.CLOUDFLARE_API_TOKEN}}
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+          directory: 'example/dist'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-environment: 'preview'

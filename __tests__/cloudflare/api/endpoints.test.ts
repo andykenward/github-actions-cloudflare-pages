@@ -2,15 +2,15 @@ import {describe, expect, test} from 'vitest'
 
 import {getCloudflareApiEndpoint} from '@/src/cloudflare/api/endpoints.js'
 import {
-  ACTION_INPUT_ACCOUNT_ID,
-  ACTION_INPUT_PROJECT_NAME
+  ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID,
+  ACTION_INPUT_CLOUDFLARE_PROJECT_NAME
 } from '@/src/constants.js'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 describe('getCloudflareApiEndpoint', () => {
   test('returns correct url', () => {
-    stubInputEnv(ACTION_INPUT_ACCOUNT_ID, 'mock-account-id')
-    stubInputEnv(ACTION_INPUT_PROJECT_NAME, 'mock-project-name')
+    stubInputEnv(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, 'mock-account-id')
+    stubInputEnv(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, 'mock-project-name')
 
     const url = getCloudflareApiEndpoint()
 
@@ -20,8 +20,8 @@ describe('getCloudflareApiEndpoint', () => {
   })
 
   test('appends path argument', () => {
-    stubInputEnv(ACTION_INPUT_ACCOUNT_ID, 'mock-account-id')
-    stubInputEnv(ACTION_INPUT_PROJECT_NAME, 'mock-project-name')
+    stubInputEnv(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, 'mock-account-id')
+    stubInputEnv(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, 'mock-project-name')
 
     const url = getCloudflareApiEndpoint('mock-deployment')
 
@@ -38,14 +38,14 @@ describe('getCloudflareApiEndpoint', () => {
 
   test.each([
     {
-      input: ACTION_INPUT_ACCOUNT_ID,
+      input: ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID,
       value: 'mock-account-id',
-      expected: ACTION_INPUT_PROJECT_NAME
+      expected: ACTION_INPUT_CLOUDFLARE_PROJECT_NAME
     },
     {
-      input: ACTION_INPUT_PROJECT_NAME,
+      input: ACTION_INPUT_CLOUDFLARE_PROJECT_NAME,
       value: 'mock-project-id',
-      expected: ACTION_INPUT_ACCOUNT_ID
+      expected: ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID
     }
   ])(
     `$input with $value throws error $expected`,

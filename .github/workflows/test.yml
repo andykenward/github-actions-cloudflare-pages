@@ -3,10 +3,11 @@
 name: test
 on:
   pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
-      - 'releases/*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,29 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v3.5.2
+      - uses: actions/checkout@v3.5.3
       - uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
         with:
-          node-version: 18.x
+          node-version: 18
       - name: Lint
         run: pnpm run lint
       - name: Test
         run: pnpm run test
-  action:
-    permissions:
-      contents: read
-      deployments: write
-      pull-requests: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v3.5.2
-      - id: 'our-action'
-        uses: ./
-        with:
-          api-token: ${{secrets.CLOUDFLARE_API_TOKEN}}
-          account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
-          directory: 'example/dist'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-environment: 'preview'

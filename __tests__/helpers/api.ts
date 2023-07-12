@@ -56,8 +56,8 @@ export const getMockApi = () => {
 }
 export type MockApi = ReturnType<typeof getMockApi>
 
-const MOCK_ACCOUNT_ID = 'mock-account-id'
-const MOCK_PROJECT_NAME = 'mock-project-name'
+const MOCK_ACCOUNT_ID = 'mock-cloudflare-account-id'
+const MOCK_PROJECT_NAME = 'mock-cloudflare-project-name'
 
 export const MOCK_API_PATH = `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`
 export const MOCK_API_PATH_DEPLOYMENTS = `${MOCK_API_PATH}/deployments`

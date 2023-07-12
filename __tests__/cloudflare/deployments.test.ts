@@ -86,16 +86,16 @@ describe('deployments', () => {
             ''
           ],
           'mock-directory',
-          'mock-project-name',
+          'mock-cloudflare-project-name',
           'mock-github-head-ref',
           'mock-github-sha'
         )
         expect(execa.$).toHaveBeenCalledTimes(1)
         expect(process.env[CLOUDFLARE_API_TOKEN]).toStrictEqual(
-          'mock-api-token'
+          'mock-cloudflare-api-token'
         )
         expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toStrictEqual(
-          'mock-account-id'
+          'mock-cloudflare-account-id'
         )
         expect(setOutput).not.toHaveBeenCalled()
         expect(summary.addTable).not.toHaveBeenCalled()
@@ -124,7 +124,7 @@ describe('deployments', () => {
         await expect(
           createDeployment()
         ).rejects.toThrowErrorMatchingInlineSnapshot(
-          '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-account-id/pages/projects/mock-project-name/deployments) failed."'
+          '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed."'
         )
         expect(execa.$).toHaveBeenCalledTimes(1)
         expect(setOutput).not.toHaveBeenCalled()

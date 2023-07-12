@@ -96,10 +96,11 @@ declare namespace NodeJS {
     CLOUDFLARE_API_TOKEN?: string
 
     /** Action Inputs */
-    INPUT_API_TOKEN?: string
-    INPUT_ACCOUNT_ID?: string
-    INPUT_PROJECT_NAME?: string
+    INPUT_CLOUDFLARE_API_TOKEN?: string
+    INPUT_CLOUDFLARE_ACCOUNT_ID?: string
+    INPUT_CLOUDFLARE_PROJECT_NAME?: string
     INPUT_DIRECTORY?: string
-    // INPUT_GITHUB_TOKEN?: string
+    INPUT_GITHUB_TOKEN?: string
+    INPUT_GITHUB_ENVIRONMENT?: string
   }
 }

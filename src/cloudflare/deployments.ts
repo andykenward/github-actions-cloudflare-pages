@@ -3,10 +3,10 @@ import {$} from 'execa'
 
 import type {PagesDeployment} from './types.js'
 import {
-  ACTION_INPUT_ACCOUNT_ID,
-  ACTION_INPUT_API_TOKEN,
+  ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID,
+  ACTION_INPUT_CLOUDFLARE_API_TOKEN,
+  ACTION_INPUT_CLOUDFLARE_PROJECT_NAME,
   ACTION_INPUT_DIRECTORY,
-  ACTION_INPUT_PROJECT_NAME,
   CLOUDFLARE_ACCOUNT_ID,
   CLOUDFLARE_API_TOKEN
 } from '../constants.js'
@@ -53,16 +53,16 @@ export const getDeploymentAlias = (deployment: PagesDeployment): string => {
 }
 
 export const createDeployment = async () => {
-  const accountId = getInput(ACTION_INPUT_ACCOUNT_ID, {
+  const accountId = getInput(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, {
     required: true
   })
-  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, {
+  const projectName = getInput(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, {
     required: true
   })
   const directory = getInput(ACTION_INPUT_DIRECTORY, {
     required: true
   })
-  const apiToken = getInput(ACTION_INPUT_API_TOKEN, {
+  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, {
     required: true
   })
 
