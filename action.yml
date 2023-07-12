@@ -6,23 +6,23 @@ branding:
   icon: 'upload-cloud'
   color: 'orange'
 inputs:
-  apiToken:
+  api-token:
     description: 'Cloudflare API Token'
     required: true
-  accountId:
+  account-id:
     description: 'Cloudflare Account ID'
     required: true
-  projectName:
+  project-name:
     description: 'The name of the Pages project to upload to'
     required: true
   directory:
     description: 'The directory of static files to upload'
     required: true
-  githubToken:
+  github-token:
     description: 'Github API key'
     required: true
   github-environment:
-    description: 'The name of the GitHub environment to deploy to'
+    description: 'The name of the GitHub environment to deploy to. You need to manually create this on github.com'
     required: true
 
 outputs:
@@ -50,9 +50,9 @@ runs:
       run: node ${{ github.action_path }}/dist/index.js
       shell: ${{ (runner.os == 'Windows' && 'pwsh') || 'bash' }}
       env:
-        INPUT_APITOKEN: ${{ inputs.apiToken }}
-        INPUT_ACCOUNTID: ${{ inputs.accountId }}
-        INPUT_PROJECTNAME: ${{ inputs.projectName }}
+        INPUT_API_TOKEN: ${{ inputs.api-token }}
+        INPUT_ACCOUNT_ID: ${{ inputs.account-id }}
+        INPUT_PROJECT_NAME: ${{ inputs.project-name }}
         INPUT_DIRECTORY: ${{ inputs.directory }}
-        INPUT_GITHUBTOKEN: ${{ inputs.githubToken }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
         INPUT_GITHUB_ENVIRONMENT: ${{ inputs.github-environment }}

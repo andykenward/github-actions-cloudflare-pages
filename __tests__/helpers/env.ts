@@ -1,3 +1,7 @@
+import {vi} from 'vitest'
+
+import {raise} from '@/src/utils.js'
+
 export const TEST_ENV_VARS: NodeJS.ProcessEnv = {
   GITHUB_HEAD_REF: 'mock-github-head-ref',
   GITHUB_REF: 'mock-github-ref',
@@ -11,10 +15,10 @@ export const TEST_ENV_VARS: NodeJS.ProcessEnv = {
   GITHUB_GRAPHQL_URL: 'https://api.github.com/graphql'
 }
 
-export const setTestEnvVars = () => {
+export const stubTestEnvVars = () => {
   for (const key in TEST_ENV_VARS) {
-    if (Object.prototype.hasOwnProperty.call(TEST_ENV_VARS, key)) {
-      process.env[key] = TEST_ENV_VARS[key]
-    }
+    const value =
+      TEST_ENV_VARS[key] ?? raise(`Missing TEST_ENV_VARS value for key: ${key}`)
+    vi.stubEnv(key, value)
   }
 }

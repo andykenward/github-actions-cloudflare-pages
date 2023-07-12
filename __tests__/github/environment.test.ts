@@ -11,7 +11,7 @@ import {
 import type {MockApi} from '../helpers/index.js'
 import {
   getMockApi,
-  setRequiredInputEnv,
+  stubRequiredInputEnv,
   TEST_ENV_VARS
 } from '../helpers/index.js'
 
@@ -21,7 +21,7 @@ describe('environment', () => {
 
   beforeEach(() => {
     mockApi = getMockApi()
-    setRequiredInputEnv()
+    stubRequiredInputEnv()
   })
 
   afterEach(async () => {
