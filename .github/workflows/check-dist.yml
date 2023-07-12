@@ -25,6 +25,7 @@ concurrency:
 jobs:
   check-dist:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v3.5.2
       - uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
