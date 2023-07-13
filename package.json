@@ -43,7 +43,7 @@
     "node",
     "setup"
   ],
-  "author": "",
+  "author": "Unlike Ltd <hi@unlike.dev> (https://unlike.dev/)",
   "license": "MIT",
   "engines": {
     "node": "^18.16.0",
