@@ -3207,7 +3207,7 @@ var createDeployment = /* @__PURE__ */ __name(async () => {
     throw new Error(`${ERROR_KEY} branch is undefined`);
   }
   try {
-    await $`npx wrangler@3.1.1 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
+    await $`npx wrangler@3.2.0 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
     const deployments = await getDeployments();
     const deployment = deployments?.find(
       (deployment2) => deployment2.deployment_trigger.metadata.commit_hash === commitHash
