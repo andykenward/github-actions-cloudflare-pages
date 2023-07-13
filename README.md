@@ -2,9 +2,9 @@
 
 # Cloudflare Pages GitHub Action
 
-This action deploys your build ouput to [Cloudflare Pages] using [Wrangler]. GitHub Environments and Deployments are used to track these deployments.
+This action deploys your build output to [Cloudflare Pages] using [Wrangler]. GitHub Environments and Deployments are used to track these deployments.
 
-When used in context of a [pull request], the action will create a deployment for the Pull Request and add a comment with the URL of the deployment. On closing the [pull request], the deployment will be deleted from [Cloudflare Pages], GitHub Deployment and the related comment. **The action is only able to delete deployments & comments that it created, as it requires a certain payload in a GitHub deployment.**
+When used in context of a [pull request], the action will create a deployment for the pull request and add a comment with the URL of the deployment. On closing the [pull request], all the deployments for that pull request will be deleted from [Cloudflare Pages], GitHub Deployment and the related comment. **The action is only able to delete deployments & comments that it created, as it requires a certain payload in a GitHub deployment.**
 
 - Deploy to [Cloudflare Pages].
 - Use GitHub Environments & Deployments.
@@ -40,13 +40,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Node.js & pnpm
-        uses: unlike-ltd/github-actions/setup-pnpm@v0
+        uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
         with:
           node-version: 18.x
       - name: Build
         run: pnpm run build
       - name: Publish to Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@v0
+        uses: unlike-ltd/github-actions-cloudflare-pages@v0.0.1
         id: pages
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -65,10 +65,10 @@ jobs:
 name: 'delete deployments'
 on:
   pull_request:
-    types: [closed]
+    types:
+      - closed
     branches:
       - main
-      - 'releases/*'
 
 jobs:
   delete:
@@ -79,15 +79,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - id: 'our-action'
-        uses: ./
+      - name: 'Delete Cloudflare Pages deployments'
+        uses: unlike-ltd/github-actions-cloudflare-pages@v0.0.1
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           directory: 'example/dist'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-environment: 'preview'
+          github-environment: ${{ vars.CLOUDFLARE_PROJECT_NAME }} ${{ (github.ref == 'refs/heads/main' && '(Production)') || '(Preview)' }}
 ```
 
 ## Inputs
@@ -138,7 +138,7 @@ alias:
 
 Deployments are only deleted when the GitHub Action Event triggered is `pull_request` and the event payload action is `closed`.
 
-It will only delete deployments that it created. This is because it requires a certain payload in a GitHub deployment response.
+It will only delete deployments that it created for that pull request. This is because it requires a certain payload in a GitHub deployment response.
 
 ### GitHub Deployment payload example response
 
