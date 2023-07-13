@@ -28,6 +28,7 @@
     "codegen": "graphql-codegen-esm --config graphql.config.js",
     "codegen:events": "pnpm run ts-node -T bin/codegen/index.ts",
     "download": "pnpm run ts-node -T bin/download/index.ts",
+    "deployments:delete": "pnpm run ts-node -T bin/deployments/index.ts",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset publish"
