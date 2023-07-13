@@ -105,10 +105,10 @@ cloudflare-project-name:
 directory:
   description: 'Directory of static files to upload'
   required: true
-gh-token:
+github-token:
   description: 'Github API key'
   required: true
-gh-environment:
+github-environment:
   description: 'GitHub environment to deploy to. You need to manually create this for the github repo'
   required: true
 ```
