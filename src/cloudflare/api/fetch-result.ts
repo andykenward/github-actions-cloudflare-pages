@@ -3,7 +3,7 @@ import type {RequestInit} from 'undici'
 import {getInput} from '@unlike/github-actions-core'
 
 import type {FetchResult} from '../types.js'
-import {ACTION_INPUT_API_TOKEN} from '../../constants.js'
+import {ACTION_INPUT_CLOUDFLARE_API_TOKEN} from '../../constants.js'
 import {throwFetchError} from './fetch-error.js'
 
 export const fetchResult = async <ResponseType>(
@@ -13,7 +13,7 @@ export const fetchResult = async <ResponseType>(
   abortSignal?: AbortSignal
 ): Promise<ResponseType> => {
   const method = init.method ?? 'GET'
-  const apiToken = getInput(ACTION_INPUT_API_TOKEN, {required: true})
+  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, {required: true})
 
   const initFetch = {
     headers: {
@@ -43,7 +43,7 @@ export const fetchSuccess = async (
   init: RequestInit = {}
 ): Promise<boolean> => {
   const method = init.method ?? 'GET'
-  const apiToken = getInput(ACTION_INPUT_API_TOKEN, {required: true})
+  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, {required: true})
 
   const initFetch = {
     headers: {

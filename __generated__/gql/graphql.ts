@@ -7140,6 +7140,20 @@ export type EnvironmentEdge = {
   node?: Maybe<Environment>;
 };
 
+/** Properties by which environments connections can be ordered */
+export enum EnvironmentOrderField {
+  /** Order environments by name. */
+  Name = 'NAME'
+}
+
+/** Ordering options for environments */
+export type Environments = {
+  /** The direction in which to order environments by the specified field. */
+  direction: OrderDirection;
+  /** The field to order environments by. */
+  field: EnvironmentOrderField;
+};
+
 /**
  * An external identity provisioned by SAML SSO or SCIM. If SAML is configured on
  * the organization, the external identity is visible to (1) organization owners,
@@ -13682,6 +13696,7 @@ export type OrganizationMannequinsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  login?: InputMaybe<Scalars['String']['input']>;
   orderBy?: InputMaybe<MannequinOrder>;
 };
 
@@ -20403,6 +20418,7 @@ export type RepositoryEnvironmentsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<Environments>;
 };
 
 
@@ -21745,7 +21761,7 @@ export enum RequestableCheckStatusState {
 }
 
 /** Types that can be requested reviewers. */
-export type RequestedReviewer = Mannequin | Team | User;
+export type RequestedReviewer = Bot | Mannequin | Team | User;
 
 /** The connection type for RequestedReviewer. */
 export type RequestedReviewerConnection = {

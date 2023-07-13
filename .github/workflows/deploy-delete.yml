@@ -1,15 +1,15 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 
-name: 'delete deployments'
+name: deploy delete
 on:
   pull_request:
-    types: [closed]
+    types:
+      - closed
     branches:
       - main
-      - 'releases/*'
 
 jobs:
-  delete:
+  cloudflare-pages-deploy-delete:
     permissions:
       contents: read
       deployments: write
@@ -17,13 +17,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v3.5.2
-      - id: 'our-action'
+      - uses: actions/checkout@v3.5.3
+      - id: 'cloudflare-pages'
         uses: ./
         with:
-          api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           directory: 'example/dist'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-environment: 'preview'

@@ -28,6 +28,7 @@
     "codegen": "graphql-codegen-esm --config graphql.config.js",
     "codegen:events": "pnpm run ts-node -T bin/codegen/index.ts",
     "download": "pnpm run ts-node -T bin/download/index.ts",
+    "deployments:delete": "pnpm run ts-node -T bin/deployments/index.ts",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset publish"
@@ -42,7 +43,7 @@
     "node",
     "setup"
   ],
-  "author": "",
+  "author": "Unlike Ltd <hi@unlike.dev> (https://unlike.dev/)",
   "license": "MIT",
   "engines": {
     "node": "^18.16.0",
@@ -54,7 +55,7 @@
     "@octokit/plugin-paginate-rest": "8.0.0",
     "@unlike/github-actions-core": "0.1.0",
     "execa": "7.1.1",
-    "wrangler": "3.1.1"
+    "wrangler": "3.2.0"
   },
   "devDependencies": {
     "@changesets/cli": "2.26.2",
@@ -63,7 +64,7 @@
     "@graphql-codegen/client-preset": "4.0.1",
     "@graphql-typed-document-node/core": "3.2.0",
     "@ianvs/prettier-plugin-sort-imports": "4.0.2",
-    "@octokit/graphql-schema": "14.20.0",
+    "@octokit/graphql-schema": "14.22.0",
     "@octokit/webhooks-schemas": "7.1.0",
     "@octokit/webhooks-types": "7.1.0",
     "@total-typescript/ts-reset": "0.4.2",
@@ -75,7 +76,7 @@
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
     "dotenv": "16.3.1",
-    "esbuild": "0.18.11",
+    "esbuild": "0.18.12",
     "eslint": "8.44.0",
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-unicorn": "47.0.0",

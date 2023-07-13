@@ -2883,9 +2883,9 @@ __name(create$, "create$");
 var $ = create$();
 
 // src/constants.ts
-var ACTION_INPUT_ACCOUNT_ID = "account id";
-var ACTION_INPUT_PROJECT_NAME = "project name";
-var ACTION_INPUT_API_TOKEN = "api token";
+var ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID = "cloudflare account id";
+var ACTION_INPUT_CLOUDFLARE_PROJECT_NAME = "cloudflare project name";
+var ACTION_INPUT_CLOUDFLARE_API_TOKEN = "cloudflare api token";
 var ACTION_INPUT_DIRECTORY = "directory";
 var ACTION_INPUT_GITHUB_TOKEN = "github token";
 var ACTION_INPUT_GITHUB_ENVIRONMENT = "github environment";
@@ -3050,10 +3050,12 @@ var useContextEvent = /* @__PURE__ */ __name(() => useContext().event, "useConte
 // src/cloudflare/api/endpoints.ts
 var API_ENDPOINT = `https://api.cloudflare.com`;
 var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path3) => {
-  const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
+  const accountIdentifier = getInput(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, {
     required: true
   });
-  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, { required: true });
+  const projectName = getInput(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, {
+    required: true
+  });
   const input = [
     `/client/v4/accounts/${accountIdentifier}/pages/projects/${projectName}`,
     path3
@@ -3061,10 +3063,12 @@ var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path3) => {
   return new URL(input, API_ENDPOINT).toString();
 }, "getCloudflareApiEndpoint");
 var getCloudflareLogEndpoint = /* @__PURE__ */ __name((id) => {
-  const accountIdentifier = getInput(ACTION_INPUT_ACCOUNT_ID, {
+  const accountIdentifier = getInput(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, {
     required: true
   });
-  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, { required: true });
+  const projectName = getInput(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, {
+    required: true
+  });
   return `https://dash.cloudflare.com/${accountIdentifier}/pages/view/${projectName}/${id}`;
 }, "getCloudflareLogEndpoint");
 
@@ -3119,7 +3123,7 @@ __name(renderError, "renderError");
 // src/cloudflare/api/fetch-result.ts
 var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams, abortSignal) => {
   const method = init.method ?? "GET";
-  const apiToken = getInput(ACTION_INPUT_API_TOKEN, { required: true });
+  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, { required: true });
   const initFetch = {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
@@ -3142,7 +3146,7 @@ var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams
 }, "fetchResult");
 var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
   const method = init.method ?? "GET";
-  const apiToken = getInput(ACTION_INPUT_API_TOKEN, { required: true });
+  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, { required: true });
   const initFetch = {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
@@ -3184,16 +3188,16 @@ var getDeploymentAlias = /* @__PURE__ */ __name((deployment) => {
   return deployment.aliases && deployment.aliases.length > 0 ? deployment.aliases[0] : deployment.url;
 }, "getDeploymentAlias");
 var createDeployment = /* @__PURE__ */ __name(async () => {
-  const accountId = getInput(ACTION_INPUT_ACCOUNT_ID, {
+  const accountId = getInput(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, {
     required: true
   });
-  const projectName = getInput(ACTION_INPUT_PROJECT_NAME, {
+  const projectName = getInput(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, {
     required: true
   });
   const directory = getInput(ACTION_INPUT_DIRECTORY, {
     required: true
   });
-  const apiToken = getInput(ACTION_INPUT_API_TOKEN, {
+  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, {
     required: true
   });
   process.env[CLOUDFLARE_API_TOKEN] = apiToken;
@@ -3203,7 +3207,7 @@ var createDeployment = /* @__PURE__ */ __name(async () => {
     throw new Error(`${ERROR_KEY} branch is undefined`);
   }
   try {
-    await $`npx wrangler@3.1.1 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
+    await $`npx wrangler@3.2.0 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
     const deployments = await getDeployments();
     const deployment = deployments?.find(
       (deployment2) => deployment2.deployment_trigger.metadata.commit_hash === commitHash
