@@ -26,6 +26,7 @@
     "all": "pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls && pnpm run format && pnpm run lint:ls && pnpm run test && pnpm run build",
     "act:d": "act -j delete --secret-file .env",
     "codegen": "graphql-codegen-esm --config graphql.config.js",
+    "codegen:watch": "pnpm run codegen --watch",
     "codegen:events": "pnpm run ts-node -T bin/codegen/index.ts",
     "download": "pnpm run ts-node -T bin/download/index.ts",
     "deployments:delete": "pnpm run ts-node -T bin/deployments/index.ts",

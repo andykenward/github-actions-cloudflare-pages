@@ -3290,6 +3290,13 @@ var TypedDocumentString = class extends String {
     return this.value;
   }
 };
+var DeploymentFragmentFragmentDoc = new TypedDocumentString(`
+    fragment DeploymentFragment on Deployment {
+  id
+  environment
+  state
+}
+    `, { "fragmentName": "DeploymentFragment" });
 var EnvironmentFragmentFragmentDoc = new TypedDocumentString(`
     fragment EnvironmentFragment on Environment {
   name
@@ -3320,23 +3327,6 @@ var FilesDocument = new TypedDocumentString(`
   }
 }
     `);
-var DeleteDeploymentDocument = new TypedDocumentString(`
-    mutation DeleteDeployment($deploymentId: ID!) {
-  deleteDeployment(input: {id: $deploymentId}) {
-    clientMutationId
-  }
-}
-    `);
-var DeleteDeploymentAndCommentDocument = new TypedDocumentString(`
-    mutation DeleteDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
-  deleteDeployment(input: {id: $deploymentId}) {
-    clientMutationId
-  }
-  deleteIssueComment(input: {id: $commentId}) {
-    clientMutationId
-  }
-}
-    `);
 var AddCommentDocument = new TypedDocumentString(`
     mutation AddComment($subjectId: ID!, $body: String!) {
   addComment(input: {subjectId: $subjectId, body: $body}) {
@@ -3348,6 +3338,55 @@ var AddCommentDocument = new TypedDocumentString(`
   }
 }
     `);
+var CreateGitHubDeploymentDocument = new TypedDocumentString(`
+    mutation CreateGitHubDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!, $description: String) {
+  createDeployment(
+    input: {autoMerge: false, description: $description, environment: $environmentName, refId: $refId, repositoryId: $repositoryId, requiredContexts: [], payload: $payload}
+  ) {
+    deployment {
+      ...DeploymentFragment
+    }
+  }
+}
+    fragment DeploymentFragment on Deployment {
+  id
+  environment
+  state
+}`);
+var DeleteGitHubDeploymentDocument = new TypedDocumentString(`
+    mutation DeleteGitHubDeployment($deploymentId: ID!) {
+  deleteDeployment(input: {id: $deploymentId}) {
+    clientMutationId
+  }
+}
+    `);
+var DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(`
+    mutation DeleteGitHubDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
+  deleteDeployment(input: {id: $deploymentId}) {
+    clientMutationId
+  }
+  deleteIssueComment(input: {id: $commentId}) {
+    clientMutationId
+  }
+}
+    `);
+var CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
+    mutation CreateGitHubDeploymentStatus($deploymentId: ID!, $environment: String, $environmentUrl: String!, $logUrl: String!, $state: DeploymentStatusState!) {
+  createDeploymentStatus(
+    input: {autoInactive: false, deploymentId: $deploymentId, environment: $environment, environmentUrl: $environmentUrl, logUrl: $logUrl, state: $state}
+  ) {
+    deploymentStatus {
+      deployment {
+        ...DeploymentFragment
+      }
+    }
+  }
+}
+    fragment DeploymentFragment on Deployment {
+  id
+  environment
+  state
+}`);
 var CreateEnvironmentDocument = new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
   createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
@@ -3378,21 +3417,6 @@ var GetEnvironmentDocument = new TypedDocumentString(`
   id
 }`);
 
-// __generated__/gql/gql.ts
-var documents = {
-  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
-  "\n  mutation DeleteDeployment($deploymentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n  }\n": DeleteDeploymentDocument,
-  "\n  mutation DeleteDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n": DeleteDeploymentAndCommentDocument,
-  "\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n        }\n      }\n    }\n  }\n": AddCommentDocument,
-  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
-  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
-  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": GetEnvironmentDocument
-};
-function graphql(source) {
-  return documents[source] ?? {};
-}
-__name(graphql, "graphql");
-
 // src/github/api/client.ts
 var request = /* @__PURE__ */ __name(async (params) => {
   const { query, variables, options } = params;
@@ -3414,205 +3438,6 @@ var request = /* @__PURE__ */ __name(async (params) => {
     return res;
   });
 }, "request");
-
-// src/github/comment.ts
-var MutationAddComment = graphql(
-  /* GraphQL */
-  `
-  mutation AddComment($subjectId: ID!, $body: String!) {
-    addComment(input: {subjectId: $subjectId, body: $body}) {
-      commentEdge {
-        node {
-          id
-        }
-      }
-    }
-  }
-`
-);
-var addComment = /* @__PURE__ */ __name(async (deployment) => {
-  const { eventName, payload } = useContextEvent();
-  if (eventName === "pull_request" && payload.action !== "closed") {
-    const prNodeId = payload.pull_request.node_id ?? raise("No pull request node id");
-    const { sha } = useContext();
-    const rawBody = `## Cloudflare Pages Deployment
- **Environment:** ${deployment.environment} 
- **Project:** ${deployment.project_name} 
- **Built with commit:** ${sha}
- **Preview URL:** ${deployment.url} 
- **Branch Preview URL:** ${getDeploymentAlias(deployment)}`;
-    const comment = await request({
-      query: MutationAddComment,
-      variables: {
-        subjectId: prNodeId,
-        body: rawBody
-      }
-    });
-    return comment.data.addComment?.commentEdge?.node?.id;
-  }
-}, "addComment");
-
-// src/github/environment.ts
-var EnvironmentFragment = graphql(
-  /* GraphQL */
-  `
-  fragment EnvironmentFragment on Environment {
-    name
-    id
-  }
-`
-);
-var MutationCreateEnvironment = graphql(
-  /* GraphQL */
-  `
-  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
-    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
-      environment {
-        ...EnvironmentFragment
-      }
-    }
-  }
-`
-);
-var QueryGetEnvironment = graphql(
-  /* GraphQL */
-  `
-  query GetEnvironment(
-    $owner: String!
-    $repo: String!
-    $environment_name: String!
-    $qualifiedName: String!
-  ) {
-    repository(owner: $owner, name: $repo) {
-      environment(name: $environment_name) {
-        ...EnvironmentFragment
-      }
-      ref(qualifiedName: $qualifiedName) {
-        id
-        name
-        prefix
-      }
-    }
-  }
-`
-);
-var checkEnvironment = /* @__PURE__ */ __name(async () => {
-  const environmentName = getInput(ACTION_INPUT_GITHUB_ENVIRONMENT, {
-    required: true
-  });
-  const { repo, ref } = useContext();
-  const environment = await request({
-    query: QueryGetEnvironment,
-    variables: {
-      owner: repo.owner,
-      repo: repo.repo,
-      environment_name: environmentName,
-      qualifiedName: ref
-    },
-    options: {
-      errorThrows: false
-    }
-  });
-  if (environment.errors) {
-    error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
-  }
-  if (!environment.data.repository?.environment) {
-    throw new Error(`GitHub Environment: Not created for ${environmentName}`);
-  }
-  if (!environment.data.repository?.ref?.id) {
-    throw new Error(`GitHub Environment: No ref id ${environmentName}`);
-  }
-  return {
-    ...environment.data.repository.environment,
-    refId: environment.data.repository?.ref?.id
-  };
-}, "checkEnvironment");
-
-// src/github/deployment.ts
-var MutationCreateDeployment = `
-  mutation CreateDeployment(
-    $repositoryId: ID!
-    $environmentName: String!
-    $refId: ID!
-    $payload: String!
-    $description: String
-  ) {
-    createDeployment(
-      input: {
-        autoMerge: false
-        description: $description
-        environment: $environmentName
-        refId: $refId
-        repositoryId: $repositoryId
-        requiredContexts: []
-        payload: $payload
-      }
-    ) {
-      deployment {
-        id
-        environment
-        state
-      }
-    }
-  }
-`;
-var MutationCreateDeploymentStatus = `
-  mutation CreateDeploymentStatus(
-    $deploymentId: ID!
-    $environment: String
-    $environmentUrl: String!
-    $logUrl: String!
-    $state: DeploymentStatusState!
-  ) {
-    createDeploymentStatus(
-      input: {
-        autoInactive: false
-        deploymentId: $deploymentId
-        environment: $environment
-        environmentUrl: $environmentUrl
-        logUrl: $logUrl
-        state: $state
-      }
-    ) {
-      deploymentStatus {
-        createdAt
-        deployment {
-          id
-          environment
-          state
-        }
-        state
-        environmentUrl
-      }
-    }
-  }
-`;
-var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url: url2 }, commentId) => {
-  const { name, refId } = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required");
-  const { repo } = useContext();
-  const payload = { cloudflareId: id, url: url2, commentId };
-  const deployment = await request({
-    query: MutationCreateDeployment,
-    variables: {
-      repositoryId: repo.node_id,
-      environmentName: name,
-      refId,
-      payload: JSON.stringify(payload),
-      description: `Cloudflare Pages Deployment: ${id}`
-    }
-  });
-  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id ?? raise("GitHub Deployment: GitHub deployment id is required");
-  await request({
-    query: MutationCreateDeploymentStatus,
-    variables: {
-      environment: name,
-      deploymentId: gitHubDeploymentId,
-      environmentUrl: url2,
-      logUrl: getCloudflareLogEndpoint(id),
-      state: "SUCCESS" /* Success */
-    }
-  });
-}, "createGitHubDeployment");
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.0/node_modules/@octokit-next/endpoint/lib/util/lowercase-keys.js
 function lowercaseKeys(object) {
@@ -4290,7 +4115,7 @@ var NON_VARIABLE_OPTIONS = [
 ];
 var FORBIDDEN_VARIABLE_OPTIONS = ["query", "method", "url"];
 var GHES_V3_SUFFIX_REGEX = /\/api\/v3\/?$/;
-function graphql2(request3, query, options) {
+function graphql(request3, query, options) {
   if (options) {
     if (typeof query === "string" && "query" in options) {
       return Promise.reject(
@@ -4332,13 +4157,13 @@ function graphql2(request3, query, options) {
     return response.data.data;
   });
 }
-__name(graphql2, "graphql");
+__name(graphql, "graphql");
 
 // node_modules/.pnpm/@octokit-next+graphql@2.7.0/node_modules/@octokit-next/graphql/lib/with-defaults.js
 function withDefaults3(oldRequest, newDefaults) {
   const newRequest = oldRequest.defaults(newDefaults);
   const newApi = /* @__PURE__ */ __name((query, options) => {
-    return graphql2(newRequest, query, options);
+    return graphql(newRequest, query, options);
   }, "newApi");
   return Object.assign(newApi, {
     defaults: withDefaults3.bind(null, newRequest),
@@ -4348,7 +4173,7 @@ function withDefaults3(oldRequest, newDefaults) {
 __name(withDefaults3, "withDefaults");
 
 // node_modules/.pnpm/@octokit-next+graphql@2.7.0/node_modules/@octokit-next/graphql/index.js
-var graphql3 = withDefaults3(request2, {
+var graphql2 = withDefaults3(request2, {
   headers: {
     "user-agent": `octokit-next-graphql.js/${VERSION3} ${getUserAgent()}`
   },
@@ -4610,39 +4435,242 @@ var paginate = /* @__PURE__ */ __name(async (endpoint2, options) => {
   );
 }, "paginate");
 
-// src/github/deployments.ts
-var getDeployments2 = /* @__PURE__ */ __name(async () => {
-  const { repo, ref } = useContext();
-  const deployments = await paginate("GET /repos/{owner}/{repo}/deployments", {
-    owner: repo.owner,
-    repo: repo.repo,
-    ref,
-    per_page: 100
-  });
-  return deployments;
-}, "getDeployments");
+// __generated__/gql/gql.ts
+var documents = {
+  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
+  "\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n        }\n      }\n    }\n  }\n": AddCommentDocument,
+  "\n  mutation CreateGitHubDeployment(\n    $repositoryId: ID!\n    $environmentName: String!\n    $refId: ID!\n    $payload: String!\n    $description: String\n  ) {\n    createDeployment(\n      input: {\n        autoMerge: false\n        description: $description\n        environment: $environmentName\n        refId: $refId\n        repositoryId: $repositoryId\n        requiredContexts: []\n        payload: $payload\n      }\n    ) {\n      deployment {\n        ...DeploymentFragment\n      }\n    }\n  }\n": CreateGitHubDeploymentDocument,
+  "\n  mutation DeleteGitHubDeployment($deploymentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n  }\n": DeleteGitHubDeploymentDocument,
+  "\n  mutation DeleteGitHubDeploymentAndComment(\n    $deploymentId: ID!\n    $commentId: ID!\n  ) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n": DeleteGitHubDeploymentAndCommentDocument,
+  "\n  fragment DeploymentFragment on Deployment {\n    id\n    environment\n    state\n  }\n": DeploymentFragmentFragmentDoc,
+  "\n  mutation CreateGitHubDeploymentStatus(\n    $deploymentId: ID!\n    $environment: String\n    $environmentUrl: String!\n    $logUrl: String!\n    $state: DeploymentStatusState!\n  ) {\n    createDeploymentStatus(\n      input: {\n        autoInactive: false\n        deploymentId: $deploymentId\n        environment: $environment\n        environmentUrl: $environmentUrl\n        logUrl: $logUrl\n        state: $state\n      }\n    ) {\n      deploymentStatus {\n        deployment {\n          ...DeploymentFragment\n        }\n      }\n    }\n  }\n": CreateGitHubDeploymentStatusDocument,
+  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
+  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
+  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": GetEnvironmentDocument
+};
+function graphql3(source) {
+  return documents[source] ?? {};
+}
+__name(graphql3, "graphql");
 
-// src/delete.ts
-var idDeploymentPayload = /* @__PURE__ */ __name((payload) => {
-  const parsedPayload = typeof payload === "string" ? JSON.parse(payload) : payload;
-  if (!parsedPayload || typeof parsedPayload !== "object")
-    return false;
-  return "cloudflareId" in parsedPayload && "url" in parsedPayload;
-}, "idDeploymentPayload");
-var MutationDeleteDeployment = graphql(
+// src/github/comment.ts
+var MutationAddComment = graphql3(
   /* GraphQL */
   `
-  mutation DeleteDeployment($deploymentId: ID!) {
+  mutation AddComment($subjectId: ID!, $body: String!) {
+    addComment(input: {subjectId: $subjectId, body: $body}) {
+      commentEdge {
+        node {
+          id
+        }
+      }
+    }
+  }
+`
+);
+var addComment = /* @__PURE__ */ __name(async (deployment) => {
+  const { eventName, payload } = useContextEvent();
+  if (eventName === "pull_request" && payload.action !== "closed") {
+    const prNodeId = payload.pull_request.node_id ?? raise("No pull request node id");
+    const { sha } = useContext();
+    const rawBody = `## Cloudflare Pages Deployment
+ **Environment:** ${deployment.environment} 
+ **Project:** ${deployment.project_name} 
+ **Built with commit:** ${sha}
+ **Preview URL:** ${deployment.url} 
+ **Branch Preview URL:** ${getDeploymentAlias(deployment)}`;
+    const comment = await request({
+      query: MutationAddComment,
+      variables: {
+        subjectId: prNodeId,
+        body: rawBody
+      }
+    });
+    return comment.data.addComment?.commentEdge?.node?.id;
+  }
+}, "addComment");
+
+// src/github/environment.ts
+var EnvironmentFragment = graphql3(
+  /* GraphQL */
+  `
+  fragment EnvironmentFragment on Environment {
+    name
+    id
+  }
+`
+);
+var MutationCreateEnvironment = graphql3(
+  /* GraphQL */
+  `
+  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
+    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+      environment {
+        ...EnvironmentFragment
+      }
+    }
+  }
+`
+);
+var QueryGetEnvironment = graphql3(
+  /* GraphQL */
+  `
+  query GetEnvironment(
+    $owner: String!
+    $repo: String!
+    $environment_name: String!
+    $qualifiedName: String!
+  ) {
+    repository(owner: $owner, name: $repo) {
+      environment(name: $environment_name) {
+        ...EnvironmentFragment
+      }
+      ref(qualifiedName: $qualifiedName) {
+        id
+        name
+        prefix
+      }
+    }
+  }
+`
+);
+var checkEnvironment = /* @__PURE__ */ __name(async () => {
+  const environmentName = getInput(ACTION_INPUT_GITHUB_ENVIRONMENT, {
+    required: true
+  });
+  const { repo, ref } = useContext();
+  const environment = await request({
+    query: QueryGetEnvironment,
+    variables: {
+      owner: repo.owner,
+      repo: repo.repo,
+      environment_name: environmentName,
+      qualifiedName: ref
+    },
+    options: {
+      errorThrows: false
+    }
+  });
+  if (environment.errors) {
+    error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
+  }
+  if (!environment.data.repository?.environment) {
+    throw new Error(`GitHub Environment: Not created for ${environmentName}`);
+  }
+  if (!environment.data.repository?.ref?.id) {
+    throw new Error(`GitHub Environment: No ref id ${environmentName}`);
+  }
+  return {
+    ...environment.data.repository.environment,
+    refId: environment.data.repository?.ref?.id
+  };
+}, "checkEnvironment");
+
+// src/github/deployment/status.ts
+var MutationCreateGitHubDeploymentStatus = graphql3(
+  /* GraphQL */
+  `
+  mutation CreateGitHubDeploymentStatus(
+    $deploymentId: ID!
+    $environment: String
+    $environmentUrl: String!
+    $logUrl: String!
+    $state: DeploymentStatusState!
+  ) {
+    createDeploymentStatus(
+      input: {
+        autoInactive: false
+        deploymentId: $deploymentId
+        environment: $environment
+        environmentUrl: $environmentUrl
+        logUrl: $logUrl
+        state: $state
+      }
+    ) {
+      deploymentStatus {
+        deployment {
+          ...DeploymentFragment
+        }
+      }
+    }
+  }
+`
+);
+
+// src/github/deployment/create.ts
+var MutationCreateGitHubDeployment = graphql3(
+  /* GraphQL */
+  `
+  mutation CreateGitHubDeployment(
+    $repositoryId: ID!
+    $environmentName: String!
+    $refId: ID!
+    $payload: String!
+    $description: String
+  ) {
+    createDeployment(
+      input: {
+        autoMerge: false
+        description: $description
+        environment: $environmentName
+        refId: $refId
+        repositoryId: $repositoryId
+        requiredContexts: []
+        payload: $payload
+      }
+    ) {
+      deployment {
+        ...DeploymentFragment
+      }
+    }
+  }
+`
+);
+var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url: url2 }, commentId) => {
+  const { name, refId } = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required");
+  const { repo } = useContext();
+  const payload = { cloudflareId: id, url: url2, commentId };
+  const deployment = await request({
+    query: MutationCreateGitHubDeployment,
+    variables: {
+      repositoryId: repo.node_id,
+      environmentName: name,
+      refId,
+      payload: JSON.stringify(payload),
+      description: `Cloudflare Pages Deployment: ${id}`
+    }
+  });
+  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id ?? raise("GitHub Deployment: GitHub deployment id is required");
+  await request({
+    query: MutationCreateGitHubDeploymentStatus,
+    variables: {
+      environment: name,
+      deploymentId: gitHubDeploymentId,
+      environmentUrl: url2,
+      logUrl: getCloudflareLogEndpoint(id),
+      state: "SUCCESS" /* Success */
+    }
+  });
+}, "createGitHubDeployment");
+
+// src/github/deployment/delete.ts
+var MutationDeleteGitHubDeployment = graphql3(
+  /* GraphQL */
+  `
+  mutation DeleteGitHubDeployment($deploymentId: ID!) {
     deleteDeployment(input: {id: $deploymentId}) {
       clientMutationId
     }
   }
 `
 );
-var MutationDeleteDeploymentAndComment = graphql(
+var MutationDeleteGitHubDeploymentAndComment = graphql3(
   /* GraphQL */
   `
-  mutation DeleteDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
+  mutation DeleteGitHubDeploymentAndComment(
+    $deploymentId: ID!
+    $commentId: ID!
+  ) {
     deleteDeployment(input: {id: $deploymentId}) {
       clientMutationId
     }
@@ -4652,13 +4680,33 @@ var MutationDeleteDeploymentAndComment = graphql(
   }
 `
 );
+
+// src/github/deployment/get.ts
+var getGitHubDeployments = /* @__PURE__ */ __name(async () => {
+  const { repo, ref } = useContext();
+  const deployments = await paginate("GET /repos/{owner}/{repo}/deployments", {
+    owner: repo.owner,
+    repo: repo.repo,
+    ref,
+    per_page: 100
+  });
+  return deployments;
+}, "getGitHubDeployments");
+
+// src/delete.ts
+var idDeploymentPayload = /* @__PURE__ */ __name((payload) => {
+  const parsedPayload = typeof payload === "string" ? JSON.parse(payload) : payload;
+  if (!parsedPayload || typeof parsedPayload !== "object")
+    return false;
+  return "cloudflareId" in parsedPayload && "url" in parsedPayload;
+}, "idDeploymentPayload");
 var deleteDeployments = /* @__PURE__ */ __name(async () => {
   const { eventName, payload } = useContextEvent();
   if (eventName !== "pull_request")
     return;
   if (payload.action !== "closed")
     return;
-  const deployments = await getDeployments2();
+  const deployments = await getGitHubDeployments();
   if (deployments.length === 0) {
     info("No deployments found to delete");
     return;
@@ -4675,7 +4723,7 @@ var deleteDeployments = /* @__PURE__ */ __name(async () => {
       continue;
     info(`Cloudflare Deployment Deleted: ${cloudflareId}`);
     const updateStatusGitHubDeployment = await request({
-      query: MutationCreateDeploymentStatus,
+      query: MutationCreateGitHubDeploymentStatus,
       variables: {
         environment: deployment.environment,
         deploymentId: deployment.node_id,
@@ -4696,7 +4744,7 @@ var deleteDeployments = /* @__PURE__ */ __name(async () => {
       continue;
     }
     const deletedGitHubDeployment = commentId ? await request({
-      query: MutationDeleteDeploymentAndComment,
+      query: MutationDeleteGitHubDeploymentAndComment,
       variables: {
         deploymentId: deployment.node_id,
         commentId
@@ -4705,7 +4753,7 @@ var deleteDeployments = /* @__PURE__ */ __name(async () => {
         errorThrows: false
       }
     }) : await request({
-      query: MutationDeleteDeployment,
+      query: MutationDeleteGitHubDeployment,
       variables: {
         deploymentId: deployment.node_id
       },

@@ -1,0 +1,117 @@
+# https://docs.github.com/en/graphql/overview/schema-previews#deployments-preview
+
+# https://docs.github.com/en/graphql/reference/input-objects#createdeploymentinput
+input CreateDeploymentInput {
+  """
+  Attempt to automatically merge the default branch into the requested ref, defaults to true.
+  """
+  autoMerge: Boolean
+  """
+  A unique identifier for the client performing the mutation.
+  """
+  clientMutationId: String
+  """
+  Short description of the deployment.
+  """
+  description: String
+  """
+  Name for the target deployment environment.
+  """
+  environment: String
+  """
+  JSON payload with extra information about the deployment.
+  """
+  payload: String
+  """
+  The node ID of the ref to be deployed.
+  """
+  refId: ID!
+  """
+  The node ID of the repository.
+  """
+  repositoryId: ID!
+  """
+  The status contexts to verify against commit status checks. To bypass required contexts, pass an empty array. Defaults to all unique contexts.
+  """
+  requiredContexts: [String!]
+  """
+  Specifies a task to execute.
+  """
+  task: String
+}
+
+type CreateDeploymentPayload {
+  """
+  True if the default branch has been auto-merged into the deployment ref.
+  """
+  autoMerged: Boolean
+  """
+  A unique identifier for the client performing the mutation.
+  """
+  clientMutationId: String
+  """
+  The new deployment.
+  """
+  deployment: Deployment
+}
+
+input CreateDeploymentStatusInput {
+  """
+  Adds a new inactive status to all non-transient, non-production environment deployments with the same repository and environment name as the created status's deployment.
+  """
+  autoInactive: Boolean
+  """
+  A unique identifier for the client performing the mutation.
+  """
+  clientMutationId: String
+  """
+  The node ID of the deployment.
+  """
+  deploymentId: ID!
+  """
+  A short description of the status. Maximum length of 140 characters.
+  """
+  description: String
+  """
+  If provided, updates the environment of the deploy. Otherwise, does not modify the environment.
+  """
+  environment: String
+  """
+  Sets the URL for accessing your environment.
+  """
+  environmentUrl: String
+  """
+  The log URL to associate with this status. This URL should contain output to keep the user updated while the task is running or serve as historical information for what happened in the deployment.
+  """
+  logUrl: String
+  """
+  The state of the status.
+  """
+  state: DeploymentStatusState!
+}
+
+type CreateDeploymentStatusPayload {
+  """
+  A unique identifier for the client performing the mutation.
+  """
+  clientMutationId: String
+  """
+  The new deployment status.
+  """
+  deploymentStatus: DeploymentStatus
+}
+
+type Mutation {
+  """
+  Creates a new deployment event.
+  https://docs.github.com/en/graphql/reference/mutations#createdeployment
+  """
+  createDeployment(input: CreateDeploymentInput!): CreateDeploymentPayload
+  """
+  Creates a deployment status.
+  https://docs.github.com/en/graphql/reference/mutations#createdeploymentstatus
+  """
+  createDeploymentStatus(
+    input: CreateDeploymentStatusInput!
+  ): CreateDeploymentStatusPayload
+}
