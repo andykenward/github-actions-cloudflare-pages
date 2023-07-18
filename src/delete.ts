@@ -10,8 +10,7 @@ import {
   MutationCreateGitHubDeploymentStatus,
   MutationDeleteGitHubDeployment,
   MutationDeleteGitHubDeploymentAndComment,
-  request,
-  useContextEvent
+  request
 } from './github/index.js'
 
 const idDeploymentPayload = (
@@ -27,16 +26,13 @@ const idDeploymentPayload = (
   return 'cloudflareId' in parsedPayload && 'url' in parsedPayload
 }
 
-export const deleteDeployments = async () => {
-  /**
-   * Check if event is pull_request and is closed
-   */
-  const {eventName, payload} = useContextEvent()
+export const deleteDeployments = async (isProduction = false) => {
+  let deployments = await getGitHubDeployments()
 
-  if (eventName !== 'pull_request') return
-  if (payload.action !== 'closed') return
-
-  const deployments = await getGitHubDeployments()
+  if (isProduction) {
+    // Remove first 5 deployments
+    deployments = deployments.slice(5)
+  }
 
   if (deployments.length === 0) {
     info('No deployments found to delete')

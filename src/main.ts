@@ -1,15 +1,19 @@
 /* eslint-disable no-console */
 
+import {info} from '@unlike/github-actions-core'
+
 import {createDeployment} from './cloudflare/deployments.js'
 import {getProject} from './cloudflare/project/get-project.js'
 import {deleteDeployments} from './delete.js'
 import {
   addComment,
   createGitHubDeployment,
+  useContext,
   useContextEvent
 } from './github/index.js'
 
 export async function run() {
+  const {branch} = useContext()
   const {eventName, payload} = useContextEvent()
 
   /**
@@ -20,11 +24,24 @@ export async function run() {
   /**
    * Validate Cloudflare project
    */
-  await getProject()
+  const project = await getProject()
 
   if (eventName === 'pull_request' && payload.action === 'closed') {
     await deleteDeployments()
     return
+  }
+
+  const isProduction = project.production_branch === branch
+  if (eventName === 'push' && isProduction) {
+    try {
+      info('Is production branch, deleting old deployments but latest 5')
+      await deleteDeployments(isProduction)
+    } catch {
+      /**
+       * We don't want to fail the deployment if we can't delete old production deployments.
+       */
+      info('Error deleting deployments for production branch')
+    }
   }
 
   const cloudflareDeployment = await createDeployment()
