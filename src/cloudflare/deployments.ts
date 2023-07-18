@@ -1,4 +1,11 @@
-import {error, getInput, setOutput, summary} from '@unlike/github-actions-core'
+import {
+  error,
+  getInput,
+  info,
+  setOutput,
+  summary,
+  warning
+} from '@unlike/github-actions-core'
 import {$} from 'execa'
 
 import type {PagesDeployment} from './types.js'
@@ -13,6 +20,7 @@ import {
 import {useContext} from '../github/context.js'
 import {getCloudflareApiEndpoint} from './api/endpoints.js'
 import {fetchResult, fetchSuccess} from './api/fetch-result.js'
+import {ParseError} from './api/parse-error.js'
 
 const ERROR_KEY = `Create Deployment:`
 
@@ -32,16 +40,31 @@ export const deleteDeployment = async (
   )
 
   try {
-    const result = await fetchSuccess(url, {
+    const success = await fetchSuccess(url, {
       method: 'DELETE'
     })
 
-    if (result === true) {
+    if (success === true) {
+      info(`Cloudflare Deployment Deleted: ${deploymentIdentifier}`)
       return true
     }
     throw new Error('Cloudflare Delete Deployment: fail')
-  } catch {
-    error(`Error deleting deployment: ${deploymentIdentifier}`)
+  } catch (successError) {
+    if (successError instanceof ParseError && successError.code === 8_000_009) {
+      /**
+       * The cloudflare deployment might have been deleted manually. So return true.
+       * Error response example
+       * {
+       *   "code": 8000009,
+       *   "message": "The deployment ID you have specified does not exist. Update the deployment ID and try again. "
+       * }
+       */
+      warning(
+        `Cloudflare Deployment might have been deleted already: ${deploymentIdentifier}`
+      )
+      return true
+    }
+    error(`Cloudflare Error deleting deployment: ${deploymentIdentifier}`)
     return false
   }
 }

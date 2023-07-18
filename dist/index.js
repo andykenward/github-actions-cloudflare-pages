@@ -3081,6 +3081,7 @@ var ParseError = class extends Error {
   notes;
   location;
   kind;
+  code;
   constructor({ text, notes, location, kind }) {
     super(text);
     this.name = this.constructor.name;
@@ -3157,6 +3158,9 @@ var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
     method,
     ...initFetch
   }).then((response2) => response2.json());
+  if (!response.success && response.errors.length > 0) {
+    throwFetchError(resource, response);
+  }
   return response.success;
 }, "fetchSuccess");
 
@@ -3172,15 +3176,22 @@ var deleteDeployment = /* @__PURE__ */ __name(async (deploymentIdentifier) => {
     `deployments/${deploymentIdentifier}?force=true`
   );
   try {
-    const result = await fetchSuccess(url2, {
+    const success = await fetchSuccess(url2, {
       method: "DELETE"
     });
-    if (result === true) {
+    if (success === true) {
+      info(`Cloudflare Deployment Deleted: ${deploymentIdentifier}`);
       return true;
     }
     throw new Error("Cloudflare Delete Deployment: fail");
-  } catch {
-    error(`Error deleting deployment: ${deploymentIdentifier}`);
+  } catch (successError) {
+    if (successError instanceof ParseError && successError.code === 8000009) {
+      warning(
+        `Cloudflare Deployment might have been deleted already: ${deploymentIdentifier}`
+      );
+      return true;
+    }
+    error(`Cloudflare Error deleting deployment: ${deploymentIdentifier}`);
     return false;
   }
 }, "deleteDeployment");
@@ -4683,11 +4694,11 @@ var MutationDeleteGitHubDeploymentAndComment = graphql3(
 
 // src/github/deployment/get.ts
 var getGitHubDeployments = /* @__PURE__ */ __name(async () => {
-  const { repo, ref } = useContext();
+  const { repo, branch } = useContext();
   const deployments = await paginate("GET /repos/{owner}/{repo}/deployments", {
     owner: repo.owner,
     repo: repo.repo,
-    ref,
+    ref: branch,
     per_page: 100
   });
   return deployments;
@@ -4719,7 +4730,6 @@ var deleteDeployments = /* @__PURE__ */ __name(async (isProduction = false) => {
     const deletedCloudflareDeployment = await deleteDeployment(cloudflareId);
     if (!deletedCloudflareDeployment)
       continue;
-    info(`Cloudflare Deployment Deleted: ${cloudflareId}`);
     const updateStatusGitHubDeployment = await request({
       query: MutationCreateGitHubDeploymentStatus,
       variables: {

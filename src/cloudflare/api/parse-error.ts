@@ -31,6 +31,7 @@ export class ParseError extends Error implements Message {
   readonly notes: Message[]
   readonly location?: Location
   readonly kind: 'warning' | 'error'
+  code: number | undefined
 
   constructor({text, notes, location, kind}: Message) {
     super(text)

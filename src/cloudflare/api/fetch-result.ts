@@ -57,5 +57,9 @@ export const fetchSuccess = async (
     ...initFetch
   }).then(response => response.json())) as FetchResult<null>
 
+  if (!response.success && response.errors.length > 0) {
+    throwFetchError(resource, response)
+  }
+
   return response.success
 }

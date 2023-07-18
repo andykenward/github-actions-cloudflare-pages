@@ -8,12 +8,12 @@ import {useContext} from '../context.js'
 export const getGitHubDeployments = async (): Promise<
   PaginateResponse<'GET /repos/{owner}/{repo}/deployments'>
 > => {
-  const {repo, ref} = useContext()
+  const {repo, branch} = useContext()
 
   const deployments = await paginate('GET /repos/{owner}/{repo}/deployments', {
     owner: repo.owner,
     repo: repo.repo,
-    ref: ref,
+    ref: branch,
     per_page: 100
   })
 

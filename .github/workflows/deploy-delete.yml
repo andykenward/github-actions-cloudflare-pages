@@ -7,6 +7,7 @@ on:
       - closed
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   cloudflare-pages-deploy-delete:

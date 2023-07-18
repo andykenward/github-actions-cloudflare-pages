@@ -21,7 +21,6 @@ export function throwFetchError(
   const code = response.errors[0]?.code
   if (code) {
     // TODO: Does cloudflare have a schema for their codes?
-    //@ts-expect-error non-standard property on Error
     error.code = code
   }
   if (error.notes?.length > 0) {
