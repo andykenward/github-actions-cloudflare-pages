@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@octokit-next/core':
-    specifier: 2.7.0
-    version: 2.7.0
+    specifier: 2.7.1
+    version: 2.7.1
   '@octokit/plugin-paginate-rest':
     specifier: 8.0.0
     version: 8.0.0(@octokit/core@5.0.0)
@@ -2268,64 +2268,64 @@ packages:
       fastq: 1.15.0
     dev: true
 
-  /@octokit-next/auth-token@2.7.0:
-    resolution: {integrity: sha512-oF0AbMgUF0D7a6feBfVAiJCThKiia7dHW5cIEn3WxQf5Z4RbzxzmSrAZJAjWfGMyFGcgDNxxSV+CzPvZjUB1pg==}
+  /@octokit-next/auth-token@2.7.1:
+    resolution: {integrity: sha512-/V2ea4gE3PGHz7n5+lvibmzQnjjx1QsW9mt1aCCK8ZwyHxUW3ih2lopYKNXTREvRosBSOrVVtCPEy29VuTYh+Q==}
     dependencies:
-      '@octokit-next/request': 2.7.0
-      '@octokit-next/types': 2.7.0
+      '@octokit-next/request': 2.7.1
+      '@octokit-next/types': 2.7.1
     dev: false
 
-  /@octokit-next/core@2.7.0:
-    resolution: {integrity: sha512-kRnZypQ4psnVuhFBSHZMrDYOc7eo+1GJ3X+FXcM5+LadvJPnmbsnMYW0wC8tBeoBIrTCSgrt18WQAkTPptm+Ww==}
+  /@octokit-next/core@2.7.1:
+    resolution: {integrity: sha512-yCvO/ATxI7x0oz9GaMBIm0AP4SscC0npp4Imq6ftmkFoADzAjCbMRZPSoI/CEcVyBvaCTmQNSNZi/J2jnLWfiw==}
     dependencies:
-      '@octokit-next/auth-token': 2.7.0
-      '@octokit-next/endpoint': 2.7.0
-      '@octokit-next/graphql': 2.7.0
-      '@octokit-next/request': 2.7.0
-      '@octokit-next/types': 2.7.0
+      '@octokit-next/auth-token': 2.7.1
+      '@octokit-next/endpoint': 2.7.1
+      '@octokit-next/graphql': 2.7.1
+      '@octokit-next/request': 2.7.1
+      '@octokit-next/types': 2.7.1
       before-after-hook: 3.0.2
       universal-user-agent: 7.0.1
     dev: false
 
-  /@octokit-next/endpoint@2.7.0:
-    resolution: {integrity: sha512-zWnr6C+ygSDkETygQsBZ1xLkdCNZ1NbPzv6BWHTtxgeN8VPqTEo9oraO1Tjty3tkdJ4BwxekXIjEMU4Cw/LhHw==}
+  /@octokit-next/endpoint@2.7.1:
+    resolution: {integrity: sha512-Ocw3BPZWks1zWkKvf6VNQ24wwywD4h7B6eJu/i6etf6c02sqaT3GjcrZfpWJ6jHbunFwUHMozUQPqacXZpboLw==}
     dependencies:
-      '@octokit-next/types': 2.7.0
+      '@octokit-next/types': 2.7.1
       is-plain-obj: 4.1.0
-      type-fest: 3.13.0
+      type-fest: 4.0.0
       universal-user-agent: 7.0.1
     dev: false
 
-  /@octokit-next/graphql@2.7.0:
-    resolution: {integrity: sha512-HqLxISAsEqlrv7HoW2rWF2WHchqB+Wf59eT6FrX12NHqp+EQxjamIP+6yLLd4vhoAXbjwI4nrozryc1EcS9g4Q==}
+  /@octokit-next/graphql@2.7.1:
+    resolution: {integrity: sha512-SFbzHOFeB9l/cOY8MXknPkGiD+U+YjaljQP+QQw8MRjVGlGP7SkNYEEq1e+U052lwYvWWby+hqOnLb77cpS1kg==}
     dependencies:
-      '@octokit-next/request': 2.7.0
-      '@octokit-next/types': 2.7.0
+      '@octokit-next/request': 2.7.1
+      '@octokit-next/types': 2.7.1
       universal-user-agent: 7.0.1
     dev: false
 
-  /@octokit-next/request-error@2.7.0:
-    resolution: {integrity: sha512-gTVk0MQRDDOYpwMTNcR0h4fmtujRfMFTpA49E2czbW7A5NP0s4Xaizpcf8y6vvjHh38qSnsrx/F5wo0oq7FXzw==}
+  /@octokit-next/request-error@2.7.1:
+    resolution: {integrity: sha512-EBIjY9RbqT3n8W3PJVoBAdBycUnl3pGWUnLyNrrrUkt6+31NU+m0+Z+SF3ArAlYu21OZtAKniy58r7ltU0cM3Q==}
     dependencies:
-      '@octokit-next/types': 2.7.0
+      '@octokit-next/types': 2.7.1
     dev: false
 
-  /@octokit-next/request@2.7.0:
-    resolution: {integrity: sha512-htjjWEMJV5GWF1T6ppMDsyg1vHXFZustSVBkhUFIypyq79tLc+A+beKPWMwsK6vm3r+TRk3E6gAMBxf7i3sSOw==}
+  /@octokit-next/request@2.7.1:
+    resolution: {integrity: sha512-4jSmxRTJ9MhvL3qMDiFawHe8X02BMUM4UIJg627KyWEBfWqDRsWRdVWR1nHDh+tweP7o87/ggepehHoq8sdizQ==}
     dependencies:
-      '@octokit-next/endpoint': 2.7.0
-      '@octokit-next/types': 2.7.0
+      '@octokit-next/endpoint': 2.7.1
+      '@octokit-next/types': 2.7.1
       is-plain-object: 5.0.0
-      type-fest: 3.13.0
+      type-fest: 4.0.0
       universal-user-agent: 7.0.1
     dev: false
 
-  /@octokit-next/types@2.7.0:
-    resolution: {integrity: sha512-rk5SuYHFML1rO9b9lBHdDYF60IBcBR3ulwmIdnvlAqVFoEPiOsybbbjpLZ3svs5O+ugAup036KwaAuuUKl5euQ==}
+  /@octokit-next/types@2.7.1:
+    resolution: {integrity: sha512-pRHifAVgloAPSpLyXVOmWzk2SnpY3Phsk0cdtbuJd+pvn/npnQQjw+FkJuak078d5xDdWJDx/iUQY4EkvbXyHA==}
     dependencies:
-      '@octokit-next/request-error': 2.7.0
+      '@octokit-next/request-error': 2.7.1
       before-after-hook: 3.0.2
-      type-fest: 3.13.0
+      type-fest: 4.0.0
     dev: false
 
   /@octokit/auth-token@4.0.0:
@@ -6587,9 +6587,9 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /type-fest@3.13.0:
-    resolution: {integrity: sha512-Gur3yQGM9qiLNs0KPP7LPgeRbio2QTt4xXouobMCarR0/wyW3F+F/+OWwshg3NG0Adon7uQfSZBpB46NfhoF1A==}
-    engines: {node: '>=14.16'}
+  /type-fest@4.0.0:
+    resolution: {integrity: sha512-d/oYtUnPM9zar2fqqGLYPzgcY0qUlYK0evgNVti93xpzfjGkMgZHu9Lvgrkn0rqGXTgsFRxFamzjGoD9Uo+dgw==}
+    engines: {node: '>=16'}
     dev: false
 
   /typed-array-length@1.0.4:
