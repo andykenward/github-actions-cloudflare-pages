@@ -12,7 +12,7 @@ concurrency:
 jobs:
   download:
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -38,7 +38,7 @@ jobs:
             This is an automated PR to update payloads.
   types:
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
