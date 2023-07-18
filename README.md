@@ -9,7 +9,8 @@ When used in context of a [pull request], the action will create a deployment fo
 - Deploy to [Cloudflare Pages].
 - Use GitHub Environments & Deployments.
 - Comment on pull requests with deployment URL.
-- Delete Cloudflare Pages, GitHub deployments & comments, on pull request close.
+- On pull request close, deletes Cloudflare Pages, GitHub deployments & comments
+- Production branch keeps latest 5 deployments.
 
 ## Usage
 
