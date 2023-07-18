@@ -4700,24 +4700,22 @@ var idDeploymentPayload = /* @__PURE__ */ __name((payload) => {
     return false;
   return "cloudflareId" in parsedPayload && "url" in parsedPayload;
 }, "idDeploymentPayload");
-var deleteDeployments = /* @__PURE__ */ __name(async () => {
-  const { eventName, payload } = useContextEvent();
-  if (eventName !== "pull_request")
-    return;
-  if (payload.action !== "closed")
-    return;
-  const deployments = await getGitHubDeployments();
+var deleteDeployments = /* @__PURE__ */ __name(async (isProduction = false) => {
+  let deployments = await getGitHubDeployments();
+  if (isProduction) {
+    deployments = deployments.slice(5);
+  }
   if (deployments.length === 0) {
     info("No deployments found to delete");
     return;
   }
   for (const deployment of deployments) {
-    const payload2 = deployment.payload;
-    if (!idDeploymentPayload(payload2)) {
+    const payload = deployment.payload;
+    if (!idDeploymentPayload(payload)) {
       info(`Deployment ${deployment.id} has no payload`);
       continue;
     }
-    const { cloudflareId, commentId, url: url2 } = payload2;
+    const { cloudflareId, commentId, url: url2 } = payload;
     const deletedCloudflareDeployment = await deleteDeployment(cloudflareId);
     if (!deletedCloudflareDeployment)
       continue;
@@ -4774,13 +4772,23 @@ var deleteDeployments = /* @__PURE__ */ __name(async () => {
 
 // src/main.ts
 async function run() {
+  const { branch } = useContext();
   const { eventName, payload } = useContextEvent();
   if (eventName !== "push" && eventName !== "pull_request")
     return;
-  await getProject();
+  const project = await getProject();
   if (eventName === "pull_request" && payload.action === "closed") {
     await deleteDeployments();
     return;
+  }
+  const isProduction = project.production_branch === branch;
+  if (eventName === "push" && isProduction) {
+    try {
+      info("Is production branch, deleting old deployments but latest 5");
+      await deleteDeployments(isProduction);
+    } catch {
+      info("Error deleting deployments for production branch");
+    }
   }
   const cloudflareDeployment = await createDeployment();
   const commentId = await addComment(cloudflareDeployment);
