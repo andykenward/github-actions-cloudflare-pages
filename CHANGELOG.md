@@ -1,5 +1,18 @@
 # github-actions-cloudflare-pages
 
+## 0.1.0
+
+### Minor Changes
+
+- e1dbbb5: feat: production branch delete old deployments but latest 5
+
+### Patch Changes
+
+- 232de83: fix: get github deployments using branch instead of ref
+- 77913d1: chore(deps-dev): bump @octokit-next/core to 2.7.1
+- 1eea162: custom GitHub preview schema for types
+- 23e11ac: feat: catch cloudflare manual deployment deletions so we delete github deployments
+
 ## 0.0.1
 
 ### Patch Changes
