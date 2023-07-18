@@ -14,6 +14,7 @@
     "tsc:watch": "pnpm run tsc:check --watch",
     "tsc:ls": "pnpm run tsc:check --listFilesOnly",
     "tsc:ts-node-config": "tsc --showConfig > tsconfig.tsnode.json",
+    "tsc:types": "pnpm run tsc:ts-node-config && pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls",
     "ts-node": "ts-node-esm --project tsconfig.tsnode.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
