@@ -36,3 +36,27 @@ jobs:
           title: 'chore: update payloads'
           body: |
             This is an automated PR to update payloads.
+  types:
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v3.5.3
+      - uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
+        with:
+          node-version: 18
+      - name: cli all
+        run: pnpm run tsc:types
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v5.0.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update types'
+          branch: 'chore/types'
+          delete-branch: true
+          title: 'chore: update types'
+          body: |
+            This is an automated PR to update generated types.
