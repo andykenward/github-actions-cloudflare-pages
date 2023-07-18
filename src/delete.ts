@@ -1,18 +1,15 @@
 import {info, warning} from '@unlike/github-actions-core'
 
-import {graphql} from '@/gql/gql.js'
 import {DeploymentStatusState} from '@/gql/graphql.js'
 
-import type {
-  CreateDeploymentStatusMutation,
-  CreateDeploymentStatusMutationVariables,
-  DeploymentPayload
-} from './github/index.js'
+import type {PayloadGithubDeployment} from './github/index.js'
 import {getCloudflareLogEndpoint} from './cloudflare/api/endpoints.js'
 import {deleteDeployment} from './cloudflare/deployments.js'
 import {
-  getDeployments,
-  MutationCreateDeploymentStatus,
+  getGitHubDeployments,
+  MutationCreateGitHubDeploymentStatus,
+  MutationDeleteGitHubDeployment,
+  MutationDeleteGitHubDeploymentAndComment,
   request,
   useContextEvent
 } from './github/index.js'
@@ -23,31 +20,12 @@ const idDeploymentPayload = (
     | {
         [key: string]: unknown
       }
-): payload is DeploymentPayload => {
+): payload is PayloadGithubDeployment => {
   const parsedPayload =
     typeof payload === 'string' ? JSON.parse(payload) : payload
   if (!parsedPayload || typeof parsedPayload !== 'object') return false
   return 'cloudflareId' in parsedPayload && 'url' in parsedPayload
 }
-
-const MutationDeleteDeployment = graphql(/* GraphQL */ `
-  mutation DeleteDeployment($deploymentId: ID!) {
-    deleteDeployment(input: {id: $deploymentId}) {
-      clientMutationId
-    }
-  }
-`)
-
-const MutationDeleteDeploymentAndComment = graphql(/* GraphQL */ `
-  mutation DeleteDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
-    deleteDeployment(input: {id: $deploymentId}) {
-      clientMutationId
-    }
-    deleteIssueComment(input: {id: $commentId}) {
-      clientMutationId
-    }
-  }
-`)
 
 export const deleteDeployments = async () => {
   /**
@@ -58,7 +36,7 @@ export const deleteDeployments = async () => {
   if (eventName !== 'pull_request') return
   if (payload.action !== 'closed') return
 
-  const deployments = await getDeployments()
+  const deployments = await getGitHubDeployments()
 
   if (deployments.length === 0) {
     info('No deployments found to delete')
@@ -84,11 +62,8 @@ export const deleteDeployments = async () => {
      * On success of Cloudflare deployment delete GitHub deployment & and comment.
      */
 
-    const updateStatusGitHubDeployment = await request<
-      CreateDeploymentStatusMutation,
-      CreateDeploymentStatusMutationVariables
-    >({
-      query: MutationCreateDeploymentStatus,
+    const updateStatusGitHubDeployment = await request({
+      query: MutationCreateGitHubDeploymentStatus,
       variables: {
         environment: deployment.environment,
         deploymentId: deployment.node_id,
@@ -112,7 +87,7 @@ export const deleteDeployments = async () => {
 
     const deletedGitHubDeployment = commentId
       ? await request({
-          query: MutationDeleteDeploymentAndComment,
+          query: MutationDeleteGitHubDeploymentAndComment,
           variables: {
             deploymentId: deployment.node_id,
             commentId: commentId
@@ -122,7 +97,7 @@ export const deleteDeployments = async () => {
           }
         })
       : await request({
-          query: MutationDeleteDeployment,
+          query: MutationDeleteGitHubDeployment,
           variables: {
             deploymentId: deployment.node_id
           },
