@@ -4683,11 +4683,11 @@ var MutationDeleteGitHubDeploymentAndComment = graphql3(
 
 // src/github/deployment/get.ts
 var getGitHubDeployments = /* @__PURE__ */ __name(async () => {
-  const { repo, ref } = useContext();
+  const { repo, branch } = useContext();
   const deployments = await paginate("GET /repos/{owner}/{repo}/deployments", {
     owner: repo.owner,
     repo: repo.repo,
-    ref,
+    ref: branch,
     per_page: 100
   });
   return deployments;
