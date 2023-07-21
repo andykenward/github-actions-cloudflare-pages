@@ -7,15 +7,12 @@ import type {MockApi} from '@/tests/helpers/index.js'
 import RESPONSE_NOT_FOUND_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments-not-found.response.json'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json'
 import {
+  CLOUDFLARE_ACCOUNT_ID,
+  CLOUDFLARE_API_TOKEN,
   createDeployment,
   getDeploymentAlias
 } from '@/src/cloudflare/deployments.js'
-import {CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN} from '@/src/constants.js'
-import {
-  MOCK_API_PATH_DEPLOYMENTS,
-  setMockApi,
-  stubRequiredInputEnv
-} from '@/tests/helpers/index.js'
+import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/index.js'
 
 import PACKAGE_JSON from '../../package.json'
 
@@ -56,8 +53,6 @@ describe('deployments', () => {
       let mockApi: MockApi
       beforeEach(() => {
         mockApi = setMockApi()
-        // Set required inputs
-        stubRequiredInputEnv()
       })
       afterEach(async () => {
         mockApi.mockAgent.assertNoPendingInterceptors()

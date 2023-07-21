@@ -1,9 +1,8 @@
 import type {RequestInit} from 'undici'
 
-import {getInput} from '@unlike/github-actions-core'
+import {useInputs} from '@/src/inputs.js'
 
 import type {FetchResult} from '../types.js'
-import {ACTION_INPUT_CLOUDFLARE_API_TOKEN} from '../../constants.js'
 import {throwFetchError} from './fetch-error.js'
 
 export const fetchResult = async <ResponseType>(
@@ -13,12 +12,12 @@ export const fetchResult = async <ResponseType>(
   abortSignal?: AbortSignal
 ): Promise<ResponseType> => {
   const method = init.method ?? 'GET'
-  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, {required: true})
+  const {cloudflareApiToken} = useInputs()
 
   const initFetch = {
     headers: {
       'Content-Type': 'application/json;charset=UTF-8',
-      Authorization: `Bearer ${apiToken}`
+      Authorization: `Bearer ${cloudflareApiToken}`
     }
   }
 
@@ -43,12 +42,12 @@ export const fetchSuccess = async (
   init: RequestInit = {}
 ): Promise<boolean> => {
   const method = init.method ?? 'GET'
-  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, {required: true})
+  const {cloudflareApiToken} = useInputs()
 
   const initFetch = {
     headers: {
       'Content-Type': 'application/json;charset=UTF-8',
-      Authorization: `Bearer ${apiToken}`
+      Authorization: `Bearer ${cloudflareApiToken}`
     }
   }
 

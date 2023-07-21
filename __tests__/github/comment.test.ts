@@ -8,7 +8,7 @@ import * as Context from '@/src/github/context.js'
 import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 
 import type {MockApi} from '../helpers/index.js'
-import {setMockApi, stubRequiredInputEnv} from '../helpers/index.js'
+import {setMockApi} from '../helpers/index.js'
 
 vi.mock('@unlike/github-actions-core')
 describe('addComment', () => {
@@ -16,8 +16,6 @@ describe('addComment', () => {
   let mockApi: MockApi
   beforeEach(() => {
     mockApi = setMockApi()
-
-    stubRequiredInputEnv()
   })
 
   afterEach(async () => {

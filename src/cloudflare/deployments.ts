@@ -1,6 +1,5 @@
 import {
   error,
-  getInput,
   info,
   setOutput,
   summary,
@@ -9,19 +8,16 @@ import {
 import {$} from 'execa'
 
 import type {PagesDeployment} from './types.js'
-import {
-  ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID,
-  ACTION_INPUT_CLOUDFLARE_API_TOKEN,
-  ACTION_INPUT_CLOUDFLARE_PROJECT_NAME,
-  ACTION_INPUT_DIRECTORY,
-  CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_API_TOKEN
-} from '../constants.js'
 import {useContext} from '../github/context.js'
+import {useInputs} from '../inputs.js'
 import {getCloudflareApiEndpoint} from './api/endpoints.js'
 import {fetchResult, fetchSuccess} from './api/fetch-result.js'
 import {ParseError} from './api/parse-error.js'
 
+/** Environment variables key for Cloudflare wrangler */
+export const CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN'
+/** Environment variables key for Cloudflare wrangler */
+export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
 const ERROR_KEY = `Create Deployment:`
 
 const getDeployments = async (): Promise<Array<PagesDeployment>> => {
@@ -76,21 +72,15 @@ export const getDeploymentAlias = (deployment: PagesDeployment): string => {
 }
 
 export const createDeployment = async () => {
-  const accountId = getInput(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, {
-    required: true
-  })
-  const projectName = getInput(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, {
-    required: true
-  })
-  const directory = getInput(ACTION_INPUT_DIRECTORY, {
-    required: true
-  })
-  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, {
-    required: true
-  })
+  const {
+    cloudflareAccountId,
+    cloudflareProjectName,
+    directory,
+    cloudflareApiToken
+  } = useInputs()
 
-  process.env[CLOUDFLARE_API_TOKEN] = apiToken
-  process.env[CLOUDFLARE_ACCOUNT_ID] = accountId
+  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken
+  process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId
 
   const {repo, branch, sha: commitHash} = useContext()
 
@@ -102,7 +92,7 @@ export const createDeployment = async () => {
     /**
      * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
      */
-    await $`npx wrangler@3.2.0 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`
+    await $`npx wrangler@3.2.0 pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`
 
     /**
      * Get the latest deployment by commitHash.

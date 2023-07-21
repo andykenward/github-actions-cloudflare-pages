@@ -1,8 +1,8 @@
-import {error, getInput, notice} from '@unlike/github-actions-core'
+import {error, notice} from '@unlike/github-actions-core'
 
 import {graphql} from '@/gql/gql.js'
 
-import {ACTION_INPUT_GITHUB_ENVIRONMENT} from '../constants.js'
+import {useInputs} from '../inputs.js'
 import {request} from './api/client.js'
 import {useContext} from './context.js'
 
@@ -81,9 +81,7 @@ export const QueryGetEnvironment = graphql(/* GraphQL */ `
  * will error to the users to create the environment themselves.
  */
 export const checkEnvironment = async () => {
-  const environmentName = getInput(ACTION_INPUT_GITHUB_ENVIRONMENT, {
-    required: true
-  })
+  const {gitHubEnvironment} = useInputs()
   const {repo, ref} = useContext()
 
   const environment = await request({
@@ -91,7 +89,7 @@ export const checkEnvironment = async () => {
     variables: {
       owner: repo.owner,
       repo: repo.repo,
-      environment_name: environmentName,
+      environment_name: gitHubEnvironment,
       qualifiedName: ref
     },
     options: {
@@ -104,11 +102,11 @@ export const checkEnvironment = async () => {
   }
 
   if (!environment.data.repository?.environment) {
-    throw new Error(`GitHub Environment: Not created for ${environmentName}`)
+    throw new Error(`GitHub Environment: Not created for ${gitHubEnvironment}`)
   }
 
   if (!environment.data.repository?.ref?.id) {
-    throw new Error(`GitHub Environment: No ref id ${environmentName}`)
+    throw new Error(`GitHub Environment: No ref id ${gitHubEnvironment}`)
   }
 
   return {

@@ -2882,16 +2882,6 @@ function create$(options) {
 __name(create$, "create$");
 var $ = create$();
 
-// src/constants.ts
-var ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID = "cloudflare account id";
-var ACTION_INPUT_CLOUDFLARE_PROJECT_NAME = "cloudflare project name";
-var ACTION_INPUT_CLOUDFLARE_API_TOKEN = "cloudflare api token";
-var ACTION_INPUT_DIRECTORY = "directory";
-var ACTION_INPUT_GITHUB_TOKEN = "github token";
-var ACTION_INPUT_GITHUB_ENVIRONMENT = "github environment";
-var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
-var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
-
 // src/utils.ts
 var raise = /* @__PURE__ */ __name((message) => {
   throw new Error(message);
@@ -3047,29 +3037,47 @@ var useContext = /* @__PURE__ */ __name(() => {
 }, "useContext");
 var useContextEvent = /* @__PURE__ */ __name(() => useContext().event, "useContextEvent");
 
+// src/inputs.ts
+var INPUT_KEY_CLOUDFLARE_ACCOUNT_ID = "cloudflare account id";
+var INPUT_KEY_CLOUDFLARE_API_TOKEN = "cloudflare api token";
+var INPUT_KEY_CLOUDFLARE_PROJECT_NAME = "cloudflare project name";
+var INPUT_KEY_DIRECTORY = "directory";
+var INPUT_KEY_GITHUB_ENVIRONMENT = "github environment";
+var INPUT_KEY_GITHUB_TOKEN = "github token";
+var OPTIONS = {
+  required: true
+};
+var getInputs = /* @__PURE__ */ __name(() => {
+  return {
+    cloudflareAccountId: getInput(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID, OPTIONS),
+    cloudflareApiToken: getInput(INPUT_KEY_CLOUDFLARE_API_TOKEN, OPTIONS),
+    cloudflareProjectName: getInput(INPUT_KEY_CLOUDFLARE_PROJECT_NAME, OPTIONS),
+    directory: getInput(INPUT_KEY_DIRECTORY, OPTIONS),
+    gitHubApiToken: getInput(INPUT_KEY_GITHUB_TOKEN, OPTIONS),
+    gitHubEnvironment: getInput(INPUT_KEY_GITHUB_ENVIRONMENT, OPTIONS)
+  };
+}, "getInputs");
+var _inputs;
+var useInputs = /* @__PURE__ */ __name(() => {
+  return _inputs ?? (_inputs = getInputs());
+}, "useInputs");
+
 // src/cloudflare/api/endpoints.ts
 var API_ENDPOINT = `https://api.cloudflare.com`;
 var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path3) => {
-  const accountIdentifier = getInput(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, {
-    required: true
-  });
-  const projectName = getInput(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, {
-    required: true
-  });
+  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
   const input = [
-    `/client/v4/accounts/${accountIdentifier}/pages/projects/${projectName}`,
+    `/client/v4/accounts/${cloudflareAccountId}/pages/projects/${cloudflareProjectName}`,
     path3
   ].filter(Boolean).join("/");
   return new URL(input, API_ENDPOINT).toString();
 }, "getCloudflareApiEndpoint");
 var getCloudflareLogEndpoint = /* @__PURE__ */ __name((id) => {
-  const accountIdentifier = getInput(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, {
-    required: true
-  });
-  const projectName = getInput(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, {
-    required: true
-  });
-  return `https://dash.cloudflare.com/${accountIdentifier}/pages/view/${projectName}/${id}`;
+  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
+  return new URL(
+    `${cloudflareAccountId}/pages/view/${cloudflareProjectName}/${id}`,
+    `https://dash.cloudflare.com`
+  ).toString();
 }, "getCloudflareLogEndpoint");
 
 // src/cloudflare/api/parse-error.ts
@@ -3124,11 +3132,11 @@ __name(renderError, "renderError");
 // src/cloudflare/api/fetch-result.ts
 var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams, abortSignal) => {
   const method = init.method ?? "GET";
-  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, { required: true });
+  const { cloudflareApiToken } = useInputs();
   const initFetch = {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
-      Authorization: `Bearer ${apiToken}`
+      Authorization: `Bearer ${cloudflareApiToken}`
     }
   };
   const response = await fetch(resource, {
@@ -3147,11 +3155,11 @@ var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams
 }, "fetchResult");
 var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
   const method = init.method ?? "GET";
-  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, { required: true });
+  const { cloudflareApiToken } = useInputs();
   const initFetch = {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
-      Authorization: `Bearer ${apiToken}`
+      Authorization: `Bearer ${cloudflareApiToken}`
     }
   };
   const response = await fetch(resource, {
@@ -3165,6 +3173,8 @@ var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
 }, "fetchSuccess");
 
 // src/cloudflare/deployments.ts
+var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
+var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
 var ERROR_KEY = `Create Deployment:`;
 var getDeployments = /* @__PURE__ */ __name(async () => {
   const url2 = getCloudflareApiEndpoint("deployments");
@@ -3199,26 +3209,20 @@ var getDeploymentAlias = /* @__PURE__ */ __name((deployment) => {
   return deployment.aliases && deployment.aliases.length > 0 ? deployment.aliases[0] : deployment.url;
 }, "getDeploymentAlias");
 var createDeployment = /* @__PURE__ */ __name(async () => {
-  const accountId = getInput(ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID, {
-    required: true
-  });
-  const projectName = getInput(ACTION_INPUT_CLOUDFLARE_PROJECT_NAME, {
-    required: true
-  });
-  const directory = getInput(ACTION_INPUT_DIRECTORY, {
-    required: true
-  });
-  const apiToken = getInput(ACTION_INPUT_CLOUDFLARE_API_TOKEN, {
-    required: true
-  });
-  process.env[CLOUDFLARE_API_TOKEN] = apiToken;
-  process.env[CLOUDFLARE_ACCOUNT_ID] = accountId;
+  const {
+    cloudflareAccountId,
+    cloudflareProjectName,
+    directory,
+    cloudflareApiToken
+  } = useInputs();
+  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken;
+  process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId;
   const { repo, branch, sha: commitHash } = useContext();
   if (branch === void 0) {
     throw new Error(`${ERROR_KEY} branch is undefined`);
   }
   try {
-    await $`npx wrangler@3.2.0 pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
+    await $`npx wrangler@3.2.0 pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
     const deployments = await getDeployments();
     const deployment = deployments?.find(
       (deployment2) => deployment2.deployment_trigger.metadata.commit_hash === commitHash
@@ -3432,12 +3436,12 @@ var GetEnvironmentDocument = new TypedDocumentString(`
 var request = /* @__PURE__ */ __name(async (params) => {
   const { query, variables, options } = params;
   const { errorThrows } = options || { errorThrows: true };
-  const token = getInput(ACTION_INPUT_GITHUB_TOKEN, { required: true });
+  const { gitHubApiToken } = useInputs();
   const { graphqlEndpoint } = useContext();
   return fetch(graphqlEndpoint, {
     method: "POST",
     headers: {
-      authorization: `bearer ${token}`,
+      authorization: `bearer ${gitHubApiToken}`,
       "Content-Type": "application/json",
       Accept: "application/vnd.github.flash-preview+json"
     },
@@ -4439,11 +4443,10 @@ var Octokit = class {
 // src/github/api/paginate.ts
 var import_plugin_paginate_rest = __toESM(require_dist_node(), 1);
 var paginate = /* @__PURE__ */ __name(async (endpoint2, options) => {
-  const token = getInput(ACTION_INPUT_GITHUB_TOKEN, { required: true });
-  return new (Octokit.withPlugins([import_plugin_paginate_rest.paginateRest]))({ auth: token }).paginate(
-    endpoint2,
-    options
-  );
+  const { gitHubApiToken } = useInputs();
+  return new (Octokit.withPlugins([import_plugin_paginate_rest.paginateRest]))({
+    auth: gitHubApiToken
+  }).paginate(endpoint2, options);
 }, "paginate");
 
 // __generated__/gql/gql.ts
@@ -4546,16 +4549,14 @@ var QueryGetEnvironment = graphql3(
 `
 );
 var checkEnvironment = /* @__PURE__ */ __name(async () => {
-  const environmentName = getInput(ACTION_INPUT_GITHUB_ENVIRONMENT, {
-    required: true
-  });
+  const { gitHubEnvironment } = useInputs();
   const { repo, ref } = useContext();
   const environment = await request({
     query: QueryGetEnvironment,
     variables: {
       owner: repo.owner,
       repo: repo.repo,
-      environment_name: environmentName,
+      environment_name: gitHubEnvironment,
       qualifiedName: ref
     },
     options: {
@@ -4566,10 +4567,10 @@ var checkEnvironment = /* @__PURE__ */ __name(async () => {
     error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
   }
   if (!environment.data.repository?.environment) {
-    throw new Error(`GitHub Environment: Not created for ${environmentName}`);
+    throw new Error(`GitHub Environment: Not created for ${gitHubEnvironment}`);
   }
   if (!environment.data.repository?.ref?.id) {
-    throw new Error(`GitHub Environment: No ref id ${environmentName}`);
+    throw new Error(`GitHub Environment: No ref id ${gitHubEnvironment}`);
   }
   return {
     ...environment.data.repository.environment,

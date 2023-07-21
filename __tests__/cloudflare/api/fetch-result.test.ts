@@ -6,8 +6,7 @@ import RESPONSE_NOT_FOUND from '@/responses/api.cloudflare.com/pages/projects/pr
 import RESPONSE_OK from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
 import RESPONSE_UNAUTHORIZED from '@/responses/api.cloudflare.com/unauthorized.response.json'
 import {fetchResult} from '@/src/cloudflare/api/fetch-result.js'
-import {ACTION_INPUT_CLOUDFLARE_API_TOKEN} from '@/src/constants.js'
-import {getMockApi, stubRequiredInputEnv} from '@/tests/helpers/index.js'
+import {getMockApi} from '@/tests/helpers/index.js'
 
 const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
 const RESOURCE_URL_PATH = `/client/v4/accounts`
@@ -19,22 +18,12 @@ describe('api', () => {
     let mockApi: MockApi
 
     beforeEach(() => {
-      stubRequiredInputEnv()
       mockApi = getMockApi()
     })
 
     afterEach(async () => {
       mockApi.mockAgent.assertNoPendingInterceptors()
       await mockApi.mockAgent.close()
-    })
-
-    test(`throws error if ${ACTION_INPUT_CLOUDFLARE_API_TOKEN} undefined`, async () => {
-      vi.unstubAllEnvs()
-      await expect(
-        fetchResult(RESOURCE_URL)
-      ).rejects.toThrowErrorMatchingInlineSnapshot(
-        '"Input required and not supplied: cloudflare api token"'
-      )
     })
 
     test('handles 200 response OK', async () => {
