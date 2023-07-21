@@ -32,9 +32,8 @@ export const fetchResult = async <ResponseType>(
       throw new Error(`Cloudflare API: response missing 'result'`)
     }
     return response.result
-  } else {
-    throwFetchError(resource, response)
   }
+  return throwFetchError(resource, response)
 }
 
 export const fetchSuccess = async (

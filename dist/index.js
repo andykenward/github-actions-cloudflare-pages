@@ -3101,7 +3101,7 @@ var ParseError = class extends Error {
 };
 
 // src/cloudflare/api/fetch-error.ts
-function throwFetchError(resource, response) {
+var throwFetchError = /* @__PURE__ */ __name((resource, response) => {
   const error2 = new ParseError({
     text: `A request to the Cloudflare API (${resource}) failed.`,
     notes: response.errors.map((err) => ({
@@ -3118,16 +3118,14 @@ function throwFetchError(resource, response) {
     });
   }
   throw error2;
-}
-__name(throwFetchError, "throwFetchError");
-function renderError(err, level = 0) {
+}, "throwFetchError");
+var renderError = /* @__PURE__ */ __name((err, level = 0) => {
   const chainedMessages = err.error_chain?.map(
     (chainedError) => `
 ${"  ".repeat(level)}- ${renderError(chainedError, level + 1)}`
   ).join("\n") ?? "";
   return (err.code ? `${err.message} [code: ${err.code}]` : err.message) + chainedMessages;
-}
-__name(renderError, "renderError");
+}, "renderError");
 
 // src/cloudflare/api/fetch-result.ts
 var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams, abortSignal) => {
@@ -3149,9 +3147,8 @@ var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams
       throw new Error(`Cloudflare API: response missing 'result'`);
     }
     return response.result;
-  } else {
-    throwFetchError(resource, response);
   }
+  return throwFetchError(resource, response);
 }, "fetchResult");
 var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
   const method = init.method ?? "GET";
