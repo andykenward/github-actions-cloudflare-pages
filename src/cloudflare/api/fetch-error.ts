@@ -16,11 +16,8 @@ export const throwFetchError = (
       text: renderError(err)
     }))
   })
-  // add the first error code directly to this error
-  // so consumers can use it for specific behaviour
   const code = response.errors[0]?.code
   if (code) {
-    // TODO: Does cloudflare have a schema for their codes?
     error.code = code
   }
   if (error.notes?.length > 0) {
