@@ -1,77 +1,19 @@
-import {
-  error,
-  info,
-  setOutput,
-  summary,
-  warning
-} from '@unlike/github-actions-core'
+import {setOutput, summary} from '@unlike/github-actions-core'
 import {$} from 'execa'
 
-import type {PagesDeployment} from './types.js'
-import {useContext} from '../github/context.js'
-import {useInputs} from '../inputs.js'
-import {getCloudflareApiEndpoint} from './api/endpoints.js'
-import {fetchResult, fetchSuccess} from './api/fetch-result.js'
-import {ParseError} from './api/parse-error.js'
+import {useContext} from '@/src/github/index.js'
+import {useInputs} from '@/src/inputs.js'
 
-/** Environment variables key for Cloudflare wrangler */
+import {
+  getCloudflareDeploymentAlias,
+  getCloudflareLatestDeployment
+} from './get.js'
+
 export const CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN'
-/** Environment variables key for Cloudflare wrangler */
 export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
 const ERROR_KEY = `Create Deployment:`
 
-const getDeployments = async (): Promise<Array<PagesDeployment>> => {
-  const url = getCloudflareApiEndpoint('deployments')
-
-  const result = await fetchResult<Array<PagesDeployment>>(url)
-
-  return result
-}
-
-export const deleteDeployment = async (
-  deploymentIdentifier: string
-): Promise<boolean> => {
-  const url = getCloudflareApiEndpoint(
-    `deployments/${deploymentIdentifier}?force=true`
-  )
-
-  try {
-    const success = await fetchSuccess(url, {
-      method: 'DELETE'
-    })
-
-    if (success === true) {
-      info(`Cloudflare Deployment Deleted: ${deploymentIdentifier}`)
-      return true
-    }
-    throw new Error('Cloudflare Delete Deployment: fail')
-  } catch (successError) {
-    if (successError instanceof ParseError && successError.code === 8_000_009) {
-      /**
-       * The cloudflare deployment might have been deleted manually. So return true.
-       * Error response example
-       * {
-       *   "code": 8000009,
-       *   "message": "The deployment ID you have specified does not exist. Update the deployment ID and try again. "
-       * }
-       */
-      warning(
-        `Cloudflare Deployment might have been deleted already: ${deploymentIdentifier}`
-      )
-      return true
-    }
-    error(`Cloudflare Error deleting deployment: ${deploymentIdentifier}`)
-    return false
-  }
-}
-
-export const getDeploymentAlias = (deployment: PagesDeployment): string => {
-  return deployment.aliases && deployment.aliases.length > 0
-    ? deployment.aliases[0]
-    : deployment.url
-}
-
-export const createDeployment = async () => {
+export const createCloudflareDeployment = async () => {
   const {
     cloudflareAccountId,
     cloudflareProjectName,
@@ -97,23 +39,13 @@ export const createDeployment = async () => {
     /**
      * Get the latest deployment by commitHash.
      */
-    const deployments = await getDeployments()
-    const deployment = deployments?.find(
-      deployment =>
-        deployment.deployment_trigger.metadata.commit_hash === commitHash
-    )
-
-    if (deployment === undefined) {
-      throw new Error(
-        `${ERROR_KEY} could not find deployment with commitHash: ${commitHash}`
-      )
-    }
+    const deployment = await getCloudflareLatestDeployment()
 
     setOutput('id', deployment.id)
     setOutput('url', deployment.url)
     setOutput('environment', deployment.environment)
 
-    const alias: string = getDeploymentAlias(deployment)
+    const alias: string = getCloudflareDeploymentAlias(deployment)
     setOutput('alias', alias)
 
     const deployStage = deployment.stages.find(stage => stage.name === 'deploy')

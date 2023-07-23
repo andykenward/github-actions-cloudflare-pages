@@ -4,7 +4,7 @@ import {DeploymentStatusState} from '@/gql/graphql.js'
 
 import type {PayloadGithubDeployment} from './github/index.js'
 import {getCloudflareLogEndpoint} from './cloudflare/api/endpoints.js'
-import {deleteDeployment} from './cloudflare/deployments.js'
+import {deleteCloudflareDeployment} from './cloudflare/deployment/delete.js'
 import {
   getGitHubDeployments,
   MutationCreateGitHubDeploymentStatus,
@@ -51,7 +51,9 @@ export const deleteDeployments = async (isProduction = false) => {
     /**
      * Delete Cloudflare deployment
      */
-    const deletedCloudflareDeployment = await deleteDeployment(cloudflareId)
+    const deletedCloudflareDeployment = await deleteCloudflareDeployment(
+      cloudflareId
+    )
     if (!deletedCloudflareDeployment) continue
     /**
      * On success of Cloudflare deployment delete GitHub deployment & and comment.

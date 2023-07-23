@@ -2,7 +2,7 @@
 
 import {info} from '@unlike/github-actions-core'
 
-import {createDeployment} from './cloudflare/deployments.js'
+import {createCloudflareDeployment} from './cloudflare/deployment/create.js'
 import {getCloudflareProject} from './cloudflare/project/get.js'
 import {deleteDeployments} from './delete.js'
 import {
@@ -44,7 +44,7 @@ export async function run() {
     }
   }
 
-  const cloudflareDeployment = await createDeployment()
+  const cloudflareDeployment = await createCloudflareDeployment()
   const commentId = await addComment(cloudflareDeployment)
   await createGitHubDeployment(cloudflareDeployment, commentId)
 }

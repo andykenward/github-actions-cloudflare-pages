@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`deployments > createDeployment > api calls > handles success 1`] = `
+exports[`createCloudflareDeployment > api calls > handles success 1`] = `
 {
   "aliases": [
     "https://unknown-branch.cloudflare-pages-action-a5z.pages.dev",
