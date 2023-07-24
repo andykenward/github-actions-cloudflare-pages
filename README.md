@@ -1,6 +1,6 @@
 [![test](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/test.yml/badge.svg)](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/test.yml) [![Check dist/](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/check-dist.yml/badge.svg)](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/check-dist.yml) [![release](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/release.yml/badge.svg)](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/release.yml)
 
-# Cloudflare Pages GitHub Action
+# GitHub Action Cloudflare Pages
 
 This action deploys your build output to [Cloudflare Pages] using [Wrangler]. GitHub Environments and Deployments are used to track these deployments.
 
