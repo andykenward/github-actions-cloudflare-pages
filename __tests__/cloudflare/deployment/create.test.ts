@@ -12,8 +12,6 @@ import {
 } from '@/src/cloudflare/deployment/create.js'
 import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/index.js'
 
-import PACKAGE_JSON from '../../../package.json'
-
 vi.mock('execa')
 vi.mock('@unlike/github-actions-core')
 describe('createCloudflareDeployment', () => {
@@ -42,12 +40,14 @@ describe('createCloudflareDeployment', () => {
 
       expect(execa.$).toHaveBeenCalledWith(
         [
-          `npx wrangler@${PACKAGE_JSON.dependencies.wrangler} pages deploy `,
+          `npx wrangler@`,
+          ` pages deploy `,
           ' --project-name=',
           ' --branch=',
           ' --commit-dirty=true --commit-hash=',
           ''
         ],
+        process.env.npm_package_dependencies_wrangler,
         'mock-directory',
         'mock-cloudflare-project-name',
         'mock-github-head-ref',
