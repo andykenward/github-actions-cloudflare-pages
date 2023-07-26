@@ -1745,6 +1745,9 @@ var Summary = class {
 var _summary = new Summary();
 var summary = _summary;
 
+// src/cloudflare/deployment/create.ts
+import { strict } from "node:assert";
+
 // node_modules/.pnpm/execa@7.1.1/node_modules/execa/index.js
 var import_cross_spawn = __toESM(require_cross_spawn(), 1);
 import { Buffer as Buffer3 } from "node:buffer";
@@ -4625,7 +4628,9 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
     throw new Error(`${ERROR_KEY} branch is undefined`);
   }
   try {
-    await $`npx wrangler@3.2.0 pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
+    const WRANGLER_VERSION = "3.3.0";
+    strict(WRANGLER_VERSION, "wrangler version should exist");
+    await $`npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`;
     const deployment = await getCloudflareLatestDeployment();
     setOutput("id", deployment.id);
     setOutput("url", deployment.url);

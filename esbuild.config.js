@@ -35,5 +35,10 @@ await esbuild.build({
       `import { createRequire as topLevelCreateRequire } from 'module';`,
       `const require = topLevelCreateRequire(import.meta.url);`
     ].join('')
+  },
+  define: {
+    'process.env.npm_package_dependencies_wrangler': JSON.stringify(
+      process.env.npm_package_dependencies_wrangler
+    )
   }
 })

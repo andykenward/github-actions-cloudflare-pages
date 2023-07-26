@@ -1,3 +1,5 @@
+import {strict} from 'node:assert'
+
 import {setOutput, summary} from '@unlike/github-actions-core'
 import {$} from 'execa'
 
@@ -32,9 +34,17 @@ export const createCloudflareDeployment = async () => {
 
   try {
     /**
+     * At build process.env.npm_package_dependencies_wrangler is replaced by esbuild define.
+     * @see {@link ../../esbuild.config.js}
+     * @see {@link https://esbuild.github.io/api/#define | esbuild define}
+     * @see {@link https://docs.npmjs.com/cli/v9/using-npm/scripts#packagejson-vars | package.json vars}
+     */
+    const WRANGLER_VERSION = process.env.npm_package_dependencies_wrangler
+    strict(WRANGLER_VERSION, 'wrangler version should exist')
+    /**
      * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
      */
-    await $`npx wrangler@3.2.0 pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`
+    await $`npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`
 
     /**
      * Get the latest deployment by commitHash.
