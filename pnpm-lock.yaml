@@ -41,8 +41,8 @@ devDependencies:
     specifier: 4.1.0
     version: 4.1.0(prettier@3.0.0)
   '@octokit/graphql-schema':
-    specifier: 14.22.0
-    version: 14.22.0
+    specifier: 14.24.1
+    version: 14.24.1
   '@octokit/webhooks-schemas':
     specifier: 7.1.0
     version: 7.1.0
@@ -2270,8 +2270,8 @@ packages:
       universal-user-agent: 6.0.0
     dev: false
 
-  /@octokit/graphql-schema@14.22.0:
-    resolution: {integrity: sha512-nD31mCiZ4NNrzlj66GVv+VuGAq8o9GMKUNVKEiFT6nM3nGB0XTAJqEcVpzBJazxussxvgUpX8bDUsa08qSA9zQ==}
+  /@octokit/graphql-schema@14.24.1:
+    resolution: {integrity: sha512-MK/axY/v3D6EEnahL5zEXezuyJBKtEHZTiBOEwBw7McO/FFKx8WAmdsQXUeMxKIFnUwufAQr8QVAqVk+8uUm7A==}
     dependencies:
       graphql: 16.7.1
       graphql-tag: 2.12.6(graphql@16.7.1)
