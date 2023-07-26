@@ -1,27 +1,11 @@
 import {vi} from 'vitest'
 
-import {
-  ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID,
-  ACTION_INPUT_CLOUDFLARE_API_TOKEN,
-  ACTION_INPUT_CLOUDFLARE_PROJECT_NAME,
-  ACTION_INPUT_DIRECTORY,
-  ACTION_INPUT_GITHUB_ENVIRONMENT,
-  ACTION_INPUT_GITHUB_TOKEN
-} from '@/src/constants.js'
+import {INPUT_KEYS_REQUIRED} from '@/src/inputs.js'
 
 const INPUT_KEY = `INPUT_`
 
-export const REQUIRED_INPUTS = [
-  ACTION_INPUT_CLOUDFLARE_ACCOUNT_ID,
-  ACTION_INPUT_CLOUDFLARE_PROJECT_NAME,
-  ACTION_INPUT_DIRECTORY,
-  ACTION_INPUT_CLOUDFLARE_API_TOKEN,
-  ACTION_INPUT_GITHUB_TOKEN,
-  ACTION_INPUT_GITHUB_ENVIRONMENT
-] as const
-
 /** For `core.getInput()` */
-export const stubInputEnv = (input: string, value?: string): void => {
+const stubInputEnv = (input: string, value?: string): void => {
   const setValue = value ?? `mock-${input.replaceAll(' ', '-')}`.toLowerCase()
   vi.stubEnv(
     `${INPUT_KEY}${input.replaceAll(' ', '_')}`.toUpperCase(),
@@ -33,7 +17,7 @@ export const stubInputEnv = (input: string, value?: string): void => {
  * Set all required GitHub Action inputs to mock values.
  */
 export const stubRequiredInputEnv = () => {
-  for (const input of REQUIRED_INPUTS) {
+  for (const input of INPUT_KEYS_REQUIRED) {
     stubInputEnv(input)
   }
 }

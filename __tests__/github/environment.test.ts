@@ -9,11 +9,7 @@ import {
 } from '@/src/github/environment.js'
 
 import type {MockApi} from '../helpers/index.js'
-import {
-  getMockApi,
-  stubRequiredInputEnv,
-  TEST_ENV_VARS
-} from '../helpers/index.js'
+import {getMockApi, TEST_ENV_VARS} from '../helpers/index.js'
 
 vi.mock('@unlike/github-actions-core')
 describe('environment', () => {
@@ -21,7 +17,6 @@ describe('environment', () => {
 
   beforeEach(() => {
     mockApi = getMockApi()
-    stubRequiredInputEnv()
   })
 
   afterEach(async () => {

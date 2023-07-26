@@ -1,9 +1,7 @@
 import type {GraphQLError} from 'graphql'
 
-import {getInput} from '@unlike/github-actions-core'
-
 import type {TypedDocumentString} from '@/gql/graphql.js'
-import {ACTION_INPUT_GITHUB_TOKEN} from '@/src/constants.js'
+import {useInputs} from '@/src/inputs.js'
 
 import {useContext} from '../context.js'
 
@@ -49,14 +47,13 @@ export const request = async <
 ): Promise<GraphqlResponse<TData>> => {
   const {query, variables, options} = params
   const {errorThrows} = options || {errorThrows: true}
-  const token = getInput(ACTION_INPUT_GITHUB_TOKEN, {required: true})
-
+  const {gitHubApiToken} = useInputs()
   const {graphqlEndpoint} = useContext()
 
   return fetch(graphqlEndpoint, {
     method: 'POST',
     headers: {
-      authorization: `bearer ${token}`,
+      authorization: `bearer ${gitHubApiToken}`,
       'Content-Type': 'application/json',
       Accept: 'application/vnd.github.flash-preview+json'
     },

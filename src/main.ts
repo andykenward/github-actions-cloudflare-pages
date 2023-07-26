@@ -2,8 +2,8 @@
 
 import {info} from '@unlike/github-actions-core'
 
-import {createDeployment} from './cloudflare/deployments.js'
-import {getProject} from './cloudflare/project/get-project.js'
+import {createCloudflareDeployment} from './cloudflare/deployment/create.js'
+import {getCloudflareProject} from './cloudflare/project/get.js'
 import {deleteDeployments} from './delete.js'
 import {
   addComment,
@@ -24,7 +24,7 @@ export async function run() {
   /**
    * Validate Cloudflare project
    */
-  const project = await getProject()
+  const project = await getCloudflareProject()
 
   if (eventName === 'pull_request' && payload.action === 'closed') {
     await deleteDeployments()
@@ -44,7 +44,7 @@ export async function run() {
     }
   }
 
-  const cloudflareDeployment = await createDeployment()
+  const cloudflareDeployment = await createCloudflareDeployment()
   const commentId = await addComment(cloudflareDeployment)
   await createGitHubDeployment(cloudflareDeployment, commentId)
 }

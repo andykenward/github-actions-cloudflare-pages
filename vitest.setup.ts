@@ -1,9 +1,13 @@
 import {afterEach, beforeEach, vi} from 'vitest'
 
-import {stubTestEnvVars} from './__tests__/helpers/index.js'
+import {
+  stubRequiredInputEnv,
+  stubTestEnvVars
+} from './__tests__/helpers/index.js'
 
 beforeEach(() => {
   stubTestEnvVars()
+  stubRequiredInputEnv()
 })
 afterEach(() => {
   vi.unstubAllEnvs()
