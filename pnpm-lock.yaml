@@ -12,8 +12,8 @@ dependencies:
     specifier: 8.0.0
     version: 8.0.0(@octokit/core@5.0.0)
   '@unlike/github-actions-core':
-    specifier: 0.1.0
-    version: 0.1.0
+    specifier: 0.1.2
+    version: 0.1.2
   execa:
     specifier: 7.1.1
     version: 7.1.1
@@ -2592,8 +2592,8 @@ packages:
       eslint-visitor-keys: 3.4.1
     dev: true
 
-  /@unlike/github-actions-core@0.1.0:
-    resolution: {integrity: sha512-ZvkgLE2q24kNGYHFV1mZmS+Ah9hgWmOuZokJof9xropzNty/H3/qIiEYxL/MW1xQbJH9q2PssWpJ8BghL2gD9A==}
+  /@unlike/github-actions-core@0.1.2:
+    resolution: {integrity: sha512-xRseOpDG9+L2qLG8kVKTBiiYiIvxkbdf1ckNBrkdXXxFw1qaqJ8xinrgQqYUf6mDUJnb9387h0VlzoCDHJtSjA==}
     engines: {node: '>=18.16.1'}
     dependencies:
       '@actions/http-client': 2.1.0
