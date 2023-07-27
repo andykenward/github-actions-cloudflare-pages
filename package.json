@@ -62,8 +62,8 @@
   "devDependencies": {
     "@changesets/cli": "2.26.2",
     "@cloudflare/types": "6.21.19",
-    "@graphql-codegen/cli": "4.0.1",
-    "@graphql-codegen/client-preset": "4.0.1",
+    "@graphql-codegen/cli": "5.0.0",
+    "@graphql-codegen/client-preset": "4.1.0",
     "@graphql-typed-document-node/core": "3.2.0",
     "@ianvs/prettier-plugin-sort-imports": "4.1.0",
     "@octokit/graphql-schema": "14.22.0",
