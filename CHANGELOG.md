@@ -1,5 +1,16 @@
 # github-actions-cloudflare-pages
 
+## 0.1.1
+
+### Patch Changes
+
+- e05143d: refactor: use wrangler version from package.json
+- 7db8360: chore(deps): bump @unlike/github-actions-core to 0.1.2
+- fc5ad34: chore(deps-dev): bump @octokit/graphql-schema to 14.24.1
+- 8c166b8: refactor: file & function naming convention. Improved usage of getInput & env mocking
+- 9fc3d98: chore(deps): bump wrangler to 3.4.0
+- c3e5e3e: chore(deps): bump execa to 7.2.0
+
 ## 0.1.0
 
 ### Minor Changes
