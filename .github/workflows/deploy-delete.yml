@@ -9,6 +9,9 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: deploy-delete-${{ github.head_ref || github.run_id }}
+
 jobs:
   cloudflare-pages-deploy-delete:
     permissions:
