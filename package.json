@@ -57,7 +57,7 @@
     "@octokit/plugin-paginate-rest": "8.0.0",
     "@unlike/github-actions-core": "0.1.2",
     "execa": "7.2.0",
-    "wrangler": "3.3.0"
+    "wrangler": "3.4.0"
   },
   "devDependencies": {
     "@changesets/cli": "2.26.2",
