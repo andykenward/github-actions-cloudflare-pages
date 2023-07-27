@@ -594,11 +594,11 @@ var require_signals = __commonJS({
 // node_modules/.pnpm/signal-exit@3.0.7/node_modules/signal-exit/index.js
 var require_signal_exit = __commonJS({
   "node_modules/.pnpm/signal-exit@3.0.7/node_modules/signal-exit/index.js"(exports, module) {
-    var process5 = global.process;
-    var processOk = /* @__PURE__ */ __name(function(process6) {
-      return process6 && typeof process6 === "object" && typeof process6.removeListener === "function" && typeof process6.emit === "function" && typeof process6.reallyExit === "function" && typeof process6.listeners === "function" && typeof process6.kill === "function" && typeof process6.pid === "number" && typeof process6.on === "function";
+    var process6 = global.process;
+    var processOk = /* @__PURE__ */ __name(function(process7) {
+      return process7 && typeof process7 === "object" && typeof process7.removeListener === "function" && typeof process7.emit === "function" && typeof process7.reallyExit === "function" && typeof process7.listeners === "function" && typeof process7.kill === "function" && typeof process7.pid === "number" && typeof process7.on === "function";
     }, "processOk");
-    if (!processOk(process5)) {
+    if (!processOk(process6)) {
       module.exports = function() {
         return function() {
         };
@@ -606,15 +606,15 @@ var require_signal_exit = __commonJS({
     } else {
       assert2 = __require("assert");
       signals = require_signals();
-      isWin = /^win/i.test(process5.platform);
+      isWin = /^win/i.test(process6.platform);
       EE = __require("events");
       if (typeof EE !== "function") {
         EE = EE.EventEmitter;
       }
-      if (process5.__signal_exit_emitter__) {
-        emitter = process5.__signal_exit_emitter__;
+      if (process6.__signal_exit_emitter__) {
+        emitter = process6.__signal_exit_emitter__;
       } else {
-        emitter = process5.__signal_exit_emitter__ = new EE();
+        emitter = process6.__signal_exit_emitter__ = new EE();
         emitter.count = 0;
         emitter.emitted = {};
       }
@@ -651,12 +651,12 @@ var require_signal_exit = __commonJS({
         loaded = false;
         signals.forEach(function(sig) {
           try {
-            process5.removeListener(sig, sigListeners[sig]);
+            process6.removeListener(sig, sigListeners[sig]);
           } catch (er) {
           }
         });
-        process5.emit = originalProcessEmit;
-        process5.reallyExit = originalProcessReallyExit;
+        process6.emit = originalProcessEmit;
+        process6.reallyExit = originalProcessReallyExit;
         emitter.count -= 1;
       }, "unload");
       module.exports.unload = unload;
@@ -673,7 +673,7 @@ var require_signal_exit = __commonJS({
           if (!processOk(global.process)) {
             return;
           }
-          var listeners = process5.listeners(sig);
+          var listeners = process6.listeners(sig);
           if (listeners.length === emitter.count) {
             unload();
             emit("exit", null, sig);
@@ -681,7 +681,7 @@ var require_signal_exit = __commonJS({
             if (isWin && sig === "SIGHUP") {
               sig = "SIGINT";
             }
-            process5.kill(process5.pid, sig);
+            process6.kill(process6.pid, sig);
           }
         }, "listener");
       });
@@ -697,36 +697,36 @@ var require_signal_exit = __commonJS({
         emitter.count += 1;
         signals = signals.filter(function(sig) {
           try {
-            process5.on(sig, sigListeners[sig]);
+            process6.on(sig, sigListeners[sig]);
             return true;
           } catch (er) {
             return false;
           }
         });
-        process5.emit = processEmit;
-        process5.reallyExit = processReallyExit;
+        process6.emit = processEmit;
+        process6.reallyExit = processReallyExit;
       }, "load");
       module.exports.load = load;
-      originalProcessReallyExit = process5.reallyExit;
+      originalProcessReallyExit = process6.reallyExit;
       processReallyExit = /* @__PURE__ */ __name(function processReallyExit2(code) {
         if (!processOk(global.process)) {
           return;
         }
-        process5.exitCode = code || /* istanbul ignore next */
+        process6.exitCode = code || /* istanbul ignore next */
         0;
-        emit("exit", process5.exitCode, null);
-        emit("afterexit", process5.exitCode, null);
-        originalProcessReallyExit.call(process5, process5.exitCode);
+        emit("exit", process6.exitCode, null);
+        emit("afterexit", process6.exitCode, null);
+        originalProcessReallyExit.call(process6, process6.exitCode);
       }, "processReallyExit");
-      originalProcessEmit = process5.emit;
+      originalProcessEmit = process6.emit;
       processEmit = /* @__PURE__ */ __name(function processEmit2(ev, arg) {
         if (ev === "exit" && processOk(global.process)) {
           if (arg !== void 0) {
-            process5.exitCode = arg;
+            process6.exitCode = arg;
           }
           var ret = originalProcessEmit.apply(this, arguments);
-          emit("exit", process5.exitCode, null);
-          emit("afterexit", process5.exitCode, null);
+          emit("exit", process6.exitCode, null);
+          emit("afterexit", process6.exitCode, null);
           return ret;
         } else {
           return originalProcessEmit.apply(this, arguments);
@@ -1748,12 +1748,12 @@ var summary = _summary;
 // src/cloudflare/deployment/create.ts
 import { strict } from "node:assert";
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/index.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/index.js
 var import_cross_spawn = __toESM(require_cross_spawn(), 1);
 import { Buffer as Buffer3 } from "node:buffer";
 import path2 from "node:path";
 import childProcess from "node:child_process";
-import process4 from "node:process";
+import process5 from "node:process";
 
 // node_modules/.pnpm/strip-final-newline@3.0.0/node_modules/strip-final-newline/index.js
 function stripFinalNewline(input) {
@@ -1892,6 +1892,9 @@ onetime.callCount = (function_) => {
   return calledFunctions.get(function_);
 };
 var onetime_default = onetime;
+
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/error.js
+import process3 from "node:process";
 
 // node_modules/.pnpm/human-signals@4.3.1/node_modules/human-signals/build/src/main.js
 import { constants as constants3 } from "node:os";
@@ -2257,7 +2260,7 @@ var findSignalByNumber = /* @__PURE__ */ __name((number, signals) => {
 }, "findSignalByNumber");
 var signalsByNumber = getSignalsByNumber();
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/error.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/error.js
 var getErrorPrefix = /* @__PURE__ */ __name(({ timedOut, timeout, errorCode, signal, signalDescription, exitCode, isCanceled }) => {
   if (timedOut) {
     return `timed out after ${timeout} milliseconds`;
@@ -2288,7 +2291,7 @@ var makeError = /* @__PURE__ */ __name(({
   timedOut,
   isCanceled,
   killed,
-  parsed: { options: { timeout } }
+  parsed: { options: { timeout, cwd = process3.cwd() } }
 }) => {
   exitCode = exitCode === null ? void 0 : exitCode;
   signal = signal === null ? void 0 : signal;
@@ -2314,6 +2317,7 @@ ${error2.message}` : execaMessage;
   error2.signalDescription = signalDescription;
   error2.stdout = stdout;
   error2.stderr = stderr;
+  error2.cwd = cwd;
   if (all !== void 0) {
     error2.all = all;
   }
@@ -2327,7 +2331,7 @@ ${error2.message}` : execaMessage;
   return error2;
 }, "makeError");
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/stdio.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/stdio.js
 var aliases = ["stdin", "stdout", "stderr"];
 var hasAlias = /* @__PURE__ */ __name((options) => aliases.some((alias) => options[alias] !== void 0), "hasAlias");
 var normalizeStdio = /* @__PURE__ */ __name((options) => {
@@ -2351,7 +2355,7 @@ var normalizeStdio = /* @__PURE__ */ __name((options) => {
   return Array.from({ length }, (value, index) => stdio[index]);
 }, "normalizeStdio");
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/kill.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/kill.js
 var import_signal_exit = __toESM(require_signal_exit(), 1);
 import os from "node:os";
 var DEFAULT_FORCE_KILL_TIMEOUT = 1e3 * 5;
@@ -2425,7 +2429,7 @@ var setExitHandler = /* @__PURE__ */ __name(async (spawned, { cleanup, detached 
   });
 }, "setExitHandler");
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/pipe.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/pipe.js
 import { createWriteStream } from "node:fs";
 import { ChildProcess } from "node:child_process";
 
@@ -2439,7 +2443,7 @@ function isWritableStream(stream) {
 }
 __name(isWritableStream, "isWritableStream");
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/pipe.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/pipe.js
 var isExecaChildProcess = /* @__PURE__ */ __name((target) => target instanceof ChildProcess && typeof target.then === "function", "isExecaChildProcess");
 var pipeToTarget = /* @__PURE__ */ __name((spawned, streamName, target) => {
   if (typeof target === "string") {
@@ -2471,7 +2475,7 @@ var addPipeMethods = /* @__PURE__ */ __name((spawned) => {
   }
 }, "addPipeMethods");
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/stream.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/stream.js
 import { createReadStream, readFileSync } from "node:fs";
 var import_get_stream = __toESM(require_get_stream(), 1);
 var import_merge_stream = __toESM(require_merge_stream(), 1);
@@ -2561,7 +2565,7 @@ var getSpawnedResult = /* @__PURE__ */ __name(async ({ stdout, stderr, all }, { 
   }
 }, "getSpawnedResult");
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/promise.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/promise.js
 var nativePromisePrototype = (/* @__PURE__ */ (async () => {
 })()).constructor.prototype;
 var descriptors = ["then", "catch", "finally"].map((property) => [
@@ -2588,7 +2592,7 @@ var getSpawnedPromise = /* @__PURE__ */ __name((spawned) => new Promise((resolve
   }
 }), "getSpawnedPromise");
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/command.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/command.js
 import { Buffer as Buffer2 } from "node:buffer";
 import { ChildProcess as ChildProcess2 } from "node:child_process";
 var normalizeArgs = /* @__PURE__ */ __name((file, args = []) => {
@@ -2660,9 +2664,9 @@ var parseTemplates = /* @__PURE__ */ __name((templates, expressions) => {
   return tokens;
 }, "parseTemplates");
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/lib/verbose.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/lib/verbose.js
 import { debuglog } from "node:util";
-import process3 from "node:process";
+import process4 from "node:process";
 var verboseDefault = debuglog("execa").enabled;
 var padField = /* @__PURE__ */ __name((field, padding) => String(field).padStart(padding, "0"), "padField");
 var getTimestamp = /* @__PURE__ */ __name(() => {
@@ -2673,14 +2677,14 @@ var logCommand = /* @__PURE__ */ __name((escapedCommand, { verbose }) => {
   if (!verbose) {
     return;
   }
-  process3.stderr.write(`[${getTimestamp()}] ${escapedCommand}
+  process4.stderr.write(`[${getTimestamp()}] ${escapedCommand}
 `);
 }, "logCommand");
 
-// node_modules/.pnpm/execa@7.1.1/node_modules/execa/index.js
+// node_modules/.pnpm/execa@7.2.0/node_modules/execa/index.js
 var DEFAULT_MAX_BUFFER = 1e3 * 1e3 * 100;
 var getEnv = /* @__PURE__ */ __name(({ env: envOption, extendEnv, preferLocal, localDir, execPath }) => {
-  const env = extendEnv ? { ...process4.env, ...envOption } : envOption;
+  const env = extendEnv ? { ...process5.env, ...envOption } : envOption;
   if (preferLocal) {
     return npmRunPathEnv({ env, cwd: localDir, execPath });
   }
@@ -2697,8 +2701,8 @@ var handleArguments = /* @__PURE__ */ __name((file, args, options = {}) => {
     stripFinalNewline: true,
     extendEnv: true,
     preferLocal: false,
-    localDir: options.cwd || process4.cwd(),
-    execPath: process4.execPath,
+    localDir: options.cwd || process5.cwd(),
+    execPath: process5.execPath,
     encoding: "utf8",
     reject: true,
     cleanup: true,
@@ -2709,7 +2713,7 @@ var handleArguments = /* @__PURE__ */ __name((file, args, options = {}) => {
   };
   options.env = getEnv(options);
   options.stdio = normalizeStdio(options);
-  if (process4.platform === "win32" && path2.basename(file, ".exe") === "cmd") {
+  if (process5.platform === "win32" && path2.basename(file, ".exe") === "cmd") {
     args.unshift("/q");
   }
   return { file, args, options, parsed };

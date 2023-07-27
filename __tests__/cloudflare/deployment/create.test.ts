@@ -75,7 +75,8 @@ describe('createCloudflareDeployment', () => {
         stderr: '',
         failed: false,
         timedOut: false,
-        killed: false
+        killed: false,
+        cwd: '/path/to/cwd'
       })
 
       mockApi.interceptCloudflare(
@@ -105,7 +106,8 @@ describe('createCloudflareDeployment', () => {
         stderr: '',
         failed: false,
         timedOut: false,
-        killed: false
+        killed: false,
+        cwd: '/path/to/cwd'
       })
 
       mockApi.interceptCloudflare(
