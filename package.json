@@ -59,6 +59,7 @@
     "wrangler": "3.4.0"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "0.4.8",
     "@changesets/cli": "2.26.2",
     "@cloudflare/types": "6.21.19",
     "@graphql-codegen/cli": "5.0.0",
