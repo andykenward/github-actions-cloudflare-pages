@@ -1,5 +1,4 @@
 import {setOutput, summary} from '@unlike/github-actions-core'
-import * as execa from 'execa'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/index.js'
@@ -10,9 +9,10 @@ import {
   CLOUDFLARE_API_TOKEN,
   createCloudflareDeployment
 } from '@/src/cloudflare/deployment/create.js'
+import {execAsync} from '@/src/utils.js'
 import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/index.js'
 
-vi.mock('execa')
+vi.mock('@/src/utils.js')
 vi.mock('@unlike/github-actions-core')
 describe('createCloudflareDeployment', () => {
   describe('api calls', () => {
@@ -27,8 +27,7 @@ describe('createCloudflareDeployment', () => {
 
     test('handles thrown error from wrangler deploy', async () => {
       expect.assertions(9)
-      // Mock $ execa rejects
-      vi.mocked(execa.$).mockRejectedValue({stderr: 'Oh no!'})
+      vi.mocked(execAsync).mockRejectedValue({stderr: 'Oh no!'})
 
       // Expect Cloudflare Api Token and Account Id to be undefined.
       expect(process.env[CLOUDFLARE_API_TOKEN]).toBeUndefined()
@@ -38,45 +37,30 @@ describe('createCloudflareDeployment', () => {
         createCloudflareDeployment()
       ).rejects.toThrowErrorMatchingInlineSnapshot('"Oh no!"')
 
-      expect(execa.$).toHaveBeenCalledWith(
-        [
-          `npx wrangler@`,
-          ` pages deploy `,
-          ' --project-name=',
-          ' --branch=',
-          ' --commit-dirty=true --commit-hash=',
-          ''
-        ],
-        process.env.npm_package_dependencies_wrangler,
-        'mock-directory',
-        'mock-cloudflare-project-name',
-        'mock-github-head-ref',
-        'mock-github-sha'
+      expect(execAsync).toHaveBeenCalledWith(
+        `npx wrangler@3.4.0 pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
+        {
+          env: process.env
+        }
       )
-      expect(execa.$).toHaveBeenCalledTimes(1)
+
+      expect(execAsync).toHaveBeenCalledTimes(1)
       expect(process.env[CLOUDFLARE_API_TOKEN]).toStrictEqual(
         'mock-cloudflare-api-token'
       )
       expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toStrictEqual(
         'mock-cloudflare-account-id'
       )
+
       expect(setOutput).not.toHaveBeenCalled()
       expect(summary.addTable).not.toHaveBeenCalled()
     })
 
     test('handles thrown error from getDeployments', async () => {
       expect.assertions(4)
-      vi.mocked(execa.$).mockResolvedValue({
-        isCanceled: false,
-        command: '',
-        escapedCommand: '',
-        exitCode: 0,
+      vi.mocked(execAsync).mockResolvedValue({
         stdout: 'success',
-        stderr: '',
-        failed: false,
-        timedOut: false,
-        killed: false,
-        cwd: '/path/to/cwd'
+        stderr: ''
       })
 
       mockApi.interceptCloudflare(
@@ -90,24 +74,16 @@ describe('createCloudflareDeployment', () => {
       ).rejects.toThrowErrorMatchingInlineSnapshot(
         '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed."'
       )
-      expect(execa.$).toHaveBeenCalledTimes(1)
+      expect(execAsync).toHaveBeenCalledTimes(1)
       expect(setOutput).not.toHaveBeenCalled()
       expect(summary.addTable).not.toHaveBeenCalled()
     })
 
     test('handles success', async () => {
       expect.assertions(11)
-      vi.mocked(execa.$).mockResolvedValue({
-        isCanceled: false,
-        command: '',
-        escapedCommand: '',
-        exitCode: 0,
+      vi.mocked(execAsync).mockResolvedValue({
         stdout: 'success',
-        stderr: '',
-        failed: false,
-        timedOut: false,
-        killed: false,
-        cwd: '/path/to/cwd'
+        stderr: ''
       })
 
       mockApi.interceptCloudflare(
