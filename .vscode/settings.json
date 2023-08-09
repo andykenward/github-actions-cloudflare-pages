@@ -19,6 +19,7 @@
   "npm.packageManager": "pnpm",
   "javascript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifierEnding": "js",
+  "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.tsdk": "node_modules/typescript/lib",
   "editor.quickSuggestions": {
     "other": false,
