@@ -23,6 +23,9 @@ export const createCloudflareDeployment = async () => {
     cloudflareApiToken
   } = useInputs()
 
+  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken
+  process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId
+
   const {repo, branch, sha: commitHash} = useContext()
 
   if (branch === undefined) {
@@ -44,10 +47,7 @@ export const createCloudflareDeployment = async () => {
     await execAsync(
       `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
       {
-        env: {
-          [CLOUDFLARE_API_TOKEN]: cloudflareApiToken,
-          [CLOUDFLARE_ACCOUNT_ID]: cloudflareAccountId
-        } as NodeJS.ProcessEnv
+        env: process.env
       }
     )
     /**

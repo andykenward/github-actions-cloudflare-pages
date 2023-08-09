@@ -2616,6 +2616,8 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
     directory,
     cloudflareApiToken
   } = useInputs();
+  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken;
+  process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId;
   const { repo, branch, sha: commitHash } = useContext();
   if (branch === void 0) {
     throw new Error(`${ERROR_KEY} branch is undefined`);
@@ -2626,10 +2628,7 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
     await execAsync(
       `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
       {
-        env: {
-          [CLOUDFLARE_API_TOKEN]: cloudflareApiToken,
-          [CLOUDFLARE_ACCOUNT_ID]: cloudflareAccountId
-        }
+        env: process.env
       }
     );
     const deployment = await getCloudflareLatestDeployment();

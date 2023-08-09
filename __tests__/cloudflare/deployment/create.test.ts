@@ -26,8 +26,12 @@ describe('createCloudflareDeployment', () => {
     })
 
     test('handles thrown error from wrangler deploy', async () => {
-      expect.assertions(5)
+      expect.assertions(9)
       vi.mocked(execAsync).mockRejectedValue({stderr: 'Oh no!'})
+
+      // Expect Cloudflare Api Token and Account Id to be undefined.
+      expect(process.env[CLOUDFLARE_API_TOKEN]).toBeUndefined()
+      expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toBeUndefined()
 
       await expect(
         createCloudflareDeployment()
@@ -36,14 +40,17 @@ describe('createCloudflareDeployment', () => {
       expect(execAsync).toHaveBeenCalledWith(
         `npx wrangler@3.4.0 pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
         {
-          env: {
-            [CLOUDFLARE_ACCOUNT_ID]: 'mock-cloudflare-account-id',
-            [CLOUDFLARE_API_TOKEN]: 'mock-cloudflare-api-token'
-          }
+          env: process.env
         }
       )
 
       expect(execAsync).toHaveBeenCalledTimes(1)
+      expect(process.env[CLOUDFLARE_API_TOKEN]).toStrictEqual(
+        'mock-cloudflare-api-token'
+      )
+      expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toStrictEqual(
+        'mock-cloudflare-account-id'
+      )
 
       expect(setOutput).not.toHaveBeenCalled()
       expect(summary.addTable).not.toHaveBeenCalled()
