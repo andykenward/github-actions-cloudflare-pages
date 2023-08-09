@@ -1,10 +1,10 @@
 import {strict} from 'node:assert'
 
 import {setOutput, summary} from '@unlike/github-actions-core'
-import {$} from 'execa'
 
 import {useContext} from '@/src/github/index.js'
 import {useInputs} from '@/src/inputs.js'
+import {execAsync} from '@/src/utils.js'
 
 import {
   getCloudflareDeploymentAlias,
@@ -22,9 +22,6 @@ export const createCloudflareDeployment = async () => {
     directory,
     cloudflareApiToken
   } = useInputs()
-
-  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken
-  process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId
 
   const {repo, branch, sha: commitHash} = useContext()
 
@@ -44,8 +41,15 @@ export const createCloudflareDeployment = async () => {
     /**
      * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
      */
-    await $`npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`
-
+    await execAsync(
+      `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
+      {
+        env: {
+          [CLOUDFLARE_API_TOKEN]: cloudflareApiToken,
+          [CLOUDFLARE_ACCOUNT_ID]: cloudflareAccountId
+        } as NodeJS.ProcessEnv
+      }
+    )
     /**
      * Get the latest deployment by commitHash.
      */
