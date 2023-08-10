@@ -928,6 +928,7 @@ var EVENT_NAMES = [
   "deploy_key",
   "deployment",
   "deployment_protection_rule",
+  "deployment_review",
   "deployment_status",
   "discussion",
   "discussion_comment",

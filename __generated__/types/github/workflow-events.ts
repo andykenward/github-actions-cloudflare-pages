@@ -10,6 +10,7 @@ import type {
   DeployKeyEvent,
   DeploymentEvent,
   DeploymentProtectionRuleEvent,
+  DeploymentReviewEvent,
   DeploymentStatusEvent,
   DiscussionCommentEvent,
   DiscussionEvent,
@@ -77,6 +78,7 @@ export const EVENT_NAMES = [
   'deploy_key',
   'deployment',
   'deployment_protection_rule',
+  'deployment_review',
   'deployment_status',
   'discussion',
   'discussion_comment',
@@ -178,6 +180,10 @@ export type WorkflowEvent =
   | {
       eventName: 'deployment_protection_rule'
       payload: DeploymentProtectionRuleEvent
+    }
+  | {
+      eventName: 'deployment_review'
+      payload: DeploymentReviewEvent
     }
   | {
       eventName: 'deployment_status'

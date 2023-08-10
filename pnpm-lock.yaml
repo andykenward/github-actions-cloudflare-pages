@@ -44,11 +44,11 @@ devDependencies:
     specifier: 14.27.1
     version: 14.27.1
   '@octokit/webhooks-schemas':
-    specifier: 7.1.0
-    version: 7.1.0
+    specifier: 7.2.0
+    version: 7.2.0
   '@octokit/webhooks-types':
-    specifier: 7.1.0
-    version: 7.1.0
+    specifier: 7.2.0
+    version: 7.2.0
   '@total-typescript/ts-reset':
     specifier: 0.4.2
     version: 0.4.2
@@ -2344,12 +2344,12 @@ packages:
       '@octokit/openapi-types': 18.0.0
     dev: false
 
-  /@octokit/webhooks-schemas@7.1.0:
-    resolution: {integrity: sha512-RpZQDy2RZMV3UW+msjvia+lDYt3Pzoo1ivFLEi+Sf+xUdAtiTz8igAhktBddHKl6eZ4bvrB68wxQOOFbbE3n7A==}
+  /@octokit/webhooks-schemas@7.2.0:
+    resolution: {integrity: sha512-+d23l8zu+8pf8D5ruavFkITeUDxcydvArHiUKfeypoib2Mwy8bJqAECbucn8h7kpNtv+hhaoin0BEE4a+xjviw==}
     dev: true
 
-  /@octokit/webhooks-types@7.1.0:
-    resolution: {integrity: sha512-y92CpG4kFFtBBjni8LHoV12IegJ+KFxLgKRengrVjKmGE5XMeCuGvlfRe75lTRrgXaG6XIWJlFpIDTlkoJsU8w==}
+  /@octokit/webhooks-types@7.2.0:
+    resolution: {integrity: sha512-TX6347q0TJbKZD5M1wiMFUrq8T/GP6PkcnssLfw/fZ+//jkW8uRvOl63bNlhPGt82sml9Dy5nSPP0GIHW9XBTQ==}
     dev: true
 
   /@peculiar/asn1-schema@2.3.6:
