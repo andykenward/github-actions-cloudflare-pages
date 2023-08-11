@@ -5,11 +5,13 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: 'daily'
+      interval: weekly
+      day: monday
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      day: monday
     groups:
       graphql:
         patterns:
