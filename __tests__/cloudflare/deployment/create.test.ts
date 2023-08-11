@@ -38,9 +38,13 @@ describe('createCloudflareDeployment', () => {
       ).rejects.toThrowErrorMatchingInlineSnapshot('"Oh no!"')
 
       expect(execAsync).toHaveBeenCalledWith(
-        `npx wrangler@3.4.0 pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
+        `npx wrangler@${process.env.npm_package_dependencies_wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
         {
-          env: process.env
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          env: expect.objectContaining({
+            CLOUDFLARE_ACCOUNT_ID: 'mock-cloudflare-account-id',
+            CLOUDFLARE_API_TOKEN: 'mock-cloudflare-api-token'
+          })
         }
       )
 
