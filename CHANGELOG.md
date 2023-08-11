@@ -1,5 +1,15 @@
 # github-actions-cloudflare-pages
 
+## 0.2.0
+
+### Minor Changes
+
+- [#86](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/86) [`f8d42fb`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/f8d42fb953c8240fdf3bb942cd50820514c864dc) Thanks [@andykenward](https://github.com/andykenward)! - replace execa with exec from node:child_process
+
+### Patch Changes
+
+- [`3acff2f`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/3acff2f8996c29d144709f6862b7c7691f8641e6) Thanks [@andykenward](https://github.com/andykenward)! - bump wrangler to 3.5.0
+
 ## 0.1.1
 
 ### Patch Changes
