@@ -41,8 +41,8 @@ devDependencies:
     specifier: 4.1.0
     version: 4.1.0(prettier@3.0.1)
   '@octokit/graphql-schema':
-    specifier: 14.27.1
-    version: 14.27.1
+    specifier: 14.27.2
+    version: 14.27.2
   '@octokit/webhooks-schemas':
     specifier: 7.2.0
     version: 7.2.0
@@ -2471,8 +2471,8 @@ packages:
       universal-user-agent: 6.0.0
     dev: false
 
-  /@octokit/graphql-schema@14.27.1:
-    resolution: {integrity: sha512-erzbThLnXL5qUGGT05ziZ8TYspXQ68k56VR70luit50VPVtG0NXJ5tpYYVaainY42Kl02NRUycXUdfdNZL3BTg==}
+  /@octokit/graphql-schema@14.27.2:
+    resolution: {integrity: sha512-Iczh8dLseBPR4zOUnAZHVWZiHF85PoXy1fXgPzA5hsx72RGpCg78kSyReACOxpIJXTtnFU8rg95bdTPKQSX0Hg==}
     dependencies:
       graphql: 16.7.1
       graphql-tag: 2.12.6(graphql@16.7.1)
@@ -3350,7 +3350,7 @@ packages:
       normalize-path: 3.0.0
       readdirp: 3.6.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: false
 
   /chownr@1.1.4:
@@ -4222,8 +4222,8 @@ packages:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
     dev: true
 
-  /fsevents@2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+  /fsevents@2.3.3:
+    resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
@@ -5909,7 +5909,7 @@ packages:
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /run-async@2.4.1:
@@ -6705,7 +6705,7 @@ packages:
       postcss: 8.4.27
       rollup: 3.28.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /vitest@0.34.1:
@@ -6893,7 +6893,7 @@ packages:
       source-map: 0.7.4
       xxhash-wasm: 1.0.2
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color
