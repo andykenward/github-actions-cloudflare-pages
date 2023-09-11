@@ -82,7 +82,7 @@
     "eslint-config-prettier": "9.0.0",
     "eslint-plugin-unicorn": "48.0.1",
     "eslint-plugin-vitest": "0.2.8",
-    "graphql": "16.7.1",
+    "graphql": "16.8.0",
     "graphql-tag": "2.12.6",
     "prettier": "3.0.1",
     "ts-node": "10.9.1",
