@@ -11,10 +11,8 @@
 				"eamodio.gitlens",
 				"esbenp.prettier-vscode",
 				"github.vscode-github-actions",
-				"GitHub.vscode-pull-request-github",
 				"yoavbls.pretty-ts-errors",
 				"redhat.vscode-yaml",
-				"GitHub.copilot",
 				"GraphQL.vscode-graphql",
 				"GraphQL.vscode-graphql-syntax"
 			]
