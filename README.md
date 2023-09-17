@@ -47,7 +47,7 @@ jobs:
       - name: Build
         run: pnpm run build
       - name: Publish to Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@v0.1.0
+        uses: unlike-ltd/github-actions-cloudflare-pages@v1.0.0
         id: pages
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -81,7 +81,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: 'Delete Cloudflare Pages deployments'
-        uses: unlike-ltd/github-actions-cloudflare-pages@v0.1.0
+        uses: unlike-ltd/github-actions-cloudflare-pages@v1.0.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
