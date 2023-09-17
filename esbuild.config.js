@@ -8,10 +8,7 @@ await esbuild.build({
   outdir: './dist',
   format: 'esm',
   keepNames: true,
-  /**
-   * This has to be node 16 instead of node 18 because GitHub Actions doesn't support node 18 yet.
-   */
-  target: 'node18',
+  target: 'node20',
   platform: 'node',
   sourcemap: true,
   legalComments: 'external',
