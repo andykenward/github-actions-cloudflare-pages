@@ -2801,6 +2801,16 @@ export type ConnectedEvent = Node & {
   subject: ReferencedSubject;
 };
 
+/** The Contributing Guidelines for a repository. */
+export type ContributingGuidelines = {
+  /** The body of the Contributing Guidelines. */
+  body?: Maybe<Scalars['String']['output']>;
+  /** The HTTP path for the Contributing Guidelines. */
+  resourcePath?: Maybe<Scalars['URI']['output']>;
+  /** The HTTP URL for the Contributing Guidelines. */
+  url?: Maybe<Scalars['URI']['output']>;
+};
+
 /** Represents a contribution a user made on GitHub, such as opening an issue. */
 export type Contribution = {
   /**
@@ -6083,6 +6093,18 @@ export type EnterpriseBillingInfo = {
   totalLicenses: Scalars['Int']['output'];
 };
 
+/** The connection type for Enterprise. */
+export type EnterpriseConnection = {
+  /** A list of edges. */
+  edges?: Maybe<Array<Maybe<EnterpriseEdge>>>;
+  /** A list of nodes. */
+  nodes?: Maybe<Array<Maybe<Enterprise>>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  /** Identifies the total count of items in the connection. */
+  totalCount: Scalars['Int']['output'];
+};
+
 /** The possible values for the enterprise base repository permission setting. */
 export enum EnterpriseDefaultRepositoryPermissionSettingValue {
   /** Organization members will be able to clone, pull, push, and add new collaborators to all organization repositories. */
@@ -6096,6 +6118,14 @@ export enum EnterpriseDefaultRepositoryPermissionSettingValue {
   /** Organization members will be able to clone, pull, and push all organization repositories. */
   Write = 'WRITE'
 }
+
+/** An edge in a connection. */
+export type EnterpriseEdge = {
+  /** A cursor for use in pagination. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node?: Maybe<Enterprise>;
+};
 
 /** The possible values for an enabled/disabled enterprise setting. */
 export enum EnterpriseEnabledDisabledSettingValue {
@@ -6237,6 +6267,32 @@ export enum EnterpriseMembersCanMakePurchasesSettingValue {
   Disabled = 'DISABLED',
   /** The setting is enabled for organizations in the enterprise. */
   Enabled = 'ENABLED'
+}
+
+/** The possible values we have for filtering Platform::Objects::User#enterprises. */
+export enum EnterpriseMembershipType {
+  /** Returns all enterprises in which the user is an admin. */
+  Admin = 'ADMIN',
+  /** Returns all enterprises in which the user is a member, admin, or billing manager. */
+  All = 'ALL',
+  /** Returns all enterprises in which the user is a billing manager. */
+  BillingManager = 'BILLING_MANAGER',
+  /** Returns all enterprises in which the user is a member of an org that is owned by the enterprise. */
+  OrgMembership = 'ORG_MEMBERSHIP'
+}
+
+/** Ordering options for enterprises. */
+export type EnterpriseOrder = {
+  /** The ordering direction. */
+  direction: OrderDirection;
+  /** The field to order enterprises by. */
+  field: EnterpriseOrderField;
+};
+
+/** Properties by which enterprise connections can be ordered. */
+export enum EnterpriseOrderField {
+  /** Order enterprises by name */
+  Name = 'NAME'
 }
 
 /** The connection type for Organization. */
@@ -13558,6 +13614,8 @@ export type Organization = Actor & AnnouncementBanner & MemberStatusable & Node 
   announcementUserDismissible?: Maybe<Scalars['Boolean']['output']>;
   /** Determine if this repository owner has any items that can be pinned to their profile. */
   anyPinnableItems: Scalars['Boolean']['output'];
+  /** Identifies the date and time when the organization was archived. */
+  archivedAt?: Maybe<Scalars['DateTime']['output']>;
   /** Audit log entries of the organization */
   auditLog: OrganizationAuditEntryConnection;
   /** A URL pointing to the organization's public avatar. */
@@ -20186,6 +20244,8 @@ export type Repository = Node & PackageOwner & ProjectOwner & ProjectV2Recent & 
   commitComments: CommitCommentConnection;
   /** Returns a list of contact links associated to the repository */
   contactLinks?: Maybe<Array<RepositoryContactLink>>;
+  /** Returns the contributing guidelines for this repository. */
+  contributingGuidelines?: Maybe<ContributingGuidelines>;
   /** Identifies the date and time when the object was created. */
   createdAt: Scalars['DateTime']['output'];
   /** Identifies the primary key from the database. */
@@ -21408,6 +21468,8 @@ export type RepositoryRule = Node & {
   id: Scalars['ID']['output'];
   /** The parameters for this rule. */
   parameters?: Maybe<RuleParameters>;
+  /** The repository ruleset associated with this rule configuration */
+  repositoryRuleset?: Maybe<RepositoryRuleset>;
   /** The type of rule. */
   type: RepositoryRuleType;
 };
@@ -24208,11 +24270,7 @@ export type StartRepositoryMigrationInput = {
   accessToken?: InputMaybe<Scalars['String']['input']>;
   /** A unique identifier for the client performing the mutation. */
   clientMutationId?: InputMaybe<Scalars['String']['input']>;
-  /**
-   * Whether to continue the migration on error. Defaults to `false`. We strongly
-   * recommend setting this to `true` for the smoothest migration experience. *This
-   * default will change to `true` on September 4, 2023.*
-   */
+  /** Whether to continue the migration on error. Defaults to `true`. */
   continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
   /** The signed URL to access the user-uploaded git archive. */
   gitArchiveUrl?: InputMaybe<Scalars['String']['input']>;
@@ -27413,6 +27471,8 @@ export type User = Actor & Node & PackageOwner & ProfileOwner & ProjectOwner & P
   databaseId?: Maybe<Scalars['Int']['output']>;
   /** The user's publicly visible profile email. */
   email: Scalars['String']['output'];
+  /** A list of enterprises that the user belongs to. */
+  enterprises?: Maybe<EnterpriseConnection>;
   /** The estimated next GitHub Sponsors payout for this user/organization in cents (USD). */
   estimatedNextSponsorsPayoutInCents: Scalars['Int']['output'];
   /** A list of users the given user is followed by. */
@@ -27608,6 +27668,17 @@ export type UserContributionsCollectionArgs = {
   from?: InputMaybe<Scalars['DateTime']['input']>;
   organizationID?: InputMaybe<Scalars['ID']['input']>;
   to?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+
+/** A user is an individual's account on GitHub that owns repositories and can make new content. */
+export type UserEnterprisesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  membershipType?: InputMaybe<EnterpriseMembershipType>;
+  orderBy?: InputMaybe<EnterpriseOrder>;
 };
 
 

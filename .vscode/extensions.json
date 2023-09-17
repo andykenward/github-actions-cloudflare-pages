@@ -2,12 +2,10 @@
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "github.vscode-github-actions",
-    "github.vscode-pull-request-github",
     "eamodio.gitlens",
     "esbenp.prettier-vscode",
     "yoavbls.pretty-ts-errors",
     "redhat.vscode-yaml",
-    "github.copilot",
     "graphql.vscode-graphql-syntax",
     "graphql.vscode-graphql"
   ]

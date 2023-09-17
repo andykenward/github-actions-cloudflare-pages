@@ -11,10 +11,8 @@
 				"eamodio.gitlens",
 				"esbenp.prettier-vscode",
 				"github.vscode-github-actions",
-				"GitHub.vscode-pull-request-github",
 				"yoavbls.pretty-ts-errors",
 				"redhat.vscode-yaml",
-				"GitHub.copilot",
 				"GraphQL.vscode-graphql",
 				"GraphQL.vscode-graphql-syntax"
 			]
@@ -34,7 +32,9 @@
 		"ghcr.io/devcontainers-contrib/features/act:1": {},
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
 		"ghcr.io/devcontainers-contrib/features/pnpm:2": {},
-		"ghcr.io/devcontainers/features/node:1": {},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "20"
+		},
 		"ghcr.io/devcontainers/features/github-cli:1": {}
 	}
 

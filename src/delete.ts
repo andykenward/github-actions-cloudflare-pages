@@ -51,9 +51,8 @@ export const deleteDeployments = async (isProduction = false) => {
     /**
      * Delete Cloudflare deployment
      */
-    const deletedCloudflareDeployment = await deleteCloudflareDeployment(
-      cloudflareId
-    )
+    const deletedCloudflareDeployment =
+      await deleteCloudflareDeployment(cloudflareId)
     if (!deletedCloudflareDeployment) continue
     /**
      * On success of Cloudflare deployment delete GitHub deployment & and comment.
