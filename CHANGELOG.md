@@ -1,5 +1,11 @@
 # github-actions-cloudflare-pages
 
+## 1.0.0
+
+### Major Changes
+
+- [#110](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/110) [`983d2fc`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/983d2fc638e97131bcbdbaa349bb1502740ed169) Thanks [@andykenward](https://github.com/andykenward)! - Node 20
+
 ## 0.2.0
 
 ### Minor Changes
