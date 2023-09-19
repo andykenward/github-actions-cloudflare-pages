@@ -4,7 +4,7 @@ import {raise} from '@/src/utils.js'
 
 export const TEST_ENV_VARS: NodeJS.ProcessEnv = {
   GITHUB_HEAD_REF: 'mock-github-head-ref',
-  GITHUB_REF: 'mock-github-ref',
+  GITHUB_REF: 'refs/head/mock-github-ref',
   GITHUB_REF_NAME: 'mock-github-ref-name',
   GITHUB_SHA: 'mock-github-sha',
   GITHUB_EVENT_NAME: 'pull_request',
