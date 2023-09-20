@@ -1,5 +1,11 @@
 # github-actions-cloudflare-pages
 
+## 1.1.0
+
+### Minor Changes
+
+- [#112](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/112) [`9a13d39`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/9a13d399548d0c1f37b9590e88f58e581bcd54a9) Thanks [@andykenward](https://github.com/andykenward)! - Use GitHub Action NodeJS 20 instead of actions/setup-node
+
 ## 1.0.0
 
 ### Major Changes
