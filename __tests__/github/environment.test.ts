@@ -120,7 +120,7 @@ describe('environment', () => {
             owner: 'unlike-ltd',
             repo: 'github-actions-cloudflare-pages',
             environment_name: 'mock-github-environment',
-            qualifiedName: 'refs/heads/mock-github-ref'
+            qualifiedName: 'mock-github-head-ref'
           }
         },
         {
@@ -161,7 +161,7 @@ describe('environment', () => {
             owner: 'unlike-ltd',
             repo: 'github-actions-cloudflare-pages',
             environment_name: 'mock-github-environment',
-            qualifiedName: 'refs/heads/mock-github-ref'
+            qualifiedName: 'mock-github-head-ref'
           }
         },
         {

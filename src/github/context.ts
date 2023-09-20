@@ -73,7 +73,7 @@ const getGitHubContext = (): Context => {
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
 
   const ref = ((): Context['ref'] => {
-    let ref = process.env.GITHUB_REF
+    let ref = process.env.GITHUB_HEAD_REF
     if (!ref) {
       if ('ref' in event.payload) {
         ref = event.payload.ref // refs/heads/feature-branch-1

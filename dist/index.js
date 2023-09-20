@@ -1026,7 +1026,7 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
   const sha = process.env.GITHUB_SHA;
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL;
   const ref = (() => {
-    let ref2 = process.env.GITHUB_REF;
+    let ref2 = process.env.GITHUB_HEAD_REF;
     if (!ref2) {
       if ("ref" in event.payload) {
         ref2 = event.payload.ref;
