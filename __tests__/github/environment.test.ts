@@ -133,7 +133,7 @@ describe('environment', () => {
               ref: {
                 id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk=',
                 name: 'mock-github-head-ref',
-                prefix: 'ref/head'
+                prefix: 'refs/heads/'
               }
             }
           }

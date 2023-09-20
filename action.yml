@@ -28,31 +28,13 @@ inputs:
 outputs:
   id:
     description: 'Cloudflare Pages deployed id'
-    value: ${{ steps.action.outputs.id }}
   url:
     description: 'Cloudflare Pages deployed url'
-    value: ${{ steps.action.outputs.url }}
   environment:
     description: 'Cloudflare Pages deployed environment "production" or "preview"'
-    value: ${{ steps.action.outputs.environment }}
   alias:
     description: 'Cloudflare Pages deployed alias. Fallsback to deployed url if deployed alias is null'
-    value: ${{ steps.action.outputs.alias }}
 
 runs:
-  using: 'composite'
-  steps:
-    - uses: actions/setup-node@v3.8.1
-      with:
-        node-version: 20
-    - name: Action
-      id: action
-      run: node ${{ github.action_path }}/dist/index.js
-      shell: ${{ (runner.os == 'Windows' && 'pwsh') || 'bash' }}
-      env:
-        INPUT_CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
-        INPUT_CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
-        INPUT_CLOUDFLARE_PROJECT_NAME: ${{ inputs.cloudflare-project-name }}
-        INPUT_DIRECTORY: ${{ inputs.directory }}
-        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
-        INPUT_GITHUB_ENVIRONMENT: ${{ inputs.github-environment }}
+  using: node20
+  main: dist/index.js
