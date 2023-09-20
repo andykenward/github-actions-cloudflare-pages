@@ -4,7 +4,7 @@ import {getInput} from '@unlike/github-actions-core'
 
 const INPUT_KEY_CLOUDFLARE_ACCOUNT_ID = 'cloudflare account id'
 const INPUT_KEY_CLOUDFLARE_API_TOKEN = 'cloudflare api token'
-const INPUT_KEY_CLOUDFLARE_PROJECT_NAME = 'cloudflare project name'
+const INPUT_KEY_CLOUDFLARE_PROJECT_NAME = 'cloudflare-project-name'
 const INPUT_KEY_DIRECTORY = 'directory'
 const INPUT_KEY_GITHUB_ENVIRONMENT = 'github environment'
 const INPUT_KEY_GITHUB_TOKEN = 'github token'
