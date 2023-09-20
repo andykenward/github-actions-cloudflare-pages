@@ -120,7 +120,7 @@ describe('environment', () => {
             owner: 'unlike-ltd',
             repo: 'github-actions-cloudflare-pages',
             environment_name: 'mock-github-environment',
-            qualifiedName: 'mock-github-head-ref'
+            qualifiedName: 'refs/heads/mock-github-ref'
           }
         },
         {
@@ -133,7 +133,7 @@ describe('environment', () => {
               ref: {
                 id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk=',
                 name: 'mock-github-head-ref',
-                prefix: 'ref/head'
+                prefix: 'refs/heads/'
               }
             }
           }
@@ -161,7 +161,7 @@ describe('environment', () => {
             owner: 'unlike-ltd',
             repo: 'github-actions-cloudflare-pages',
             environment_name: 'mock-github-environment',
-            qualifiedName: 'mock-github-head-ref'
+            qualifiedName: 'refs/heads/mock-github-ref'
           }
         },
         {

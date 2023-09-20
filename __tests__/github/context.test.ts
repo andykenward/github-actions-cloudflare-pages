@@ -23,6 +23,6 @@ describe('getGitHubContext', () => {
     expect(branch).toStrictEqual(`mock-github-head-ref`)
     expect(sha).toStrictEqual(`mock-github-sha`)
     expect(graphqlEndpoint).toStrictEqual(`https://api.github.com/graphql`)
-    expect(ref).toStrictEqual(`mock-github-head-ref`)
+    expect(ref).toStrictEqual(`refs/heads/mock-github-ref`)
   })
 })
