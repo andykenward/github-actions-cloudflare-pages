@@ -53,7 +53,7 @@
     "@octokit-next/core": "2.7.1",
     "@octokit/plugin-paginate-rest": "8.0.0",
     "@unlike/github-actions-core": "0.1.2",
-    "wrangler": "3.8.0"
+    "wrangler": "3.13.1"
   },
   "devDependencies": {
     "@changesets/changelog-github": "0.4.8",
