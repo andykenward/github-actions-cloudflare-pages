@@ -1,4 +1,3 @@
-#!/usr/bin/env ts-node-transpile-only
 import type {JSONSchema7} from 'json-schema'
 
 import {strict as assert} from 'node:assert'

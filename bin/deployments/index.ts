@@ -1,5 +1,3 @@
-#!/usr/bin/env ts-node-transpile-only
-
 import 'dotenv/config'
 
 import type {HeadersInit} from 'undici'
