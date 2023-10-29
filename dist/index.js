@@ -1421,12 +1421,12 @@ function withDefaults(oldDefaults, newDefaults) {
 }
 __name(withDefaults, "withDefaults");
 
-// node_modules/.pnpm/universal-user-agent@7.0.1/node_modules/universal-user-agent/index.js
+// node_modules/.pnpm/universal-user-agent@7.0.2/node_modules/universal-user-agent/index.js
 function getUserAgent() {
   if (typeof navigator === "object" && "userAgent" in navigator) {
     return navigator.userAgent;
   }
-  if (typeof process === "object" && "version" in process) {
+  if (typeof process === "object" && process.version !== void 0) {
     return `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})`;
   }
   return "<environment undetectable>";
