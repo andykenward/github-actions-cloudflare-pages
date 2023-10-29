@@ -26,9 +26,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// node_modules/.pnpm/@octokit+plugin-paginate-rest@8.0.0_@octokit+core@5.0.1/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
+// node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.2_@octokit+core@5.0.1/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
 var require_dist_node = __commonJS({
-  "node_modules/.pnpm/@octokit+plugin-paginate-rest@8.0.0_@octokit+core@5.0.1/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js"(exports, module) {
+  "node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.2_@octokit+core@5.0.1/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js"(exports, module) {
     "use strict";
     var __defProp9 = Object.defineProperty;
     var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
@@ -55,7 +55,7 @@ var require_dist_node = __commonJS({
       paginatingEndpoints: () => paginatingEndpoints
     });
     module.exports = __toCommonJS(dist_src_exports);
-    var VERSION5 = "8.0.0";
+    var VERSION5 = "9.1.2";
     function normalizePaginatedListResponse(response) {
       if (!response.data) {
         return {
@@ -157,9 +157,13 @@ var require_dist_node = __commonJS({
       iterator
     });
     var paginatingEndpoints = [
+      "GET /advisories",
       "GET /app/hook/deliveries",
       "GET /app/installation-requests",
       "GET /app/installations",
+      "GET /assignments/{assignment_id}/accepted_assignments",
+      "GET /classrooms",
+      "GET /classrooms/{classroom_id}/assignments",
       "GET /enterprises/{enterprise}/dependabot/alerts",
       "GET /enterprises/{enterprise}/secret-scanning/alerts",
       "GET /events",
@@ -179,13 +183,8 @@ var require_dist_node = __commonJS({
       "GET /networks/{owner}/{repo}/events",
       "GET /notifications",
       "GET /organizations",
-      "GET /organizations/{org}/personal-access-token-requests",
-      "GET /organizations/{org}/personal-access-token-requests/{pat_request_id}/repositories",
-      "GET /organizations/{org}/personal-access-tokens",
-      "GET /organizations/{org}/personal-access-tokens/{pat_id}/repositories",
       "GET /orgs/{org}/actions/cache/usage-by-repository",
       "GET /orgs/{org}/actions/permissions/repositories",
-      "GET /orgs/{org}/actions/required_workflows",
       "GET /orgs/{org}/actions/runners",
       "GET /orgs/{org}/actions/secrets",
       "GET /orgs/{org}/actions/secrets/{secret_name}/repositories",
@@ -196,6 +195,7 @@ var require_dist_node = __commonJS({
       "GET /orgs/{org}/codespaces",
       "GET /orgs/{org}/codespaces/secrets",
       "GET /orgs/{org}/codespaces/secrets/{secret_name}/repositories",
+      "GET /orgs/{org}/copilot/billing/seats",
       "GET /orgs/{org}/dependabot/alerts",
       "GET /orgs/{org}/dependabot/secrets",
       "GET /orgs/{org}/dependabot/secrets/{secret_name}/repositories",
@@ -214,11 +214,18 @@ var require_dist_node = __commonJS({
       "GET /orgs/{org}/outside_collaborators",
       "GET /orgs/{org}/packages",
       "GET /orgs/{org}/packages/{package_type}/{package_name}/versions",
+      "GET /orgs/{org}/personal-access-token-requests",
+      "GET /orgs/{org}/personal-access-token-requests/{pat_request_id}/repositories",
+      "GET /orgs/{org}/personal-access-tokens",
+      "GET /orgs/{org}/personal-access-tokens/{pat_id}/repositories",
       "GET /orgs/{org}/projects",
+      "GET /orgs/{org}/properties/values",
       "GET /orgs/{org}/public_members",
       "GET /orgs/{org}/repos",
       "GET /orgs/{org}/rulesets",
+      "GET /orgs/{org}/rulesets/rule-suites",
       "GET /orgs/{org}/secret-scanning/alerts",
+      "GET /orgs/{org}/security-advisories",
       "GET /orgs/{org}/teams",
       "GET /orgs/{org}/teams/{team_slug}/discussions",
       "GET /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments",
@@ -232,12 +239,10 @@ var require_dist_node = __commonJS({
       "GET /projects/columns/{column_id}/cards",
       "GET /projects/{project_id}/collaborators",
       "GET /projects/{project_id}/columns",
-      "GET /repos/{org}/{repo}/actions/required_workflows",
       "GET /repos/{owner}/{repo}/actions/artifacts",
       "GET /repos/{owner}/{repo}/actions/caches",
       "GET /repos/{owner}/{repo}/actions/organization-secrets",
       "GET /repos/{owner}/{repo}/actions/organization-variables",
-      "GET /repos/{owner}/{repo}/actions/required_workflows/{required_workflow_id_for_repo}/runs",
       "GET /repos/{owner}/{repo}/actions/runners",
       "GET /repos/{owner}/{repo}/actions/runs",
       "GET /repos/{owner}/{repo}/actions/runs/{run_id}/artifacts",
@@ -247,6 +252,7 @@ var require_dist_node = __commonJS({
       "GET /repos/{owner}/{repo}/actions/variables",
       "GET /repos/{owner}/{repo}/actions/workflows",
       "GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs",
+      "GET /repos/{owner}/{repo}/activity",
       "GET /repos/{owner}/{repo}/assignees",
       "GET /repos/{owner}/{repo}/branches",
       "GET /repos/{owner}/{repo}/check-runs/{check_run_id}/annotations",
@@ -309,6 +315,7 @@ var require_dist_node = __commonJS({
       "GET /repos/{owner}/{repo}/releases/{release_id}/reactions",
       "GET /repos/{owner}/{repo}/rules/branches/{branch}",
       "GET /repos/{owner}/{repo}/rulesets",
+      "GET /repos/{owner}/{repo}/rulesets/rule-suites",
       "GET /repos/{owner}/{repo}/secret-scanning/alerts",
       "GET /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}/locations",
       "GET /repos/{owner}/{repo}/security-advisories",
