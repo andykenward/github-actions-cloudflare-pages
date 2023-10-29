@@ -2631,7 +2631,7 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
     throw new Error(`${ERROR_KEY} branch is undefined`);
   }
   try {
-    const WRANGLER_VERSION = "3.8.0";
+    const WRANGLER_VERSION = "3.15.0";
     strict(WRANGLER_VERSION, "wrangler version should exist");
     await execAsync(
       `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
