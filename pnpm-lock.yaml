@@ -26,8 +26,8 @@ devDependencies:
     specifier: 2.26.2
     version: 2.26.2
   '@cloudflare/types':
-    specifier: 6.23.6
-    version: 6.23.6
+    specifier: 6.25.0
+    version: 6.25.0
   '@graphql-codegen/cli':
     specifier: 5.0.0
     version: 5.0.0(@types/node@20.8.9)(graphql@16.8.1)(typescript@5.2.2)
@@ -1029,8 +1029,8 @@ packages:
       prettier: 2.8.8
     dev: true
 
-  /@cloudflare/intl-types@1.5.1:
-    resolution: {integrity: sha512-zCHVZ9xtvRxDjiqxgG7GPeaS2kpshQsq8dDrZl+c8ppuerrzBreW7hHVw3orllAOe0HLjLCKYWVj47W4O6U8lg==}
+  /@cloudflare/intl-types@1.5.3:
+    resolution: {integrity: sha512-RhVaa6nfztt/jEbL9o+tv68iUFG1Ta7QGVRrtFIKafVXtmCeICtL2c2wzmZH52P0b3cTdZZQ8OolLNY6NDc2Tg==}
     peerDependencies:
       react: ^15.0.0-0 || ^16.0.0-0 || ^17.0.0-0
     peerDependenciesMeta:
@@ -1044,15 +1044,15 @@ packages:
       mime: 3.0.0
     dev: false
 
-  /@cloudflare/types@6.23.6:
-    resolution: {integrity: sha512-4JbJv5cbtGeo7Vpg2Sx3LXAhkvDJeJV/9FLFm2u3MkyxXb9SXdjxoanO5bOripQThTrzB1a8Ctw/ghweSA91Cw==}
+  /@cloudflare/types@6.25.0:
+    resolution: {integrity: sha512-IlIBXmYgeaiitbFLtXb0+8lrEDwKEmNiNRtvJgKGQV/vuPc83HIkD67kbH8QO7H2CYwG08cVhYZSPV1y2oMNeQ==}
     peerDependencies:
       react: ^15.0.0-0 || ^16.0.0-0 || ^17.0.0-0
     peerDependenciesMeta:
       react:
         optional: true
     dependencies:
-      '@cloudflare/intl-types': 1.5.1
+      '@cloudflare/intl-types': 1.5.3
       '@cloudflare/util-en-garde': 8.0.10
     dev: true
 

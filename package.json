@@ -58,7 +58,7 @@
   "devDependencies": {
     "@changesets/changelog-github": "0.4.8",
     "@changesets/cli": "2.26.2",
-    "@cloudflare/types": "6.23.6",
+    "@cloudflare/types": "6.25.0",
     "@graphql-codegen/cli": "5.0.0",
     "@graphql-codegen/client-preset": "4.1.0",
     "@graphql-typed-document-node/core": "3.2.0",
