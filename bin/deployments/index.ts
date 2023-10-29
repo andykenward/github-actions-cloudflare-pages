@@ -1,7 +1,5 @@
 import 'dotenv/config'
 
-import type {HeadersInit} from 'undici'
-
 import type {FetchResult, PagesDeployment} from '../../src/cloudflare/types.js'
 
 const API_ENDPOINT = 'https://api.cloudflare.com'
@@ -25,7 +23,7 @@ const getUrl = () => {
   return new URL(input, API_ENDPOINT).toString()
 }
 
-const getHeaders = (): HeadersInit => ({
+const getHeaders = (): RequestInit['headers'] => ({
   authorization: `bearer ${CLOUDFLARE_API_TOKEN}`,
   'Content-Type': 'application/json'
 })
