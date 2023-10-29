@@ -1,4 +1,3 @@
-#!/usr/bin/env ts-node-transpile-only
 import type {
   FilesQuery,
   FilesQueryVariables

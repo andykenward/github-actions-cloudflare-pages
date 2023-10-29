@@ -17,10 +17,5 @@
       "@/types/*": ["./__generated__/types/*"]
     }
   },
-  "exclude": ["dist", "example", "node_modules"],
-  "ts-node": {
-    "transpileOnly": true,
-    "files": true,
-    "experimentalResolver": true
-  }
+  "exclude": ["dist", "example", "node_modules"]
 }
