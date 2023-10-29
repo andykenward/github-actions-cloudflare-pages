@@ -1,5 +1,3 @@
-import type {RequestInit} from 'undici'
-
 import {useInputs} from '@/src/inputs.js'
 
 import type {FetchResult} from '../types.js'
