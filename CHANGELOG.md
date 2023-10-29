@@ -1,5 +1,15 @@
 # github-actions-cloudflare-pages
 
+## 1.1.1
+
+### Patch Changes
+
+- [#139](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/139) [`8036be3`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/8036be3dfee4bf741fec80bbc2f8631f261a6f53) Thanks [@andykenward](https://github.com/andykenward)! - refactor usage of undici to use @types/node
+
+- [#143](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/143) [`801be33`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/801be33d5cfd2ec2305542685a304b8abbe04907) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): upgrade @octokit/plugin-paginate-rest to 9.1.2
+
+- [#142](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/142) [`4367350`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/4367350f471bab3298536bacbe7bbd0bc5876795) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 3.8.0 to 3.15.0
+
 ## 1.1.0
 
 ### Minor Changes
