@@ -6,3 +6,4 @@ example/
 payload-examples/
 tsconfig.tsnode.json
 __generated__/
+.changeset/*.md
