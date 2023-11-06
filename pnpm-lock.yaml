@@ -41,8 +41,8 @@ devDependencies:
     specifier: 4.1.1
     version: 4.1.1(prettier@3.0.3)
   '@octokit/graphql-schema':
-    specifier: 14.39.0
-    version: 14.39.0
+    specifier: 14.40.1
+    version: 14.40.1
   '@octokit/webhooks-schemas':
     specifier: 7.3.1
     version: 7.3.1
@@ -2453,7 +2453,7 @@ packages:
       '@octokit/request-error': 5.0.1
       '@octokit/types': 12.1.1
       before-after-hook: 2.2.3
-      universal-user-agent: 6.0.0
+      universal-user-agent: 6.0.1
     dev: false
 
   /@octokit/endpoint@9.0.2:
@@ -2462,11 +2462,11 @@ packages:
     dependencies:
       '@octokit/types': 12.1.1
       is-plain-object: 5.0.0
-      universal-user-agent: 6.0.0
+      universal-user-agent: 6.0.1
     dev: false
 
-  /@octokit/graphql-schema@14.39.0:
-    resolution: {integrity: sha512-UIFmdqr25M3wrFKMiGSnr0TgAKBeiOMWBAKqK8FEf8OspVx6W9zJr6sYO37EUXJh57V2BbKrKeFgkw568XRaGQ==}
+  /@octokit/graphql-schema@14.40.1:
+    resolution: {integrity: sha512-sgunJgVg0YEa7282dMJGtvfqK9Qx0f4hsp3Uif7Ppp+Fafp8MC8PMAeXQn9tl+zRG05nQpe1b6v2Vb8lodrVXQ==}
     dependencies:
       graphql: 16.8.1
       graphql-tag: 2.12.6(graphql@16.8.1)
@@ -2478,7 +2478,7 @@ packages:
     dependencies:
       '@octokit/request': 8.1.4
       '@octokit/types': 12.1.1
-      universal-user-agent: 6.0.0
+      universal-user-agent: 6.0.1
     dev: false
 
   /@octokit/openapi-types@19.0.2:
@@ -2512,7 +2512,7 @@ packages:
       '@octokit/request-error': 5.0.1
       '@octokit/types': 12.1.1
       is-plain-object: 5.0.0
-      universal-user-agent: 6.0.0
+      universal-user-agent: 6.0.1
     dev: false
 
   /@octokit/types@12.1.1:
@@ -6421,8 +6421,8 @@ packages:
     dependencies:
       '@fastify/busboy': 2.0.0
 
-  /universal-user-agent@6.0.0:
-    resolution: {integrity: sha512-isyNax3wXoKaulPDZWHQqbmIx1k2tb9fb3GGDBRxCscfYV2Ch7WxPArBsFEG8s/safwXTT7H4QGhaIkTp9447w==}
+  /universal-user-agent@6.0.1:
+    resolution: {integrity: sha512-yCzhz6FN2wU1NiiQRogkTQszlQSlpWaw8SvVegAc+bDxbzHgh1vX8uIe8OYyMH6DwH+sdTJsgMl36+mSMdRJIQ==}
     dev: false
 
   /universal-user-agent@7.0.2:
