@@ -82,7 +82,7 @@
     "graphql": "16.8.1",
     "graphql-tag": "2.12.6",
     "prettier": "3.0.3",
-    "tsx": "3.14.0",
+    "tsx": "4.5.0",
     "typescript": "5.2.2",
     "undici": "5.27.0",
     "vitest": "0.34.6"
