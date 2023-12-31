@@ -26,9 +26,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.2_@octokit+core@5.0.1/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
+// node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.2_@octokit+core@5.0.2/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
 var require_dist_node = __commonJS({
-  "node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.2_@octokit+core@5.0.1/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js"(exports, module) {
+  "node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.2_@octokit+core@5.0.2/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js"(exports, module) {
     "use strict";
     var __defProp9 = Object.defineProperty;
     var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
@@ -2631,7 +2631,7 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
     throw new Error(`${ERROR_KEY} branch is undefined`);
   }
   try {
-    const WRANGLER_VERSION = "3.15.0";
+    const WRANGLER_VERSION = "3.22.1";
     strict(WRANGLER_VERSION, "wrangler version should exist");
     await execAsync(
       `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
