@@ -1,5 +1,15 @@
 # github-actions-cloudflare-pages
 
+## 1.1.2
+
+### Patch Changes
+
+- [`ff5af80`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/ff5af80c1fca02633c244eb8fc3e765208d93140) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump @octokit/plugin-paginate-rest 9.1.2 to 9.1.5
+  chore(deps): upgrade @unlike/github-actions-core 0.1.2 to 1.0.0
+  chore(deps-dev): bump @octokit/graphql-schema 14.39.0 to 14.46.0
+
+- [#174](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/174) [`f5b3e48`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/f5b3e4808f54b070ebe682561f6815103475867e) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 3.15.0 to 3.22.1
+
 ## 1.1.1
 
 ### Patch Changes
