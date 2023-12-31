@@ -26,9 +26,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.2_@octokit+core@5.0.2/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
+// node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.5_@octokit+core@5.0.2/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
 var require_dist_node = __commonJS({
-  "node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.2_@octokit+core@5.0.2/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js"(exports, module) {
+  "node_modules/.pnpm/@octokit+plugin-paginate-rest@9.1.5_@octokit+core@5.0.2/node_modules/@octokit/plugin-paginate-rest/dist-node/index.js"(exports, module) {
     "use strict";
     var __defProp9 = Object.defineProperty;
     var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
@@ -55,7 +55,7 @@ var require_dist_node = __commonJS({
       paginatingEndpoints: () => paginatingEndpoints
     });
     module.exports = __toCommonJS(dist_src_exports);
-    var VERSION5 = "9.1.2";
+    var VERSION5 = "9.1.5";
     function normalizePaginatedListResponse(response) {
       if (!response.data) {
         return {
