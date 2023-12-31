@@ -40,6 +40,8 @@ describe('api', () => {
     })
 
     test('handles not found 404 response', async () => {
+      expect.assertions(2)
+
       mockApi.interceptCloudflare<null>(
         RESOURCE_URL_PATH,
         RESPONSE_NOT_FOUND,
@@ -57,6 +59,8 @@ describe('api', () => {
     })
 
     test('handles unauthorized 401 response', async () => {
+      expect.assertions(1)
+
       mockApi.interceptCloudflare(RESOURCE_URL_PATH, RESPONSE_UNAUTHORIZED, 401)
 
       await expect(
@@ -69,6 +73,8 @@ describe('api', () => {
     test.each([{result: null}, {result: undefined}])(
       `handles response result of $result with thrown error`,
       async ({result}) => {
+        expect.assertions(1)
+
         mockApi.interceptCloudflare<null>(
           RESOURCE_URL_PATH,
           {

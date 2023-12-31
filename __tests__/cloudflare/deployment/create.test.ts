@@ -49,10 +49,10 @@ describe('createCloudflareDeployment', () => {
       )
 
       expect(execAsync).toHaveBeenCalledTimes(1)
-      expect(process.env[CLOUDFLARE_API_TOKEN]).toStrictEqual(
+      expect(process.env[CLOUDFLARE_API_TOKEN]).toBe(
         'mock-cloudflare-api-token'
       )
-      expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toStrictEqual(
+      expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toBe(
         'mock-cloudflare-account-id'
       )
 

@@ -8,6 +8,7 @@ import {
 describe('endpoints', () => {
   describe('getCloudflareApiEndpoint', () => {
     test('returns correct url', () => {
+      expect.assertions(1)
       const url = getCloudflareApiEndpoint()
 
       expect(url).toBe(
@@ -16,6 +17,8 @@ describe('endpoints', () => {
     })
 
     test('appends path argument', () => {
+      expect.assertions(2)
+
       const url = getCloudflareApiEndpoint('mock-deployment')
 
       expect(url).toBe(
@@ -34,6 +37,8 @@ describe('endpoints', () => {
 
   describe('getCloudflareLogEndpoint', () => {
     test('returns correct url', () => {
+      expect.assertions(2)
+
       const url = getCloudflareLogEndpoint('123')
 
       expect(url).toMatchInlineSnapshot(

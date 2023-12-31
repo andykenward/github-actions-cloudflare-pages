@@ -26,6 +26,8 @@ describe('environment', () => {
 
   describe('createEnvironment', () => {
     test('success', async () => {
+      expect.assertions(3)
+
       mockApi.interceptGithub(
         {
           query: MutationCreateEnvironment,
@@ -59,6 +61,8 @@ describe('environment', () => {
     })
 
     test('logs errors & missing environment', async () => {
+      expect.assertions(3)
+
       mockApi.interceptGithub(
         {
           query: MutationCreateEnvironment,
@@ -113,6 +117,8 @@ describe('environment', () => {
 
   describe('checkEnvironment', () => {
     test('success', async () => {
+      expect.assertions(3)
+
       mockApi.interceptGithub(
         {
           query: QueryGetEnvironment,
@@ -154,6 +160,8 @@ describe('environment', () => {
     })
 
     test('logs errors & missing environment', async () => {
+      expect.assertions(2)
+
       mockApi.interceptGithub(
         {
           query: QueryGetEnvironment,

@@ -10,6 +10,8 @@ describe('inputs', () => {
   })
 
   test('returns correct values', () => {
+    expect.assertions(1)
+
     stubRequiredInputEnv()
     const inputs = useInputs()
 
