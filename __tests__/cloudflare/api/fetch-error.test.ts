@@ -9,6 +9,8 @@ const RESOURCE_URL = `https://api.cloudflare.com/path`
 vi.mock('@unlike/github-actions-core')
 describe('throwFetchError', () => {
   test('throws parsed error with notes', () => {
+    expect.assertions(3)
+
     const ERRORS = {
       success: false,
       errors: [
@@ -22,7 +24,7 @@ describe('throwFetchError', () => {
     expect(() =>
       throwFetchError(RESOURCE_URL, ERRORS)
     ).toThrowErrorMatchingInlineSnapshot(
-      '"A request to the Cloudflare API (https://api.cloudflare.com/path) failed."'
+      `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/path) failed.]`
     )
 
     expect(core.error).toHaveBeenCalledTimes(1)
@@ -32,6 +34,8 @@ describe('throwFetchError', () => {
   })
 
   test('throws parsed error with multiple notes', () => {
+    expect.assertions(4)
+
     const ERRORS = {
       success: false,
       errors: [
@@ -49,7 +53,7 @@ describe('throwFetchError', () => {
     expect(() =>
       throwFetchError(RESOURCE_URL, ERRORS)
     ).toThrowErrorMatchingInlineSnapshot(
-      '"A request to the Cloudflare API (https://api.cloudflare.com/path) failed."'
+      `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/path) failed.]`
     )
 
     expect(core.error).toHaveBeenCalledTimes(2)

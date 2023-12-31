@@ -35,7 +35,7 @@ describe('createCloudflareDeployment', () => {
 
       await expect(
         createCloudflareDeployment()
-      ).rejects.toThrowErrorMatchingInlineSnapshot('"Oh no!"')
+      ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Oh no!]`)
 
       expect(execAsync).toHaveBeenCalledWith(
         `npx wrangler@${process.env.npm_package_dependencies_wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
@@ -49,10 +49,10 @@ describe('createCloudflareDeployment', () => {
       )
 
       expect(execAsync).toHaveBeenCalledTimes(1)
-      expect(process.env[CLOUDFLARE_API_TOKEN]).toStrictEqual(
+      expect(process.env[CLOUDFLARE_API_TOKEN]).toBe(
         'mock-cloudflare-api-token'
       )
-      expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toStrictEqual(
+      expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toBe(
         'mock-cloudflare-account-id'
       )
 
@@ -76,7 +76,7 @@ describe('createCloudflareDeployment', () => {
       await expect(
         createCloudflareDeployment()
       ).rejects.toThrowErrorMatchingInlineSnapshot(
-        '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed."'
+        `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.]`
       )
       expect(execAsync).toHaveBeenCalledTimes(1)
       expect(setOutput).not.toHaveBeenCalled()

@@ -40,6 +40,8 @@ describe('api', () => {
     })
 
     test('handles not found 404 response', async () => {
+      expect.assertions(2)
+
       mockApi.interceptCloudflare<null>(
         RESOURCE_URL_PATH,
         RESPONSE_NOT_FOUND,
@@ -49,7 +51,7 @@ describe('api', () => {
       await expect(
         fetchResult(RESOURCE_URL)
       ).rejects.toThrowErrorMatchingInlineSnapshot(
-        '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed."'
+        `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed.]`
       )
       expect(error).toHaveBeenCalledWith(
         `Cloudflare API: Project not found. The specified project name does not match any of your existing projects. [code: 8000007]`
@@ -57,18 +59,22 @@ describe('api', () => {
     })
 
     test('handles unauthorized 401 response', async () => {
+      expect.assertions(1)
+
       mockApi.interceptCloudflare(RESOURCE_URL_PATH, RESPONSE_UNAUTHORIZED, 401)
 
       await expect(
         fetchResult(RESOURCE_URL)
       ).rejects.toThrowErrorMatchingInlineSnapshot(
-        '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed."'
+        `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed.]`
       )
     })
 
     test.each([{result: null}, {result: undefined}])(
       `handles response result of $result with thrown error`,
       async ({result}) => {
+        expect.assertions(1)
+
         mockApi.interceptCloudflare<null>(
           RESOURCE_URL_PATH,
           {

@@ -23,6 +23,8 @@ describe('addComment', () => {
     await mockApi.mockAgent.close()
   })
   test('should add comment', async () => {
+    expect.assertions(1)
+
     mockApi.interceptGithub(
       {
         query: MutationAddComment,
@@ -44,7 +46,6 @@ describe('addComment', () => {
       }
     )
 
-    expect.assertions(1)
     const comment = await addComment(mockData)
     expect(comment).toBe('1')
   })

@@ -4,6 +4,8 @@ import {useContext} from '@/src/github/context.js'
 
 describe('getGitHubContext', () => {
   test('returns eventName ', () => {
+    expect.assertions(8)
+
     const {repo, event, branch, sha, graphqlEndpoint, ref} = useContext()
 
     /** Repo */
@@ -16,13 +18,13 @@ describe('getGitHubContext', () => {
     `)
 
     /** Event */
-    expect(event.payload).not.toBeUndefined()
+    expect(event.payload).toBeDefined()
     expect(event.payload).toMatchSnapshot()
-    expect(event.eventName).toStrictEqual('pull_request')
+    expect(event.eventName).toBe('pull_request')
 
-    expect(branch).toStrictEqual(`mock-github-head-ref`)
-    expect(sha).toStrictEqual(`mock-github-sha`)
-    expect(graphqlEndpoint).toStrictEqual(`https://api.github.com/graphql`)
-    expect(ref).toStrictEqual(`mock-github-head-ref`)
+    expect(branch).toBe(`mock-github-head-ref`)
+    expect(sha).toBe(`mock-github-sha`)
+    expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
+    expect(ref).toBe(`mock-github-head-ref`)
   })
 })
