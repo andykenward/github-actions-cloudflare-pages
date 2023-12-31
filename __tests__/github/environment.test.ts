@@ -196,7 +196,7 @@ describe('environment', () => {
 
       // const environment = await checkEnvironment()
       await expect(checkEnvironment).rejects.toThrowErrorMatchingInlineSnapshot(
-        '"GitHub Environment: Not created for mock-github-environment"'
+        `[Error: GitHub Environment: Not created for mock-github-environment]`
       )
 
       expect(error).toHaveBeenCalledWith(

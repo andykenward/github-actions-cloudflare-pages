@@ -51,7 +51,7 @@ describe('api', () => {
       await expect(
         fetchResult(RESOURCE_URL)
       ).rejects.toThrowErrorMatchingInlineSnapshot(
-        '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed."'
+        `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed.]`
       )
       expect(error).toHaveBeenCalledWith(
         `Cloudflare API: Project not found. The specified project name does not match any of your existing projects. [code: 8000007]`
@@ -66,7 +66,7 @@ describe('api', () => {
       await expect(
         fetchResult(RESOURCE_URL)
       ).rejects.toThrowErrorMatchingInlineSnapshot(
-        '"A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed."'
+        `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts) failed.]`
       )
     })
 

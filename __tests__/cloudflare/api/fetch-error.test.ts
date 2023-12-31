@@ -24,7 +24,7 @@ describe('throwFetchError', () => {
     expect(() =>
       throwFetchError(RESOURCE_URL, ERRORS)
     ).toThrowErrorMatchingInlineSnapshot(
-      '"A request to the Cloudflare API (https://api.cloudflare.com/path) failed."'
+      `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/path) failed.]`
     )
 
     expect(core.error).toHaveBeenCalledTimes(1)
@@ -53,7 +53,7 @@ describe('throwFetchError', () => {
     expect(() =>
       throwFetchError(RESOURCE_URL, ERRORS)
     ).toThrowErrorMatchingInlineSnapshot(
-      '"A request to the Cloudflare API (https://api.cloudflare.com/path) failed."'
+      `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/path) failed.]`
     )
 
     expect(core.error).toHaveBeenCalledTimes(2)
