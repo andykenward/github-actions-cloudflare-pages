@@ -2,21 +2,14 @@ import type {InputOptions} from '@unlike/github-actions-core'
 
 import {getInput} from '@unlike/github-actions-core'
 
-const INPUT_KEY_CLOUDFLARE_ACCOUNT_ID = 'cloudflare-account-id'
-const INPUT_KEY_CLOUDFLARE_API_TOKEN = 'cloudflare-api-token'
-const INPUT_KEY_CLOUDFLARE_PROJECT_NAME = 'cloudflare-project-name'
-const INPUT_KEY_DIRECTORY = 'directory'
-const INPUT_KEY_GITHUB_ENVIRONMENT = 'github-environment'
-const INPUT_KEY_GITHUB_TOKEN = 'github-token'
-
-export const INPUT_KEYS_REQUIRED = [
+import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
   INPUT_KEY_CLOUDFLARE_PROJECT_NAME,
   INPUT_KEY_DIRECTORY,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN
-] as const
+} from '../input-keys.js'
 
 const OPTIONS: InputOptions = {
   required: true

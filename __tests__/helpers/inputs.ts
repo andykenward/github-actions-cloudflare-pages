@@ -1,6 +1,6 @@
 import {vi} from 'vitest'
 
-import {INPUT_KEYS_REQUIRED} from '@/src/inputs.js'
+import {INPUT_KEYS_REQUIRED} from '../../input-keys.js'
 
 const INPUT_KEY = `INPUT_`
 

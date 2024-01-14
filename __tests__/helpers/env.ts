@@ -1,7 +1,5 @@
 import {vi} from 'vitest'
 
-import {raise} from '@/src/utils.js'
-
 export const TEST_ENV_VARS: NodeJS.ProcessEnv = {
   GITHUB_HEAD_REF: 'mock-github-head-ref',
   GITHUB_REF: 'refs/heads/mock-github-ref',
@@ -17,8 +15,10 @@ export const TEST_ENV_VARS: NodeJS.ProcessEnv = {
 
 export const stubTestEnvVars = () => {
   for (const key in TEST_ENV_VARS) {
-    const value =
-      TEST_ENV_VARS[key] ?? raise(`Missing TEST_ENV_VARS value for key: ${key}`)
+    const value = TEST_ENV_VARS[key]
+    if (!value) {
+      throw new Error(`Missing TEST_ENV_VARS value for key: ${key}`)
+    }
     vi.stubEnv(key, value)
   }
 }
