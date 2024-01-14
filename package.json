@@ -63,7 +63,7 @@
     "@graphql-codegen/client-preset": "4.1.0",
     "@graphql-typed-document-node/core": "3.2.0",
     "@ianvs/prettier-plugin-sort-imports": "4.1.1",
-    "@octokit/graphql-schema": "14.46.0",
+    "@octokit/graphql-schema": "14.47.0",
     "@octokit/webhooks-schemas": "7.3.1",
     "@octokit/webhooks-types": "7.3.1",
     "@total-typescript/ts-reset": "0.5.1",
