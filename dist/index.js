@@ -884,13 +884,15 @@ var summary = _summary;
 // src/cloudflare/deployment/create.ts
 import { strict } from "node:assert";
 
-// src/inputs.ts
+// input-keys.ts
 var INPUT_KEY_CLOUDFLARE_ACCOUNT_ID = "cloudflare-account-id";
 var INPUT_KEY_CLOUDFLARE_API_TOKEN = "cloudflare-api-token";
 var INPUT_KEY_CLOUDFLARE_PROJECT_NAME = "cloudflare-project-name";
 var INPUT_KEY_DIRECTORY = "directory";
 var INPUT_KEY_GITHUB_ENVIRONMENT = "github-environment";
 var INPUT_KEY_GITHUB_TOKEN = "github-token";
+
+// src/inputs.ts
 var OPTIONS = {
   required: true
 };
