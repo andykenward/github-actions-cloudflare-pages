@@ -14,7 +14,7 @@ When used in context of a [pull request], the action will create a deployment fo
 
 ## Usage
 
-See the GitHub Workflow examples below or [deploy.yml]('./.github/workflows/deploy.yml') & [deploy-delete.yml]('./.github/workflows/deploy-delete.yml')
+See the GitHub Workflow examples below or [deploy.yml](./.github/workflows/deploy.yml) & [deploy-delete.yml](./.github/workflows/deploy-delete.yml)
 
 ### `push` & `pull_request`
 
