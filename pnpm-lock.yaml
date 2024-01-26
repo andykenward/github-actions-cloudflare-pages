@@ -10,7 +10,7 @@ dependencies:
     version: 2.7.1
   '@octokit/plugin-paginate-rest':
     specifier: 9.1.5
-    version: 9.1.5(@octokit/core@5.0.2)
+    version: 9.1.5(@octokit/core@5.1.0)
   '@unlike/github-actions-core':
     specifier: 1.0.0
     version: 1.0.0
@@ -41,8 +41,8 @@ devDependencies:
     specifier: 4.1.1
     version: 4.1.1(prettier@3.1.1)
   '@octokit/graphql-schema':
-    specifier: 14.46.0
-    version: 14.46.0
+    specifier: 14.49.0
+    version: 14.49.0
   '@octokit/webhooks-schemas':
     specifier: 7.3.1
     version: 7.3.1
@@ -2271,8 +2271,8 @@ packages:
     engines: {node: '>= 18'}
     dev: false
 
-  /@octokit/core@5.0.2:
-    resolution: {integrity: sha512-cZUy1gUvd4vttMic7C0lwPed8IYXWYp8kHIMatyhY8t8n3Cpw2ILczkV5pGMPqef7v0bLo0pOHrEHarsau2Ydg==}
+  /@octokit/core@5.1.0:
+    resolution: {integrity: sha512-BDa2VAMLSh3otEiaMJ/3Y36GU4qf6GI+VivQ/P41NC6GHcdxpKlqV0ikSZ5gdQsmS3ojXeRx5vasgNTinF0Q4g==}
     engines: {node: '>= 18'}
     dependencies:
       '@octokit/auth-token': 4.0.0
@@ -2292,8 +2292,8 @@ packages:
       universal-user-agent: 6.0.1
     dev: false
 
-  /@octokit/graphql-schema@14.46.0:
-    resolution: {integrity: sha512-TeQvpu984EWMqqDueIZ9XxjTSigJLx/4oxoAaU9ZEF+LhnPml++bdVvKyY4n4rSYnm+vh/nxVJVhYJrjukhxDQ==}
+  /@octokit/graphql-schema@14.49.0:
+    resolution: {integrity: sha512-GWWLKiFmY/1hl8KtHG+L1cYD4pOz2cZ8YKXkCCRVQ8ebVRN+QapohnTB4ZiBXaube9g8FwYrLzOr+AVwr6yqCQ==}
     dependencies:
       graphql: 16.8.1
       graphql-tag: 2.12.6(graphql@16.8.1)
@@ -2312,13 +2312,13 @@ packages:
     resolution: {integrity: sha512-6G+ywGClliGQwRsjvqVYpklIfa7oRPA0vyhPQG/1Feh+B+wU0vGH1JiJ5T25d3g1JZYBHzR2qefLi9x8Gt+cpw==}
     dev: false
 
-  /@octokit/plugin-paginate-rest@9.1.5(@octokit/core@5.0.2):
+  /@octokit/plugin-paginate-rest@9.1.5(@octokit/core@5.1.0):
     resolution: {integrity: sha512-WKTQXxK+bu49qzwv4qKbMMRXej1DU2gq017euWyKVudA6MldaSSQuxtz+vGbhxV4CjxpUxjZu6rM2wfc1FiWVg==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@octokit/core': '>=5'
     dependencies:
-      '@octokit/core': 5.0.2
+      '@octokit/core': 5.1.0
       '@octokit/types': 12.4.0
     dev: false
 
