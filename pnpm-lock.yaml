@@ -71,8 +71,8 @@ devDependencies:
     specifier: 6.21.0
     version: 6.21.0(eslint@8.56.0)(typescript@5.3.3)
   dotenv:
-    specifier: 16.3.1
-    version: 16.3.1
+    specifier: 16.4.2
+    version: 16.4.2
   esbuild:
     specifier: 0.19.11
     version: 0.19.11
@@ -2059,7 +2059,7 @@ packages:
       '@whatwg-node/fetch': 0.9.16
       chalk: 4.1.2
       debug: 4.3.4
-      dotenv: 16.3.1
+      dotenv: 16.4.2
       graphql: 16.8.1
       graphql-request: 6.1.0(graphql@16.8.1)
       http-proxy-agent: 7.0.0
@@ -3653,8 +3653,8 @@ packages:
       tslib: 2.6.2
     dev: true
 
-  /dotenv@16.3.1:
-    resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
+  /dotenv@16.4.2:
+    resolution: {integrity: sha512-rZSSFxke7d9nYQ5NeMIwp5PP+f8wXgKNljpOb7KtH6SKW1cEqcXAz9VSJYVLKe7Jhup/gUYOkaeSVyK8GJ+nBg==}
     engines: {node: '>=12'}
     dev: true
 
