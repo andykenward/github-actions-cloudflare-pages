@@ -10,7 +10,7 @@ dependencies:
     version: 2.7.1
   '@octokit/plugin-paginate-rest':
     specifier: 9.1.5
-    version: 9.1.5(@octokit/core@5.0.2)
+    version: 9.1.5(@octokit/core@5.1.0)
   '@unlike/github-actions-core':
     specifier: 1.0.0
     version: 1.0.0
@@ -41,14 +41,14 @@ devDependencies:
     specifier: 4.1.1
     version: 4.1.1(prettier@3.1.1)
   '@octokit/graphql-schema':
-    specifier: 14.46.0
-    version: 14.46.0
+    specifier: 14.55.1
+    version: 14.55.1
   '@octokit/webhooks-schemas':
-    specifier: 7.3.1
-    version: 7.3.1
+    specifier: 7.3.2
+    version: 7.3.2
   '@octokit/webhooks-types':
-    specifier: 7.3.1
-    version: 7.3.1
+    specifier: 7.3.2
+    version: 7.3.2
   '@total-typescript/ts-reset':
     specifier: 0.5.1
     version: 0.5.1
@@ -2271,13 +2271,13 @@ packages:
     engines: {node: '>= 18'}
     dev: false
 
-  /@octokit/core@5.0.2:
-    resolution: {integrity: sha512-cZUy1gUvd4vttMic7C0lwPed8IYXWYp8kHIMatyhY8t8n3Cpw2ILczkV5pGMPqef7v0bLo0pOHrEHarsau2Ydg==}
+  /@octokit/core@5.1.0:
+    resolution: {integrity: sha512-BDa2VAMLSh3otEiaMJ/3Y36GU4qf6GI+VivQ/P41NC6GHcdxpKlqV0ikSZ5gdQsmS3ojXeRx5vasgNTinF0Q4g==}
     engines: {node: '>= 18'}
     dependencies:
       '@octokit/auth-token': 4.0.0
       '@octokit/graphql': 7.0.2
-      '@octokit/request': 8.1.6
+      '@octokit/request': 8.2.0
       '@octokit/request-error': 5.0.1
       '@octokit/types': 12.4.0
       before-after-hook: 2.2.3
@@ -2292,8 +2292,8 @@ packages:
       universal-user-agent: 6.0.1
     dev: false
 
-  /@octokit/graphql-schema@14.46.0:
-    resolution: {integrity: sha512-TeQvpu984EWMqqDueIZ9XxjTSigJLx/4oxoAaU9ZEF+LhnPml++bdVvKyY4n4rSYnm+vh/nxVJVhYJrjukhxDQ==}
+  /@octokit/graphql-schema@14.55.1:
+    resolution: {integrity: sha512-2D+ozyxfsbOdGeiLj/9wfBFVODj8eTQ8qeTwr9wOPyhIYtVcGPFJJTt8u/9Tfj+rImkg0xQg6fyFDO+In6Jb8Q==}
     dependencies:
       graphql: 16.8.1
       graphql-tag: 2.12.6(graphql@16.8.1)
@@ -2303,7 +2303,7 @@ packages:
     resolution: {integrity: sha512-OJ2iGMtj5Tg3s6RaXH22cJcxXRi7Y3EBqbHTBRq+PQAqfaS8f/236fUrWhfSn8P4jovyzqucxme7/vWSSZBX2Q==}
     engines: {node: '>= 18'}
     dependencies:
-      '@octokit/request': 8.1.6
+      '@octokit/request': 8.2.0
       '@octokit/types': 12.4.0
       universal-user-agent: 6.0.1
     dev: false
@@ -2312,13 +2312,13 @@ packages:
     resolution: {integrity: sha512-6G+ywGClliGQwRsjvqVYpklIfa7oRPA0vyhPQG/1Feh+B+wU0vGH1JiJ5T25d3g1JZYBHzR2qefLi9x8Gt+cpw==}
     dev: false
 
-  /@octokit/plugin-paginate-rest@9.1.5(@octokit/core@5.0.2):
+  /@octokit/plugin-paginate-rest@9.1.5(@octokit/core@5.1.0):
     resolution: {integrity: sha512-WKTQXxK+bu49qzwv4qKbMMRXej1DU2gq017euWyKVudA6MldaSSQuxtz+vGbhxV4CjxpUxjZu6rM2wfc1FiWVg==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@octokit/core': '>=5'
     dependencies:
-      '@octokit/core': 5.0.2
+      '@octokit/core': 5.1.0
       '@octokit/types': 12.4.0
     dev: false
 
@@ -2331,8 +2331,8 @@ packages:
       once: 1.4.0
     dev: false
 
-  /@octokit/request@8.1.6:
-    resolution: {integrity: sha512-YhPaGml3ncZC1NfXpP3WZ7iliL1ap6tLkAp6MvbK2fTTPytzVUyUesBBogcdMm86uRYO5rHaM1xIWxigWZ17MQ==}
+  /@octokit/request@8.2.0:
+    resolution: {integrity: sha512-exPif6x5uwLqv1N1irkLG1zZNJkOtj8bZxuVHd71U5Ftuxf2wGNvAJyNBcPbPC+EBzwYEbBDdSFb8EPcjpYxPQ==}
     engines: {node: '>= 18'}
     dependencies:
       '@octokit/endpoint': 9.0.4
@@ -2347,12 +2347,12 @@ packages:
       '@octokit/openapi-types': 19.1.0
     dev: false
 
-  /@octokit/webhooks-schemas@7.3.1:
-    resolution: {integrity: sha512-Wr82QTNH0NuXRM0R9vEAZPuRAlHj9FILKARCMf7v6qUgf6by+KjEKaro5O6wK14DZ1jxgXlXzwZ1Ha6nyc6t4w==}
+  /@octokit/webhooks-schemas@7.3.2:
+    resolution: {integrity: sha512-v7vOoE84ZyG0MPS7YmB76zmI8cT1OAwyep2RNWwrKp53S1jloktM9wE5Y3wGjPhBxcoWe9EcvDKoMVveBmb5Aw==}
     dev: true
 
-  /@octokit/webhooks-types@7.3.1:
-    resolution: {integrity: sha512-u6355ZsZnHwmxen30SrqnYb1pXieBFkYgkNzt+Ed4Ao5tupN1OErHfzwiV6hq6duGkDAYASbq7/uVJQ69PjLEg==}
+  /@octokit/webhooks-types@7.3.2:
+    resolution: {integrity: sha512-JWOoOgtWTFnTSAamPXXyjTY5/apttvNxF+vPBnwdSu5cj5snrd7FO0fyw4+wTXy8fHduq626JjhO+TwCyyA6vA==}
     dev: true
 
   /@peculiar/asn1-schema@2.3.8:
