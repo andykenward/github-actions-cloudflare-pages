@@ -27,6 +27,7 @@ updates:
         patterns:
           - '@vitest*'
           - 'vitest'
+          - 'vite'
       eslint:
         patterns:
           - '@typescript-eslint/*'
