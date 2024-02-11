@@ -30,6 +30,7 @@ updates:
           - 'vite'
       eslint:
         patterns:
+          - '@types/eslint'
           - '@typescript-eslint/*'
           - 'eslint'
           - 'eslint-config-*'
