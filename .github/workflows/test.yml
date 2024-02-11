@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4.1.1
-      - uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
+      - uses: unlike-ltd/github-actions/setup-pnpm@4f6c1e5b04525aa73e680f900c9f588f868735e3
         with:
           node-version: 20
       - name: Lint
