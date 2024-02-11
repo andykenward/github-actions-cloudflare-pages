@@ -43,7 +43,7 @@ jobs:
       - name: Setup Node.js & pnpm
         uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
         with:
-          node-version: 18.x
+          node-version: 20.x
       - name: Build
         run: pnpm run build
       - name: Publish to Cloudflare Pages
