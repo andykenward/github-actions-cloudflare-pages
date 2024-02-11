@@ -1,5 +1,17 @@
 # github-actions-cloudflare-pages
 
+## 1.1.3
+
+### Patch Changes
+
+- [#216](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/216) [`88b82bc`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/88b82bcc14181e54262e91dcbed509a7489e5578) Thanks [@dependabot](https://github.com/apps/dependabot)! - Updates @octokit/graphql-schema from 14.46.0 to 14.55.1
+  Updates @octokit/webhooks-schemas from 7.3.1 to 7.3.2
+  Updates @octokit/webhooks-types from 7.3.1 to 7.3.2
+
+- [#188](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/188) [`b6d3336`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/b6d333602ca07945ee7b2f912610f08442fc90a6) Thanks [@dependabot](https://github.com/apps/dependabot)! - bump the cloudflare from 3.22.1 to 3.22.4
+
+- [#218](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/218) [`3e0e7d7`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/3e0e7d73d72e34001d635b51e638a25b9f72f4b7) Thanks [@dependabot](https://github.com/apps/dependabot)! - bump wrangler from 3.22.4 to 3.28.1
+
 ## 1.1.2
 
 ### Patch Changes
