@@ -45,10 +45,10 @@
   "author": "Unlike Ltd <hi@unlike.dev> (https://unlike.dev/)",
   "license": "MIT",
   "engines": {
-    "node": "^20.6.1",
-    "pnpm": "^8.10.0"
+    "node": "^20.11.0",
+    "pnpm": "^8.15.1"
   },
-  "packageManager": "pnpm@8.10.0",
+  "packageManager": "pnpm@8.15.1",
   "dependencies": {
     "@octokit-next/core": "2.7.1",
     "@octokit/plugin-paginate-rest": "9.1.5",
