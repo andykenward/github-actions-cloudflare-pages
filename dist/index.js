@@ -2618,7 +2618,7 @@ var getCloudflareLatestDeployment = /* @__PURE__ */ __name(async () => {
 // src/cloudflare/deployment/status.ts
 var ERROR_KEY = `Status Of Deployment:`;
 var statusCloudflareDeployment = /* @__PURE__ */ __name(async () => {
-  let deploymentStatus;
+  let deploymentStatus = "unknown";
   let deployment;
   do {
     try {
@@ -2626,16 +2626,14 @@ var statusCloudflareDeployment = /* @__PURE__ */ __name(async () => {
       const deployStage = deployment.stages.find(
         (stage) => stage.name === "deploy"
       );
-      deploymentStatus = deployStage?.status;
       debug(JSON.stringify(deployStage));
       switch (deployStage?.status) {
         case "active":
-        case "success": {
-          break;
-        }
+        case "success":
         case "failure":
         case "skipped":
         case "canceled": {
+          deploymentStatus = deployStage.status;
           break;
         }
         default: {
@@ -2651,7 +2649,7 @@ var statusCloudflareDeployment = /* @__PURE__ */ __name(async () => {
       }
       throw new Error(`${ERROR_KEY} unknown error`);
     }
-  } while (deploymentStatus !== "success");
+  } while (deploymentStatus === "unknown");
   return { deployment, status: deploymentStatus };
 }, "statusCloudflareDeployment");
 
