@@ -2,14 +2,12 @@ import {strict} from 'node:assert'
 
 import {setOutput, summary} from '@unlike/github-actions-core'
 
+import {statusCloudflareDeployment} from '@/src/cloudflare/deployment/status.js'
 import {useContext} from '@/src/github/index.js'
 import {useInputs} from '@/src/inputs.js'
 import {execAsync} from '@/src/utils.js'
 
-import {
-  getCloudflareDeploymentAlias,
-  getCloudflareLatestDeployment
-} from './get.js'
+import {getCloudflareDeploymentAlias} from './get.js'
 
 export const CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN'
 export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
@@ -51,9 +49,9 @@ export const createCloudflareDeployment = async () => {
       }
     )
     /**
-     * Get the latest deployment by commitHash.
+     * Get the latest deployment by commitHash and poll until required status.
      */
-    const deployment = await getCloudflareLatestDeployment()
+    const {deployment, status} = await statusCloudflareDeployment()
 
     setOutput('id', deployment.id)
     setOutput('url', deployment.url)
@@ -61,8 +59,6 @@ export const createCloudflareDeployment = async () => {
 
     const alias: string = getCloudflareDeploymentAlias(deployment)
     setOutput('alias', alias)
-
-    const deployStage = deployment.stages.find(stage => stage.name === 'deploy')
 
     await summary.addHeading('Cloudflare Pages Deployment').write()
     await summary.addBreak().write()
@@ -91,10 +87,7 @@ export const createCloudflareDeployment = async () => {
           'Commit Message:',
           deployment.deployment_trigger.metadata.commit_message
         ],
-        [
-          'Status:',
-          `<strong>${deployStage?.status.toUpperCase() || `UNKNOWN`}</strong>`
-        ],
+        ['Status:', `<strong>${status.toUpperCase() || `UNKNOWN`}</strong>`],
         ['Preview URL:', `<a href='${deployment.url}'>${deployment.url}</a>`],
         ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`]
       ])

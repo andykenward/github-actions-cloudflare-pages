@@ -2247,136 +2247,6 @@ function graphql3(source) {
 }
 __name(graphql3, "graphql");
 
-// src/cloudflare/api/endpoints.ts
-var API_ENDPOINT = `https://api.cloudflare.com`;
-var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path) => {
-  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
-  const input = [
-    `/client/v4/accounts/${cloudflareAccountId}/pages/projects/${cloudflareProjectName}`,
-    path
-  ].filter(Boolean).join("/");
-  return new URL(input, API_ENDPOINT).toString();
-}, "getCloudflareApiEndpoint");
-var getCloudflareLogEndpoint = /* @__PURE__ */ __name((id) => {
-  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
-  return new URL(
-    `${cloudflareAccountId}/pages/view/${cloudflareProjectName}/${id}`,
-    `https://dash.cloudflare.com`
-  ).toString();
-}, "getCloudflareLogEndpoint");
-
-// src/cloudflare/api/parse-error.ts
-var ParseError = class extends Error {
-  static {
-    __name(this, "ParseError");
-  }
-  text;
-  notes;
-  location;
-  kind;
-  code;
-  constructor({ text, notes, location, kind }) {
-    super(text);
-    this.name = this.constructor.name;
-    this.text = text;
-    this.notes = notes ?? [];
-    this.location = location;
-    this.kind = kind ?? "error";
-  }
-};
-
-// src/cloudflare/api/fetch-error.ts
-var throwFetchError = /* @__PURE__ */ __name((resource, response) => {
-  const error2 = new ParseError({
-    text: `A request to the Cloudflare API (${resource}) failed.`,
-    notes: response.errors.map((err) => ({
-      text: renderError(err)
-    }))
-  });
-  const code = response.errors[0]?.code;
-  if (code) {
-    error2.code = code;
-  }
-  if (error2.notes?.length > 0) {
-    error2.notes.map((note) => {
-      error(`Cloudflare API: ${note.text}`);
-    });
-  }
-  throw error2;
-}, "throwFetchError");
-var renderError = /* @__PURE__ */ __name((err, level = 0) => {
-  const chainedMessages = err.error_chain?.map(
-    (chainedError) => `
-${"  ".repeat(level)}- ${renderError(chainedError, level + 1)}`
-  ).join("\n") ?? "";
-  return (err.code ? `${err.message} [code: ${err.code}]` : err.message) + chainedMessages;
-}, "renderError");
-
-// src/cloudflare/api/fetch-result.ts
-var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams, abortSignal) => {
-  const method = init.method ?? "GET";
-  const { cloudflareApiToken } = useInputs();
-  const initFetch = {
-    headers: {
-      "Content-Type": "application/json;charset=UTF-8",
-      Authorization: `Bearer ${cloudflareApiToken}`
-    }
-  };
-  const response = await fetch(resource, {
-    method,
-    ...initFetch,
-    signal: abortSignal
-  }).then((response2) => response2.json());
-  if (response.success) {
-    if (response.result === null || response.result === void 0) {
-      throw new Error(`Cloudflare API: response missing 'result'`);
-    }
-    return response.result;
-  }
-  return throwFetchError(resource, response);
-}, "fetchResult");
-var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
-  const method = init.method ?? "GET";
-  const { cloudflareApiToken } = useInputs();
-  const initFetch = {
-    headers: {
-      "Content-Type": "application/json;charset=UTF-8",
-      Authorization: `Bearer ${cloudflareApiToken}`
-    }
-  };
-  const response = await fetch(resource, {
-    method,
-    ...initFetch
-  }).then((response2) => response2.json());
-  if (!response.success && response.errors.length > 0) {
-    throwFetchError(resource, response);
-  }
-  return response.success;
-}, "fetchSuccess");
-
-// src/cloudflare/deployment/get.ts
-var getCloudflareDeployments = /* @__PURE__ */ __name(async () => {
-  const url = getCloudflareApiEndpoint("deployments");
-  const result = await fetchResult(url);
-  return result;
-}, "getCloudflareDeployments");
-var getCloudflareDeploymentAlias = /* @__PURE__ */ __name((deployment) => {
-  return deployment.aliases && deployment.aliases.length > 0 ? deployment.aliases[0] : deployment.url;
-}, "getCloudflareDeploymentAlias");
-var getCloudflareLatestDeployment = /* @__PURE__ */ __name(async () => {
-  const { sha: commitHash } = useContext();
-  const deployments = await getCloudflareDeployments();
-  const deployment = deployments?.find(
-    (deployment2) => deployment2.deployment_trigger.metadata.commit_hash === commitHash
-  );
-  if (deployment === void 0) {
-    throw new Error(
-      `Cloudflare: could not find deployment with commitHash: ${commitHash}`
-    );
-  }
-  return deployment;
-}, "getCloudflareLatestDeployment");
-
 // src/github/comment.ts
 var MutationAddComment = graphql3(
   /* GraphQL */
@@ -2413,6 +2283,24 @@ var addComment = /* @__PURE__ */ __name(async (deployment) => {
     return comment.data.addComment?.commentEdge?.node?.id;
   }
 }, "addComment");
+
+// src/cloudflare/api/endpoints.ts
+var API_ENDPOINT = `https://api.cloudflare.com`;
+var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path) => {
+  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
+  const input = [
+    `/client/v4/accounts/${cloudflareAccountId}/pages/projects/${cloudflareProjectName}`,
+    path
+  ].filter(Boolean).join("/");
+  return new URL(input, API_ENDPOINT).toString();
+}, "getCloudflareApiEndpoint");
+var getCloudflareLogEndpoint = /* @__PURE__ */ __name((id) => {
+  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
+  return new URL(
+    `${cloudflareAccountId}/pages/view/${cloudflareProjectName}/${id}`,
+    `https://dash.cloudflare.com`
+  ).toString();
+}, "getCloudflareLogEndpoint");
 
 // src/github/environment.ts
 var EnvironmentFragment = graphql3(
@@ -2615,10 +2503,160 @@ var getGitHubDeployments = /* @__PURE__ */ __name(async () => {
   return deployments;
 }, "getGitHubDeployments");
 
+// src/cloudflare/api/parse-error.ts
+var ParseError = class extends Error {
+  static {
+    __name(this, "ParseError");
+  }
+  text;
+  notes;
+  location;
+  kind;
+  code;
+  constructor({ text, notes, location, kind }) {
+    super(text);
+    this.name = this.constructor.name;
+    this.text = text;
+    this.notes = notes ?? [];
+    this.location = location;
+    this.kind = kind ?? "error";
+  }
+};
+
+// src/cloudflare/api/fetch-error.ts
+var throwFetchError = /* @__PURE__ */ __name((resource, response) => {
+  const error2 = new ParseError({
+    text: `A request to the Cloudflare API (${resource}) failed.`,
+    notes: response.errors.map((err) => ({
+      text: renderError(err)
+    }))
+  });
+  const code = response.errors[0]?.code;
+  if (code) {
+    error2.code = code;
+  }
+  if (error2.notes?.length > 0) {
+    error2.notes.map((note) => {
+      error(`Cloudflare API: ${note.text}`);
+    });
+  }
+  throw error2;
+}, "throwFetchError");
+var renderError = /* @__PURE__ */ __name((err, level = 0) => {
+  const chainedMessages = err.error_chain?.map(
+    (chainedError) => `
+${"  ".repeat(level)}- ${renderError(chainedError, level + 1)}`
+  ).join("\n") ?? "";
+  return (err.code ? `${err.message} [code: ${err.code}]` : err.message) + chainedMessages;
+}, "renderError");
+
+// src/cloudflare/api/fetch-result.ts
+var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams, abortSignal) => {
+  const method = init.method ?? "GET";
+  const { cloudflareApiToken } = useInputs();
+  const initFetch = {
+    headers: {
+      "Content-Type": "application/json;charset=UTF-8",
+      Authorization: `Bearer ${cloudflareApiToken}`
+    }
+  };
+  const response = await fetch(resource, {
+    method,
+    ...initFetch,
+    signal: abortSignal
+  }).then((response2) => response2.json());
+  if (response.success) {
+    if (response.result === null || response.result === void 0) {
+      throw new Error(`Cloudflare API: response missing 'result'`);
+    }
+    return response.result;
+  }
+  return throwFetchError(resource, response);
+}, "fetchResult");
+var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
+  const method = init.method ?? "GET";
+  const { cloudflareApiToken } = useInputs();
+  const initFetch = {
+    headers: {
+      "Content-Type": "application/json;charset=UTF-8",
+      Authorization: `Bearer ${cloudflareApiToken}`
+    }
+  };
+  const response = await fetch(resource, {
+    method,
+    ...initFetch
+  }).then((response2) => response2.json());
+  if (!response.success && response.errors.length > 0) {
+    throwFetchError(resource, response);
+  }
+  return response.success;
+}, "fetchSuccess");
+
+// src/cloudflare/deployment/get.ts
+var getCloudflareDeployments = /* @__PURE__ */ __name(async () => {
+  const url = getCloudflareApiEndpoint("deployments");
+  const result = await fetchResult(url);
+  return result;
+}, "getCloudflareDeployments");
+var getCloudflareDeploymentAlias = /* @__PURE__ */ __name((deployment) => {
+  return deployment.aliases && deployment.aliases.length > 0 ? deployment.aliases[0] : deployment.url;
+}, "getCloudflareDeploymentAlias");
+var getCloudflareLatestDeployment = /* @__PURE__ */ __name(async () => {
+  const { sha: commitHash } = useContext();
+  const deployments = await getCloudflareDeployments();
+  const deployment = deployments?.find(
+    (deployment2) => deployment2.deployment_trigger.metadata.commit_hash === commitHash
+  );
+  if (deployment === void 0) {
+    throw new Error(
+      `Cloudflare: could not find deployment with commitHash: ${commitHash}`
+    );
+  }
+  return deployment;
+}, "getCloudflareLatestDeployment");
+
+// src/cloudflare/deployment/status.ts
+var ERROR_KEY = `Status Of Deployment:`;
+var statusCloudflareDeployment = /* @__PURE__ */ __name(async () => {
+  let deploymentStatus = "unknown";
+  let deployment;
+  do {
+    try {
+      deployment = await getCloudflareLatestDeployment();
+      const deployStage = deployment.stages.find(
+        (stage) => stage.name === "deploy"
+      );
+      debug(JSON.stringify(deployStage));
+      switch (deployStage?.status) {
+        case "active":
+        case "success":
+        case "failure":
+        case "skipped":
+        case "canceled": {
+          deploymentStatus = deployStage.status;
+          break;
+        }
+        default: {
+          await new Promise((resolve) => setTimeout(resolve, 1e3));
+        }
+      }
+    } catch (error2) {
+      if (error2 instanceof Error) {
+        throw error2;
+      }
+      if (error2 && typeof error2 === "object" && "stderr" in error2 && typeof error2.stderr === "string") {
+        throw new Error(error2.stderr);
+      }
+      throw new Error(`${ERROR_KEY} unknown error`);
+    }
+  } while (deploymentStatus === "unknown");
+  return { deployment, status: deploymentStatus };
+}, "statusCloudflareDeployment");
+
 // src/cloudflare/deployment/create.ts
 var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
 var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
-var ERROR_KEY = `Create Deployment:`;
+var ERROR_KEY2 = `Create Deployment:`;
 var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
   const {
     cloudflareAccountId,
@@ -2630,7 +2668,7 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
   process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId;
   const { repo, branch, sha: commitHash } = useContext();
   if (branch === void 0) {
-    throw new Error(`${ERROR_KEY} branch is undefined`);
+    throw new Error(`${ERROR_KEY2} branch is undefined`);
   }
   try {
     const WRANGLER_VERSION = "3.28.1";
@@ -2641,13 +2679,12 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
         env: process.env
       }
     );
-    const deployment = await getCloudflareLatestDeployment();
+    const { deployment, status } = await statusCloudflareDeployment();
     setOutput("id", deployment.id);
     setOutput("url", deployment.url);
     setOutput("environment", deployment.environment);
     const alias = getCloudflareDeploymentAlias(deployment);
     setOutput("alias", alias);
-    const deployStage = deployment.stages.find((stage) => stage.name === "deploy");
     await summary.addHeading("Cloudflare Pages Deployment").write();
     await summary.addBreak().write();
     await summary.addTable([
@@ -2674,10 +2711,7 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
         "Commit Message:",
         deployment.deployment_trigger.metadata.commit_message
       ],
-      [
-        "Status:",
-        `<strong>${deployStage?.status.toUpperCase() || `UNKNOWN`}</strong>`
-      ],
+      ["Status:", `<strong>${status.toUpperCase() || `UNKNOWN`}</strong>`],
       ["Preview URL:", `<a href='${deployment.url}'>${deployment.url}</a>`],
       ["Branch Preview URL:", `<a href='${alias}'>${alias}</a>`]
     ]).write();
@@ -2689,7 +2723,7 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
     if (error2 && typeof error2 === "object" && "stderr" in error2 && typeof error2.stderr === "string") {
       throw new Error(error2.stderr);
     }
-    throw new Error(`${ERROR_KEY} unknown error`);
+    throw new Error(`${ERROR_KEY2} unknown error`);
   }
 }, "createCloudflareDeployment");
 
