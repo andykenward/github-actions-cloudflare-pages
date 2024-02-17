@@ -23,7 +23,7 @@ export const getMockApi = () => {
     response: FetchResult<T>,
     statusCode?: number
   ) => {
-    mockPoolCloudflare
+    return mockPoolCloudflare
       .intercept({
         path,
         method: 'GET'
