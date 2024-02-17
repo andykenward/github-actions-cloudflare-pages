@@ -6,13 +6,16 @@ import type {PagesDeployment} from '../types.js'
 
 const ERROR_KEY = `Status Of Deployment:`
 
-type DeploymentStatus = PagesDeployment['stages'][number]['status']
+type DeploymentStatus = Exclude<
+  PagesDeployment['stages'][number]['status'],
+  'idle'
+>
 
 export const statusCloudflareDeployment = async (): Promise<{
   deployment: PagesDeployment
   status: DeploymentStatus
 }> => {
-  let deploymentStatus: DeploymentStatus | undefined
+  let deploymentStatus: DeploymentStatus | 'unknown' = 'unknown'
   let deployment
   do {
     try {
@@ -21,18 +24,15 @@ export const statusCloudflareDeployment = async (): Promise<{
         stage => stage.name === 'deploy'
       )
 
-      deploymentStatus = deployStage?.status
-
       debug(JSON.stringify(deployStage))
 
       switch (deployStage?.status) {
         case 'active':
-        case 'success': {
-          break
-        }
+        case 'success':
         case 'failure':
         case 'skipped':
         case 'canceled': {
+          deploymentStatus = deployStage.status
           break
         }
         default: {
@@ -53,7 +53,7 @@ export const statusCloudflareDeployment = async (): Promise<{
       }
       throw new Error(`${ERROR_KEY} unknown error`)
     }
-  } while (deploymentStatus !== 'success')
+  } while (deploymentStatus === 'unknown')
 
   return {deployment, status: deploymentStatus}
 }
