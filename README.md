@@ -39,15 +39,15 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
       - name: Setup Node.js & pnpm
-        uses: unlike-ltd/github-actions/setup-pnpm@v0.0.2
+        uses: unlike-ltd/github-actions/setup-pnpm@4f6c1e5b04525aa73e680f900c9f588f868735e3 #v1.0.0
         with:
           node-version: 20.x
       - name: Build
         run: pnpm run build
       - name: Publish to Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@v1.0.0
+        uses: unlike-ltd/github-actions-cloudflare-pages@8c09c46bd39321b4aa3784852491d9e4f09e1566 #v1.2.0
         id: pages
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -81,7 +81,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: 'Delete Cloudflare Pages deployments'
-        uses: unlike-ltd/github-actions-cloudflare-pages@v1.0.0
+        uses: unlike-ltd/github-actions-cloudflare-pages@8c09c46bd39321b4aa3784852491d9e4f09e1566 #v1.2.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
