@@ -1,5 +1,13 @@
 # github-actions-cloudflare-pages
 
+## 1.2.0
+
+### Minor Changes
+
+- [#223](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/223) [`e4ea179`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/e4ea17979d32e89b8713d272bc576b2fd27fa72b) Thanks [@andykenward](https://github.com/andykenward)! - Now polls the Cloudflare Pages API deployments endpoint every 1 second for the current status of the matching commit hash, if the status is not "idle" it will stop polling and continue the action. This fixes the issue #222 , where the PR comment would have the wrong preview URL.
+
+  CLOSES #222
+
 ## 1.1.3
 
 ### Patch Changes
