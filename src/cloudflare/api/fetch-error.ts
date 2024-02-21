@@ -16,6 +16,7 @@ export const throwFetchError = (
       text: renderError(err)
     }))
   })
+  throw new Error('sss')
   const code = response.errors[0]?.code
   if (code) {
     error.code = code
