@@ -36,6 +36,7 @@ await esbuild.build({
   define: {
     'process.env.npm_package_dependencies_wrangler': JSON.stringify(
       process.env.npm_package_dependencies_wrangler
-    )
+    ),
+    'process.env.NODE_ENV': JSON.stringify('production')
   }
 })
