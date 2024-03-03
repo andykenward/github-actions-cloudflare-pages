@@ -1,6 +1,6 @@
 import { createRequire as topLevelCreateRequire } from 'module';const require = topLevelCreateRequire(import.meta.url);
 var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __name = (target, value) => __defProp(target, "name", { value, configurable: !0 });
 
 // node_modules/.pnpm/@unlike+github-actions-core@1.0.0/node_modules/@unlike/github-actions-core/dist/variables.js
 import { EOL as EOL3 } from "node:os";
@@ -9,39 +9,21 @@ import { EOL as EOL3 } from "node:os";
 import { EOL } from "node:os";
 
 // node_modules/.pnpm/@unlike+github-actions-core@1.0.0/node_modules/@unlike/github-actions-core/dist/lib/utils.js
-var __defProp2 = Object.defineProperty;
-var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
-var toCommandValue = /* @__PURE__ */ __name2((input) => {
-  if (input === null || input === void 0) {
-    return "";
-  } else if (typeof input === "string" || input instanceof String) {
-    return input;
-  }
-  return JSON.stringify(input);
-}, "toCommandValue");
-var toCommandProperties = /* @__PURE__ */ __name2((annotationProperties) => {
-  if (!annotationProperties || Object.keys(annotationProperties).length === 0) {
-    return {};
-  }
-  return {
-    title: annotationProperties.title,
-    file: annotationProperties.file,
-    line: annotationProperties.startLine,
-    endLine: annotationProperties.endLine,
-    col: annotationProperties.startColumn,
-    endColumn: annotationProperties.endColumn
-  };
+var __defProp2 = Object.defineProperty, __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: !0 }), "__name"), toCommandValue = /* @__PURE__ */ __name2((input) => input == null ? "" : typeof input == "string" || input instanceof String ? input : JSON.stringify(input), "toCommandValue"), toCommandProperties = /* @__PURE__ */ __name2((annotationProperties) => !annotationProperties || Object.keys(annotationProperties).length === 0 ? {} : {
+  title: annotationProperties.title,
+  file: annotationProperties.file,
+  line: annotationProperties.startLine,
+  endLine: annotationProperties.endLine,
+  col: annotationProperties.startColumn,
+  endColumn: annotationProperties.endColumn
 }, "toCommandProperties");
 
 // node_modules/.pnpm/@unlike+github-actions-core@1.0.0/node_modules/@unlike/github-actions-core/dist/lib/command.js
-var __defProp3 = Object.defineProperty;
-var __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
-var issueCommand = /* @__PURE__ */ __name3((command, properties, message) => {
-  const cmd = new Command(command, properties, message);
+var __defProp3 = Object.defineProperty, __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: !0 }), "__name"), issueCommand = /* @__PURE__ */ __name3((command, properties, message) => {
+  let cmd = new Command(command, properties, message);
   process.stdout.write(cmd.toString() + EOL);
 }, "issueCommand");
-var CMD_STRING = "::";
-var Command = class {
+var CMD_STRING = "::", Command = class {
   static {
     __name(this, "Command");
   }
@@ -52,43 +34,31 @@ var Command = class {
   #message;
   #properties;
   constructor(command, properties, message) {
-    if (!command) {
-      command = "missing.command";
-    }
-    this.#command = command;
-    this.#properties = properties;
-    this.#message = message;
+    command || (command = "missing.command"), this.#command = command, this.#properties = properties, this.#message = message;
   }
   toString() {
     let cmdStr = CMD_STRING + this.#command;
     if (this.#properties && Object.keys(this.#properties).length > 0) {
       cmdStr += " ";
-      let first = true;
-      for (const key in this.#properties) {
+      let first = !0;
+      for (let key in this.#properties)
         if (this.#properties.hasOwnProperty(key)) {
-          const val = this.#properties[key];
-          if (val) {
-            if (first) {
-              first = false;
-            } else {
-              cmdStr += ",";
-            }
-            cmdStr += `${key}=${escapeProperty(val)}`;
-          }
+          let val = this.#properties[key];
+          val && (first ? first = !1 : cmdStr += ",", cmdStr += `${key}=${escapeProperty(val)}`);
         }
-      }
     }
-    cmdStr += `${CMD_STRING}${escapeData(this.#message)}`;
-    return cmdStr;
+    return cmdStr += `${CMD_STRING}${escapeData(this.#message)}`, cmdStr;
   }
 };
 function escapeData(s) {
-  return toCommandValue(s).replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+  return toCommandValue(s).replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll(`
+`, "%0A");
 }
 __name(escapeData, "escapeData");
 __name3(escapeData, "escapeData");
 function escapeProperty(s) {
-  return toCommandValue(s).replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A").replaceAll(":", "%3A").replaceAll(",", "%2C");
+  return toCommandValue(s).replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll(`
+`, "%0A").replaceAll(":", "%3A").replaceAll(",", "%2C");
 }
 __name(escapeProperty, "escapeProperty");
 __name3(escapeProperty, "escapeProperty");
@@ -97,93 +67,63 @@ __name3(escapeProperty, "escapeProperty");
 import { randomUUID as uuidv4 } from "node:crypto";
 import { appendFileSync, existsSync } from "node:fs";
 import { EOL as EOL2 } from "node:os";
-var __defProp4 = Object.defineProperty;
-var __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
-var issueFileCommand = /* @__PURE__ */ __name4((command, message) => {
-  const filePath = process.env[`GITHUB_${command}`];
-  if (!filePath) {
+var __defProp4 = Object.defineProperty, __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: !0 }), "__name"), issueFileCommand = /* @__PURE__ */ __name4((command, message) => {
+  let filePath = process.env[`GITHUB_${command}`];
+  if (!filePath)
     throw new Error(
       `Unable to find environment variable for file command ${command}`
     );
-  }
-  if (!existsSync(filePath)) {
+  if (!existsSync(filePath))
     throw new Error(`Missing file at path: ${filePath}`);
-  }
   appendFileSync(filePath, `${toCommandValue(message)}${EOL2}`, {
     encoding: "utf8"
   });
-}, "issueFileCommand");
-var prepareKeyValueMessage = /* @__PURE__ */ __name4((key, value) => {
-  const delimiter = `ghadelimiter_${uuidv4()}`;
-  const convertedValue = toCommandValue(value);
-  if (key.includes(delimiter)) {
+}, "issueFileCommand"), prepareKeyValueMessage = /* @__PURE__ */ __name4((key, value) => {
+  let delimiter = `ghadelimiter_${uuidv4()}`, convertedValue = toCommandValue(value);
+  if (key.includes(delimiter))
     throw new Error(
       `Unexpected input: name should not contain the delimiter "${delimiter}"`
     );
-  }
-  if (convertedValue.includes(delimiter)) {
+  if (convertedValue.includes(delimiter))
     throw new Error(
       `Unexpected input: value should not contain the delimiter "${delimiter}"`
     );
-  }
   return `${key}<<${delimiter}${EOL2}${convertedValue}${EOL2}${delimiter}`;
 }, "prepareKeyValueMessage");
 
 // node_modules/.pnpm/@unlike+github-actions-core@1.0.0/node_modules/@unlike/github-actions-core/dist/variables.js
-var __defProp5 = Object.defineProperty;
-var __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
+var __defProp5 = Object.defineProperty, __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: !0 }), "__name");
 var getInput = /* @__PURE__ */ __name5((name, options) => {
-  const val = process.env[`INPUT_${name.replaceAll(" ", "_").toUpperCase()}`] || "";
-  if (options && options.required && !val) {
+  let val = process.env[`INPUT_${name.replaceAll(" ", "_").toUpperCase()}`] || "";
+  if (options && options.required && !val)
     throw new Error(`Input required and not supplied: ${name}`);
-  }
-  if (options && options.trimWhitespace === false) {
-    return val;
-  }
-  return val.trim();
+  return options && options.trimWhitespace === !1 ? val : val.trim();
 }, "getInput");
 var setOutput = /* @__PURE__ */ __name5((name, value) => {
-  const filePath = process.env["GITHUB_OUTPUT"] || "";
-  if (filePath) {
+  if (process.env.GITHUB_OUTPUT || "")
     return issueFileCommand("OUTPUT", prepareKeyValueMessage(name, value));
-  }
-  process.stdout.write(EOL3);
-  issueCommand("set-output", { name }, toCommandValue(value));
+  process.stdout.write(EOL3), issueCommand("set-output", { name }, toCommandValue(value));
 }, "setOutput");
 
 // node_modules/.pnpm/@unlike+github-actions-core@1.0.0/node_modules/@unlike/github-actions-core/dist/types.js
-var ExitCode = /* @__PURE__ */ ((ExitCode2) => {
-  ExitCode2[ExitCode2["Success"] = 0] = "Success";
-  ExitCode2[ExitCode2["Failure"] = 1] = "Failure";
-  return ExitCode2;
-})(ExitCode || {});
+var ExitCode = /* @__PURE__ */ ((ExitCode2) => (ExitCode2[ExitCode2.Success = 0] = "Success", ExitCode2[ExitCode2.Failure = 1] = "Failure", ExitCode2))(ExitCode || {});
 
 // node_modules/.pnpm/@unlike+github-actions-core@1.0.0/node_modules/@unlike/github-actions-core/dist/errors.js
-var __defProp6 = Object.defineProperty;
-var __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
-var error = /* @__PURE__ */ __name6((message, properties = {}) => {
+var __defProp6 = Object.defineProperty, __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: !0 }), "__name"), error = /* @__PURE__ */ __name6((message, properties = {}) => {
   issueCommand(
     "error",
     toCommandProperties(properties),
     message instanceof Error ? message.toString() : message
   );
-}, "error");
-var setFailed = /* @__PURE__ */ __name6((message) => {
-  process.exitCode = ExitCode.Failure;
-  error(message);
+}, "error"), setFailed = /* @__PURE__ */ __name6((message) => {
+  process.exitCode = ExitCode.Failure, error(message);
 }, "setFailed");
 
 // node_modules/.pnpm/@unlike+github-actions-core@1.0.0/node_modules/@unlike/github-actions-core/dist/logging.js
 import { EOL as EOL4 } from "node:os";
-var __defProp7 = Object.defineProperty;
-var __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
-var isDebug = /* @__PURE__ */ __name7(() => {
-  return process.env["RUNNER_DEBUG"] === "1";
-}, "isDebug");
-var debug = /* @__PURE__ */ __name7((message) => {
+var __defProp7 = Object.defineProperty, __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: !0 }), "__name"), isDebug = /* @__PURE__ */ __name7(() => process.env.RUNNER_DEBUG === "1", "isDebug"), debug = /* @__PURE__ */ __name7((message) => {
   issueCommand("debug", {}, message);
-}, "debug");
-var warning = /* @__PURE__ */ __name7((message, properties = {}) => {
+}, "debug"), warning = /* @__PURE__ */ __name7((message, properties = {}) => {
   issueCommand(
     "warning",
     toCommandProperties(properties),
@@ -197,10 +137,7 @@ var info = /* @__PURE__ */ __name7((message) => {
 // node_modules/.pnpm/@unlike+github-actions-core@1.0.0/node_modules/@unlike/github-actions-core/dist/lib/summary.js
 import { constants, promises } from "node:fs";
 import { EOL as EOL5 } from "node:os";
-var __defProp8 = Object.defineProperty;
-var __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
-var { access, appendFile, writeFile } = promises;
-var SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
+var __defProp8 = Object.defineProperty, __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: !0 }), "__name"), { access, appendFile, writeFile } = promises, SUMMARY_ENV_VAR = "GITHUB_STEP_SUMMARY";
 var Summary = class {
   static {
     __name(this, "Summary");
@@ -220,15 +157,13 @@ var Summary = class {
    * @returns step summary file path
    */
   async #fileSummaryPath() {
-    if (this.#filePath) {
+    if (this.#filePath)
       return this.#filePath;
-    }
-    const pathFromEnv = process.env[SUMMARY_ENV_VAR];
-    if (!pathFromEnv) {
+    let pathFromEnv = process.env[SUMMARY_ENV_VAR];
+    if (!pathFromEnv)
       throw new Error(
         `Unable to find environment variable for $${SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`
       );
-    }
     try {
       await access(pathFromEnv, constants.R_OK | constants.W_OK);
     } catch {
@@ -236,8 +171,7 @@ var Summary = class {
         `Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`
       );
     }
-    this.#filePath = pathFromEnv;
-    return this.#filePath;
+    return this.#filePath = pathFromEnv, this.#filePath;
   }
   /**
    * Wraps content in an HTML tag, adding any HTML attributes
@@ -249,11 +183,8 @@ var Summary = class {
    * @returns {string} content wrapped in HTML element
    */
   #wrap(tag, content, attrs = {}) {
-    const htmlAttrs = Object.entries(attrs).map(([key, value]) => ` ${key}="${value}"`).join("");
-    if (!content) {
-      return `<${tag}${htmlAttrs}>`;
-    }
-    return `<${tag}${htmlAttrs}>${content}</${tag}>`;
+    let htmlAttrs = Object.entries(attrs).map(([key, value]) => ` ${key}="${value}"`).join("");
+    return content ? `<${tag}${htmlAttrs}>${content}</${tag}>` : `<${tag}${htmlAttrs}>`;
   }
   /**
    * Writes text in the buffer to the summary buffer file and empties buffer. Will append by default.
@@ -263,11 +194,8 @@ var Summary = class {
    * @returns {Promise<Summary>} summary instance
    */
   async write(options) {
-    const overwrite = !!options?.overwrite;
-    const filePath = await this.#fileSummaryPath();
-    const writeFunc = overwrite ? writeFile : appendFile;
-    await writeFunc(filePath, this.#buffer, { encoding: "utf8" });
-    return this.emptyBuffer();
+    let overwrite = !!options?.overwrite, filePath = await this.#fileSummaryPath();
+    return await (overwrite ? writeFile : appendFile)(filePath, this.#buffer, { encoding: "utf8" }), this.emptyBuffer();
   }
   /**
    * Clears the summary buffer and wipes the summary file
@@ -275,7 +203,7 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   async clear() {
-    return this.emptyBuffer().write({ overwrite: true });
+    return this.emptyBuffer().write({ overwrite: !0 });
   }
   /**
    * Returns the current summary buffer as a string
@@ -299,8 +227,7 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   emptyBuffer() {
-    this.#buffer = "";
-    return this;
+    return this.#buffer = "", this;
   }
   /**
    * Adds raw text to the summary buffer
@@ -310,9 +237,8 @@ var Summary = class {
    *
    * @returns {Summary} summary instance
    */
-  addRaw(text, addEOL = false) {
-    this.#buffer += text;
-    return addEOL ? this.addEOL() : this;
+  addRaw(text, addEOL = !1) {
+    return this.#buffer += text, addEOL ? this.addEOL() : this;
   }
   /**
    * Adds the operating system-specific end-of-line marker to the buffer
@@ -331,10 +257,9 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addCodeBlock(code, lang) {
-    const attrs = {
+    let attrs = {
       ...lang && { lang }
-    };
-    const element = this.#wrap("pre", this.#wrap("code", code), attrs);
+    }, element = this.#wrap("pre", this.#wrap("code", code), attrs);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -345,10 +270,8 @@ var Summary = class {
    *
    * @returns {Summary} summary instance
    */
-  addList(items, ordered = false) {
-    const tag = ordered ? "ol" : "ul";
-    const listItems = items.map((item) => this.#wrap("li", item)).join("");
-    const element = this.#wrap(tag, listItems);
+  addList(items, ordered = !1) {
+    let tag = ordered ? "ol" : "ul", listItems = items.map((item) => this.#wrap("li", item)).join(""), element = this.#wrap(tag, listItems);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -359,22 +282,18 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addTable(rows) {
-    const tableBody = rows.map((row) => {
-      const cells = row.map((cell) => {
-        if (typeof cell === "string") {
+    let tableBody = rows.map((row) => {
+      let cells = row.map((cell) => {
+        if (typeof cell == "string")
           return this.#wrap("td", cell);
-        }
-        const { header, data, colspan, rowspan } = cell;
-        const tag = header ? "th" : "td";
-        const attrs = {
+        let { header, data, colspan, rowspan } = cell, tag = header ? "th" : "td", attrs = {
           ...colspan && { colspan },
           ...rowspan && { rowspan }
         };
         return this.#wrap(tag, data, attrs);
       }).join("");
       return this.#wrap("tr", cells);
-    }).join("");
-    const element = this.#wrap("table", tableBody);
+    }).join(""), element = this.#wrap("table", tableBody);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -386,7 +305,7 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addDetails(label, content) {
-    const element = this.#wrap(
+    let element = this.#wrap(
       "details",
       this.#wrap("summary", label) + content
     );
@@ -402,12 +321,10 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addImage(src, alt, options) {
-    const { width, height } = options || {};
-    const attrs = {
+    let { width, height } = options || {}, attrs = {
       ...width && { width },
       ...height && { height }
-    };
-    const element = this.#wrap("img", null, { src, alt, ...attrs });
+    }, element = this.#wrap("img", null, { src, alt, ...attrs });
     return this.addRaw(element).addEOL();
   }
   /**
@@ -419,9 +336,7 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addHeading(text, level) {
-    const tag = `h${level}`;
-    const allowedTag = ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tag) ? tag : "h1";
-    const element = this.#wrap(allowedTag, text);
+    let tag = `h${level}`, allowedTag = ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tag) ? tag : "h1", element = this.#wrap(allowedTag, text);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -430,7 +345,7 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addSeparator() {
-    const element = this.#wrap("hr", null);
+    let element = this.#wrap("hr", null);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -439,7 +354,7 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addBreak() {
-    const element = this.#wrap("br", null);
+    let element = this.#wrap("br", null);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -451,10 +366,9 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addQuote(text, cite) {
-    const attrs = {
+    let attrs = {
       ...cite && { cite }
-    };
-    const element = this.#wrap("blockquote", text, attrs);
+    }, element = this.#wrap("blockquote", text, attrs);
     return this.addRaw(element).addEOL();
   }
   /**
@@ -466,12 +380,10 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addLink(text, href) {
-    const element = this.#wrap("a", text, { href });
+    let element = this.#wrap("a", text, { href });
     return this.addRaw(element).addEOL();
   }
-};
-var _summary = new Summary();
-var summary = _summary;
+}, _summary = new Summary(), summary = _summary;
 
 // src/cloudflare/deployment/create.ts
 import { strict } from "node:assert";
@@ -481,8 +393,7 @@ import { exec } from "node:child_process";
 import { promisify } from "node:util";
 var raise = /* @__PURE__ */ __name((message) => {
   throw new Error(message);
-}, "raise");
-var execAsync = promisify(exec);
+}, "raise"), execAsync = promisify(exec);
 
 // src/github/workflow-event/workflow-event.ts
 import { strict as assert } from "node:assert";
@@ -559,28 +470,23 @@ var EVENT_NAMES = [
 // src/github/workflow-event/workflow-event.ts
 var getPayload = /* @__PURE__ */ __name(() => {
   if (process.env.GITHUB_EVENT_PATH) {
-    if (existsSync2(process.env.GITHUB_EVENT_PATH)) {
+    if (existsSync2(process.env.GITHUB_EVENT_PATH))
       return JSON.parse(
         readFileSync(process.env.GITHUB_EVENT_PATH, { encoding: "utf8" })
       );
-    } else {
-      const path = process.env.GITHUB_EVENT_PATH;
+    {
+      let path = process.env.GITHUB_EVENT_PATH;
       process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${EOL6}`);
     }
   }
-}, "getPayload");
-var getWorkflowEvent = /* @__PURE__ */ __name(() => {
-  const eventName = process.env.GITHUB_EVENT_NAME;
+}, "getPayload"), getWorkflowEvent = /* @__PURE__ */ __name(() => {
+  let eventName = process.env.GITHUB_EVENT_NAME;
   assert(
     EVENT_NAMES.includes(eventName),
     `eventName ${eventName} is not supported`
   );
-  const payload = getPayload();
-  if (isDebug()) {
-    debug(`eventName: ${eventName}`);
-    debug(`payload: ${JSON.stringify(payload)}`);
-  }
-  return {
+  let payload = getPayload();
+  return isDebug() && (debug(`eventName: ${eventName}`), debug(`payload: ${JSON.stringify(payload)}`)), {
     eventName,
     payload
   };
@@ -588,31 +494,15 @@ var getWorkflowEvent = /* @__PURE__ */ __name(() => {
 
 // src/github/context.ts
 var getGitHubContext = /* @__PURE__ */ __name(() => {
-  const event = getWorkflowEvent();
-  const repo = (() => {
-    const [owner, repo2] = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split("/") : raise(
+  let event = getWorkflowEvent(), repo = (() => {
+    let [owner, repo2] = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split("/") : raise(
       "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-    );
-    const node_id = "repository" in event.payload ? event.payload.repository?.node_id || raise("context.repo: no repo node_id in payload") : raise("context.repo: no repo node_id in payload");
+    ), node_id = "repository" in event.payload ? event.payload.repository?.node_id || raise("context.repo: no repo node_id in payload") : raise("context.repo: no repo node_id in payload");
     return { owner, repo: repo2, node_id };
-  })();
-  const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
-  const sha = process.env.GITHUB_SHA;
-  const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL;
-  const ref = (() => {
+  })(), branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME, sha = process.env.GITHUB_SHA, graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL, ref = (() => {
     let ref2 = process.env.GITHUB_HEAD_REF;
-    if (!ref2) {
-      if ("ref" in event.payload) {
-        ref2 = event.payload.ref;
-      } else if (event.eventName === "pull_request") {
-        ref2 = event.payload.pull_request.head.ref;
-      }
-      if (!ref2)
-        return raise("context: no ref");
-    }
-    return ref2;
-  })();
-  const context = {
+    return !ref2 && ("ref" in event.payload ? ref2 = event.payload.ref : event.eventName === "pull_request" && (ref2 = event.payload.pull_request.head.ref), !ref2) ? raise("context: no ref") : ref2;
+  })(), context = {
     event,
     repo,
     branch,
@@ -621,62 +511,42 @@ var getGitHubContext = /* @__PURE__ */ __name(() => {
     ref
   };
   if (isDebug()) {
-    const debugContext = {
+    let debugContext = {
       ...context,
       event: "will debug itself as output is large"
     };
     debug(`context: ${JSON.stringify(debugContext)}`);
   }
   return context;
-}, "getGitHubContext");
-var _context;
-var useContext = /* @__PURE__ */ __name(() => {
-  return _context ?? (_context = getGitHubContext());
-}, "useContext");
-var useContextEvent = /* @__PURE__ */ __name(() => useContext().event, "useContextEvent");
+}, "getGitHubContext"), _context, useContext = /* @__PURE__ */ __name(() => _context ?? (_context = getGitHubContext()), "useContext"), useContextEvent = /* @__PURE__ */ __name(() => useContext().event, "useContextEvent");
 
 // input-keys.ts
-var INPUT_KEY_CLOUDFLARE_ACCOUNT_ID = "cloudflare-account-id";
-var INPUT_KEY_CLOUDFLARE_API_TOKEN = "cloudflare-api-token";
-var INPUT_KEY_CLOUDFLARE_PROJECT_NAME = "cloudflare-project-name";
-var INPUT_KEY_DIRECTORY = "directory";
-var INPUT_KEY_GITHUB_ENVIRONMENT = "github-environment";
-var INPUT_KEY_GITHUB_TOKEN = "github-token";
+var INPUT_KEY_CLOUDFLARE_ACCOUNT_ID = "cloudflare-account-id", INPUT_KEY_CLOUDFLARE_API_TOKEN = "cloudflare-api-token", INPUT_KEY_CLOUDFLARE_PROJECT_NAME = "cloudflare-project-name", INPUT_KEY_DIRECTORY = "directory", INPUT_KEY_GITHUB_ENVIRONMENT = "github-environment", INPUT_KEY_GITHUB_TOKEN = "github-token";
 
 // src/inputs.ts
 var OPTIONS = {
-  required: true
-};
-var getInputs = /* @__PURE__ */ __name(() => {
-  return {
-    cloudflareAccountId: getInput(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID, OPTIONS),
-    cloudflareApiToken: getInput(INPUT_KEY_CLOUDFLARE_API_TOKEN, OPTIONS),
-    cloudflareProjectName: getInput(INPUT_KEY_CLOUDFLARE_PROJECT_NAME, OPTIONS),
-    directory: getInput(INPUT_KEY_DIRECTORY, OPTIONS),
-    gitHubApiToken: getInput(INPUT_KEY_GITHUB_TOKEN, OPTIONS),
-    gitHubEnvironment: getInput(INPUT_KEY_GITHUB_ENVIRONMENT, OPTIONS)
-  };
-}, "getInputs");
-var _inputs;
-var useInputs = /* @__PURE__ */ __name(() => {
-  return _inputs ?? (_inputs = getInputs());
-}, "useInputs");
+  required: !0
+}, getInputs = /* @__PURE__ */ __name(() => ({
+  cloudflareAccountId: getInput(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID, OPTIONS),
+  cloudflareApiToken: getInput(INPUT_KEY_CLOUDFLARE_API_TOKEN, OPTIONS),
+  cloudflareProjectName: getInput(INPUT_KEY_CLOUDFLARE_PROJECT_NAME, OPTIONS),
+  directory: getInput(INPUT_KEY_DIRECTORY, OPTIONS),
+  gitHubApiToken: getInput(INPUT_KEY_GITHUB_TOKEN, OPTIONS),
+  gitHubEnvironment: getInput(INPUT_KEY_GITHUB_ENVIRONMENT, OPTIONS)
+}), "getInputs"), _inputs, useInputs = /* @__PURE__ */ __name(() => _inputs ?? (_inputs = getInputs()), "useInputs");
 
 // src/cloudflare/api/endpoints.ts
-var API_ENDPOINT = `https://api.cloudflare.com`;
-var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path) => {
-  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
-  const input = [
+var API_ENDPOINT = "https://api.cloudflare.com", getCloudflareApiEndpoint = /* @__PURE__ */ __name((path) => {
+  let { cloudflareAccountId, cloudflareProjectName } = useInputs(), input = [
     `/client/v4/accounts/${cloudflareAccountId}/pages/projects/${cloudflareProjectName}`,
     path
   ].filter(Boolean).join("/");
   return new URL(input, API_ENDPOINT).toString();
-}, "getCloudflareApiEndpoint");
-var getCloudflareLogEndpoint = /* @__PURE__ */ __name((id) => {
-  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
+}, "getCloudflareApiEndpoint"), getCloudflareLogEndpoint = /* @__PURE__ */ __name((id) => {
+  let { cloudflareAccountId, cloudflareProjectName } = useInputs();
   return new URL(
     `${cloudflareAccountId}/pages/view/${cloudflareProjectName}/${id}`,
-    `https://dash.cloudflare.com`
+    "https://dash.cloudflare.com"
   ).toString();
 }, "getCloudflareLogEndpoint");
 
@@ -691,120 +561,86 @@ var ParseError = class extends Error {
   kind;
   code;
   constructor({ text, notes, location, kind }) {
-    super(text);
-    this.name = this.constructor.name;
-    this.text = text;
-    this.notes = notes ?? [];
-    this.location = location;
-    this.kind = kind ?? "error";
+    super(text), this.name = this.constructor.name, this.text = text, this.notes = notes ?? [], this.location = location, this.kind = kind ?? "error";
   }
 };
 
 // src/cloudflare/api/fetch-error.ts
 var throwFetchError = /* @__PURE__ */ __name((resource, response) => {
-  const error2 = new ParseError({
+  let error2 = new ParseError({
     text: `A request to the Cloudflare API (${resource}) failed.`,
     notes: response.errors.map((err) => ({
       text: renderError(err)
     }))
-  });
-  const code = response.errors[0]?.code;
-  if (code) {
-    error2.code = code;
-  }
-  if (error2.notes?.length > 0) {
-    error2.notes.map((note) => {
-      error(`Cloudflare API: ${note.text}`);
-    });
-  }
-  throw error2;
-}, "throwFetchError");
-var renderError = /* @__PURE__ */ __name((err, level = 0) => {
-  const chainedMessages = err.error_chain?.map(
+  }), code = response.errors[0]?.code;
+  throw code && (error2.code = code), error2.notes?.length > 0 && error2.notes.map((note) => {
+    error(`Cloudflare API: ${note.text}`);
+  }), error2;
+}, "throwFetchError"), renderError = /* @__PURE__ */ __name((err, level = 0) => {
+  let chainedMessages = err.error_chain?.map(
     (chainedError) => `
 ${"  ".repeat(level)}- ${renderError(chainedError, level + 1)}`
-  ).join("\n") ?? "";
+  ).join(`
+`) ?? "";
   return (err.code ? `${err.message} [code: ${err.code}]` : err.message) + chainedMessages;
 }, "renderError");
 
 // src/cloudflare/api/fetch-result.ts
 var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams, abortSignal) => {
-  const method = init.method ?? "GET";
-  const { cloudflareApiToken } = useInputs();
-  const initFetch = {
+  let method = init.method ?? "GET", { cloudflareApiToken } = useInputs(), initFetch = {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
       Authorization: `Bearer ${cloudflareApiToken}`
     }
-  };
-  const response = await fetch(resource, {
+  }, response = await fetch(resource, {
     method,
     ...initFetch,
     signal: abortSignal
   }).then((response2) => response2.json());
   if (response.success) {
-    if (response.result === null || response.result === void 0) {
-      throw new Error(`Cloudflare API: response missing 'result'`);
-    }
+    if (response.result === null || response.result === void 0)
+      throw new Error("Cloudflare API: response missing 'result'");
     return response.result;
   }
   return throwFetchError(resource, response);
-}, "fetchResult");
-var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
-  const method = init.method ?? "GET";
-  const { cloudflareApiToken } = useInputs();
-  const initFetch = {
+}, "fetchResult"), fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
+  let method = init.method ?? "GET", { cloudflareApiToken } = useInputs(), initFetch = {
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
       Authorization: `Bearer ${cloudflareApiToken}`
     }
-  };
-  const response = await fetch(resource, {
+  }, response = await fetch(resource, {
     method,
     ...initFetch
   }).then((response2) => response2.json());
-  if (!response.success && response.errors.length > 0) {
-    throwFetchError(resource, response);
-  }
-  return response.success;
+  return !response.success && response.errors.length > 0 && throwFetchError(resource, response), response.success;
 }, "fetchSuccess");
 
 // src/cloudflare/deployment/get.ts
 var getCloudflareDeployments = /* @__PURE__ */ __name(async () => {
-  const url = getCloudflareApiEndpoint("deployments");
-  const result = await fetchResult(url);
-  return result;
-}, "getCloudflareDeployments");
-var getCloudflareDeploymentAlias = /* @__PURE__ */ __name((deployment) => {
-  return deployment.aliases && deployment.aliases.length > 0 ? deployment.aliases[0] : deployment.url;
-}, "getCloudflareDeploymentAlias");
-var getCloudflareLatestDeployment = /* @__PURE__ */ __name(async () => {
-  const { sha: commitHash } = useContext();
-  const deployments = await getCloudflareDeployments();
-  const deployment = deployments?.find(
+  let url = getCloudflareApiEndpoint("deployments");
+  return await fetchResult(url);
+}, "getCloudflareDeployments"), getCloudflareDeploymentAlias = /* @__PURE__ */ __name((deployment) => deployment.aliases && deployment.aliases.length > 0 ? deployment.aliases[0] : deployment.url, "getCloudflareDeploymentAlias"), getCloudflareLatestDeployment = /* @__PURE__ */ __name(async () => {
+  let { sha: commitHash } = useContext(), deployment = (await getCloudflareDeployments())?.find(
     (deployment2) => deployment2.deployment_trigger.metadata.commit_hash === commitHash
   );
-  if (deployment === void 0) {
+  if (deployment === void 0)
     throw new Error(
       `Cloudflare: could not find deployment with commitHash: ${commitHash}`
     );
-  }
   return deployment;
 }, "getCloudflareLatestDeployment");
 
 // src/cloudflare/deployment/status.ts
-var ERROR_KEY = `Status Of Deployment:`;
-var statusCloudflareDeployment = /* @__PURE__ */ __name(async () => {
-  let deploymentStatus = "unknown";
-  let deployment;
-  do {
+var ERROR_KEY = "Status Of Deployment:", statusCloudflareDeployment = /* @__PURE__ */ __name(async () => {
+  let deploymentStatus = "unknown", deployment;
+  do
     try {
       deployment = await getCloudflareLatestDeployment();
-      const deployStage = deployment.stages.find(
+      let deployStage = deployment.stages.find(
         (stage) => stage.name === "deploy"
       );
-      debug(JSON.stringify(deployStage));
-      switch (deployStage?.status) {
+      switch (debug(JSON.stringify(deployStage)), deployStage?.status) {
         case "active":
         case "success":
         case "failure":
@@ -813,66 +649,48 @@ var statusCloudflareDeployment = /* @__PURE__ */ __name(async () => {
           deploymentStatus = deployStage.status;
           break;
         }
-        default: {
+        default:
           await new Promise((resolve) => setTimeout(resolve, 1e3));
-        }
       }
     } catch (error2) {
-      if (error2 instanceof Error) {
-        throw error2;
-      }
-      if (error2 && typeof error2 === "object" && "stderr" in error2 && typeof error2.stderr === "string") {
-        throw new Error(error2.stderr);
-      }
-      throw new Error(`${ERROR_KEY} unknown error`);
+      throw error2 instanceof Error ? error2 : error2 && typeof error2 == "object" && "stderr" in error2 && typeof error2.stderr == "string" ? new Error(error2.stderr) : new Error(`${ERROR_KEY} unknown error`);
     }
-  } while (deploymentStatus === "unknown");
+  while (deploymentStatus === "unknown");
   return { deployment, status: deploymentStatus };
 }, "statusCloudflareDeployment");
 
 // src/cloudflare/deployment/create.ts
-var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
-var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
-var ERROR_KEY2 = `Create Deployment:`;
-var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
-  const {
+var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN", CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID", ERROR_KEY2 = "Create Deployment:", createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
+  let {
     cloudflareAccountId,
     cloudflareProjectName,
     directory,
     cloudflareApiToken
   } = useInputs();
-  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken;
-  process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId;
-  const { repo, branch, sha: commitHash } = useContext();
-  if (branch === void 0) {
+  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken, process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId;
+  let { repo, branch, sha: commitHash } = useContext();
+  if (branch === void 0)
     throw new Error(`${ERROR_KEY2} branch is undefined`);
-  }
   try {
-    const WRANGLER_VERSION = "3.28.1";
-    strict(WRANGLER_VERSION, "wrangler version should exist");
-    await execAsync(
+    let WRANGLER_VERSION = "3.28.1";
+    strict(WRANGLER_VERSION, "wrangler version should exist"), await execAsync(
       `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
       {
         env: process.env
       }
     );
-    const { deployment, status } = await statusCloudflareDeployment();
-    setOutput("id", deployment.id);
-    setOutput("url", deployment.url);
-    setOutput("environment", deployment.environment);
-    const alias = getCloudflareDeploymentAlias(deployment);
-    setOutput("alias", alias);
-    await summary.addHeading("Cloudflare Pages Deployment").write();
-    await summary.addBreak().write();
-    await summary.addTable([
+    let { deployment, status } = await statusCloudflareDeployment();
+    setOutput("id", deployment.id), setOutput("url", deployment.url), setOutput("environment", deployment.environment);
+    let alias = getCloudflareDeploymentAlias(deployment);
+    return setOutput("alias", alias), await summary.addHeading("Cloudflare Pages Deployment").write(), await summary.addBreak().write(), await summary.addTable([
       [
         {
           data: "Name",
-          header: true
+          header: !0
         },
         {
           data: "Result",
-          header: true
+          header: !0
         }
       ],
       ["Environment:", deployment.environment],
@@ -888,27 +706,19 @@ var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
         "Commit Message:",
         deployment.deployment_trigger.metadata.commit_message
       ],
-      ["Status:", `<strong>${status.toUpperCase() || `UNKNOWN`}</strong>`],
+      ["Status:", `<strong>${status.toUpperCase() || "UNKNOWN"}</strong>`],
       ["Preview URL:", `<a href='${deployment.url}'>${deployment.url}</a>`],
       ["Branch Preview URL:", `<a href='${alias}'>${alias}</a>`]
-    ]).write();
-    return deployment;
+    ]).write(), deployment;
   } catch (error2) {
-    if (error2 instanceof Error) {
-      throw error2;
-    }
-    if (error2 && typeof error2 === "object" && "stderr" in error2 && typeof error2.stderr === "string") {
-      throw new Error(error2.stderr);
-    }
-    throw new Error(`${ERROR_KEY2} unknown error`);
+    throw error2 instanceof Error ? error2 : error2 && typeof error2 == "object" && "stderr" in error2 && typeof error2.stderr == "string" ? new Error(error2.stderr) : new Error(`${ERROR_KEY2} unknown error`);
   }
 }, "createCloudflareDeployment");
 
 // src/cloudflare/project/get.ts
 var getCloudflareProject = /* @__PURE__ */ __name(async () => {
-  const url = getCloudflareApiEndpoint();
-  const result = await fetchResult(url);
-  return result;
+  let url = getCloudflareApiEndpoint();
+  return await fetchResult(url);
 }, "getCloudflareProject");
 
 // __generated__/gql/graphql.ts
@@ -925,21 +735,18 @@ var TypedDocumentString = class extends String {
   toString() {
     return this.value;
   }
-};
-var DeploymentFragmentFragmentDoc = new TypedDocumentString(`
+}, DeploymentFragmentFragmentDoc = new TypedDocumentString(`
     fragment DeploymentFragment on Deployment {
   id
   environment
   state
 }
-    `, { "fragmentName": "DeploymentFragment" });
-var EnvironmentFragmentFragmentDoc = new TypedDocumentString(`
+    `, { fragmentName: "DeploymentFragment" }), EnvironmentFragmentFragmentDoc = new TypedDocumentString(`
     fragment EnvironmentFragment on Environment {
   name
   id
 }
-    `, { "fragmentName": "EnvironmentFragment" });
-var FilesDocument = new TypedDocumentString(`
+    `, { fragmentName: "EnvironmentFragment" }), FilesDocument = new TypedDocumentString(`
     query Files($owner: String!, $repo: String!, $path: String!) {
   repository(owner: $owner, name: $repo) {
     object(expression: $path) {
@@ -962,8 +769,7 @@ var FilesDocument = new TypedDocumentString(`
     }
   }
 }
-    `);
-var AddCommentDocument = new TypedDocumentString(`
+    `), AddCommentDocument = new TypedDocumentString(`
     mutation AddComment($subjectId: ID!, $body: String!) {
   addComment(input: {subjectId: $subjectId, body: $body}) {
     commentEdge {
@@ -973,8 +779,7 @@ var AddCommentDocument = new TypedDocumentString(`
     }
   }
 }
-    `);
-var CreateGitHubDeploymentDocument = new TypedDocumentString(`
+    `), CreateGitHubDeploymentDocument = new TypedDocumentString(`
     mutation CreateGitHubDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!, $description: String) {
   createDeployment(
     input: {autoMerge: false, description: $description, environment: $environmentName, refId: $refId, repositoryId: $repositoryId, requiredContexts: [], payload: $payload}
@@ -988,15 +793,13 @@ var CreateGitHubDeploymentDocument = new TypedDocumentString(`
   id
   environment
   state
-}`);
-var DeleteGitHubDeploymentDocument = new TypedDocumentString(`
+}`), DeleteGitHubDeploymentDocument = new TypedDocumentString(`
     mutation DeleteGitHubDeployment($deploymentId: ID!) {
   deleteDeployment(input: {id: $deploymentId}) {
     clientMutationId
   }
 }
-    `);
-var DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(`
+    `), DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(`
     mutation DeleteGitHubDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
   deleteDeployment(input: {id: $deploymentId}) {
     clientMutationId
@@ -1005,8 +808,7 @@ var DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(`
     clientMutationId
   }
 }
-    `);
-var CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
+    `), CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
     mutation CreateGitHubDeploymentStatus($deploymentId: ID!, $environment: String, $environmentUrl: String!, $logUrl: String!, $state: DeploymentStatusState!) {
   createDeploymentStatus(
     input: {autoInactive: false, deploymentId: $deploymentId, environment: $environment, environmentUrl: $environmentUrl, logUrl: $logUrl, state: $state}
@@ -1022,8 +824,7 @@ var CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
   id
   environment
   state
-}`);
-var CreateEnvironmentDocument = new TypedDocumentString(`
+}`), CreateEnvironmentDocument = new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
   createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
     environment {
@@ -1034,8 +835,7 @@ var CreateEnvironmentDocument = new TypedDocumentString(`
     fragment EnvironmentFragment on Environment {
   name
   id
-}`);
-var GetEnvironmentDocument = new TypedDocumentString(`
+}`), GetEnvironmentDocument = new TypedDocumentString(`
     query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!, $qualifiedName: String!) {
   repository(owner: $owner, name: $repo) {
     environment(name: $environment_name) {
@@ -1055,36 +855,25 @@ var GetEnvironmentDocument = new TypedDocumentString(`
 
 // src/cloudflare/deployment/delete.ts
 var deleteCloudflareDeployment = /* @__PURE__ */ __name(async (deploymentIdentifier) => {
-  const url = getCloudflareApiEndpoint(
+  let url = getCloudflareApiEndpoint(
     `deployments/${deploymentIdentifier}?force=true`
   );
   try {
-    const success = await fetchSuccess(url, {
+    if (await fetchSuccess(url, {
       method: "DELETE"
-    });
-    if (success === true) {
-      info(`Cloudflare Deployment Deleted: ${deploymentIdentifier}`);
-      return true;
-    }
+    }) === !0)
+      return info(`Cloudflare Deployment Deleted: ${deploymentIdentifier}`), !0;
     throw new Error("Cloudflare Delete Deployment: fail");
   } catch (successError) {
-    if (successError instanceof ParseError && successError.code === 8000009) {
-      warning(
-        `Cloudflare Deployment might have been deleted already: ${deploymentIdentifier}`
-      );
-      return true;
-    }
-    error(`Cloudflare Error deleting deployment: ${deploymentIdentifier}`);
-    return false;
+    return successError instanceof ParseError && successError.code === 8000009 ? (warning(
+      `Cloudflare Deployment might have been deleted already: ${deploymentIdentifier}`
+    ), !0) : (error(`Cloudflare Error deleting deployment: ${deploymentIdentifier}`), !1);
   }
 }, "deleteCloudflareDeployment");
 
 // src/github/api/client.ts
 var request = /* @__PURE__ */ __name(async (params) => {
-  const { query, variables, options } = params;
-  const { errorThrows } = options || { errorThrows: true };
-  const { gitHubApiToken } = useInputs();
-  const { graphqlEndpoint } = useContext();
+  let { query, variables, options } = params, { errorThrows } = options || { errorThrows: !0 }, { gitHubApiToken } = useInputs(), { graphqlEndpoint } = useContext();
   return fetch(graphqlEndpoint, {
     method: "POST",
     headers: {
@@ -1094,9 +883,8 @@ var request = /* @__PURE__ */ __name(async (params) => {
     },
     body: JSON.stringify({ query: query.toString(), variables })
   }).then((res) => res.json()).then((res) => {
-    if (res.errors && errorThrows) {
+    if (res.errors && errorThrows)
       throw new Error(JSON.stringify(res.errors));
-    }
     return res;
   });
 }, "request");
@@ -1129,8 +917,7 @@ var MutationDeleteGitHubDeployment = graphql(
     }
   }
 `
-);
-var MutationDeleteGitHubDeploymentAndComment = graphql(
+), MutationDeleteGitHubDeploymentAndComment = graphql(
   /* GraphQL */
   `
   mutation DeleteGitHubDeploymentAndComment(
@@ -1149,89 +936,57 @@ var MutationDeleteGitHubDeploymentAndComment = graphql(
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/util/lowercase-keys.js
 function lowercaseKeys(object) {
-  if (!object) {
-    return {};
-  }
-  return Object.keys(object).reduce((newObj, key) => {
-    newObj[key.toLowerCase()] = object[key];
-    return newObj;
-  }, {});
+  return object ? Object.keys(object).reduce((newObj, key) => (newObj[key.toLowerCase()] = object[key], newObj), {}) : {};
 }
 __name(lowercaseKeys, "lowercaseKeys");
 
 // node_modules/.pnpm/is-plain-obj@4.1.0/node_modules/is-plain-obj/index.js
 function isPlainObject(value) {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const prototype = Object.getPrototypeOf(value);
+  if (typeof value != "object" || value === null)
+    return !1;
+  let prototype = Object.getPrototypeOf(value);
   return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value) && !(Symbol.iterator in value);
 }
 __name(isPlainObject, "isPlainObject");
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/util/merge-deep.js
 function mergeDeep(defaults, options) {
-  const result = Object.assign({}, defaults);
-  Object.keys(options).forEach((key) => {
-    if (isPlainObject(options[key])) {
-      if (!(key in defaults))
-        Object.assign(result, { [key]: options[key] });
-      else
-        result[key] = mergeDeep(defaults[key], options[key]);
-    } else {
-      Object.assign(result, { [key]: options[key] });
-    }
-  });
-  return result;
+  let result = Object.assign({}, defaults);
+  return Object.keys(options).forEach((key) => {
+    isPlainObject(options[key]) ? key in defaults ? result[key] = mergeDeep(defaults[key], options[key]) : Object.assign(result, { [key]: options[key] }) : Object.assign(result, { [key]: options[key] });
+  }), result;
 }
 __name(mergeDeep, "mergeDeep");
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/util/remove-undefined-properties.js
 function removeUndefinedProperties(obj) {
-  for (const key in obj) {
-    if (obj[key] === void 0) {
-      delete obj[key];
-    }
-  }
+  for (let key in obj)
+    obj[key] === void 0 && delete obj[key];
   return obj;
 }
 __name(removeUndefinedProperties, "removeUndefinedProperties");
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/merge.js
 function merge(defaults, route, options) {
-  if (typeof route === "string") {
+  if (typeof route == "string") {
     let [method, url] = route.split(" ");
     options = Object.assign(url ? { method, url } : { url: method }, options);
-  } else {
+  } else
     options = Object.assign({}, route);
-  }
-  options.headers = lowercaseKeys(options.headers);
-  removeUndefinedProperties(options);
-  removeUndefinedProperties(options.headers);
-  const mergedOptions = mergeDeep(defaults || {}, options);
-  if (defaults && defaults.mediaType.previews.length) {
-    mergedOptions.mediaType.previews = defaults.mediaType.previews.filter((preview) => !mergedOptions.mediaType.previews.includes(preview)).concat(mergedOptions.mediaType.previews);
-  }
-  mergedOptions.mediaType.previews = mergedOptions.mediaType.previews.map(
+  options.headers = lowercaseKeys(options.headers), removeUndefinedProperties(options), removeUndefinedProperties(options.headers);
+  let mergedOptions = mergeDeep(defaults || {}, options);
+  return defaults && defaults.mediaType.previews.length && (mergedOptions.mediaType.previews = defaults.mediaType.previews.filter((preview) => !mergedOptions.mediaType.previews.includes(preview)).concat(mergedOptions.mediaType.previews)), mergedOptions.mediaType.previews = mergedOptions.mediaType.previews.map(
     (preview) => preview.replace(/-preview/, "")
-  );
-  return mergedOptions;
+  ), mergedOptions;
 }
 __name(merge, "merge");
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/util/add-query-parameters.js
 function addQueryParameters(url, parameters) {
-  const separator = /\?/.test(url) ? "&" : "?";
-  const names = Object.keys(parameters);
-  if (names.length === 0) {
+  let separator = /\?/.test(url) ? "&" : "?", names = Object.keys(parameters);
+  if (names.length === 0)
     return url;
-  }
-  const query = names.map((name) => {
-    if (name === "q") {
-      return "q=" + parameters.q.split("+").map(encodeURIComponent).join("+");
-    }
-    return `${name}=${encodeURIComponent(parameters[name])}`;
-  }).join("&");
+  let query = names.map((name) => name === "q" ? "q=" + parameters.q.split("+").map(encodeURIComponent).join("+") : `${name}=${encodeURIComponent(parameters[name])}`).join("&");
   return url + separator + query;
 }
 __name(addQueryParameters, "addQueryParameters");
@@ -1243,30 +998,21 @@ function removeNonChars(variableName) {
 }
 __name(removeNonChars, "removeNonChars");
 function extractUrlVariableNames(url) {
-  const matches = url.match(urlVariableRegex);
-  if (!matches) {
-    return [];
-  }
-  return matches.map(removeNonChars).reduce((a, b) => a.concat(b), []);
+  let matches = url.match(urlVariableRegex);
+  return matches ? matches.map(removeNonChars).reduce((a, b) => a.concat(b), []) : [];
 }
 __name(extractUrlVariableNames, "extractUrlVariableNames");
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/util/omit.js
 function omit(object, keysToOmit) {
-  return Object.keys(object).filter((option) => !keysToOmit.includes(option)).reduce((obj, key) => {
-    obj[key] = object[key];
-    return obj;
-  }, {});
+  return Object.keys(object).filter((option) => !keysToOmit.includes(option)).reduce((obj, key) => (obj[key] = object[key], obj), {});
 }
 __name(omit, "omit");
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/util/url-template.js
 function encodeReserved(str) {
   return str.split(/(%[0-9A-Fa-f]{2})/g).map(function(part) {
-    if (!/%[0-9A-Fa-f]/.test(part)) {
-      part = encodeURI(part).replace(/%5B/g, "[").replace(/%5D/g, "]");
-    }
-    return part;
+    return /%[0-9A-Fa-f]/.test(part) || (part = encodeURI(part).replace(/%5B/g, "[").replace(/%5D/g, "]")), part;
   }).join("");
 }
 __name(encodeReserved, "encodeReserved");
@@ -1277,16 +1023,11 @@ function encodeUnreserved(str) {
 }
 __name(encodeUnreserved, "encodeUnreserved");
 function encodeValue(operator, value, key) {
-  value = operator === "+" || operator === "#" ? encodeReserved(value) : encodeUnreserved(value);
-  if (key) {
-    return encodeUnreserved(key) + "=" + value;
-  } else {
-    return value;
-  }
+  return value = operator === "+" || operator === "#" ? encodeReserved(value) : encodeUnreserved(value), key ? encodeUnreserved(key) + "=" + value : value;
 }
 __name(encodeValue, "encodeValue");
 function isDefined(value) {
-  return value !== void 0 && value !== null;
+  return value != null;
 }
 __name(isDefined, "isDefined");
 function isKeyOperator(operator) {
@@ -1295,62 +1036,29 @@ function isKeyOperator(operator) {
 __name(isKeyOperator, "isKeyOperator");
 function getValues(context, operator, key, modifier) {
   var value = context[key], result = [];
-  if (isDefined(value) && value !== "") {
-    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-      value = value.toString();
-      if (modifier && modifier !== "*") {
-        value = value.substring(0, parseInt(modifier, 10));
-      }
-      result.push(
+  if (isDefined(value) && value !== "")
+    if (typeof value == "string" || typeof value == "number" || typeof value == "boolean")
+      value = value.toString(), modifier && modifier !== "*" && (value = value.substring(0, parseInt(modifier, 10))), result.push(
         encodeValue(operator, value, isKeyOperator(operator) ? key : "")
       );
-    } else {
-      if (modifier === "*") {
-        if (Array.isArray(value)) {
-          value.filter(isDefined).forEach(function(value2) {
-            result.push(
-              encodeValue(operator, value2, isKeyOperator(operator) ? key : "")
-            );
-          });
-        } else {
-          Object.keys(value).forEach(function(k) {
-            if (isDefined(value[k])) {
-              result.push(encodeValue(operator, value[k], k));
-            }
-          });
-        }
-      } else {
-        const tmp = [];
-        if (Array.isArray(value)) {
-          value.filter(isDefined).forEach(function(value2) {
-            tmp.push(encodeValue(operator, value2));
-          });
-        } else {
-          Object.keys(value).forEach(function(k) {
-            if (isDefined(value[k])) {
-              tmp.push(encodeUnreserved(k));
-              tmp.push(encodeValue(operator, value[k].toString()));
-            }
-          });
-        }
-        if (isKeyOperator(operator)) {
-          result.push(encodeUnreserved(key) + "=" + tmp.join(","));
-        } else if (tmp.length !== 0) {
-          result.push(tmp.join(","));
-        }
-      }
+    else if (modifier === "*")
+      Array.isArray(value) ? value.filter(isDefined).forEach(function(value2) {
+        result.push(
+          encodeValue(operator, value2, isKeyOperator(operator) ? key : "")
+        );
+      }) : Object.keys(value).forEach(function(k) {
+        isDefined(value[k]) && result.push(encodeValue(operator, value[k], k));
+      });
+    else {
+      let tmp = [];
+      Array.isArray(value) ? value.filter(isDefined).forEach(function(value2) {
+        tmp.push(encodeValue(operator, value2));
+      }) : Object.keys(value).forEach(function(k) {
+        isDefined(value[k]) && (tmp.push(encodeUnreserved(k)), tmp.push(encodeValue(operator, value[k].toString())));
+      }), isKeyOperator(operator) ? result.push(encodeUnreserved(key) + "=" + tmp.join(",")) : tmp.length !== 0 && result.push(tmp.join(","));
     }
-  } else {
-    if (operator === ";") {
-      if (isDefined(value)) {
-        result.push(encodeUnreserved(key));
-      }
-    } else if (value === "" && (operator === "&" || operator === "?")) {
-      result.push(encodeUnreserved(key) + "=");
-    } else if (value === "") {
-      result.push("");
-    }
-  }
+  else
+    operator === ";" ? isDefined(value) && result.push(encodeUnreserved(key)) : value === "" && (operator === "&" || operator === "?") ? result.push(encodeUnreserved(key) + "=") : value === "" && result.push("");
   return result;
 }
 __name(getValues, "getValues");
@@ -1366,30 +1074,17 @@ function expand(template, context) {
     /\{([^\{\}]+)\}|([^\{\}]+)/g,
     function(_, expression, literal) {
       if (expression) {
-        let operator = "";
-        const values = [];
-        if (operators.indexOf(expression.charAt(0)) !== -1) {
-          operator = expression.charAt(0);
-          expression = expression.substr(1);
-        }
-        expression.split(/,/g).forEach(function(variable) {
+        let operator = "", values = [];
+        if (operators.indexOf(expression.charAt(0)) !== -1 && (operator = expression.charAt(0), expression = expression.substr(1)), expression.split(/,/g).forEach(function(variable) {
           var tmp = /([^:\*]*)(?::(\d+)|(\*))?/.exec(variable);
           values.push(getValues(context, operator, tmp[1], tmp[2] || tmp[3]));
-        });
-        if (operator && operator !== "+") {
+        }), operator && operator !== "+") {
           var separator = ",";
-          if (operator === "?") {
-            separator = "&";
-          } else if (operator !== "#") {
-            separator = operator;
-          }
-          return (values.length !== 0 ? operator : "") + values.join(separator);
-        } else {
+          return operator === "?" ? separator = "&" : operator !== "#" && (separator = operator), (values.length !== 0 ? operator : "") + values.join(separator);
+        } else
           return values.join(",");
-        }
-      } else {
+      } else
         return encodeReserved(literal);
-      }
     }
   );
 }
@@ -1397,63 +1092,31 @@ __name(expand, "expand");
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/parse.js
 function parse(options) {
-  let method = options.method.toUpperCase();
-  let url = (options.url || "/").replace(/:([a-z]\w+)/g, "{$1}");
-  let headers = Object.assign({}, options.headers);
-  let body;
-  let parameters = omit(options, [
+  let method = options.method.toUpperCase(), url = (options.url || "/").replace(/:([a-z]\w+)/g, "{$1}"), headers = Object.assign({}, options.headers), body, parameters = omit(options, [
     "method",
     "baseUrl",
     "url",
     "headers",
     "request",
     "mediaType"
-  ]);
-  const urlVariableNames = extractUrlVariableNames(url);
-  url = parseUrl(url).expand(parameters);
-  if (!/^http/.test(url)) {
-    url = options.baseUrl + url;
+  ]), urlVariableNames = extractUrlVariableNames(url);
+  url = parseUrl(url).expand(parameters), /^http/.test(url) || (url = options.baseUrl + url);
+  let omittedParameters = Object.keys(options).filter((option) => urlVariableNames.includes(option)).concat("baseUrl"), remainingParameters = omit(parameters, omittedParameters);
+  if (!/application\/octet-stream/i.test(headers.accept) && (options.mediaType.format && (headers.accept = headers.accept.split(/,/).map(
+    (preview) => preview.replace(
+      /application\/vnd(\.\w+)(\.v3)?(\.\w+)?(\+json)?$/,
+      `application/vnd$1$2.${options.mediaType.format}`
+    )
+  ).join(",")), options.mediaType.previews.length)) {
+    let previewsFromAcceptHeader = headers.accept.match(/[\w-]+(?=-preview)/g) || [];
+    headers.accept = previewsFromAcceptHeader.concat(options.mediaType.previews).map((preview) => {
+      let format = options.mediaType.format ? `.${options.mediaType.format}` : "+json";
+      return `application/vnd.github.${preview}-preview${format}`;
+    }).join(",");
   }
-  const omittedParameters = Object.keys(options).filter((option) => urlVariableNames.includes(option)).concat("baseUrl");
-  const remainingParameters = omit(parameters, omittedParameters);
-  const isBinaryRequest = /application\/octet-stream/i.test(headers.accept);
-  if (!isBinaryRequest) {
-    if (options.mediaType.format) {
-      headers.accept = headers.accept.split(/,/).map(
-        (preview) => preview.replace(
-          /application\/vnd(\.\w+)(\.v3)?(\.\w+)?(\+json)?$/,
-          `application/vnd$1$2.${options.mediaType.format}`
-        )
-      ).join(",");
-    }
-    if (options.mediaType.previews.length) {
-      const previewsFromAcceptHeader = headers.accept.match(/[\w-]+(?=-preview)/g) || [];
-      headers.accept = previewsFromAcceptHeader.concat(options.mediaType.previews).map((preview) => {
-        const format = options.mediaType.format ? `.${options.mediaType.format}` : "+json";
-        return `application/vnd.github.${preview}-preview${format}`;
-      }).join(",");
-    }
-  }
-  if (["GET", "HEAD"].includes(method)) {
-    url = addQueryParameters(url, remainingParameters);
-  } else {
-    if ("data" in remainingParameters) {
-      body = remainingParameters.data;
-    } else {
-      if (Object.keys(remainingParameters).length) {
-        body = remainingParameters;
-      }
-    }
-  }
-  if (!headers["content-type"] && typeof body !== "undefined") {
-    headers["content-type"] = "application/json; charset=utf-8";
-  }
-  if (["PATCH", "PUT"].includes(method) && typeof body === "undefined") {
-    body = "";
-  }
-  return Object.assign(
+  return ["GET", "HEAD"].includes(method) ? url = addQueryParameters(url, remainingParameters) : "data" in remainingParameters ? body = remainingParameters.data : Object.keys(remainingParameters).length && (body = remainingParameters), !headers["content-type"] && typeof body < "u" && (headers["content-type"] = "application/json; charset=utf-8"), ["PATCH", "PUT"].includes(method) && typeof body > "u" && (body = ""), Object.assign(
     { method, url, headers },
-    typeof body !== "undefined" ? { body } : null,
+    typeof body < "u" ? { body } : null,
     options.request ? { request: options.request } : null
   );
 }
@@ -1467,8 +1130,7 @@ __name(endpointWithDefaults, "endpointWithDefaults");
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/with-defaults.js
 function withDefaults(oldDefaults, newDefaults) {
-  const DEFAULTS2 = merge(oldDefaults, newDefaults);
-  const endpoint2 = endpointWithDefaults.bind(null, DEFAULTS2);
+  let DEFAULTS2 = merge(oldDefaults, newDefaults), endpoint2 = endpointWithDefaults.bind(null, DEFAULTS2);
   return Object.assign(endpoint2, {
     DEFAULTS: DEFAULTS2,
     defaults: withDefaults.bind(null, DEFAULTS2),
@@ -1480,13 +1142,7 @@ __name(withDefaults, "withDefaults");
 
 // node_modules/.pnpm/universal-user-agent@7.0.2/node_modules/universal-user-agent/index.js
 function getUserAgent() {
-  if (typeof navigator === "object" && "userAgent" in navigator) {
-    return navigator.userAgent;
-  }
-  if (typeof process === "object" && process.version !== void 0) {
-    return `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})`;
-  }
-  return "<environment undetectable>";
+  return typeof navigator == "object" && "userAgent" in navigator ? navigator.userAgent : typeof process == "object" && process.version !== void 0 ? `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})` : "<environment undetectable>";
 }
 __name(getUserAgent, "getUserAgent");
 
@@ -1494,8 +1150,7 @@ __name(getUserAgent, "getUserAgent");
 var VERSION = "2.7.1";
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/defaults.js
-var userAgent = `octokit-next-endpoint.js/${VERSION} ${getUserAgent()}`;
-var DEFAULTS = {
+var userAgent = `octokit-next-endpoint.js/${VERSION} ${getUserAgent()}`, DEFAULTS = {
   method: "GET",
   baseUrl: "https://api.github.com",
   headers: {
@@ -1521,18 +1176,7 @@ function isObject(o) {
 __name(isObject, "isObject");
 function isPlainObject2(o) {
   var ctor, prot;
-  if (isObject(o) === false)
-    return false;
-  ctor = o.constructor;
-  if (ctor === void 0)
-    return true;
-  prot = ctor.prototype;
-  if (isObject(prot) === false)
-    return false;
-  if (prot.hasOwnProperty("isPrototypeOf") === false) {
-    return false;
-  }
-  return true;
+  return isObject(o) === !1 ? !1 : (ctor = o.constructor, ctor === void 0 ? !0 : (prot = ctor.prototype, !(isObject(prot) === !1 || prot.hasOwnProperty("isPrototypeOf") === !1)));
 }
 __name(isPlainObject2, "isPlainObject");
 
@@ -1555,27 +1199,15 @@ var RequestError = class extends Error {
    */
   response;
   constructor(message, statusCode, options) {
-    super(message);
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
-    this.name = "HttpError";
-    this.status = statusCode;
-    if ("response" in options) {
-      this.response = options.response;
-    }
-    const requestCopy = { ...options.request };
-    if (options.request.headers.authorization) {
-      requestCopy.headers = {
-        ...options.request.headers,
-        authorization: options.request.headers.authorization.replace(
-          / .*$/,
-          " [REDACTED]"
-        )
-      };
-    }
-    requestCopy.url = requestCopy.url.replace(/\bclient_secret=\w+/g, "client_secret=[REDACTED]").replace(/\baccess_token=\w+/g, "access_token=[REDACTED]");
-    this.request = requestCopy;
+    super(message), Error.captureStackTrace && Error.captureStackTrace(this, this.constructor), this.name = "HttpError", this.status = statusCode, "response" in options && (this.response = options.response);
+    let requestCopy = { ...options.request };
+    options.request.headers.authorization && (requestCopy.headers = {
+      ...options.request.headers,
+      authorization: options.request.headers.authorization.replace(
+        / .*$/,
+        " [REDACTED]"
+      )
+    }), requestCopy.url = requestCopy.url.replace(/\bclient_secret=\w+/g, "client_secret=[REDACTED]").replace(/\baccess_token=\w+/g, "access_token=[REDACTED]"), this.request = requestCopy;
   }
 };
 
@@ -1587,137 +1219,98 @@ __name(getBufferResponse, "getBufferResponse");
 
 // node_modules/.pnpm/@octokit-next+request@2.7.1/node_modules/@octokit-next/request/lib/fetch-wrapper.js
 function fetchWrapper(requestOptions) {
-  const log = requestOptions.request?.log || console;
-  if (isPlainObject2(requestOptions.body) || Array.isArray(requestOptions.body)) {
-    requestOptions.body = JSON.stringify(requestOptions.body);
-  }
-  let responseHeaders = {};
-  let status;
-  let url;
-  const { redirect, fetch: fetch2, ...remainingRequestOptions } = requestOptions.request || {};
-  const fetchOptions = {
+  let log = requestOptions.request?.log || console;
+  (isPlainObject2(requestOptions.body) || Array.isArray(requestOptions.body)) && (requestOptions.body = JSON.stringify(requestOptions.body));
+  let responseHeaders = {}, status, url, { redirect, fetch: fetch2, ...remainingRequestOptions } = requestOptions.request || {}, fetchOptions = {
     method: requestOptions.method,
     body: requestOptions.body,
     headers: requestOptions.headers,
     redirect,
     ...remainingRequestOptions
   };
-  const requestOrGlobalFetch = fetch2 || globalThis.fetch;
-  return requestOrGlobalFetch(requestOptions.url, fetchOptions).then(async (response) => {
-    url = response.url;
-    status = response.status;
-    for (const keyAndValue of response.headers) {
+  return (fetch2 || globalThis.fetch)(requestOptions.url, fetchOptions).then(async (response) => {
+    url = response.url, status = response.status;
+    for (let keyAndValue of response.headers)
       responseHeaders[keyAndValue[0]] = keyAndValue[1];
-    }
     if ("deprecation" in responseHeaders) {
-      const matches = responseHeaders.link && responseHeaders.link.match(/<([^>]+)>; rel="deprecation"/);
-      const deprecationLink = matches && matches.pop();
+      let matches = responseHeaders.link && responseHeaders.link.match(/<([^>]+)>; rel="deprecation"/), deprecationLink = matches && matches.pop();
       log.warn(
         `[@octokit/request] "${requestOptions.method} ${requestOptions.url}" is deprecated. It is scheduled to be removed on ${responseHeaders.sunset}${deprecationLink ? `. See ${deprecationLink}` : ""}`
       );
     }
-    if (status === 204 || status === 205) {
-      return;
-    }
-    if (requestOptions.method === "HEAD") {
-      if (status < 400) {
-        return;
+    if (!(status === 204 || status === 205)) {
+      if (requestOptions.method === "HEAD") {
+        if (status < 400)
+          return;
+        throw new RequestError(response.statusText, status, {
+          response: {
+            url,
+            status,
+            headers: responseHeaders,
+            data: void 0
+          },
+          request: requestOptions
+        });
       }
-      throw new RequestError(response.statusText, status, {
-        response: {
-          url,
-          status,
-          headers: responseHeaders,
-          data: void 0
-        },
-        request: requestOptions
-      });
+      if (status === 304)
+        throw new RequestError("Not modified", status, {
+          response: {
+            url,
+            status,
+            headers: responseHeaders,
+            data: await getResponseData(response)
+          },
+          request: requestOptions
+        });
+      if (status >= 400) {
+        let data = await getResponseData(response);
+        throw new RequestError(toErrorMessage(data), status, {
+          response: {
+            url,
+            status,
+            headers: responseHeaders,
+            data
+          },
+          request: requestOptions
+        });
+      }
+      return getResponseData(response);
     }
-    if (status === 304) {
-      throw new RequestError("Not modified", status, {
-        response: {
-          url,
-          status,
-          headers: responseHeaders,
-          data: await getResponseData(response)
-        },
-        request: requestOptions
-      });
-    }
-    if (status >= 400) {
-      const data = await getResponseData(response);
-      const error2 = new RequestError(toErrorMessage(data), status, {
-        response: {
-          url,
-          status,
-          headers: responseHeaders,
-          data
-        },
-        request: requestOptions
-      });
-      throw error2;
-    }
-    return getResponseData(response);
-  }).then((data) => {
-    return {
-      status,
-      url,
-      headers: responseHeaders,
-      data
-    };
-  }).catch((error2) => {
-    if (error2 instanceof RequestError)
-      throw error2;
-    if (error2.name === "AbortError")
-      throw error2;
-    throw new RequestError(error2.message, 500, {
+  }).then((data) => ({
+    status,
+    url,
+    headers: responseHeaders,
+    data
+  })).catch((error2) => {
+    throw error2 instanceof RequestError || error2.name === "AbortError" ? error2 : new RequestError(error2.message, 500, {
       request: requestOptions
     });
   });
 }
 __name(fetchWrapper, "fetchWrapper");
 async function getResponseData(response) {
-  const contentType = response.headers.get("content-type");
-  if (/application\/json/.test(contentType)) {
-    return response.json();
-  }
-  if (!contentType || /^text\/|charset=utf-8$/.test(contentType)) {
-    return response.text();
-  }
-  return getBufferResponse(response);
+  let contentType = response.headers.get("content-type");
+  return /application\/json/.test(contentType) ? response.json() : !contentType || /^text\/|charset=utf-8$/.test(contentType) ? response.text() : getBufferResponse(response);
 }
 __name(getResponseData, "getResponseData");
 function toErrorMessage(data) {
-  if (typeof data === "string")
-    return data;
-  if ("message" in data) {
-    if (Array.isArray(data.errors)) {
-      return `${data.message}: ${data.errors.map(JSON.stringify).join(", ")}`;
-    }
-    return data.message;
-  }
-  return `Unknown error: ${JSON.stringify(data)}`;
+  return typeof data == "string" ? data : "message" in data ? Array.isArray(data.errors) ? `${data.message}: ${data.errors.map(JSON.stringify).join(", ")}` : data.message : `Unknown error: ${JSON.stringify(data)}`;
 }
 __name(toErrorMessage, "toErrorMessage");
 
 // node_modules/.pnpm/@octokit-next+request@2.7.1/node_modules/@octokit-next/request/lib/with-defaults.js
 function withDefaults2(oldEndpoint, newDefaults) {
-  const endpoint2 = oldEndpoint.defaults(newDefaults);
-  const newApi = /* @__PURE__ */ __name(function(route, parameters) {
-    const endpointOptions = endpoint2.merge(route, parameters);
-    if (!endpointOptions.request || !endpointOptions.request.hook) {
+  let endpoint2 = oldEndpoint.defaults(newDefaults);
+  return Object.assign(/* @__PURE__ */ __name(function(route, parameters) {
+    let endpointOptions = endpoint2.merge(route, parameters);
+    if (!endpointOptions.request || !endpointOptions.request.hook)
       return fetchWrapper(endpoint2.parse(endpointOptions));
-    }
-    const request3 = /* @__PURE__ */ __name((route2, parameters2) => {
-      return fetchWrapper(endpoint2.parse(endpoint2.merge(route2, parameters2)));
-    }, "request");
-    Object.assign(request3, {
+    let request3 = /* @__PURE__ */ __name((route2, parameters2) => fetchWrapper(endpoint2.parse(endpoint2.merge(route2, parameters2))), "request");
+    return Object.assign(request3, {
       endpoint: endpoint2,
       defaults: withDefaults2.bind(null, endpoint2)
-    });
-    return endpointOptions.request.hook(request3, endpointOptions);
-  }, "newApi");
-  return Object.assign(newApi, {
+    }), endpointOptions.request.hook(request3, endpointOptions);
+  }, "newApi"), {
     endpoint: endpoint2,
     defaults: withDefaults2.bind(null, endpoint2)
   });
@@ -1732,52 +1325,41 @@ var request2 = withDefaults2(endpoint, {
 });
 
 // node_modules/.pnpm/@octokit-next+auth-token@2.7.1/node_modules/@octokit-next/auth-token/lib/auth.js
-var REGEX_IS_INSTALLATION_LEGACY = /^v1\./;
-var REGEX_IS_INSTALLATION = /^ghs_/;
-var REGEX_IS_USER_TO_SERVER = /^ghu_/;
+var REGEX_IS_INSTALLATION_LEGACY = /^v1\./, REGEX_IS_INSTALLATION = /^ghs_/, REGEX_IS_USER_TO_SERVER = /^ghu_/;
 async function auth(token) {
-  const isApp = token.split(/\./).length === 3;
-  const isInstallation = REGEX_IS_INSTALLATION_LEGACY.test(token) || REGEX_IS_INSTALLATION.test(token);
-  const isUserToServer = REGEX_IS_USER_TO_SERVER.test(token);
-  const tokenType = isApp ? "app" : isInstallation ? "installation" : isUserToServer ? "user-to-server" : "oauth";
+  let isApp = token.split(/\./).length === 3, isInstallation = REGEX_IS_INSTALLATION_LEGACY.test(token) || REGEX_IS_INSTALLATION.test(token), isUserToServer = REGEX_IS_USER_TO_SERVER.test(token);
   return {
     type: "token",
     token,
-    tokenType
+    tokenType: isApp ? "app" : isInstallation ? "installation" : isUserToServer ? "user-to-server" : "oauth"
   };
 }
 __name(auth, "auth");
 
 // node_modules/.pnpm/@octokit-next+auth-token@2.7.1/node_modules/@octokit-next/auth-token/lib/with-authorization-prefix.js
 function withAuthorizationPrefix(token) {
-  if (token.split(/\./).length === 3) {
-    return `bearer ${token}`;
-  }
-  return `token ${token}`;
+  return token.split(/\./).length === 3 ? `bearer ${token}` : `token ${token}`;
 }
 __name(withAuthorizationPrefix, "withAuthorizationPrefix");
 
 // node_modules/.pnpm/@octokit-next+auth-token@2.7.1/node_modules/@octokit-next/auth-token/lib/hook.js
 async function hook(token, request3, route, parameters) {
-  const endpoint2 = request3.endpoint.merge(route, parameters);
-  endpoint2.headers.authorization = withAuthorizationPrefix(token);
-  return request3(endpoint2);
+  let endpoint2 = request3.endpoint.merge(route, parameters);
+  return endpoint2.headers.authorization = withAuthorizationPrefix(token), request3(endpoint2);
 }
 __name(hook, "hook");
 
 // node_modules/.pnpm/@octokit-next+auth-token@2.7.1/node_modules/@octokit-next/auth-token/index.js
 function createTokenAuth(options) {
-  if (!options?.token) {
+  if (!options?.token)
     throw new Error(
       "[@octokit/auth-token] options.token not set for createTokenAuth(options)"
     );
-  }
-  if (typeof options?.token !== "string") {
+  if (typeof options?.token != "string")
     throw new Error(
       "[@octokit/auth-token] options.token is not a string for createTokenAuth(options)"
     );
-  }
-  const token = options.token.replace(/^(token|bearer) +/i, "");
+  let token = options.token.replace(/^(token|bearer) +/i, "");
   return Object.assign(auth.bind(null, token), {
     hook: hook.bind(null, token)
   });
@@ -1790,7 +1372,8 @@ var VERSION3 = "2.7.1";
 // node_modules/.pnpm/@octokit-next+graphql@2.7.1/node_modules/@octokit-next/graphql/lib/error.js
 function _buildMessageForResponseErrors(data) {
   return `Request failed due to following response errors:
-` + data.errors.map((e) => ` - ${e.message}`).join("\n");
+` + data.errors.map((e) => ` - ${e.message}`).join(`
+`);
 }
 __name(_buildMessageForResponseErrors, "_buildMessageForResponseErrors");
 var GraphqlResponseError = class extends Error {
@@ -1798,16 +1381,7 @@ var GraphqlResponseError = class extends Error {
     __name(this, "GraphqlResponseError");
   }
   constructor(request3, headers, response) {
-    super(_buildMessageForResponseErrors(response));
-    this.request = request3;
-    this.headers = headers;
-    this.response = response;
-    this.name = "GraphqlResponseError";
-    this.errors = response.errors;
-    this.data = response.data;
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
+    super(_buildMessageForResponseErrors(response)), this.request = request3, this.headers = headers, this.response = response, this.name = "GraphqlResponseError", this.errors = response.errors, this.data = response.data, Error.captureStackTrace && Error.captureStackTrace(this, this.constructor);
   }
 };
 
@@ -1820,46 +1394,25 @@ var NON_VARIABLE_OPTIONS = [
   "request",
   "query",
   "mediaType"
-];
-var FORBIDDEN_VARIABLE_OPTIONS = ["query", "method", "url"];
-var GHES_V3_SUFFIX_REGEX = /\/api\/v3\/?$/;
+], FORBIDDEN_VARIABLE_OPTIONS = ["query", "method", "url"], GHES_V3_SUFFIX_REGEX = /\/api\/v3\/?$/;
 function graphql2(request3, query, options) {
   if (options) {
-    if (typeof query === "string" && "query" in options) {
+    if (typeof query == "string" && "query" in options)
       return Promise.reject(
-        new Error(`[@octokit/graphql] "query" cannot be used as variable name`)
+        new Error('[@octokit/graphql] "query" cannot be used as variable name')
       );
-    }
-    for (const key in options) {
-      if (!FORBIDDEN_VARIABLE_OPTIONS.includes(key))
-        continue;
-      return Promise.reject(
-        new Error(`[@octokit/graphql] "${key}" cannot be used as variable name`)
-      );
-    }
+    for (let key in options)
+      if (FORBIDDEN_VARIABLE_OPTIONS.includes(key))
+        return Promise.reject(
+          new Error(`[@octokit/graphql] "${key}" cannot be used as variable name`)
+        );
   }
-  const parsedOptions = typeof query === "string" ? Object.assign({ query }, options) : query;
-  const requestOptions = Object.keys(parsedOptions).reduce((result, key) => {
-    if (NON_VARIABLE_OPTIONS.includes(key)) {
-      result[key] = parsedOptions[key];
-      return result;
-    }
-    if (!result.variables) {
-      result.variables = {};
-    }
-    result.variables[key] = parsedOptions[key];
-    return result;
-  }, {});
-  const baseUrl = parsedOptions.baseUrl || request3.endpoint.DEFAULTS.baseUrl;
-  if (GHES_V3_SUFFIX_REGEX.test(baseUrl)) {
-    requestOptions.url = baseUrl.replace(GHES_V3_SUFFIX_REGEX, "/api/graphql");
-  }
-  return request3(requestOptions).then((response) => {
+  let parsedOptions = typeof query == "string" ? Object.assign({ query }, options) : query, requestOptions = Object.keys(parsedOptions).reduce((result, key) => NON_VARIABLE_OPTIONS.includes(key) ? (result[key] = parsedOptions[key], result) : (result.variables || (result.variables = {}), result.variables[key] = parsedOptions[key], result), {}), baseUrl = parsedOptions.baseUrl || request3.endpoint.DEFAULTS.baseUrl;
+  return GHES_V3_SUFFIX_REGEX.test(baseUrl) && (requestOptions.url = baseUrl.replace(GHES_V3_SUFFIX_REGEX, "/api/graphql")), request3(requestOptions).then((response) => {
     if (response.data.errors) {
-      const headers = {};
-      for (const key of Object.keys(response.headers)) {
+      let headers = {};
+      for (let key of Object.keys(response.headers))
         headers[key] = response.headers[key];
-      }
       throw new GraphqlResponseError(requestOptions, headers, response.data);
     }
     return response.data.data;
@@ -1869,11 +1422,8 @@ __name(graphql2, "graphql");
 
 // node_modules/.pnpm/@octokit-next+graphql@2.7.1/node_modules/@octokit-next/graphql/lib/with-defaults.js
 function withDefaults3(oldRequest, newDefaults) {
-  const newRequest = oldRequest.defaults(newDefaults);
-  const newApi = /* @__PURE__ */ __name((query, options) => {
-    return graphql2(newRequest, query, options);
-  }, "newApi");
-  return Object.assign(newApi, {
+  let newRequest = oldRequest.defaults(newDefaults);
+  return Object.assign(/* @__PURE__ */ __name((query, options) => graphql2(newRequest, query, options), "newApi"), {
     defaults: withDefaults3.bind(null, newRequest),
     endpoint: newRequest.endpoint
   });
@@ -1898,58 +1448,19 @@ __name(withCustomRequest, "withCustomRequest");
 
 // node_modules/.pnpm/before-after-hook@3.0.2/node_modules/before-after-hook/lib/register.js
 function register(state, name, method, options) {
-  if (typeof method !== "function") {
+  if (typeof method != "function")
     throw new Error("method for before hook must be a function");
-  }
-  if (!options) {
-    options = {};
-  }
-  if (Array.isArray(name)) {
-    return name.reverse().reduce((callback, name2) => {
-      return register.bind(null, state, name2, callback, options);
-    }, method)();
-  }
-  return Promise.resolve().then(() => {
-    if (!state.registry[name]) {
-      return method(options);
-    }
-    return state.registry[name].reduce((method2, registered) => {
-      return registered.hook.bind(null, method2, options);
-    }, method)();
-  });
+  return options || (options = {}), Array.isArray(name) ? name.reverse().reduce((callback, name2) => register.bind(null, state, name2, callback, options), method)() : Promise.resolve().then(() => state.registry[name] ? state.registry[name].reduce((method2, registered) => registered.hook.bind(null, method2, options), method)() : method(options));
 }
 __name(register, "register");
 
 // node_modules/.pnpm/before-after-hook@3.0.2/node_modules/before-after-hook/lib/add.js
 function addHook(state, kind, name, hook2) {
-  const orig = hook2;
-  if (!state.registry[name]) {
-    state.registry[name] = [];
-  }
-  if (kind === "before") {
-    hook2 = /* @__PURE__ */ __name((method, options) => {
-      return Promise.resolve().then(orig.bind(null, options)).then(method.bind(null, options));
-    }, "hook");
-  }
-  if (kind === "after") {
-    hook2 = /* @__PURE__ */ __name((method, options) => {
-      let result;
-      return Promise.resolve().then(method.bind(null, options)).then((result_) => {
-        result = result_;
-        return orig(result, options);
-      }).then(() => {
-        return result;
-      });
-    }, "hook");
-  }
-  if (kind === "error") {
-    hook2 = /* @__PURE__ */ __name((method, options) => {
-      return Promise.resolve().then(method.bind(null, options)).catch((error2) => {
-        return orig(error2, options);
-      });
-    }, "hook");
-  }
-  state.registry[name].push({
+  let orig = hook2;
+  state.registry[name] || (state.registry[name] = []), kind === "before" && (hook2 = /* @__PURE__ */ __name((method, options) => Promise.resolve().then(orig.bind(null, options)).then(method.bind(null, options)), "hook")), kind === "after" && (hook2 = /* @__PURE__ */ __name((method, options) => {
+    let result;
+    return Promise.resolve().then(method.bind(null, options)).then((result_) => (result = result_, orig(result, options))).then(() => result);
+  }, "hook")), kind === "error" && (hook2 = /* @__PURE__ */ __name((method, options) => Promise.resolve().then(method.bind(null, options)).catch((error2) => orig(error2, options)), "hook")), state.registry[name].push({
     hook: hook2,
     orig
   });
@@ -1958,52 +1469,38 @@ __name(addHook, "addHook");
 
 // node_modules/.pnpm/before-after-hook@3.0.2/node_modules/before-after-hook/lib/remove.js
 function removeHook(state, name, method) {
-  if (!state.registry[name]) {
+  if (!state.registry[name])
     return;
-  }
-  const index = state.registry[name].map((registered) => {
-    return registered.orig;
-  }).indexOf(method);
-  if (index === -1) {
-    return;
-  }
-  state.registry[name].splice(index, 1);
+  let index = state.registry[name].map((registered) => registered.orig).indexOf(method);
+  index !== -1 && state.registry[name].splice(index, 1);
 }
 __name(removeHook, "removeHook");
 
 // node_modules/.pnpm/before-after-hook@3.0.2/node_modules/before-after-hook/index.js
-var bind = Function.bind;
-var bindable = bind.bind(bind);
+var bind = Function.bind, bindable = bind.bind(bind);
 function bindApi(hook2, state, name) {
-  const removeHookRef = bindable(removeHook, null).apply(
+  let removeHookRef = bindable(removeHook, null).apply(
     null,
     name ? [state, name] : [state]
   );
-  hook2.api = { remove: removeHookRef };
-  hook2.remove = removeHookRef;
-  ["before", "error", "after", "wrap"].forEach((kind) => {
-    const args = name ? [state, kind, name] : [state, kind];
+  hook2.api = { remove: removeHookRef }, hook2.remove = removeHookRef, ["before", "error", "after", "wrap"].forEach((kind) => {
+    let args = name ? [state, kind, name] : [state, kind];
     hook2[kind] = hook2.api[kind] = bindable(addHook, null).apply(null, args);
   });
 }
 __name(bindApi, "bindApi");
 function Singular() {
-  const singularHookName = Symbol("Singular");
-  const singularHookState = {
+  let singularHookName = Symbol("Singular"), singularHookState = {
     registry: {}
-  };
-  const singularHook = register.bind(null, singularHookState, singularHookName);
-  bindApi(singularHook, singularHookState, singularHookName);
-  return singularHook;
+  }, singularHook = register.bind(null, singularHookState, singularHookName);
+  return bindApi(singularHook, singularHookState, singularHookName), singularHook;
 }
 __name(Singular, "Singular");
 function Collection() {
-  const state = {
+  let state = {
     registry: {}
-  };
-  const hook2 = register.bind(null, state);
-  bindApi(hook2, state);
-  return hook2;
+  }, hook2 = register.bind(null, state);
+  return bindApi(hook2, state), hook2;
 }
 __name(Collection, "Collection");
 var before_after_hook_default = { Singular, Collection };
@@ -2022,7 +1519,7 @@ var Octokit = class {
     userAgent: `octokit-next-core.js/${VERSION4} ${getUserAgent()}`
   };
   static withPlugins(newPlugins) {
-    const currentPlugins = this.PLUGINS;
+    let currentPlugins = this.PLUGINS;
     return class extends this {
       static PLUGINS = currentPlugins.concat(
         newPlugins.filter((plugin) => !currentPlugins.includes(plugin))
@@ -2030,8 +1527,7 @@ var Octokit = class {
     };
   }
   static withDefaults(defaults) {
-    const newDefaultUserAgent = [defaults?.userAgent, this.DEFAULTS.userAgent].filter(Boolean).join(" ");
-    const newDefaults = {
+    let newDefaultUserAgent = [defaults?.userAgent, this.DEFAULTS.userAgent].filter(Boolean).join(" "), newDefaults = {
       ...this.DEFAULTS,
       ...defaults,
       userAgent: newDefaultUserAgent,
@@ -2042,7 +1538,7 @@ var Octokit = class {
     };
     return class extends this {
       constructor(options) {
-        if (typeof defaults === "function") {
+        if (typeof defaults == "function") {
           super(defaults(options, newDefaults));
           return;
         }
@@ -2061,8 +1557,7 @@ var Octokit = class {
         ...options?.request
       }
     };
-    const hook2 = new before_after_hook_default.Collection();
-    const requestDefaults = {
+    let hook2 = new before_after_hook_default.Collection(), requestDefaults = {
       baseUrl: this.options.baseUrl,
       headers: {},
       request: {
@@ -2073,21 +1568,10 @@ var Octokit = class {
         previews: [],
         format: ""
       }
-    };
-    const userAgent2 = [options?.userAgent, this.constructor.DEFAULTS.userAgent].filter(Boolean).join(" ");
-    requestDefaults.headers["user-agent"] = userAgent2;
-    if (this.options.previews) {
-      requestDefaults.mediaType.previews = this.options.previews;
-    }
-    if (this.options.timeZone) {
-      requestDefaults.headers["time-zone"] = this.options.timeZone;
-    }
-    this.constructor.PLUGINS.forEach((plugin) => {
+    }, userAgent2 = [options?.userAgent, this.constructor.DEFAULTS.userAgent].filter(Boolean).join(" ");
+    if (requestDefaults.headers["user-agent"] = userAgent2, this.options.previews && (requestDefaults.mediaType.previews = this.options.previews), this.options.timeZone && (requestDefaults.headers["time-zone"] = this.options.timeZone), this.constructor.PLUGINS.forEach((plugin) => {
       Object.assign(this, plugin(this, this.options));
-    });
-    this.request = request2.defaults(requestDefaults);
-    this.graphql = withCustomRequest(this.request).defaults(requestDefaults);
-    this.log = Object.assign(
+    }), this.request = request2.defaults(requestDefaults), this.graphql = withCustomRequest(this.request).defaults(requestDefaults), this.log = Object.assign(
       {
         debug: () => {
         },
@@ -2097,21 +1581,8 @@ var Octokit = class {
         error: console.error.bind(console)
       },
       this.options.log
-    );
-    this.hook = hook2;
-    if (!this.options.authStrategy) {
-      if (!this.options.auth) {
-        this.auth = async () => ({
-          type: "unauthenticated"
-        });
-      } else {
-        const auth2 = createTokenAuth({ token: this.options.auth });
-        hook2.wrap("request", auth2.hook);
-        this.auth = auth2;
-      }
-    } else {
-      const { authStrategy, ...otherOptions } = this.options;
-      const auth2 = authStrategy(
+    ), this.hook = hook2, this.options.authStrategy) {
+      let { authStrategy, ...otherOptions } = this.options, auth2 = authStrategy(
         Object.assign(
           {
             request: this.request,
@@ -2127,8 +1598,14 @@ var Octokit = class {
           this.options.auth
         )
       );
-      hook2.wrap("request", auth2.hook);
-      this.auth = auth2;
+      hook2.wrap("request", auth2.hook), this.auth = auth2;
+    } else if (!this.options.auth)
+      this.auth = async () => ({
+        type: "unauthenticated"
+      });
+    else {
+      let auth2 = createTokenAuth({ token: this.options.auth });
+      hook2.wrap("request", auth2.hook), this.auth = auth2;
     }
   }
 };
@@ -2136,57 +1613,35 @@ var Octokit = class {
 // node_modules/.pnpm/@octokit+plugin-paginate-rest@10.0.0_@octokit+core@6.0.1/node_modules/@octokit/plugin-paginate-rest/dist-bundle/index.js
 var VERSION5 = "0.0.0-development";
 function normalizePaginatedListResponse(response) {
-  if (!response.data) {
+  if (!response.data)
     return {
       ...response,
       data: []
     };
-  }
-  const responseNeedsNormalization = "total_count" in response.data && !("url" in response.data);
-  if (!responseNeedsNormalization)
+  if (!("total_count" in response.data && !("url" in response.data)))
     return response;
-  const incompleteResults = response.data.incomplete_results;
-  const repositorySelection = response.data.repository_selection;
-  const totalCount = response.data.total_count;
-  delete response.data.incomplete_results;
-  delete response.data.repository_selection;
-  delete response.data.total_count;
-  const namespaceKey = Object.keys(response.data)[0];
-  const data = response.data[namespaceKey];
-  response.data = data;
-  if (typeof incompleteResults !== "undefined") {
-    response.data.incomplete_results = incompleteResults;
-  }
-  if (typeof repositorySelection !== "undefined") {
-    response.data.repository_selection = repositorySelection;
-  }
-  response.data.total_count = totalCount;
-  return response;
+  let incompleteResults = response.data.incomplete_results, repositorySelection = response.data.repository_selection, totalCount = response.data.total_count;
+  delete response.data.incomplete_results, delete response.data.repository_selection, delete response.data.total_count;
+  let namespaceKey = Object.keys(response.data)[0], data = response.data[namespaceKey];
+  return response.data = data, typeof incompleteResults < "u" && (response.data.incomplete_results = incompleteResults), typeof repositorySelection < "u" && (response.data.repository_selection = repositorySelection), response.data.total_count = totalCount, response;
 }
 __name(normalizePaginatedListResponse, "normalizePaginatedListResponse");
 function iterator(octokit, route, parameters) {
-  const options = typeof route === "function" ? route.endpoint(parameters) : octokit.request.endpoint(route, parameters);
-  const requestMethod = typeof route === "function" ? route : octokit.request;
-  const method = options.method;
-  const headers = options.headers;
-  let url = options.url;
+  let options = typeof route == "function" ? route.endpoint(parameters) : octokit.request.endpoint(route, parameters), requestMethod = typeof route == "function" ? route : octokit.request, method = options.method, headers = options.headers, url = options.url;
   return {
     [Symbol.asyncIterator]: () => ({
       async next() {
         if (!url)
-          return { done: true };
+          return { done: !0 };
         try {
-          const response = await requestMethod({ method, url, headers });
-          const normalizedResponse = normalizePaginatedListResponse(response);
-          url = ((normalizedResponse.headers.link || "").match(
+          let response = await requestMethod({ method, url, headers }), normalizedResponse = normalizePaginatedListResponse(response);
+          return url = ((normalizedResponse.headers.link || "").match(
             /<([^>]+)>;\s*rel="next"/
-          ) || [])[1];
-          return { value: normalizedResponse };
+          ) || [])[1], { value: normalizedResponse };
         } catch (error2) {
           if (error2.status !== 409)
             throw error2;
-          url = "";
-          return {
+          return url = "", {
             value: {
               status: 200,
               headers: {},
@@ -2200,11 +1655,7 @@ function iterator(octokit, route, parameters) {
 }
 __name(iterator, "iterator");
 function paginate(octokit, route, parameters, mapFn) {
-  if (typeof parameters === "function") {
-    mapFn = parameters;
-    parameters = void 0;
-  }
-  return gather(
+  return typeof parameters == "function" && (mapFn = parameters, parameters = void 0), gather(
     octokit,
     [],
     iterator(octokit, route, parameters)[Symbol.asyncIterator](),
@@ -2214,21 +1665,15 @@ function paginate(octokit, route, parameters, mapFn) {
 __name(paginate, "paginate");
 function gather(octokit, results, iterator2, mapFn) {
   return iterator2.next().then((result) => {
-    if (result.done) {
+    if (result.done)
       return results;
-    }
-    let earlyExit = false;
+    let earlyExit = !1;
     function done() {
-      earlyExit = true;
+      earlyExit = !0;
     }
-    __name(done, "done");
-    results = results.concat(
+    return __name(done, "done"), results = results.concat(
       mapFn ? mapFn(result.value, done) : result.value.data
-    );
-    if (earlyExit) {
-      return results;
-    }
-    return gather(octokit, results, iterator2, mapFn);
+    ), earlyExit ? results : gather(octokit, results, iterator2, mapFn);
   });
 }
 __name(gather, "gather");
@@ -2247,7 +1692,7 @@ paginateRest.VERSION = VERSION5;
 
 // src/github/api/paginate.ts
 var paginate2 = /* @__PURE__ */ __name(async (endpoint2, options) => {
-  const { gitHubApiToken } = useInputs();
+  let { gitHubApiToken } = useInputs();
   return new (Octokit.withPlugins([paginateRest]))({
     auth: gitHubApiToken
   }).paginate(endpoint2, options);
@@ -2255,14 +1700,13 @@ var paginate2 = /* @__PURE__ */ __name(async (endpoint2, options) => {
 
 // src/github/deployment/get.ts
 var getGitHubDeployments = /* @__PURE__ */ __name(async () => {
-  const { repo, branch } = useContext();
-  const deployments = await paginate2("GET /repos/{owner}/{repo}/deployments", {
+  let { repo, branch } = useContext();
+  return await paginate2("GET /repos/{owner}/{repo}/deployments", {
     owner: repo.owner,
     repo: repo.repo,
     ref: branch,
     per_page: 100
   });
-  return deployments;
 }, "getGitHubDeployments");
 
 // src/github/deployment/status.ts
@@ -2298,31 +1742,24 @@ var MutationCreateGitHubDeploymentStatus = graphql(
 
 // src/delete.ts
 var idDeploymentPayload = /* @__PURE__ */ __name((payload) => {
-  const parsedPayload = typeof payload === "string" ? JSON.parse(payload) : payload;
-  if (!parsedPayload || typeof parsedPayload !== "object")
-    return false;
-  return "cloudflareId" in parsedPayload && "url" in parsedPayload;
-}, "idDeploymentPayload");
-var deleteDeployments = /* @__PURE__ */ __name(async (isProduction = false) => {
+  let parsedPayload = typeof payload == "string" ? JSON.parse(payload) : payload;
+  return !parsedPayload || typeof parsedPayload != "object" ? !1 : "cloudflareId" in parsedPayload && "url" in parsedPayload;
+}, "idDeploymentPayload"), deleteDeployments = /* @__PURE__ */ __name(async (isProduction = !1) => {
   let deployments = await getGitHubDeployments();
-  if (isProduction) {
-    deployments = deployments.slice(5);
-  }
-  if (deployments.length === 0) {
+  if (isProduction && (deployments = deployments.slice(5)), deployments.length === 0) {
     info("No deployments found to delete");
     return;
   }
-  for (const deployment of deployments) {
-    const payload = deployment.payload;
+  for (let deployment of deployments) {
+    let payload = deployment.payload;
     if (!idDeploymentPayload(payload)) {
       info(`Deployment ${deployment.id} has no payload`);
       continue;
     }
-    const { cloudflareId, commentId, url } = payload;
-    const deletedCloudflareDeployment = await deleteCloudflareDeployment(cloudflareId);
-    if (!deletedCloudflareDeployment)
+    let { cloudflareId, commentId, url } = payload;
+    if (!await deleteCloudflareDeployment(cloudflareId))
       continue;
-    const updateStatusGitHubDeployment = await request({
+    let updateStatusGitHubDeployment = await request({
       query: MutationCreateGitHubDeploymentStatus,
       variables: {
         environment: deployment.environment,
@@ -2332,7 +1769,7 @@ var deleteDeployments = /* @__PURE__ */ __name(async (isProduction = false) => {
         state: "INACTIVE" /* Inactive */
       },
       options: {
-        errorThrows: false
+        errorThrows: !1
       }
     });
     if (updateStatusGitHubDeployment.errors) {
@@ -2343,14 +1780,14 @@ var deleteDeployments = /* @__PURE__ */ __name(async (isProduction = false) => {
       );
       continue;
     }
-    const deletedGitHubDeployment = commentId ? await request({
+    let deletedGitHubDeployment = commentId ? await request({
       query: MutationDeleteGitHubDeploymentAndComment,
       variables: {
         deploymentId: deployment.node_id,
         commentId
       },
       options: {
-        errorThrows: false
+        errorThrows: !1
       }
     }) : await request({
       query: MutationDeleteGitHubDeployment,
@@ -2358,17 +1795,14 @@ var deleteDeployments = /* @__PURE__ */ __name(async (isProduction = false) => {
         deploymentId: deployment.node_id
       },
       options: {
-        errorThrows: false
+        errorThrows: !1
       }
     });
-    if (deletedGitHubDeployment.errors) {
-      warning(
-        `Error deleting GitHub deployment: ${JSON.stringify(
-          deletedGitHubDeployment.errors
-        )}`
-      );
-    }
-    info(`GitHub Deployment Deleted: ${deployment.node_id}`);
+    deletedGitHubDeployment.errors && warning(
+      `Error deleting GitHub deployment: ${JSON.stringify(
+        deletedGitHubDeployment.errors
+      )}`
+    ), info(`GitHub Deployment Deleted: ${deployment.node_id}`);
   }
 }, "deleteDeployments");
 
@@ -2386,26 +1820,22 @@ var MutationAddComment = graphql(
     }
   }
 `
-);
-var addComment = /* @__PURE__ */ __name(async (deployment) => {
-  const { eventName, payload } = useContextEvent();
+), addComment = /* @__PURE__ */ __name(async (deployment) => {
+  let { eventName, payload } = useContextEvent();
   if (eventName === "pull_request" && payload.action !== "closed") {
-    const prNodeId = payload.pull_request.node_id ?? raise("No pull request node id");
-    const { sha } = useContext();
-    const rawBody = `## Cloudflare Pages Deployment
+    let prNodeId = payload.pull_request.node_id ?? raise("No pull request node id"), { sha } = useContext(), rawBody = `## Cloudflare Pages Deployment
  **Environment:** ${deployment.environment} 
  **Project:** ${deployment.project_name} 
  **Built with commit:** ${sha}
  **Preview URL:** ${deployment.url} 
  **Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}`;
-    const comment = await request({
+    return (await request({
       query: MutationAddComment,
       variables: {
         subjectId: prNodeId,
         body: rawBody
       }
-    });
-    return comment.data.addComment?.commentEdge?.node?.id;
+    })).data.addComment?.commentEdge?.node?.id;
   }
 }, "addComment");
 
@@ -2418,8 +1848,7 @@ var EnvironmentFragment = graphql(
     id
   }
 `
-);
-var MutationCreateEnvironment = graphql(
+), MutationCreateEnvironment = graphql(
   /* GraphQL */
   `
   mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
@@ -2452,11 +1881,8 @@ var QueryGetEnvironment = graphql(
     }
   }
 `
-);
-var checkEnvironment = /* @__PURE__ */ __name(async () => {
-  const { gitHubEnvironment } = useInputs();
-  const { repo, ref } = useContext();
-  const environment = await request({
+), checkEnvironment = /* @__PURE__ */ __name(async () => {
+  let { gitHubEnvironment } = useInputs(), { repo, ref } = useContext(), environment = await request({
     query: QueryGetEnvironment,
     variables: {
       owner: repo.owner,
@@ -2465,18 +1891,13 @@ var checkEnvironment = /* @__PURE__ */ __name(async () => {
       qualifiedName: ref
     },
     options: {
-      errorThrows: false
+      errorThrows: !1
     }
   });
-  if (environment.errors) {
-    error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
-  }
-  if (!environment.data.repository?.environment) {
+  if (environment.errors && error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`), !environment.data.repository?.environment)
     throw new Error(`GitHub Environment: Not created for ${gitHubEnvironment}`);
-  }
-  if (!environment.data.repository?.ref?.id) {
+  if (!environment.data.repository?.ref?.id)
     throw new Error(`GitHub Environment: No ref id ${gitHubEnvironment}`);
-  }
   return {
     ...environment.data.repository.environment,
     refId: environment.data.repository?.ref?.id
@@ -2511,12 +1932,8 @@ var MutationCreateGitHubDeployment = graphql(
     }
   }
 `
-);
-var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url }, commentId) => {
-  const { name, refId } = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required");
-  const { repo } = useContext();
-  const payload = { cloudflareId: id, url, commentId };
-  const deployment = await request({
+), createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url }, commentId) => {
+  let { name, refId } = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required"), { repo } = useContext(), payload = { cloudflareId: id, url, commentId }, gitHubDeploymentId = (await request({
     query: MutationCreateGitHubDeployment,
     variables: {
       repositoryId: repo.node_id,
@@ -2525,8 +1942,7 @@ var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url }, commentI
       payload: JSON.stringify(payload),
       description: `Cloudflare Pages Deployment: ${id}`
     }
-  });
-  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id ?? raise("GitHub Deployment: GitHub deployment id is required");
+  })).data.createDeployment?.deployment?.id ?? raise("GitHub Deployment: GitHub deployment id is required");
   await request({
     query: MutationCreateGitHubDeploymentStatus,
     variables: {
@@ -2541,37 +1957,32 @@ var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url }, commentI
 
 // src/main.ts
 async function run() {
-  const { branch } = useContext();
-  const { eventName, payload } = useContextEvent();
+  let { branch } = useContext(), { eventName, payload } = useContextEvent();
   if (eventName !== "push" && eventName !== "pull_request") {
     setFailed(`GitHub Action event name '${eventName}' not supported.`);
     return;
   }
-  const project = await getCloudflareProject();
+  let project = await getCloudflareProject();
   if (eventName === "pull_request" && payload.action === "closed") {
     await deleteDeployments();
     return;
   }
-  const isProduction = project.production_branch === branch;
-  if (eventName === "push" && isProduction) {
+  let isProduction = project.production_branch === branch;
+  if (eventName === "push" && isProduction)
     try {
-      info("Is production branch, deleting old deployments but latest 5");
-      await deleteDeployments(isProduction);
+      info("Is production branch, deleting old deployments but latest 5"), await deleteDeployments(isProduction);
     } catch {
       info("Error deleting deployments for production branch");
     }
-  }
-  const cloudflareDeployment = await createCloudflareDeployment();
-  const commentId = await addComment(cloudflareDeployment);
+  let cloudflareDeployment = await createCloudflareDeployment(), commentId = await addComment(cloudflareDeployment);
   await createGitHubDeployment(cloudflareDeployment, commentId);
 }
 __name(run, "run");
 
 // src/index.ts
 try {
-  void run();
+  run();
 } catch (error2) {
-  if (error2 instanceof Error)
-    setFailed(error2.message);
+  error2 instanceof Error && setFailed(error2.message);
 }
 //# sourceMappingURL=index.js.map
