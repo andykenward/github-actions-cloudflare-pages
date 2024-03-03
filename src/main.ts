@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import {info} from '@unlike/github-actions-core'
+import {error, info} from '@unlike/github-actions-core'
 
 import {createCloudflareDeployment} from './cloudflare/deployment/create.js'
 import {getCloudflareProject} from './cloudflare/project/get.js'
@@ -19,7 +19,10 @@ export async function run() {
   /**
    * Only support eventName push & pull_request.
    */
-  if (eventName !== 'push' && eventName !== 'pull_request') return
+  if (eventName !== 'push' && eventName !== 'pull_request') {
+    error(`GitHub Action event name '${eventName}' not supported.`)
+    return
+  }
 
   /**
    * Validate Cloudflare project
