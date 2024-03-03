@@ -2840,8 +2840,10 @@ var deleteDeployments = /* @__PURE__ */ __name(async (isProduction = false) => {
 async function run() {
   const { branch } = useContext();
   const { eventName, payload } = useContextEvent();
-  if (eventName !== "push" && eventName !== "pull_request")
+  if (eventName !== "push" && eventName !== "pull_request") {
+    error(`GitHub Action event name '${eventName}' not supported.`);
     return;
+  }
   const project = await getCloudflareProject();
   if (eventName === "pull_request" && payload.action === "closed") {
     await deleteDeployments();
