@@ -1,15 +1,16 @@
 import {error, notice} from '@unlike/github-actions-core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
+import type {MockApi} from '@/tests/helpers/api.js'
+
 import {
   checkEnvironment,
   createEnvironment,
   MutationCreateEnvironment,
   QueryGetEnvironment
 } from '@/src/github/environment.js'
-
-import type {MockApi} from '../helpers/index.js'
-import {getMockApi, TEST_ENV_VARS} from '../helpers/index.js'
+import {getMockApi} from '@/tests/helpers/api.js'
+import {TEST_ENV_VARS} from '@/tests/helpers/env.js'
 
 vi.mock('@unlike/github-actions-core')
 describe('environment', () => {

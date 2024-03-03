@@ -19,7 +19,8 @@
   "npm.packageManager": "pnpm",
   "javascript.preferences.importModuleSpecifierEnding": "js",
   "typescript.preferences.importModuleSpecifierEnding": "js",
-  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.preferences.importModuleSpecifier": "shortest",
+  "javascript.preferences.importModuleSpecifier": "shortest",
   "typescript.tsdk": "node_modules/typescript/lib",
   "editor.quickSuggestions": {
     "other": false,

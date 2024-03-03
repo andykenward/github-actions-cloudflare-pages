@@ -5,6 +5,7 @@ import {EOL} from 'node:os'
 import {debug, isDebug} from '@unlike/github-actions-core'
 
 import type {EventName} from '@/types/github/workflow-events.js'
+
 import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 
 import type {WorkflowEventExtract, WorkflowEventPayload} from './types.js'

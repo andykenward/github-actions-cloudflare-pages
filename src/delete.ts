@@ -2,16 +2,17 @@ import {info, warning} from '@unlike/github-actions-core'
 
 import {DeploymentStatusState} from '@/gql/graphql.js'
 
-import type {PayloadGithubDeployment} from './github/index.js'
+import type {PayloadGithubDeployment} from './github/deployment/types.js'
+
 import {getCloudflareLogEndpoint} from './cloudflare/api/endpoints.js'
 import {deleteCloudflareDeployment} from './cloudflare/deployment/delete.js'
+import {request} from './github/api/client.js'
 import {
-  getGitHubDeployments,
-  MutationCreateGitHubDeploymentStatus,
   MutationDeleteGitHubDeployment,
-  MutationDeleteGitHubDeploymentAndComment,
-  request
-} from './github/index.js'
+  MutationDeleteGitHubDeploymentAndComment
+} from './github/deployment/delete.js'
+import {getGitHubDeployments} from './github/deployment/get.js'
+import {MutationCreateGitHubDeploymentStatus} from './github/deployment/status.js'
 
 const idDeploymentPayload = (
   payload:

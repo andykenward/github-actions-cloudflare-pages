@@ -1,8 +1,8 @@
 import type {GraphQLError} from 'graphql'
 
 import type {TypedDocumentString} from '@/gql/graphql.js'
-import {useInputs} from '@/src/inputs.js'
 
+import {useInputs} from '../../inputs.js'
 import {useContext} from '../context.js'
 
 /**

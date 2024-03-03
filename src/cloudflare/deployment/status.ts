@@ -1,8 +1,8 @@
 import {debug} from '@unlike/github-actions-core'
 
-import {getCloudflareLatestDeployment} from '@/src/cloudflare/deployment/get.js'
-
 import type {PagesDeployment} from '../types.js'
+
+import {getCloudflareLatestDeployment} from './get.js'
 
 const ERROR_KEY = `Status Of Deployment:`
 

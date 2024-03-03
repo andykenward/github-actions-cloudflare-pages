@@ -1,6 +1,7 @@
 import {describe, expect, test} from 'vitest'
 
 import type {PagesDeployment} from '@/src/cloudflare/types.js'
+
 import {getCloudflareDeploymentAlias} from '@/src/cloudflare/deployment/get.js'
 
 describe('getCloudflareDeploymentAlias', () => {

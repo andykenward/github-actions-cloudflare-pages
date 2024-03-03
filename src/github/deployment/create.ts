@@ -1,10 +1,11 @@
-import type {PagesDeployment} from '@/src/cloudflare/types.js'
 import {graphql} from '@/gql/gql.js'
 import {DeploymentStatusState} from '@/gql/graphql.js'
-import {getCloudflareLogEndpoint} from '@/src/cloudflare/api/endpoints.js'
-import {raise} from '@/src/utils.js'
 
+import type {PagesDeployment} from '../../cloudflare/types.js'
 import type {PayloadGithubDeployment} from './types.js'
+
+import {getCloudflareLogEndpoint} from '../../cloudflare/api/endpoints.js'
+import {raise} from '../../utils.js'
 import {request} from '../api/client.js'
 import {useContext} from '../context.js'
 import {checkEnvironment} from '../environment.js'

@@ -1,6 +1,7 @@
 import {error as coreError} from '@unlike/github-actions-core'
 
 import type {FetchError, FetchResult} from '../types.js'
+
 import {ParseError} from './parse-error.js'
 
 /**
