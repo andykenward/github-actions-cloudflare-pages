@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://json.schemastore.org/pre-commit-config.json
 
-exclude: __generated__|pnpm-lock.yaml
+exclude: __generated__|pnpm-lock.yaml|dist
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
