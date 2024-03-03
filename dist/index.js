@@ -476,33 +476,6 @@ var summary = _summary;
 // src/cloudflare/deployment/create.ts
 import { strict } from "node:assert";
 
-// input-keys.ts
-var INPUT_KEY_CLOUDFLARE_ACCOUNT_ID = "cloudflare-account-id";
-var INPUT_KEY_CLOUDFLARE_API_TOKEN = "cloudflare-api-token";
-var INPUT_KEY_CLOUDFLARE_PROJECT_NAME = "cloudflare-project-name";
-var INPUT_KEY_DIRECTORY = "directory";
-var INPUT_KEY_GITHUB_ENVIRONMENT = "github-environment";
-var INPUT_KEY_GITHUB_TOKEN = "github-token";
-
-// src/inputs.ts
-var OPTIONS = {
-  required: true
-};
-var getInputs = /* @__PURE__ */ __name(() => {
-  return {
-    cloudflareAccountId: getInput(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID, OPTIONS),
-    cloudflareApiToken: getInput(INPUT_KEY_CLOUDFLARE_API_TOKEN, OPTIONS),
-    cloudflareProjectName: getInput(INPUT_KEY_CLOUDFLARE_PROJECT_NAME, OPTIONS),
-    directory: getInput(INPUT_KEY_DIRECTORY, OPTIONS),
-    gitHubApiToken: getInput(INPUT_KEY_GITHUB_TOKEN, OPTIONS),
-    gitHubEnvironment: getInput(INPUT_KEY_GITHUB_ENVIRONMENT, OPTIONS)
-  };
-}, "getInputs");
-var _inputs;
-var useInputs = /* @__PURE__ */ __name(() => {
-  return _inputs ?? (_inputs = getInputs());
-}, "useInputs");
-
 // src/utils.ts
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
@@ -662,6 +635,450 @@ var useContext = /* @__PURE__ */ __name(() => {
 }, "useContext");
 var useContextEvent = /* @__PURE__ */ __name(() => useContext().event, "useContextEvent");
 
+// input-keys.ts
+var INPUT_KEY_CLOUDFLARE_ACCOUNT_ID = "cloudflare-account-id";
+var INPUT_KEY_CLOUDFLARE_API_TOKEN = "cloudflare-api-token";
+var INPUT_KEY_CLOUDFLARE_PROJECT_NAME = "cloudflare-project-name";
+var INPUT_KEY_DIRECTORY = "directory";
+var INPUT_KEY_GITHUB_ENVIRONMENT = "github-environment";
+var INPUT_KEY_GITHUB_TOKEN = "github-token";
+
+// src/inputs.ts
+var OPTIONS = {
+  required: true
+};
+var getInputs = /* @__PURE__ */ __name(() => {
+  return {
+    cloudflareAccountId: getInput(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID, OPTIONS),
+    cloudflareApiToken: getInput(INPUT_KEY_CLOUDFLARE_API_TOKEN, OPTIONS),
+    cloudflareProjectName: getInput(INPUT_KEY_CLOUDFLARE_PROJECT_NAME, OPTIONS),
+    directory: getInput(INPUT_KEY_DIRECTORY, OPTIONS),
+    gitHubApiToken: getInput(INPUT_KEY_GITHUB_TOKEN, OPTIONS),
+    gitHubEnvironment: getInput(INPUT_KEY_GITHUB_ENVIRONMENT, OPTIONS)
+  };
+}, "getInputs");
+var _inputs;
+var useInputs = /* @__PURE__ */ __name(() => {
+  return _inputs ?? (_inputs = getInputs());
+}, "useInputs");
+
+// src/cloudflare/api/endpoints.ts
+var API_ENDPOINT = `https://api.cloudflare.com`;
+var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path) => {
+  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
+  const input = [
+    `/client/v4/accounts/${cloudflareAccountId}/pages/projects/${cloudflareProjectName}`,
+    path
+  ].filter(Boolean).join("/");
+  return new URL(input, API_ENDPOINT).toString();
+}, "getCloudflareApiEndpoint");
+var getCloudflareLogEndpoint = /* @__PURE__ */ __name((id) => {
+  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
+  return new URL(
+    `${cloudflareAccountId}/pages/view/${cloudflareProjectName}/${id}`,
+    `https://dash.cloudflare.com`
+  ).toString();
+}, "getCloudflareLogEndpoint");
+
+// src/cloudflare/api/parse-error.ts
+var ParseError = class extends Error {
+  static {
+    __name(this, "ParseError");
+  }
+  text;
+  notes;
+  location;
+  kind;
+  code;
+  constructor({ text, notes, location, kind }) {
+    super(text);
+    this.name = this.constructor.name;
+    this.text = text;
+    this.notes = notes ?? [];
+    this.location = location;
+    this.kind = kind ?? "error";
+  }
+};
+
+// src/cloudflare/api/fetch-error.ts
+var throwFetchError = /* @__PURE__ */ __name((resource, response) => {
+  const error2 = new ParseError({
+    text: `A request to the Cloudflare API (${resource}) failed.`,
+    notes: response.errors.map((err) => ({
+      text: renderError(err)
+    }))
+  });
+  const code = response.errors[0]?.code;
+  if (code) {
+    error2.code = code;
+  }
+  if (error2.notes?.length > 0) {
+    error2.notes.map((note) => {
+      error(`Cloudflare API: ${note.text}`);
+    });
+  }
+  throw error2;
+}, "throwFetchError");
+var renderError = /* @__PURE__ */ __name((err, level = 0) => {
+  const chainedMessages = err.error_chain?.map(
+    (chainedError) => `
+${"  ".repeat(level)}- ${renderError(chainedError, level + 1)}`
+  ).join("\n") ?? "";
+  return (err.code ? `${err.message} [code: ${err.code}]` : err.message) + chainedMessages;
+}, "renderError");
+
+// src/cloudflare/api/fetch-result.ts
+var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams, abortSignal) => {
+  const method = init.method ?? "GET";
+  const { cloudflareApiToken } = useInputs();
+  const initFetch = {
+    headers: {
+      "Content-Type": "application/json;charset=UTF-8",
+      Authorization: `Bearer ${cloudflareApiToken}`
+    }
+  };
+  const response = await fetch(resource, {
+    method,
+    ...initFetch,
+    signal: abortSignal
+  }).then((response2) => response2.json());
+  if (response.success) {
+    if (response.result === null || response.result === void 0) {
+      throw new Error(`Cloudflare API: response missing 'result'`);
+    }
+    return response.result;
+  }
+  return throwFetchError(resource, response);
+}, "fetchResult");
+var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
+  const method = init.method ?? "GET";
+  const { cloudflareApiToken } = useInputs();
+  const initFetch = {
+    headers: {
+      "Content-Type": "application/json;charset=UTF-8",
+      Authorization: `Bearer ${cloudflareApiToken}`
+    }
+  };
+  const response = await fetch(resource, {
+    method,
+    ...initFetch
+  }).then((response2) => response2.json());
+  if (!response.success && response.errors.length > 0) {
+    throwFetchError(resource, response);
+  }
+  return response.success;
+}, "fetchSuccess");
+
+// src/cloudflare/deployment/get.ts
+var getCloudflareDeployments = /* @__PURE__ */ __name(async () => {
+  const url = getCloudflareApiEndpoint("deployments");
+  const result = await fetchResult(url);
+  return result;
+}, "getCloudflareDeployments");
+var getCloudflareDeploymentAlias = /* @__PURE__ */ __name((deployment) => {
+  return deployment.aliases && deployment.aliases.length > 0 ? deployment.aliases[0] : deployment.url;
+}, "getCloudflareDeploymentAlias");
+var getCloudflareLatestDeployment = /* @__PURE__ */ __name(async () => {
+  const { sha: commitHash } = useContext();
+  const deployments = await getCloudflareDeployments();
+  const deployment = deployments?.find(
+    (deployment2) => deployment2.deployment_trigger.metadata.commit_hash === commitHash
+  );
+  if (deployment === void 0) {
+    throw new Error(
+      `Cloudflare: could not find deployment with commitHash: ${commitHash}`
+    );
+  }
+  return deployment;
+}, "getCloudflareLatestDeployment");
+
+// src/cloudflare/deployment/status.ts
+var ERROR_KEY = `Status Of Deployment:`;
+var statusCloudflareDeployment = /* @__PURE__ */ __name(async () => {
+  let deploymentStatus = "unknown";
+  let deployment;
+  do {
+    try {
+      deployment = await getCloudflareLatestDeployment();
+      const deployStage = deployment.stages.find(
+        (stage) => stage.name === "deploy"
+      );
+      debug(JSON.stringify(deployStage));
+      switch (deployStage?.status) {
+        case "active":
+        case "success":
+        case "failure":
+        case "skipped":
+        case "canceled": {
+          deploymentStatus = deployStage.status;
+          break;
+        }
+        default: {
+          await new Promise((resolve) => setTimeout(resolve, 1e3));
+        }
+      }
+    } catch (error2) {
+      if (error2 instanceof Error) {
+        throw error2;
+      }
+      if (error2 && typeof error2 === "object" && "stderr" in error2 && typeof error2.stderr === "string") {
+        throw new Error(error2.stderr);
+      }
+      throw new Error(`${ERROR_KEY} unknown error`);
+    }
+  } while (deploymentStatus === "unknown");
+  return { deployment, status: deploymentStatus };
+}, "statusCloudflareDeployment");
+
+// src/cloudflare/deployment/create.ts
+var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
+var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
+var ERROR_KEY2 = `Create Deployment:`;
+var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
+  const {
+    cloudflareAccountId,
+    cloudflareProjectName,
+    directory,
+    cloudflareApiToken
+  } = useInputs();
+  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken;
+  process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId;
+  const { repo, branch, sha: commitHash } = useContext();
+  if (branch === void 0) {
+    throw new Error(`${ERROR_KEY2} branch is undefined`);
+  }
+  try {
+    const WRANGLER_VERSION = "3.28.1";
+    strict(WRANGLER_VERSION, "wrangler version should exist");
+    await execAsync(
+      `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
+      {
+        env: process.env
+      }
+    );
+    const { deployment, status } = await statusCloudflareDeployment();
+    setOutput("id", deployment.id);
+    setOutput("url", deployment.url);
+    setOutput("environment", deployment.environment);
+    const alias = getCloudflareDeploymentAlias(deployment);
+    setOutput("alias", alias);
+    await summary.addHeading("Cloudflare Pages Deployment").write();
+    await summary.addBreak().write();
+    await summary.addTable([
+      [
+        {
+          data: "Name",
+          header: true
+        },
+        {
+          data: "Result",
+          header: true
+        }
+      ],
+      ["Environment:", deployment.environment],
+      [
+        "Branch:",
+        `<a href='https://github.com/${repo.owner}/${repo.repo}/tree/${deployment.deployment_trigger.metadata.branch}'><code>${deployment.deployment_trigger.metadata.branch}</code></a>`
+      ],
+      [
+        "Commit Hash:",
+        `<a href='https://github.com/${repo.owner}/${repo.repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}'><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
+      ],
+      [
+        "Commit Message:",
+        deployment.deployment_trigger.metadata.commit_message
+      ],
+      ["Status:", `<strong>${status.toUpperCase() || `UNKNOWN`}</strong>`],
+      ["Preview URL:", `<a href='${deployment.url}'>${deployment.url}</a>`],
+      ["Branch Preview URL:", `<a href='${alias}'>${alias}</a>`]
+    ]).write();
+    return deployment;
+  } catch (error2) {
+    if (error2 instanceof Error) {
+      throw error2;
+    }
+    if (error2 && typeof error2 === "object" && "stderr" in error2 && typeof error2.stderr === "string") {
+      throw new Error(error2.stderr);
+    }
+    throw new Error(`${ERROR_KEY2} unknown error`);
+  }
+}, "createCloudflareDeployment");
+
+// src/cloudflare/project/get.ts
+var getCloudflareProject = /* @__PURE__ */ __name(async () => {
+  const url = getCloudflareApiEndpoint();
+  const result = await fetchResult(url);
+  return result;
+}, "getCloudflareProject");
+
+// __generated__/gql/graphql.ts
+var TypedDocumentString = class extends String {
+  constructor(value, __meta__) {
+    super(value);
+    this.value = value;
+    this.__meta__ = __meta__;
+  }
+  static {
+    __name(this, "TypedDocumentString");
+  }
+  __apiType;
+  toString() {
+    return this.value;
+  }
+};
+var DeploymentFragmentFragmentDoc = new TypedDocumentString(`
+    fragment DeploymentFragment on Deployment {
+  id
+  environment
+  state
+}
+    `, { "fragmentName": "DeploymentFragment" });
+var EnvironmentFragmentFragmentDoc = new TypedDocumentString(`
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}
+    `, { "fragmentName": "EnvironmentFragment" });
+var FilesDocument = new TypedDocumentString(`
+    query Files($owner: String!, $repo: String!, $path: String!) {
+  repository(owner: $owner, name: $repo) {
+    object(expression: $path) {
+      __typename
+      ... on Tree {
+        entries {
+          name
+          type
+          language {
+            name
+          }
+          object {
+            __typename
+            ... on Blob {
+              text
+            }
+          }
+        }
+      }
+    }
+  }
+}
+    `);
+var AddCommentDocument = new TypedDocumentString(`
+    mutation AddComment($subjectId: ID!, $body: String!) {
+  addComment(input: {subjectId: $subjectId, body: $body}) {
+    commentEdge {
+      node {
+        id
+      }
+    }
+  }
+}
+    `);
+var CreateGitHubDeploymentDocument = new TypedDocumentString(`
+    mutation CreateGitHubDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!, $description: String) {
+  createDeployment(
+    input: {autoMerge: false, description: $description, environment: $environmentName, refId: $refId, repositoryId: $repositoryId, requiredContexts: [], payload: $payload}
+  ) {
+    deployment {
+      ...DeploymentFragment
+    }
+  }
+}
+    fragment DeploymentFragment on Deployment {
+  id
+  environment
+  state
+}`);
+var DeleteGitHubDeploymentDocument = new TypedDocumentString(`
+    mutation DeleteGitHubDeployment($deploymentId: ID!) {
+  deleteDeployment(input: {id: $deploymentId}) {
+    clientMutationId
+  }
+}
+    `);
+var DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(`
+    mutation DeleteGitHubDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
+  deleteDeployment(input: {id: $deploymentId}) {
+    clientMutationId
+  }
+  deleteIssueComment(input: {id: $commentId}) {
+    clientMutationId
+  }
+}
+    `);
+var CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
+    mutation CreateGitHubDeploymentStatus($deploymentId: ID!, $environment: String, $environmentUrl: String!, $logUrl: String!, $state: DeploymentStatusState!) {
+  createDeploymentStatus(
+    input: {autoInactive: false, deploymentId: $deploymentId, environment: $environment, environmentUrl: $environmentUrl, logUrl: $logUrl, state: $state}
+  ) {
+    deploymentStatus {
+      deployment {
+        ...DeploymentFragment
+      }
+    }
+  }
+}
+    fragment DeploymentFragment on Deployment {
+  id
+  environment
+  state
+}`);
+var CreateEnvironmentDocument = new TypedDocumentString(`
+    mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
+  createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+    environment {
+      ...EnvironmentFragment
+    }
+  }
+}
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}`);
+var GetEnvironmentDocument = new TypedDocumentString(`
+    query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!, $qualifiedName: String!) {
+  repository(owner: $owner, name: $repo) {
+    environment(name: $environment_name) {
+      ...EnvironmentFragment
+    }
+    ref(qualifiedName: $qualifiedName) {
+      id
+      name
+      prefix
+    }
+  }
+}
+    fragment EnvironmentFragment on Environment {
+  name
+  id
+}`);
+
+// src/cloudflare/deployment/delete.ts
+var deleteCloudflareDeployment = /* @__PURE__ */ __name(async (deploymentIdentifier) => {
+  const url = getCloudflareApiEndpoint(
+    `deployments/${deploymentIdentifier}?force=true`
+  );
+  try {
+    const success = await fetchSuccess(url, {
+      method: "DELETE"
+    });
+    if (success === true) {
+      info(`Cloudflare Deployment Deleted: ${deploymentIdentifier}`);
+      return true;
+    }
+    throw new Error("Cloudflare Delete Deployment: fail");
+  } catch (successError) {
+    if (successError instanceof ParseError && successError.code === 8000009) {
+      warning(
+        `Cloudflare Deployment might have been deleted already: ${deploymentIdentifier}`
+      );
+      return true;
+    }
+    error(`Cloudflare Error deleting deployment: ${deploymentIdentifier}`);
+    return false;
+  }
+}, "deleteCloudflareDeployment");
+
 // src/github/api/client.ts
 var request = /* @__PURE__ */ __name(async (params) => {
   const { query, variables, options } = params;
@@ -683,6 +1100,52 @@ var request = /* @__PURE__ */ __name(async (params) => {
     return res;
   });
 }, "request");
+
+// __generated__/gql/gql.ts
+var documents = {
+  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
+  "\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n        }\n      }\n    }\n  }\n": AddCommentDocument,
+  "\n  mutation CreateGitHubDeployment(\n    $repositoryId: ID!\n    $environmentName: String!\n    $refId: ID!\n    $payload: String!\n    $description: String\n  ) {\n    createDeployment(\n      input: {\n        autoMerge: false\n        description: $description\n        environment: $environmentName\n        refId: $refId\n        repositoryId: $repositoryId\n        requiredContexts: []\n        payload: $payload\n      }\n    ) {\n      deployment {\n        ...DeploymentFragment\n      }\n    }\n  }\n": CreateGitHubDeploymentDocument,
+  "\n  mutation DeleteGitHubDeployment($deploymentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n  }\n": DeleteGitHubDeploymentDocument,
+  "\n  mutation DeleteGitHubDeploymentAndComment(\n    $deploymentId: ID!\n    $commentId: ID!\n  ) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n": DeleteGitHubDeploymentAndCommentDocument,
+  "\n  fragment DeploymentFragment on Deployment {\n    id\n    environment\n    state\n  }\n": DeploymentFragmentFragmentDoc,
+  "\n  mutation CreateGitHubDeploymentStatus(\n    $deploymentId: ID!\n    $environment: String\n    $environmentUrl: String!\n    $logUrl: String!\n    $state: DeploymentStatusState!\n  ) {\n    createDeploymentStatus(\n      input: {\n        autoInactive: false\n        deploymentId: $deploymentId\n        environment: $environment\n        environmentUrl: $environmentUrl\n        logUrl: $logUrl\n        state: $state\n      }\n    ) {\n      deploymentStatus {\n        deployment {\n          ...DeploymentFragment\n        }\n      }\n    }\n  }\n": CreateGitHubDeploymentStatusDocument,
+  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
+  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
+  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": GetEnvironmentDocument
+};
+function graphql(source) {
+  return documents[source] ?? {};
+}
+__name(graphql, "graphql");
+
+// src/github/deployment/delete.ts
+var MutationDeleteGitHubDeployment = graphql(
+  /* GraphQL */
+  `
+  mutation DeleteGitHubDeployment($deploymentId: ID!) {
+    deleteDeployment(input: {id: $deploymentId}) {
+      clientMutationId
+    }
+  }
+`
+);
+var MutationDeleteGitHubDeploymentAndComment = graphql(
+  /* GraphQL */
+  `
+  mutation DeleteGitHubDeploymentAndComment(
+    $deploymentId: ID!
+    $commentId: ID!
+  ) {
+    deleteDeployment(input: {id: $deploymentId}) {
+      clientMutationId
+    }
+    deleteIssueComment(input: {id: $commentId}) {
+      clientMutationId
+    }
+  }
+`
+);
 
 // node_modules/.pnpm/@octokit-next+endpoint@2.7.1/node_modules/@octokit-next/endpoint/lib/util/lowercase-keys.js
 function lowercaseKeys(object) {
@@ -1360,7 +1823,7 @@ var NON_VARIABLE_OPTIONS = [
 ];
 var FORBIDDEN_VARIABLE_OPTIONS = ["query", "method", "url"];
 var GHES_V3_SUFFIX_REGEX = /\/api\/v3\/?$/;
-function graphql(request3, query, options) {
+function graphql2(request3, query, options) {
   if (options) {
     if (typeof query === "string" && "query" in options) {
       return Promise.reject(
@@ -1402,13 +1865,13 @@ function graphql(request3, query, options) {
     return response.data.data;
   });
 }
-__name(graphql, "graphql");
+__name(graphql2, "graphql");
 
 // node_modules/.pnpm/@octokit-next+graphql@2.7.1/node_modules/@octokit-next/graphql/lib/with-defaults.js
 function withDefaults3(oldRequest, newDefaults) {
   const newRequest = oldRequest.defaults(newDefaults);
   const newApi = /* @__PURE__ */ __name((query, options) => {
-    return graphql(newRequest, query, options);
+    return graphql2(newRequest, query, options);
   }, "newApi");
   return Object.assign(newApi, {
     defaults: withDefaults3.bind(null, newRequest),
@@ -1418,7 +1881,7 @@ function withDefaults3(oldRequest, newDefaults) {
 __name(withDefaults3, "withDefaults");
 
 // node_modules/.pnpm/@octokit-next+graphql@2.7.1/node_modules/@octokit-next/graphql/index.js
-var graphql2 = withDefaults3(request2, {
+var graphql3 = withDefaults3(request2, {
   headers: {
     "user-agent": `octokit-next-graphql.js/${VERSION3} ${getUserAgent()}`
   },
@@ -1790,297 +2253,20 @@ var paginate2 = /* @__PURE__ */ __name(async (endpoint2, options) => {
   }).paginate(endpoint2, options);
 }, "paginate");
 
-// __generated__/gql/graphql.ts
-var TypedDocumentString = class extends String {
-  constructor(value, __meta__) {
-    super(value);
-    this.value = value;
-    this.__meta__ = __meta__;
-  }
-  static {
-    __name(this, "TypedDocumentString");
-  }
-  __apiType;
-  toString() {
-    return this.value;
-  }
-};
-var DeploymentFragmentFragmentDoc = new TypedDocumentString(`
-    fragment DeploymentFragment on Deployment {
-  id
-  environment
-  state
-}
-    `, { "fragmentName": "DeploymentFragment" });
-var EnvironmentFragmentFragmentDoc = new TypedDocumentString(`
-    fragment EnvironmentFragment on Environment {
-  name
-  id
-}
-    `, { "fragmentName": "EnvironmentFragment" });
-var FilesDocument = new TypedDocumentString(`
-    query Files($owner: String!, $repo: String!, $path: String!) {
-  repository(owner: $owner, name: $repo) {
-    object(expression: $path) {
-      __typename
-      ... on Tree {
-        entries {
-          name
-          type
-          language {
-            name
-          }
-          object {
-            __typename
-            ... on Blob {
-              text
-            }
-          }
-        }
-      }
-    }
-  }
-}
-    `);
-var AddCommentDocument = new TypedDocumentString(`
-    mutation AddComment($subjectId: ID!, $body: String!) {
-  addComment(input: {subjectId: $subjectId, body: $body}) {
-    commentEdge {
-      node {
-        id
-      }
-    }
-  }
-}
-    `);
-var CreateGitHubDeploymentDocument = new TypedDocumentString(`
-    mutation CreateGitHubDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!, $description: String) {
-  createDeployment(
-    input: {autoMerge: false, description: $description, environment: $environmentName, refId: $refId, repositoryId: $repositoryId, requiredContexts: [], payload: $payload}
-  ) {
-    deployment {
-      ...DeploymentFragment
-    }
-  }
-}
-    fragment DeploymentFragment on Deployment {
-  id
-  environment
-  state
-}`);
-var DeleteGitHubDeploymentDocument = new TypedDocumentString(`
-    mutation DeleteGitHubDeployment($deploymentId: ID!) {
-  deleteDeployment(input: {id: $deploymentId}) {
-    clientMutationId
-  }
-}
-    `);
-var DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(`
-    mutation DeleteGitHubDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
-  deleteDeployment(input: {id: $deploymentId}) {
-    clientMutationId
-  }
-  deleteIssueComment(input: {id: $commentId}) {
-    clientMutationId
-  }
-}
-    `);
-var CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
-    mutation CreateGitHubDeploymentStatus($deploymentId: ID!, $environment: String, $environmentUrl: String!, $logUrl: String!, $state: DeploymentStatusState!) {
-  createDeploymentStatus(
-    input: {autoInactive: false, deploymentId: $deploymentId, environment: $environment, environmentUrl: $environmentUrl, logUrl: $logUrl, state: $state}
-  ) {
-    deploymentStatus {
-      deployment {
-        ...DeploymentFragment
-      }
-    }
-  }
-}
-    fragment DeploymentFragment on Deployment {
-  id
-  environment
-  state
-}`);
-var CreateEnvironmentDocument = new TypedDocumentString(`
-    mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
-  createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
-    environment {
-      ...EnvironmentFragment
-    }
-  }
-}
-    fragment EnvironmentFragment on Environment {
-  name
-  id
-}`);
-var GetEnvironmentDocument = new TypedDocumentString(`
-    query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!, $qualifiedName: String!) {
-  repository(owner: $owner, name: $repo) {
-    environment(name: $environment_name) {
-      ...EnvironmentFragment
-    }
-    ref(qualifiedName: $qualifiedName) {
-      id
-      name
-      prefix
-    }
-  }
-}
-    fragment EnvironmentFragment on Environment {
-  name
-  id
-}`);
-
-// __generated__/gql/gql.ts
-var documents = {
-  "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": FilesDocument,
-  "\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n        }\n      }\n    }\n  }\n": AddCommentDocument,
-  "\n  mutation CreateGitHubDeployment(\n    $repositoryId: ID!\n    $environmentName: String!\n    $refId: ID!\n    $payload: String!\n    $description: String\n  ) {\n    createDeployment(\n      input: {\n        autoMerge: false\n        description: $description\n        environment: $environmentName\n        refId: $refId\n        repositoryId: $repositoryId\n        requiredContexts: []\n        payload: $payload\n      }\n    ) {\n      deployment {\n        ...DeploymentFragment\n      }\n    }\n  }\n": CreateGitHubDeploymentDocument,
-  "\n  mutation DeleteGitHubDeployment($deploymentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n  }\n": DeleteGitHubDeploymentDocument,
-  "\n  mutation DeleteGitHubDeploymentAndComment(\n    $deploymentId: ID!\n    $commentId: ID!\n  ) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n": DeleteGitHubDeploymentAndCommentDocument,
-  "\n  fragment DeploymentFragment on Deployment {\n    id\n    environment\n    state\n  }\n": DeploymentFragmentFragmentDoc,
-  "\n  mutation CreateGitHubDeploymentStatus(\n    $deploymentId: ID!\n    $environment: String\n    $environmentUrl: String!\n    $logUrl: String!\n    $state: DeploymentStatusState!\n  ) {\n    createDeploymentStatus(\n      input: {\n        autoInactive: false\n        deploymentId: $deploymentId\n        environment: $environment\n        environmentUrl: $environmentUrl\n        logUrl: $logUrl\n        state: $state\n      }\n    ) {\n      deploymentStatus {\n        deployment {\n          ...DeploymentFragment\n        }\n      }\n    }\n  }\n": CreateGitHubDeploymentStatusDocument,
-  "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": EnvironmentFragmentFragmentDoc,
-  "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": CreateEnvironmentDocument,
-  "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": GetEnvironmentDocument
-};
-function graphql3(source) {
-  return documents[source] ?? {};
-}
-__name(graphql3, "graphql");
-
-// src/github/comment.ts
-var MutationAddComment = graphql3(
-  /* GraphQL */
-  `
-  mutation AddComment($subjectId: ID!, $body: String!) {
-    addComment(input: {subjectId: $subjectId, body: $body}) {
-      commentEdge {
-        node {
-          id
-        }
-      }
-    }
-  }
-`
-);
-var addComment = /* @__PURE__ */ __name(async (deployment) => {
-  const { eventName, payload } = useContextEvent();
-  if (eventName === "pull_request" && payload.action !== "closed") {
-    const prNodeId = payload.pull_request.node_id ?? raise("No pull request node id");
-    const { sha } = useContext();
-    const rawBody = `## Cloudflare Pages Deployment
- **Environment:** ${deployment.environment} 
- **Project:** ${deployment.project_name} 
- **Built with commit:** ${sha}
- **Preview URL:** ${deployment.url} 
- **Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}`;
-    const comment = await request({
-      query: MutationAddComment,
-      variables: {
-        subjectId: prNodeId,
-        body: rawBody
-      }
-    });
-    return comment.data.addComment?.commentEdge?.node?.id;
-  }
-}, "addComment");
-
-// src/cloudflare/api/endpoints.ts
-var API_ENDPOINT = `https://api.cloudflare.com`;
-var getCloudflareApiEndpoint = /* @__PURE__ */ __name((path) => {
-  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
-  const input = [
-    `/client/v4/accounts/${cloudflareAccountId}/pages/projects/${cloudflareProjectName}`,
-    path
-  ].filter(Boolean).join("/");
-  return new URL(input, API_ENDPOINT).toString();
-}, "getCloudflareApiEndpoint");
-var getCloudflareLogEndpoint = /* @__PURE__ */ __name((id) => {
-  const { cloudflareAccountId, cloudflareProjectName } = useInputs();
-  return new URL(
-    `${cloudflareAccountId}/pages/view/${cloudflareProjectName}/${id}`,
-    `https://dash.cloudflare.com`
-  ).toString();
-}, "getCloudflareLogEndpoint");
-
-// src/github/environment.ts
-var EnvironmentFragment = graphql3(
-  /* GraphQL */
-  `
-  fragment EnvironmentFragment on Environment {
-    name
-    id
-  }
-`
-);
-var MutationCreateEnvironment = graphql3(
-  /* GraphQL */
-  `
-  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
-    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
-      environment {
-        ...EnvironmentFragment
-      }
-    }
-  }
-`
-);
-var QueryGetEnvironment = graphql3(
-  /* GraphQL */
-  `
-  query GetEnvironment(
-    $owner: String!
-    $repo: String!
-    $environment_name: String!
-    $qualifiedName: String!
-  ) {
-    repository(owner: $owner, name: $repo) {
-      environment(name: $environment_name) {
-        ...EnvironmentFragment
-      }
-      ref(qualifiedName: $qualifiedName) {
-        id
-        name
-        prefix
-      }
-    }
-  }
-`
-);
-var checkEnvironment = /* @__PURE__ */ __name(async () => {
-  const { gitHubEnvironment } = useInputs();
-  const { repo, ref } = useContext();
-  const environment = await request({
-    query: QueryGetEnvironment,
-    variables: {
-      owner: repo.owner,
-      repo: repo.repo,
-      environment_name: gitHubEnvironment,
-      qualifiedName: ref
-    },
-    options: {
-      errorThrows: false
-    }
+// src/github/deployment/get.ts
+var getGitHubDeployments = /* @__PURE__ */ __name(async () => {
+  const { repo, branch } = useContext();
+  const deployments = await paginate2("GET /repos/{owner}/{repo}/deployments", {
+    owner: repo.owner,
+    repo: repo.repo,
+    ref: branch,
+    per_page: 100
   });
-  if (environment.errors) {
-    error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
-  }
-  if (!environment.data.repository?.environment) {
-    throw new Error(`GitHub Environment: Not created for ${gitHubEnvironment}`);
-  }
-  if (!environment.data.repository?.ref?.id) {
-    throw new Error(`GitHub Environment: No ref id ${gitHubEnvironment}`);
-  }
-  return {
-    ...environment.data.repository.environment,
-    refId: environment.data.repository?.ref?.id
-  };
-}, "checkEnvironment");
+  return deployments;
+}, "getGitHubDeployments");
 
 // src/github/deployment/status.ts
-var MutationCreateGitHubDeploymentStatus = graphql3(
+var MutationCreateGitHubDeploymentStatus = graphql(
   /* GraphQL */
   `
   mutation CreateGitHubDeploymentStatus(
@@ -2109,359 +2295,6 @@ var MutationCreateGitHubDeploymentStatus = graphql3(
   }
 `
 );
-
-// src/github/deployment/create.ts
-var MutationCreateGitHubDeployment = graphql3(
-  /* GraphQL */
-  `
-  mutation CreateGitHubDeployment(
-    $repositoryId: ID!
-    $environmentName: String!
-    $refId: ID!
-    $payload: String!
-    $description: String
-  ) {
-    createDeployment(
-      input: {
-        autoMerge: false
-        description: $description
-        environment: $environmentName
-        refId: $refId
-        repositoryId: $repositoryId
-        requiredContexts: []
-        payload: $payload
-      }
-    ) {
-      deployment {
-        ...DeploymentFragment
-      }
-    }
-  }
-`
-);
-var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url }, commentId) => {
-  const { name, refId } = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required");
-  const { repo } = useContext();
-  const payload = { cloudflareId: id, url, commentId };
-  const deployment = await request({
-    query: MutationCreateGitHubDeployment,
-    variables: {
-      repositoryId: repo.node_id,
-      environmentName: name,
-      refId,
-      payload: JSON.stringify(payload),
-      description: `Cloudflare Pages Deployment: ${id}`
-    }
-  });
-  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id ?? raise("GitHub Deployment: GitHub deployment id is required");
-  await request({
-    query: MutationCreateGitHubDeploymentStatus,
-    variables: {
-      environment: name,
-      deploymentId: gitHubDeploymentId,
-      environmentUrl: url,
-      logUrl: getCloudflareLogEndpoint(id),
-      state: "SUCCESS" /* Success */
-    }
-  });
-}, "createGitHubDeployment");
-
-// src/github/deployment/delete.ts
-var MutationDeleteGitHubDeployment = graphql3(
-  /* GraphQL */
-  `
-  mutation DeleteGitHubDeployment($deploymentId: ID!) {
-    deleteDeployment(input: {id: $deploymentId}) {
-      clientMutationId
-    }
-  }
-`
-);
-var MutationDeleteGitHubDeploymentAndComment = graphql3(
-  /* GraphQL */
-  `
-  mutation DeleteGitHubDeploymentAndComment(
-    $deploymentId: ID!
-    $commentId: ID!
-  ) {
-    deleteDeployment(input: {id: $deploymentId}) {
-      clientMutationId
-    }
-    deleteIssueComment(input: {id: $commentId}) {
-      clientMutationId
-    }
-  }
-`
-);
-
-// src/github/deployment/get.ts
-var getGitHubDeployments = /* @__PURE__ */ __name(async () => {
-  const { repo, branch } = useContext();
-  const deployments = await paginate2("GET /repos/{owner}/{repo}/deployments", {
-    owner: repo.owner,
-    repo: repo.repo,
-    ref: branch,
-    per_page: 100
-  });
-  return deployments;
-}, "getGitHubDeployments");
-
-// src/cloudflare/api/parse-error.ts
-var ParseError = class extends Error {
-  static {
-    __name(this, "ParseError");
-  }
-  text;
-  notes;
-  location;
-  kind;
-  code;
-  constructor({ text, notes, location, kind }) {
-    super(text);
-    this.name = this.constructor.name;
-    this.text = text;
-    this.notes = notes ?? [];
-    this.location = location;
-    this.kind = kind ?? "error";
-  }
-};
-
-// src/cloudflare/api/fetch-error.ts
-var throwFetchError = /* @__PURE__ */ __name((resource, response) => {
-  const error2 = new ParseError({
-    text: `A request to the Cloudflare API (${resource}) failed.`,
-    notes: response.errors.map((err) => ({
-      text: renderError(err)
-    }))
-  });
-  const code = response.errors[0]?.code;
-  if (code) {
-    error2.code = code;
-  }
-  if (error2.notes?.length > 0) {
-    error2.notes.map((note) => {
-      error(`Cloudflare API: ${note.text}`);
-    });
-  }
-  throw error2;
-}, "throwFetchError");
-var renderError = /* @__PURE__ */ __name((err, level = 0) => {
-  const chainedMessages = err.error_chain?.map(
-    (chainedError) => `
-${"  ".repeat(level)}- ${renderError(chainedError, level + 1)}`
-  ).join("\n") ?? "";
-  return (err.code ? `${err.message} [code: ${err.code}]` : err.message) + chainedMessages;
-}, "renderError");
-
-// src/cloudflare/api/fetch-result.ts
-var fetchResult = /* @__PURE__ */ __name(async (resource, init = {}, queryParams, abortSignal) => {
-  const method = init.method ?? "GET";
-  const { cloudflareApiToken } = useInputs();
-  const initFetch = {
-    headers: {
-      "Content-Type": "application/json;charset=UTF-8",
-      Authorization: `Bearer ${cloudflareApiToken}`
-    }
-  };
-  const response = await fetch(resource, {
-    method,
-    ...initFetch,
-    signal: abortSignal
-  }).then((response2) => response2.json());
-  if (response.success) {
-    if (response.result === null || response.result === void 0) {
-      throw new Error(`Cloudflare API: response missing 'result'`);
-    }
-    return response.result;
-  }
-  return throwFetchError(resource, response);
-}, "fetchResult");
-var fetchSuccess = /* @__PURE__ */ __name(async (resource, init = {}) => {
-  const method = init.method ?? "GET";
-  const { cloudflareApiToken } = useInputs();
-  const initFetch = {
-    headers: {
-      "Content-Type": "application/json;charset=UTF-8",
-      Authorization: `Bearer ${cloudflareApiToken}`
-    }
-  };
-  const response = await fetch(resource, {
-    method,
-    ...initFetch
-  }).then((response2) => response2.json());
-  if (!response.success && response.errors.length > 0) {
-    throwFetchError(resource, response);
-  }
-  return response.success;
-}, "fetchSuccess");
-
-// src/cloudflare/deployment/get.ts
-var getCloudflareDeployments = /* @__PURE__ */ __name(async () => {
-  const url = getCloudflareApiEndpoint("deployments");
-  const result = await fetchResult(url);
-  return result;
-}, "getCloudflareDeployments");
-var getCloudflareDeploymentAlias = /* @__PURE__ */ __name((deployment) => {
-  return deployment.aliases && deployment.aliases.length > 0 ? deployment.aliases[0] : deployment.url;
-}, "getCloudflareDeploymentAlias");
-var getCloudflareLatestDeployment = /* @__PURE__ */ __name(async () => {
-  const { sha: commitHash } = useContext();
-  const deployments = await getCloudflareDeployments();
-  const deployment = deployments?.find(
-    (deployment2) => deployment2.deployment_trigger.metadata.commit_hash === commitHash
-  );
-  if (deployment === void 0) {
-    throw new Error(
-      `Cloudflare: could not find deployment with commitHash: ${commitHash}`
-    );
-  }
-  return deployment;
-}, "getCloudflareLatestDeployment");
-
-// src/cloudflare/deployment/status.ts
-var ERROR_KEY = `Status Of Deployment:`;
-var statusCloudflareDeployment = /* @__PURE__ */ __name(async () => {
-  let deploymentStatus = "unknown";
-  let deployment;
-  do {
-    try {
-      deployment = await getCloudflareLatestDeployment();
-      const deployStage = deployment.stages.find(
-        (stage) => stage.name === "deploy"
-      );
-      debug(JSON.stringify(deployStage));
-      switch (deployStage?.status) {
-        case "active":
-        case "success":
-        case "failure":
-        case "skipped":
-        case "canceled": {
-          deploymentStatus = deployStage.status;
-          break;
-        }
-        default: {
-          await new Promise((resolve) => setTimeout(resolve, 1e3));
-        }
-      }
-    } catch (error2) {
-      if (error2 instanceof Error) {
-        throw error2;
-      }
-      if (error2 && typeof error2 === "object" && "stderr" in error2 && typeof error2.stderr === "string") {
-        throw new Error(error2.stderr);
-      }
-      throw new Error(`${ERROR_KEY} unknown error`);
-    }
-  } while (deploymentStatus === "unknown");
-  return { deployment, status: deploymentStatus };
-}, "statusCloudflareDeployment");
-
-// src/cloudflare/deployment/create.ts
-var CLOUDFLARE_API_TOKEN = "CLOUDFLARE_API_TOKEN";
-var CLOUDFLARE_ACCOUNT_ID = "CLOUDFLARE_ACCOUNT_ID";
-var ERROR_KEY2 = `Create Deployment:`;
-var createCloudflareDeployment = /* @__PURE__ */ __name(async () => {
-  const {
-    cloudflareAccountId,
-    cloudflareProjectName,
-    directory,
-    cloudflareApiToken
-  } = useInputs();
-  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken;
-  process.env[CLOUDFLARE_ACCOUNT_ID] = cloudflareAccountId;
-  const { repo, branch, sha: commitHash } = useContext();
-  if (branch === void 0) {
-    throw new Error(`${ERROR_KEY2} branch is undefined`);
-  }
-  try {
-    const WRANGLER_VERSION = "3.28.1";
-    strict(WRANGLER_VERSION, "wrangler version should exist");
-    await execAsync(
-      `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
-      {
-        env: process.env
-      }
-    );
-    const { deployment, status } = await statusCloudflareDeployment();
-    setOutput("id", deployment.id);
-    setOutput("url", deployment.url);
-    setOutput("environment", deployment.environment);
-    const alias = getCloudflareDeploymentAlias(deployment);
-    setOutput("alias", alias);
-    await summary.addHeading("Cloudflare Pages Deployment").write();
-    await summary.addBreak().write();
-    await summary.addTable([
-      [
-        {
-          data: "Name",
-          header: true
-        },
-        {
-          data: "Result",
-          header: true
-        }
-      ],
-      ["Environment:", deployment.environment],
-      [
-        "Branch:",
-        `<a href='https://github.com/${repo.owner}/${repo.repo}/tree/${deployment.deployment_trigger.metadata.branch}'><code>${deployment.deployment_trigger.metadata.branch}</code></a>`
-      ],
-      [
-        "Commit Hash:",
-        `<a href='https://github.com/${repo.owner}/${repo.repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}'><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
-      ],
-      [
-        "Commit Message:",
-        deployment.deployment_trigger.metadata.commit_message
-      ],
-      ["Status:", `<strong>${status.toUpperCase() || `UNKNOWN`}</strong>`],
-      ["Preview URL:", `<a href='${deployment.url}'>${deployment.url}</a>`],
-      ["Branch Preview URL:", `<a href='${alias}'>${alias}</a>`]
-    ]).write();
-    return deployment;
-  } catch (error2) {
-    if (error2 instanceof Error) {
-      throw error2;
-    }
-    if (error2 && typeof error2 === "object" && "stderr" in error2 && typeof error2.stderr === "string") {
-      throw new Error(error2.stderr);
-    }
-    throw new Error(`${ERROR_KEY2} unknown error`);
-  }
-}, "createCloudflareDeployment");
-
-// src/cloudflare/project/get.ts
-var getCloudflareProject = /* @__PURE__ */ __name(async () => {
-  const url = getCloudflareApiEndpoint();
-  const result = await fetchResult(url);
-  return result;
-}, "getCloudflareProject");
-
-// src/cloudflare/deployment/delete.ts
-var deleteCloudflareDeployment = /* @__PURE__ */ __name(async (deploymentIdentifier) => {
-  const url = getCloudflareApiEndpoint(
-    `deployments/${deploymentIdentifier}?force=true`
-  );
-  try {
-    const success = await fetchSuccess(url, {
-      method: "DELETE"
-    });
-    if (success === true) {
-      info(`Cloudflare Deployment Deleted: ${deploymentIdentifier}`);
-      return true;
-    }
-    throw new Error("Cloudflare Delete Deployment: fail");
-  } catch (successError) {
-    if (successError instanceof ParseError && successError.code === 8000009) {
-      warning(
-        `Cloudflare Deployment might have been deleted already: ${deploymentIdentifier}`
-      );
-      return true;
-    }
-    error(`Cloudflare Error deleting deployment: ${deploymentIdentifier}`);
-    return false;
-  }
-}, "deleteCloudflareDeployment");
 
 // src/delete.ts
 var idDeploymentPayload = /* @__PURE__ */ __name((payload) => {
@@ -2538,6 +2371,173 @@ var deleteDeployments = /* @__PURE__ */ __name(async (isProduction = false) => {
     info(`GitHub Deployment Deleted: ${deployment.node_id}`);
   }
 }, "deleteDeployments");
+
+// src/github/comment.ts
+var MutationAddComment = graphql(
+  /* GraphQL */
+  `
+  mutation AddComment($subjectId: ID!, $body: String!) {
+    addComment(input: {subjectId: $subjectId, body: $body}) {
+      commentEdge {
+        node {
+          id
+        }
+      }
+    }
+  }
+`
+);
+var addComment = /* @__PURE__ */ __name(async (deployment) => {
+  const { eventName, payload } = useContextEvent();
+  if (eventName === "pull_request" && payload.action !== "closed") {
+    const prNodeId = payload.pull_request.node_id ?? raise("No pull request node id");
+    const { sha } = useContext();
+    const rawBody = `## Cloudflare Pages Deployment
+ **Environment:** ${deployment.environment} 
+ **Project:** ${deployment.project_name} 
+ **Built with commit:** ${sha}
+ **Preview URL:** ${deployment.url} 
+ **Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}`;
+    const comment = await request({
+      query: MutationAddComment,
+      variables: {
+        subjectId: prNodeId,
+        body: rawBody
+      }
+    });
+    return comment.data.addComment?.commentEdge?.node?.id;
+  }
+}, "addComment");
+
+// src/github/environment.ts
+var EnvironmentFragment = graphql(
+  /* GraphQL */
+  `
+  fragment EnvironmentFragment on Environment {
+    name
+    id
+  }
+`
+);
+var MutationCreateEnvironment = graphql(
+  /* GraphQL */
+  `
+  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
+    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+      environment {
+        ...EnvironmentFragment
+      }
+    }
+  }
+`
+);
+var QueryGetEnvironment = graphql(
+  /* GraphQL */
+  `
+  query GetEnvironment(
+    $owner: String!
+    $repo: String!
+    $environment_name: String!
+    $qualifiedName: String!
+  ) {
+    repository(owner: $owner, name: $repo) {
+      environment(name: $environment_name) {
+        ...EnvironmentFragment
+      }
+      ref(qualifiedName: $qualifiedName) {
+        id
+        name
+        prefix
+      }
+    }
+  }
+`
+);
+var checkEnvironment = /* @__PURE__ */ __name(async () => {
+  const { gitHubEnvironment } = useInputs();
+  const { repo, ref } = useContext();
+  const environment = await request({
+    query: QueryGetEnvironment,
+    variables: {
+      owner: repo.owner,
+      repo: repo.repo,
+      environment_name: gitHubEnvironment,
+      qualifiedName: ref
+    },
+    options: {
+      errorThrows: false
+    }
+  });
+  if (environment.errors) {
+    error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`);
+  }
+  if (!environment.data.repository?.environment) {
+    throw new Error(`GitHub Environment: Not created for ${gitHubEnvironment}`);
+  }
+  if (!environment.data.repository?.ref?.id) {
+    throw new Error(`GitHub Environment: No ref id ${gitHubEnvironment}`);
+  }
+  return {
+    ...environment.data.repository.environment,
+    refId: environment.data.repository?.ref?.id
+  };
+}, "checkEnvironment");
+
+// src/github/deployment/create.ts
+var MutationCreateGitHubDeployment = graphql(
+  /* GraphQL */
+  `
+  mutation CreateGitHubDeployment(
+    $repositoryId: ID!
+    $environmentName: String!
+    $refId: ID!
+    $payload: String!
+    $description: String
+  ) {
+    createDeployment(
+      input: {
+        autoMerge: false
+        description: $description
+        environment: $environmentName
+        refId: $refId
+        repositoryId: $repositoryId
+        requiredContexts: []
+        payload: $payload
+      }
+    ) {
+      deployment {
+        ...DeploymentFragment
+      }
+    }
+  }
+`
+);
+var createGitHubDeployment = /* @__PURE__ */ __name(async ({ id, url }, commentId) => {
+  const { name, refId } = await checkEnvironment() ?? raise("GitHub Deployment: GitHub Environment is required");
+  const { repo } = useContext();
+  const payload = { cloudflareId: id, url, commentId };
+  const deployment = await request({
+    query: MutationCreateGitHubDeployment,
+    variables: {
+      repositoryId: repo.node_id,
+      environmentName: name,
+      refId,
+      payload: JSON.stringify(payload),
+      description: `Cloudflare Pages Deployment: ${id}`
+    }
+  });
+  const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id ?? raise("GitHub Deployment: GitHub deployment id is required");
+  await request({
+    query: MutationCreateGitHubDeploymentStatus,
+    variables: {
+      environment: name,
+      deploymentId: gitHubDeploymentId,
+      environmentUrl: url,
+      logUrl: getCloudflareLogEndpoint(id),
+      state: "SUCCESS" /* Success */
+    }
+  });
+}, "createGitHubDeployment");
 
 // src/main.ts
 async function run() {

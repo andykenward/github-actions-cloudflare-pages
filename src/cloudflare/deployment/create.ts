@@ -2,12 +2,11 @@ import {strict} from 'node:assert'
 
 import {setOutput, summary} from '@unlike/github-actions-core'
 
-import {statusCloudflareDeployment} from '@/src/cloudflare/deployment/status.js'
-import {useContext} from '@/src/github/index.js'
-import {useInputs} from '@/src/inputs.js'
-import {execAsync} from '@/src/utils.js'
-
+import {useContext} from '../../github/context.js'
+import {useInputs} from '../../inputs.js'
+import {execAsync} from '../../utils.js'
 import {getCloudflareDeploymentAlias} from './get.js'
+import {statusCloudflareDeployment} from './status.js'
 
 export const CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN'
 export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'

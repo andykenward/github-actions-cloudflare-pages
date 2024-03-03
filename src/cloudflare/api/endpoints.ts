@@ -1,4 +1,4 @@
-import {useInputs} from '@/src/inputs.js'
+import {useInputs} from '../../inputs.js'
 
 const API_ENDPOINT = `https://api.cloudflare.com`
 

@@ -1,7 +1,8 @@
 import {setOutput, summary} from '@unlike/github-actions-core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
-import type {MockApi} from '@/tests/helpers/index.js'
+import type {MockApi} from '@/tests/helpers/api.js'
+
 import RESPONSE_NOT_FOUND_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments-not-found.response.json'
 import RESPONSE_DEPLOYMENTS_IDLE from '@/responses/api.cloudflare.com/pages/deployments/deployments.idle.response.json'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json'
@@ -11,7 +12,7 @@ import {
   createCloudflareDeployment
 } from '@/src/cloudflare/deployment/create.js'
 import {execAsync} from '@/src/utils.js'
-import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/index.js'
+import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/api.js'
 
 vi.mock('@/src/utils.js')
 vi.mock('@unlike/github-actions-core')

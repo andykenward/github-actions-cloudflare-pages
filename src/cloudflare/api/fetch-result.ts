@@ -1,6 +1,6 @@
-import {useInputs} from '@/src/inputs.js'
-
 import type {FetchResult} from '../types.js'
+
+import {useInputs} from '../../inputs.js'
 import {throwFetchError} from './fetch-error.js'
 
 export const fetchResult = async <ResponseType>(

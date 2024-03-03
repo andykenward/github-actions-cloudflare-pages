@@ -2,11 +2,12 @@ import {error} from '@unlike/github-actions-core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
+
 import RESPONSE_NOT_FOUND from '@/responses/api.cloudflare.com/pages/projects/project-not-found.response.json'
 import RESPONSE_OK from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
 import RESPONSE_UNAUTHORIZED from '@/responses/api.cloudflare.com/unauthorized.response.json'
 import {fetchResult} from '@/src/cloudflare/api/fetch-result.js'
-import {getMockApi} from '@/tests/helpers/index.js'
+import {getMockApi} from '@/tests/helpers/api.js'
 
 const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
 const RESOURCE_URL_PATH = `/client/v4/accounts`

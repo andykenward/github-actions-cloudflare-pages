@@ -3,7 +3,7 @@ import type {PaginatingEndpoints} from '@octokit/plugin-paginate-rest'
 import {Octokit} from '@octokit-next/core'
 import {paginateRest} from '@octokit/plugin-paginate-rest'
 
-import {useInputs} from '@/src/inputs.js'
+import {useInputs} from '../../inputs.js'
 
 /**
  * @see {@link https://github.com/octokit/plugin-paginate-rest.js/blob/44d8b933b8fb495fb7b8d95661452f23b482ea55/src/types.ts#L55}

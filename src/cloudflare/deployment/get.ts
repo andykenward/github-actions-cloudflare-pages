@@ -1,6 +1,6 @@
-import {useContext} from '@/src/github/index.js'
-
 import type {PagesDeployment} from '../types.js'
+
+import {useContext} from '../../github/context.js'
 import {getCloudflareApiEndpoint} from '../api/endpoints.js'
 import {fetchResult} from '../api/fetch-result.js'
 
