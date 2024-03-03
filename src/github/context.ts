@@ -110,7 +110,9 @@ type UseContext = ReturnType<typeof getGitHubContext>
 
 let _context: UseContext
 export const useContext = (): UseContext => {
-  return _context ?? (_context = getGitHubContext())
+  return process.env.NODE_ENV === 'test'
+    ? getGitHubContext()
+    : _context ?? (_context = getGitHubContext())
 }
 
 export const useContextEvent = (): UseContext['event'] => useContext().event
