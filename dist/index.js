@@ -2841,7 +2841,7 @@ async function run() {
   const { branch } = useContext();
   const { eventName, payload } = useContextEvent();
   if (eventName !== "push" && eventName !== "pull_request") {
-    error(`GitHub Action event name '${eventName}' not supported.`);
+    setFailed(`GitHub Action event name '${eventName}' not supported.`);
     return;
   }
   const project = await getCloudflareProject();
