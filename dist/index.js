@@ -1971,10 +1971,10 @@ var addComment = /* @__PURE__ */ __name(async (deployment) => {
     const prNodeId = payload.pull_request.node_id ?? raise("No pull request node id");
     const { sha } = useContext();
     const rawBody = `## Cloudflare Pages Deployment
- **Environment:** ${deployment.environment}
- **Project:** ${deployment.project_name}
+ **Environment:** ${deployment.environment} 
+ **Project:** ${deployment.project_name} 
  **Built with commit:** ${sha}
- **Preview URL:** ${deployment.url}
+ **Preview URL:** ${deployment.url} 
  **Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}`;
     const comment = await request({
       query: MutationAddComment,
