@@ -15,6 +15,7 @@ await esbuild.build({
   logLevel: 'info',
   minify: false,
   minifySyntax: true,
+  minifyWhitespace: true,
   external: ['wrangler'],
   treeShaking: true,
   banner: {
