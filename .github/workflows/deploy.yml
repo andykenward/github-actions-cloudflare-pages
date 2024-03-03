@@ -9,6 +9,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run actiomn against'
+        type: environment
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -31,4 +36,4 @@ jobs:
           cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           directory: 'example/dist'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-environment: 'preview'
+          github-environment: ${{ inputs.environment || 'preview' }}
