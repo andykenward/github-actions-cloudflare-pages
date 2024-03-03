@@ -57,7 +57,7 @@ describe('environment', () => {
           query: MutationCreateEnvironment,
           variables: {
             repositoryId: `MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=`,
-            name: TEST_ENV_VARS.GITHUB_HEAD_REF as string
+            name: TEST_ENV_VARS().GITHUB_HEAD_REF as string
           }
         },
         {
@@ -92,7 +92,7 @@ describe('environment', () => {
           query: MutationCreateEnvironment,
           variables: {
             repositoryId: `MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=`,
-            name: TEST_ENV_VARS.GITHUB_HEAD_REF as string
+            name: TEST_ENV_VARS().GITHUB_HEAD_REF as string
           }
         },
         {
