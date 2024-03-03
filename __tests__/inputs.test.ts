@@ -1,8 +1,7 @@
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {useInputs} from '@/src/inputs.js'
-
-import {stubRequiredInputEnv} from './helpers/index.js'
+import {stubRequiredInputEnv} from '@/tests/helpers/inputs.js'
 
 describe('inputs', () => {
   beforeEach(() => {

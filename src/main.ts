@@ -5,12 +5,9 @@ import {info, setFailed} from '@unlike/github-actions-core'
 import {createCloudflareDeployment} from './cloudflare/deployment/create.js'
 import {getCloudflareProject} from './cloudflare/project/get.js'
 import {deleteDeployments} from './delete.js'
-import {
-  addComment,
-  createGitHubDeployment,
-  useContext,
-  useContextEvent
-} from './github/index.js'
+import {addComment} from './github/comment.js'
+import {useContext, useContextEvent} from './github/context.js'
+import {createGitHubDeployment} from './github/deployment/create.js'
 
 export async function run() {
   const {branch} = useContext()

@@ -2,6 +2,7 @@ import * as core from '@unlike/github-actions-core'
 import {describe, expect, test, vi} from 'vitest'
 
 import type {FetchResult} from '@/src/cloudflare/types.js'
+
 import {throwFetchError} from '@/src/cloudflare/api/fetch-error.js'
 
 const RESOURCE_URL = `https://api.cloudflare.com/path`
