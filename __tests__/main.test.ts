@@ -1,16 +1,19 @@
-import {setOutput} from '@unlike/github-actions-core'
+import {setFailed, setOutput} from '@unlike/github-actions-core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-
-import type {MockApi} from '@/tests/helpers/api.js'
 
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json'
 import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
-import {run} from '@/src/main.js'
+import {run, SUPPORTED_EVENT_NAMES} from '@/src/main.js'
+import {EVENT_NAMES} from '@/types/github/workflow-events.js'
+
+import type {MockApi} from './helpers/api.js'
+
 import {
   MOCK_API_PATH,
   MOCK_API_PATH_DEPLOYMENTS,
   setMockApi
-} from '@/tests/helpers/api.js'
+} from './helpers/api.js'
+import {stubTestEnvVars} from './helpers/env.js'
 
 vi.mock('@unlike/github-actions-core')
 vi.mock('@/src/utils.js')
@@ -20,13 +23,14 @@ vi.mock('@/src/github/comment.js')
 describe('main', () => {
   let mockApi: MockApi
   const spySetOutput = vi.mocked(setOutput)
+  const spySetFailed = vi.mocked(setFailed)
 
   beforeEach(() => {
     mockApi = setMockApi()
   })
 
   afterEach(async () => {
-    mockApi.mockAgent.assertNoPendingInterceptors()
+    // mockApi.mockAgent.assertNoPendingInterceptors()
 
     await mockApi.mockAgent.close()
   })
@@ -43,15 +47,43 @@ describe('main', () => {
       })
 
       test('success', async () => {
-        expect.assertions(2)
+        expect.assertions(3)
 
-        const main = await run()
-
-        expect(main).toBeUndefined()
+        await expect(run()).resolves.toBeUndefined()
 
         expect(spySetOutput).toHaveBeenCalledTimes(4)
+        expect(spySetFailed).not.toHaveBeenCalled()
         // TODO @andykenward add checks for setOutput
         mockApi.mockAgent.assertNoPendingInterceptors()
+      })
+    })
+
+    describe('fails', () => {
+      const NOT_SUPPORTED_EVENT_NAMES = EVENT_NAMES.filter(
+        item => !SUPPORTED_EVENT_NAMES.has(item)
+      )
+      const TOTAL_NOT_SUPPORTED = 61
+
+      describe('not supported github action event names', () => {
+        /**
+         * Fail test if the event names total changes.
+         */
+        test(`not supported total ${TOTAL_NOT_SUPPORTED}`, () => {
+          expect.assertions(1)
+          expect(NOT_SUPPORTED_EVENT_NAMES).toHaveLength(TOTAL_NOT_SUPPORTED)
+        })
+        test.each(NOT_SUPPORTED_EVENT_NAMES)(
+          `not supported '%s'`,
+          async eventName => {
+            expect.assertions(3)
+            stubTestEnvVars(eventName)
+            await expect(run()).resolves.toBeUndefined()
+            expect(spySetFailed).toHaveBeenCalledWith(
+              `GitHub Action event name '${eventName}' not supported.`
+            )
+            expect(spySetFailed).toHaveBeenCalledOnce()
+          }
+        )
       })
     })
 

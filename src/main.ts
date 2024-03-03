@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+import type {WebhookEventName} from '@octokit/webhooks-types'
+
 import {info, setFailed} from '@unlike/github-actions-core'
 
 import {createCloudflareDeployment} from './cloudflare/deployment/create.js'
@@ -9,6 +11,11 @@ import {addComment} from './github/comment.js'
 import {useContext, useContextEvent} from './github/context.js'
 import {createGitHubDeployment} from './github/deployment/create.js'
 
+export const SUPPORTED_EVENT_NAMES: Set<WebhookEventName> = new Set([
+  'pull_request',
+  'push'
+])
+
 export async function run() {
   const {branch} = useContext()
   const {eventName, payload} = useContextEvent()
@@ -16,7 +23,7 @@ export async function run() {
   /**
    * Only support eventName push & pull_request.
    */
-  if (eventName !== 'push' && eventName !== 'pull_request') {
+  if (!SUPPORTED_EVENT_NAMES.has(eventName)) {
     setFailed(`GitHub Action event name '${eventName}' not supported.`)
     return
   }

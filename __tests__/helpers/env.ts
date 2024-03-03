@@ -11,7 +11,10 @@ const getPayload = (eventName: WebhookEventName): string => {
       return '__generated__/payloads/api.github.com/workflow_dispatch/payload.json'
     }
     default: {
-      throw new Error('No payload to test for')
+      /**
+       * Not supported eventName needs a valid file.
+       */
+      return '__tests__/helpers/no-payload.json'
     }
   }
 }

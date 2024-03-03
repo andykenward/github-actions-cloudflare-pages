@@ -1956,9 +1956,13 @@ var MutationCreateGitHubDeployment = graphql(
 }, "createGitHubDeployment");
 
 // src/main.ts
+var SUPPORTED_EVENT_NAMES = /* @__PURE__ */ new Set([
+  "pull_request",
+  "push"
+]);
 async function run() {
   let { branch } = useContext(), { eventName, payload } = useContextEvent();
-  if (eventName !== "push" && eventName !== "pull_request") {
+  if (!SUPPORTED_EVENT_NAMES.has(eventName)) {
     setFailed(`GitHub Action event name '${eventName}' not supported.`);
     return;
   }
