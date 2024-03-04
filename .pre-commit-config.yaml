@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://json.schemastore.org/pre-commit-config.json
+
+exclude: __generated__|pnpm-lock.yaml|dist
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+  - repo: https://gitlab.com/bmares/check-json5
+    rev: v1.0.0
+    hooks:
+      - id: check-json5
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        additional_dependencies:
+          - prettier@3.2.5
+          - '@ianvs/prettier-plugin-sort-imports@4.1.1'
