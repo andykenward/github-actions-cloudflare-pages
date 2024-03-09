@@ -61,7 +61,7 @@
     "@changesets/cli": "2.27.1",
     "@cloudflare/types": "6.27.0",
     "@graphql-codegen/cli": "5.0.2",
-    "@graphql-codegen/client-preset": "4.2.2",
+    "@graphql-codegen/client-preset": "4.2.4",
     "@graphql-typed-document-node/core": "3.2.0",
     "@ianvs/prettier-plugin-sort-imports": "4.1.1",
     "@octokit/graphql-schema": "14.58.0",
