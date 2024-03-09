@@ -20,7 +20,7 @@
     "lint:fix": "pnpm run lint -- --fix",
     "lint:ls": "DEBUG=eslint:cli-engine pnpm run lint",
     "test": "vitest run",
-    "test:ci": "vitest run --reporter=default",
+    "test:ci": "vitest",
     "test:watch": "vitest",
     "all": "pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls && pnpm run format && pnpm run lint:ls && pnpm run test && pnpm run build",
     "act:d": "act -j delete --secret-file .env",

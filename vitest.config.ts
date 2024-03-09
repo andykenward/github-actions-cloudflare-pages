@@ -19,7 +19,8 @@ export default defineConfig({
       '__tests__/helpers/**'
     ],
     clearMocks: true,
-    restoreMocks: false
+    restoreMocks: false,
+    reporters: 'default'
   },
   resolve: {
     alias: {
