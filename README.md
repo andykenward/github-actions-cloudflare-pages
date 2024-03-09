@@ -2,17 +2,31 @@
 
 # GitHub Action Cloudflare Pages
 
-This action deploys your build output to [Cloudflare Pages] using [Wrangler]. GitHub Environments and Deployments are used to track these deployments.
+This action deploys your build output to [Cloudflare Pages] using [Wrangler]. [GitHub Environments] and [GitHub Deployment] are used to keep track of the [Cloudflare Pages] deployments.
 
 When used in context of a [pull request], the action will create a deployment for the pull request and add a comment with the URL of the deployment. On closing the [pull request], all the deployments for that pull request will be deleted from [Cloudflare Pages], GitHub Deployment and the related comment. **The action is only able to delete deployments & comments that it created, as it requires a certain payload in a GitHub deployment.**
 
 - Deploy to [Cloudflare Pages].
-- Use GitHub Environments & Deployments.
+- Use [GitHub Environments] & [GitHub Deployment].
 - Comment on pull requests with deployment URL.
 - On pull request close, deletes Cloudflare Pages, GitHub deployments & comments
 - Production branch keeps latest 5 deployments.
 
 ## Usage
+
+### GitHub Environments - **(Required)**
+
+> **This GitHub Action doesn't create the required [GitHub Environments], see below for more information.**
+
+The GitHub Action uses [GitHub Environments] for the deployments. **This GitHub Action doesn't create [GitHub Environments]**, this is due to the required permission of `administration:write` by the GitHub API, you will have to do this manually, see [Creating an environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#creating-an-environment).
+
+For example manually create two GitHub Environments called "production" & "preview". Then you can define them in the workflow yaml step for `github-environment` as the below example. The check for `github.ref == 'refs/heads/main'` is used to switch between these two GitHub Environments, `main` Git branch for `"production"` and any other branch will use `"preview"`.
+
+```yaml
+github-environemnt: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
+```
+
+### Examples
 
 See the GitHub Workflow examples below or [deploy.yml](./.github/workflows/deploy.yml) & [deploy-delete.yml](./.github/workflows/deploy-delete.yml)
 
@@ -171,13 +185,15 @@ All actions ran while this secret is enabled contain additional diagnostic log f
 
 ## Docs
 
-[GitHub Action Variables](https://docs.github.com/en/actions/learn-github-actions/variables)
-[GitHub Action Default Environment variables](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables)
+- [GitHub Action Variables](https://docs.github.com/en/actions/learn-github-actions/variables)
+- [GitHub Action Default Environment variables](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables)
 
 ## ESM
 
-[TypeScript ESM Node](https://www.typescriptlang.org/docs/handbook/esm-node.html)
+- [TypeScript ESM Node](https://www.typescriptlang.org/docs/handbook/esm-node.html)
 
 [Cloudflare Pages]: https://pages.cloudflare.com/
 [Wrangler]: https://developers.cloudflare.com/workers/wrangler/
 [pull request]: https://docs.github.com/en/pull-requests
+[GitHub Environments]: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
+[GitHub Deployment]: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
