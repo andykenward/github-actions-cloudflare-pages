@@ -20,4 +20,5 @@ export const summary = core.summary
 summary.addTable = vi.fn().mockReturnValue(summary)
 summary.addHeading = vi.fn().mockReturnValue(summary)
 summary.addBreak = vi.fn().mockReturnValue(summary)
+summary.addRaw = vi.fn().mockReturnValue(summary)
 summary.write = vi.fn()

@@ -89,7 +89,7 @@ describe('createCloudflareDeployment', () => {
     })
 
     test('handles success', async () => {
-      expect.assertions(12)
+      expect.assertions(13)
       vi.mocked(execAsync).mockResolvedValue({
         stdout: 'success',
         stderr: ''
@@ -170,9 +170,9 @@ describe('createCloudflareDeployment', () => {
         [
           'Branch Preview URL:',
           `<a href='https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'>https://unknown-branch.cloudflare-pages-action-a5z.pages.dev</a>`
-        ],
-        ['Wrangler Output:', `<pre><code>success</code></pre>`]
+        ]
       ])
+      expect(summary.addRaw).toHaveBeenCalledWith('success')
     })
   })
 })
