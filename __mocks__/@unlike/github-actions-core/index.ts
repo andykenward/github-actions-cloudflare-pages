@@ -14,6 +14,7 @@ export const notice = vi.fn()
 export const debug = vi.fn()
 export const isDebug = vi.fn().mockReturnValue(false)
 export const setFailed = vi.fn()
+export const info = vi.fn()
 
 export const summary = core.summary
 summary.addTable = vi.fn().mockReturnValue(summary)

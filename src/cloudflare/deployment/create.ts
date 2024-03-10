@@ -92,7 +92,8 @@ export const createCloudflareDeployment = async () => {
         ],
         ['Status:', `<strong>${status.toUpperCase() || `UNKNOWN`}</strong>`],
         ['Preview URL:', `<a href='${deployment.url}'>${deployment.url}</a>`],
-        ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`]
+        ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`],
+        ['Wrangler Output:', stdout]
       ])
       .write()
 

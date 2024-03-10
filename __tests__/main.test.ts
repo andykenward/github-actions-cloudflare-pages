@@ -6,6 +6,7 @@ import type {MockApi} from '@/tests/helpers/api.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json'
 import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
 import {run} from '@/src/main.js'
+import {execAsync} from '@/src/utils.js'
 import {
   MOCK_API_PATH,
   MOCK_API_PATH_DEPLOYMENTS,
@@ -34,6 +35,10 @@ describe('main', () => {
   describe('run', () => {
     describe('handles resolve', () => {
       beforeEach(() => {
+        vi.mocked(execAsync).mockResolvedValue({
+          stdout: 'success',
+          stderr: ''
+        })
         mockApi.interceptCloudflare(MOCK_API_PATH, RESPONSE_PROJECT, 200)
         mockApi.interceptCloudflare(
           MOCK_API_PATH_DEPLOYMENTS,
