@@ -1,6 +1,8 @@
-import {error, notice} from '@unlike/github-actions-core'
+import {error, notice, setFailed} from '@unlike/github-actions-core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
+import type {GetEnvironmentQuery} from '@/gql/graphql.js'
+import type {GitHubGraphQLError} from '@/src/github/api/client.js'
 import {
   checkEnvironment,
   createEnvironment,
@@ -14,6 +16,27 @@ import {getMockApi, TEST_ENV_VARS} from '../helpers/index.js'
 vi.mock('@unlike/github-actions-core')
 describe('environment', () => {
   let mockApi: MockApi
+
+  const mockQueryGetEnvironment = (
+    data: GetEnvironmentQuery,
+    errors?: GitHubGraphQLError[] | undefined
+  ): void => {
+    mockApi.interceptGithub(
+      {
+        query: QueryGetEnvironment,
+        variables: {
+          owner: 'unlike-ltd',
+          repo: 'github-actions-cloudflare-pages',
+          environment_name: 'mock-github-environment',
+          qualifiedName: 'mock-github-head-ref'
+        }
+      },
+      {
+        data,
+        errors
+      }
+    )
+  }
 
   beforeEach(() => {
     mockApi = getMockApi()
@@ -116,39 +139,29 @@ describe('environment', () => {
   })
 
   describe('checkEnvironment', () => {
-    test('success', async () => {
-      expect.assertions(3)
+    const spySetFailed = vi.mocked(setFailed)
 
-      mockApi.interceptGithub(
-        {
-          query: QueryGetEnvironment,
-          variables: {
-            owner: 'unlike-ltd',
-            repo: 'github-actions-cloudflare-pages',
-            environment_name: 'mock-github-environment',
-            qualifiedName: 'mock-github-head-ref'
-          }
-        },
-        {
-          data: {
-            repository: {
-              environment: {
-                name: 'unlike-dev (Preview)',
-                id: 'EN_kwDOJn0nrM5D_l8n'
-              },
-              ref: {
-                id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk=',
-                name: 'mock-github-head-ref',
-                prefix: 'refs/heads/'
-              }
-            }
+    test('success', async () => {
+      expect.assertions(4)
+
+      mockQueryGetEnvironment({
+        repository: {
+          environment: {
+            name: 'unlike-dev (Preview)',
+            id: 'EN_kwDOJn0nrM5D_l8n'
+          },
+          ref: {
+            id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk=',
+            name: 'mock-github-head-ref',
+            prefix: 'refs/heads/'
           }
         }
-      )
+      })
 
       const environment = await checkEnvironment()
 
       expect(error).not.toHaveBeenCalled()
+      expect(spySetFailed).not.toHaveBeenCalled()
       expect(notice).not.toHaveBeenCalled()
       expect(environment).toMatchInlineSnapshot(`
         {
@@ -159,26 +172,17 @@ describe('environment', () => {
       `)
     })
 
-    test('logs errors & missing environment', async () => {
-      expect.assertions(2)
-
-      mockApi.interceptGithub(
-        {
-          query: QueryGetEnvironment,
-          variables: {
-            owner: 'unlike-ltd',
-            repo: 'github-actions-cloudflare-pages',
-            environment_name: 'mock-github-environment',
-            qualifiedName: 'mock-github-head-ref'
-          }
-        },
-        {
-          data: {
+    const RESPONSES: Array<
+      [Parameters<typeof mockQueryGetEnvironment>, string]
+    > = [
+      [
+        [
+          {
             repository: {
               environment: null
             }
           },
-          errors: [
+          [
             {
               type: 'NOT_FOUND',
               path: ['getEnvironment'],
@@ -191,15 +195,7 @@ describe('environment', () => {
               message: 'some error message'
             }
           ]
-        }
-      )
-
-      // const environment = await checkEnvironment()
-      await expect(checkEnvironment).rejects.toThrowErrorMatchingInlineSnapshot(
-        `[Error: GitHub Environment: Not created for mock-github-environment]`
-      )
-
-      expect(error).toHaveBeenCalledWith(
+        ],
         `GitHub Environment: Errors - ${JSON.stringify([
           {
             type: 'NOT_FOUND',
@@ -213,7 +209,43 @@ describe('environment', () => {
             message: 'some error message'
           }
         ])}`
-      )
+      ],
+      [
+        [
+          {
+            repository: {
+              environment: undefined,
+              ref: {
+                id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk=',
+                name: 'mock-github-head-ref',
+                prefix: 'refs/heads/'
+              }
+            }
+          }
+        ],
+        `GitHub Environment: Not created for mock-github-environment`
+      ],
+      [
+        [
+          {
+            repository: {
+              environment: {
+                name: 'unlike-dev (Preview)',
+                id: 'EN_kwDOJn0nrM5D_l8n'
+              },
+              ref: undefined
+            }
+          }
+        ],
+        `GitHub Environment: No ref id mock-github-environment`
+      ]
+    ]
+
+    test.each(RESPONSES)(`setFailed is called`, async (response, expected) => {
+      expect.assertions(2)
+      mockQueryGetEnvironment(...response)
+      await expect(checkEnvironment()).rejects.toThrow(expected)
+      expect(spySetFailed).toHaveBeenCalledWith(expected)
     })
   })
 })
