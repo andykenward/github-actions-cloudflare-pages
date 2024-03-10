@@ -30,7 +30,7 @@ describe('addComment', () => {
         query: MutationAddComment,
         variables: {
           subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-          body: '## Cloudflare Pages Deployment\n **Environment:** production \n **Project:** cloudflare-pages-action \n **Built with commit:** mock-github-sha\n **Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev \n **Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev \n <details><summary>Wrangler Output:</summary>success</details>'
+          body: '## Cloudflare Pages Deployment\n **Environment:** production \n **Project:** cloudflare-pages-action \n **Built with commit:** mock-github-sha\n **Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev \n **Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev \n <details><summary>Wrangler Output:</summary> \n ``` \n success \n ``` \n </details>'
         }
       },
       {

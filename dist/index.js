@@ -180,7 +180,11 @@ ${"  ".repeat(level)}- ${renderError(chainedError,level+1)}`).join(`
  **Built with commit:** ${sha}
  **Preview URL:** ${deployment.url} 
  **Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)} 
- <details><summary>Wrangler Output:</summary>${output}</details>`;return(await request({query:MutationAddComment,variables:{subjectId:prNodeId,body:rawBody}})).data.addComment?.commentEdge?.node?.id}},"addComment");var EnvironmentFragment=graphql(`
+ <details><summary>Wrangler Output:</summary> 
+ \`\`\` 
+ ${output} 
+ \`\`\` 
+ </details>`;return(await request({query:MutationAddComment,variables:{subjectId:prNodeId,body:rawBody}})).data.addComment?.commentEdge?.node?.id}},"addComment");var EnvironmentFragment=graphql(`
   fragment EnvironmentFragment on Environment {
     name
     id
