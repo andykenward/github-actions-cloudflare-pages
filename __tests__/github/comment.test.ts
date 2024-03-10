@@ -30,7 +30,7 @@ describe('addComment', () => {
         query: MutationAddComment,
         variables: {
           subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-          body: '## Cloudflare Pages Deployment\n **Environment:** production \n **Project:** cloudflare-pages-action \n **Built with commit:** mock-github-sha\n **Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev \n **Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
+          body: '## Cloudflare Pages Deployment\n **Environment:** production \n **Project:** cloudflare-pages-action \n **Built with commit:** mock-github-sha\n **Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev \n **Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev \n **Wrangler Output:** success'
         }
       },
       {
@@ -46,7 +46,7 @@ describe('addComment', () => {
       }
     )
 
-    const comment = await addComment(mockData)
+    const comment = await addComment(mockData, 'success')
     expect(comment).toBe('1')
   })
 
@@ -64,7 +64,7 @@ describe('addComment', () => {
         payload: {}
       } as Readonly<WorkflowEventExtract<typeof eventName>>)
 
-      await expect(addComment(mockData)).resolves.toBeUndefined()
+      await expect(addComment(mockData, 'success')).resolves.toBeUndefined()
     }
   )
 })

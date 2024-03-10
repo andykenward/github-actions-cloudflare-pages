@@ -20,7 +20,8 @@ export const MutationAddComment = graphql(/* GraphQL */ `
 `)
 
 export const addComment = async (
-  deployment: PagesDeployment
+  deployment: PagesDeployment,
+  output: string
 ): Promise<string | undefined> => {
   const {eventName, payload} = useContextEvent()
 
@@ -36,7 +37,7 @@ export const addComment = async (
       deployment.project_name
     } \n **Built with commit:** ${sha}\n **Preview URL:** ${
       deployment.url
-    } \n **Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}`
+    } \n **Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)} \n **Wrangler Output:** ${output}`
 
     const comment = await request({
       query: MutationAddComment,

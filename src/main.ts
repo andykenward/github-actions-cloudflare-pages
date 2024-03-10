@@ -44,7 +44,8 @@ export async function run() {
     }
   }
 
-  const cloudflareDeployment = await createCloudflareDeployment()
-  const commentId = await addComment(cloudflareDeployment)
+  const {deployment: cloudflareDeployment, wranglerOutput} =
+    await createCloudflareDeployment()
+  const commentId = await addComment(cloudflareDeployment, wranglerOutput)
   await createGitHubDeployment(cloudflareDeployment, commentId)
 }

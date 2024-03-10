@@ -2,6 +2,8 @@ import {strict} from 'node:assert'
 
 import {info, setOutput, summary} from '@unlike/github-actions-core'
 
+import type {PagesDeployment} from '../types.js'
+
 import {useContext} from '../../github/context.js'
 import {useInputs} from '../../inputs.js'
 import {execAsync} from '../../utils.js'
@@ -12,7 +14,10 @@ export const CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN'
 export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
 const ERROR_KEY = `Create Deployment:`
 
-export const createCloudflareDeployment = async () => {
+export const createCloudflareDeployment = async (): Promise<{
+  deployment: PagesDeployment
+  wranglerOutput: string
+}> => {
   const {
     cloudflareAccountId,
     cloudflareProjectName,
@@ -98,7 +103,7 @@ export const createCloudflareDeployment = async () => {
       ])
       .write()
 
-    return deployment
+    return {deployment, wranglerOutput: stdout}
   } catch (error) {
     if (error instanceof Error) {
       throw error

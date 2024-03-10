@@ -89,7 +89,7 @@ describe('createCloudflareDeployment', () => {
     })
 
     test('handles success', async () => {
-      expect.assertions(13)
+      expect.assertions(14)
       vi.mocked(execAsync).mockResolvedValue({
         stdout: 'success',
         stderr: ''
@@ -109,8 +109,9 @@ describe('createCloudflareDeployment', () => {
         200
       )
 
-      const deployment = await createCloudflareDeployment()
+      const {deployment, wranglerOutput} = await createCloudflareDeployment()
 
+      expect(wranglerOutput).toMatchInlineSnapshot(`"success"`)
       expect(deployment).toMatchSnapshot()
       expect(deployment.id).toMatchInlineSnapshot(
         '"206e215c-33b3-4ce4-adf4-7fc6c9b65483"'
