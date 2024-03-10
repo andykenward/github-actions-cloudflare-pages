@@ -63,9 +63,9 @@ export const createCloudflareDeployment = async () => {
     const alias: string = getCloudflareDeploymentAlias(deployment)
     setOutput('alias', alias)
 
-    await summary.addHeading('Cloudflare Pages Deployment').write()
-    await summary.addBreak().write()
     await summary
+      .addHeading('Cloudflare Pages Deployment')
+      .addBreak()
       .addTable([
         [
           {
@@ -94,8 +94,8 @@ export const createCloudflareDeployment = async () => {
         ['Preview URL:', `<a href='${deployment.url}'>${deployment.url}</a>`],
         ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`]
       ])
+      .addRaw(stdout, true)
       .write()
-    await summary.addRaw(stdout).write()
 
     return deployment
   } catch (error) {

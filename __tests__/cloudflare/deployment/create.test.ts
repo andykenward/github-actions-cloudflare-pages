@@ -172,7 +172,7 @@ describe('createCloudflareDeployment', () => {
           `<a href='https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'>https://unknown-branch.cloudflare-pages-action-a5z.pages.dev</a>`
         ]
       ])
-      expect(summary.addRaw).toHaveBeenCalledWith('success')
+      expect(summary.addRaw).toHaveBeenCalledWith('success', true)
     })
   })
 })
