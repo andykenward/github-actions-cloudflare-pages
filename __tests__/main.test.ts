@@ -54,7 +54,7 @@ describe('main', () => {
 
         expect(main).toBeUndefined()
 
-        expect(spySetOutput).toHaveBeenCalledTimes(4)
+        expect(spySetOutput).toHaveBeenCalledTimes(5)
         // TODO @andykenward add checks for setOutput
         mockApi.mockAgent.assertNoPendingInterceptors()
       })

@@ -117,7 +117,7 @@ describe('createCloudflareDeployment', () => {
       )
       expect(info).toHaveBeenLastCalledWith('success')
 
-      expect(setOutput).toHaveBeenCalledTimes(4)
+      expect(setOutput).toHaveBeenCalledTimes(5)
       expect(setOutput).toHaveBeenNthCalledWith(
         1,
         'id',
@@ -134,6 +134,7 @@ describe('createCloudflareDeployment', () => {
         'alias',
         'https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
       )
+      expect(setOutput).toHaveBeenNthCalledWith(5, 'wrangler', 'success')
 
       expect(summary.addHeading).toHaveBeenCalledWith(
         `Cloudflare Pages Deployment`
@@ -170,9 +171,9 @@ describe('createCloudflareDeployment', () => {
         [
           'Branch Preview URL:',
           `<a href='https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'>https://unknown-branch.cloudflare-pages-action-a5z.pages.dev</a>`
-        ]
+        ],
+        ['Wrangler Output:', `success`]
       ])
-      expect(summary.addRaw).toHaveBeenCalledWith('success', true)
     })
   })
 })
