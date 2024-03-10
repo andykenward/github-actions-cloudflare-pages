@@ -3,6 +3,7 @@ import {error, notice} from '@unlike/github-actions-core'
 import {graphql} from '@/gql/gql.js'
 
 import {useInputs} from '../inputs.js'
+import {raiseFail} from '../utils.js'
 import {request} from './api/client.js'
 import {useContext} from './context.js'
 
@@ -98,15 +99,17 @@ export const checkEnvironment = async () => {
   })
 
   if (environment.errors) {
-    error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`)
+    return raiseFail(
+      `GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`
+    )
   }
 
   if (!environment.data.repository?.environment) {
-    throw new Error(`GitHub Environment: Not created for ${gitHubEnvironment}`)
+    return raiseFail(`GitHub Environment: Not created for ${gitHubEnvironment}`)
   }
 
   if (!environment.data.repository?.ref?.id) {
-    throw new Error(`GitHub Environment: No ref id ${gitHubEnvironment}`)
+    return raiseFail(`GitHub Environment: No ref id ${gitHubEnvironment}`)
   }
 
   return {
