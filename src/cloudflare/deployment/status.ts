@@ -36,7 +36,9 @@ export const statusCloudflareDeployment = async (): Promise<{
           break
         }
         default: {
-          await new Promise(resolve => setTimeout(resolve, 1000))
+          await new Promise(resolve =>
+            setTimeout(resolve, process.env.NODE_ENV === 'test' ? 1 : 1000)
+          )
         }
       }
     } catch (error) {
