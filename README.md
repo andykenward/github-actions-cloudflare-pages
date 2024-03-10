@@ -155,6 +155,9 @@ environment:
 alias:
   description: 'Cloudflare Pages deployed alias. Fallsback to deployed url if deployed alias is null'
   value: ${{ steps.action.outputs.alias }}
+wrangler:
+  description: 'Wrangler cli output'
+  values: ${{ steps.action.outputs.wrangler }}
 ```
 
 ## Comment Example

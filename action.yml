@@ -34,6 +34,8 @@ outputs:
     description: 'Cloudflare Pages deployed environment "production" or "preview"'
   alias:
     description: 'Cloudflare Pages deployed alias. Fallsback to deployed url if deployed alias is null'
+  wrangler:
+    description: 'Wrangler cli output'
 
 runs:
   using: node20
