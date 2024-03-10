@@ -4050,6 +4050,12 @@ export type CreateSponsorshipsInput = {
   privacyLevel?: InputMaybe<SponsorshipPrivacy>;
   /** Whether the sponsor should receive email updates from the sponsorables. */
   receiveEmails?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Whether the sponsorships created should continue each billing cycle for the
+   * sponsor (monthly or annually), versus lasting only a single month. Defaults to
+   * one-time sponsorships.
+   */
+  recurring?: InputMaybe<Scalars['Boolean']['input']>;
   /** The username of the user or organization who is acting as the sponsor, paying for the sponsorships. */
   sponsorLogin: Scalars['String']['input'];
   /** The list of maintainers to sponsor and for how much apiece. */
@@ -7759,8 +7765,6 @@ export enum FundingPlatform {
   Liberapay = 'LIBERAPAY',
   /** Open Collective funding platform. */
   OpenCollective = 'OPEN_COLLECTIVE',
-  /** Otechie funding platform. */
-  Otechie = 'OTECHIE',
   /** Patreon funding platform. */
   Patreon = 'PATREON',
   /** Polar funding platform. */
@@ -10655,9 +10659,8 @@ export type Mutation = {
   /** Start a new sponsorship of a maintainer in GitHub Sponsors, or reactivate a past sponsorship. */
   createSponsorship?: Maybe<CreateSponsorshipPayload>;
   /**
-   * Make many one-time sponsorships for different sponsorable users or
-   * organizations at once. Can only sponsor those who have a public GitHub
-   * Sponsors profile.
+   * Make many sponsorships for different sponsorable users or organizations at
+   * once. Can only sponsor those who have a public GitHub Sponsors profile.
    */
   createSponsorships?: Maybe<CreateSponsorshipsPayload>;
   /** Creates a new team discussion. */
@@ -21088,6 +21091,7 @@ export type RepositoryEnvironmentsArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+  names?: InputMaybe<Array<Scalars['String']['input']>>;
   orderBy?: InputMaybe<Environments>;
 };
 
@@ -22112,8 +22116,6 @@ export enum RepositoryRuleType {
    * request and required workflow checks to pass before they can be merged.
    */
   RequiredWorkflowStatusChecks = 'REQUIRED_WORKFLOW_STATUS_CHECKS',
-  /** Commits pushed to matching refs must have verified signatures. */
-  RulesetRequiredSignatures = 'RULESET_REQUIRED_SIGNATURES',
   /** Secret scanning */
   SecretScanning = 'SECRET_SCANNING',
   /** Tag */
