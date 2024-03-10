@@ -1,4 +1,4 @@
-import {setOutput, summary} from '@unlike/github-actions-core'
+import {info, setOutput, summary} from '@unlike/github-actions-core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
@@ -19,6 +19,7 @@ vi.mock('@unlike/github-actions-core')
 describe('createCloudflareDeployment', () => {
   describe('api calls', () => {
     let mockApi: MockApi
+
     beforeEach(() => {
       mockApi = setMockApi()
     })
@@ -28,8 +29,8 @@ describe('createCloudflareDeployment', () => {
     })
 
     test('handles thrown error from wrangler deploy', async () => {
-      expect.assertions(9)
-      vi.mocked(execAsync).mockRejectedValue({stderr: 'Oh no!'})
+      expect.assertions(10)
+      vi.mocked(execAsync).mockRejectedValue({stderr: 'Oh no!', stdout: ''})
 
       // Expect Cloudflare Api Token and Account Id to be undefined.
       expect(process.env[CLOUDFLARE_API_TOKEN]).toBeUndefined()
@@ -51,6 +52,7 @@ describe('createCloudflareDeployment', () => {
       )
 
       expect(execAsync).toHaveBeenCalledTimes(1)
+      expect(info).not.toHaveBeenCalled()
       expect(process.env[CLOUDFLARE_API_TOKEN]).toBe(
         'mock-cloudflare-api-token'
       )
@@ -63,7 +65,7 @@ describe('createCloudflareDeployment', () => {
     })
 
     test('handles thrown error from getDeployments', async () => {
-      expect.assertions(4)
+      expect.assertions(5)
       vi.mocked(execAsync).mockResolvedValue({
         stdout: 'success',
         stderr: ''
@@ -81,12 +83,13 @@ describe('createCloudflareDeployment', () => {
         `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.]`
       )
       expect(execAsync).toHaveBeenCalledTimes(1)
+      expect(info).toHaveBeenLastCalledWith('success')
       expect(setOutput).not.toHaveBeenCalled()
       expect(summary.addTable).not.toHaveBeenCalled()
     })
 
     test('handles success', async () => {
-      expect.assertions(11)
+      expect.assertions(14)
       vi.mocked(execAsync).mockResolvedValue({
         stdout: 'success',
         stderr: ''
@@ -106,14 +109,16 @@ describe('createCloudflareDeployment', () => {
         200
       )
 
-      const deployment = await createCloudflareDeployment()
+      const {deployment, wranglerOutput} = await createCloudflareDeployment()
 
+      expect(wranglerOutput).toMatchInlineSnapshot(`"success"`)
       expect(deployment).toMatchSnapshot()
       expect(deployment.id).toMatchInlineSnapshot(
         '"206e215c-33b3-4ce4-adf4-7fc6c9b65483"'
       )
+      expect(info).toHaveBeenLastCalledWith('success')
 
-      expect(setOutput).toHaveBeenCalledTimes(4)
+      expect(setOutput).toHaveBeenCalledTimes(5)
       expect(setOutput).toHaveBeenNthCalledWith(
         1,
         'id',
@@ -130,6 +135,7 @@ describe('createCloudflareDeployment', () => {
         'alias',
         'https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
       )
+      expect(setOutput).toHaveBeenNthCalledWith(5, 'wrangler', 'success')
 
       expect(summary.addHeading).toHaveBeenCalledWith(
         `Cloudflare Pages Deployment`
@@ -166,7 +172,8 @@ describe('createCloudflareDeployment', () => {
         [
           'Branch Preview URL:',
           `<a href='https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'>https://unknown-branch.cloudflare-pages-action-a5z.pages.dev</a>`
-        ]
+        ],
+        ['Wrangler Output:', `success`]
       ])
     })
   })

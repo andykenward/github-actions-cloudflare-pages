@@ -1,6 +1,8 @@
 import {strict} from 'node:assert'
 
-import {setOutput, summary} from '@unlike/github-actions-core'
+import {info, setOutput, summary} from '@unlike/github-actions-core'
+
+import type {PagesDeployment} from '../types.js'
 
 import {useContext} from '../../github/context.js'
 import {useInputs} from '../../inputs.js'
@@ -12,7 +14,10 @@ export const CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN'
 export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
 const ERROR_KEY = `Create Deployment:`
 
-export const createCloudflareDeployment = async () => {
+export const createCloudflareDeployment = async (): Promise<{
+  deployment: PagesDeployment
+  wranglerOutput: string
+}> => {
   const {
     cloudflareAccountId,
     cloudflareProjectName,
@@ -41,12 +46,16 @@ export const createCloudflareDeployment = async () => {
     /**
      * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
      */
-    await execAsync(
+    const {stdout} = await execAsync(
       `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
       {
         env: process.env
       }
     )
+    /**
+     * Log out wrangler output.
+     */
+    info(stdout)
     /**
      * Get the latest deployment by commitHash and poll until required status.
      */
@@ -58,10 +67,11 @@ export const createCloudflareDeployment = async () => {
 
     const alias: string = getCloudflareDeploymentAlias(deployment)
     setOutput('alias', alias)
+    setOutput('wrangler', stdout)
 
-    await summary.addHeading('Cloudflare Pages Deployment').write()
-    await summary.addBreak().write()
     await summary
+      .addHeading('Cloudflare Pages Deployment')
+      .addBreak()
       .addTable([
         [
           {
@@ -88,11 +98,12 @@ export const createCloudflareDeployment = async () => {
         ],
         ['Status:', `<strong>${status.toUpperCase() || `UNKNOWN`}</strong>`],
         ['Preview URL:', `<a href='${deployment.url}'>${deployment.url}</a>`],
-        ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`]
+        ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`],
+        ['Wrangler Output:', `${stdout}`]
       ])
       .write()
 
-    return deployment
+    return {deployment, wranglerOutput: stdout}
   } catch (error) {
     if (error instanceof Error) {
       throw error
