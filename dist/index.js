@@ -393,7 +393,9 @@ import { exec } from "node:child_process";
 import { promisify } from "node:util";
 var raise = /* @__PURE__ */ __name((message) => {
   throw new Error(message);
-}, "raise"), execAsync = promisify(exec);
+}, "raise"), raiseFail = /* @__PURE__ */ __name((message) => {
+  throw setFailed(message), new Error(message);
+}, "raiseFail"), execAsync = promisify(exec);
 
 // src/github/workflow-event/workflow-event.ts
 import { strict as assert } from "node:assert";
@@ -650,7 +652,9 @@ var ERROR_KEY = "Status Of Deployment:", statusCloudflareDeployment = /* @__PURE
           break;
         }
         default:
-          await new Promise((resolve) => setTimeout(resolve, 1e3));
+          await new Promise(
+            (resolve) => setTimeout(resolve, 1e3)
+          );
       }
     } catch (error2) {
       throw error2 instanceof Error ? error2 : error2 && typeof error2 == "object" && "stderr" in error2 && typeof error2.stderr == "string" ? new Error(error2.stderr) : new Error(`${ERROR_KEY} unknown error`);
@@ -1894,14 +1898,12 @@ var QueryGetEnvironment = graphql(
       errorThrows: !1
     }
   });
-  if (environment.errors && error(`GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`), !environment.data.repository?.environment)
-    throw new Error(`GitHub Environment: Not created for ${gitHubEnvironment}`);
-  if (!environment.data.repository?.ref?.id)
-    throw new Error(`GitHub Environment: No ref id ${gitHubEnvironment}`);
-  return {
+  return environment.errors ? raiseFail(
+    `GitHub Environment: Errors - ${JSON.stringify(environment.errors)}`
+  ) : environment.data.repository?.environment ? environment.data.repository?.ref?.id ? {
     ...environment.data.repository.environment,
     refId: environment.data.repository?.ref?.id
-  };
+  } : raiseFail(`GitHub Environment: No ref id ${gitHubEnvironment}`) : raiseFail(`GitHub Environment: Not created for ${gitHubEnvironment}`);
 }, "checkEnvironment");
 
 // src/github/deployment/create.ts
