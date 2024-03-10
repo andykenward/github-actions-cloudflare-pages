@@ -175,16 +175,14 @@ ${"  ".repeat(level)}- ${renderError(chainedError,level+1)}`).join(`
     }
   }
 `),addComment=__name(async(deployment,output)=>{let{eventName,payload}=useContextEvent();if(eventName==="pull_request"&&payload.action!=="closed"){let prNodeId=payload.pull_request.node_id??raise("No pull request node id"),{sha}=useContext(),rawBody=`## Cloudflare Pages Deployment
- **Environment:** ${deployment.environment} 
- **Project:** ${deployment.project_name} 
- **Built with commit:** ${sha}
- **Preview URL:** ${deployment.url} 
- **Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)} 
- <details><summary>Wrangler Output:</summary> 
- \`\`\` 
- ${output} 
- \`\`\` 
- </details>`;return(await request({query:MutationAddComment,variables:{subjectId:prNodeId,body:rawBody}})).data.addComment?.commentEdge?.node?.id}},"addComment");var EnvironmentFragment=graphql(`
+**Environment:** ${deployment.environment}
+**Project:** ${deployment.project_name}
+**Built with commit:** ${sha}
+**Preview URL:** ${deployment.url}
+**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}
+
+### Wrangler Output
+${output}`;return(await request({query:MutationAddComment,variables:{subjectId:prNodeId,body:rawBody}})).data.addComment?.commentEdge?.node?.id}},"addComment");var EnvironmentFragment=graphql(`
   fragment EnvironmentFragment on Environment {
     name
     id
