@@ -46,7 +46,7 @@ See the GitHub Workflow examples below or [deploy.yml](./.github/workflows/deplo
 
 ```yaml
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-
+name: 'Deployment'
 on:
   push:
     branches:
@@ -56,24 +56,23 @@ on:
       - main
 
 jobs:
-  publish:
+  deploy:
     permissions:
+      actions: read # Only required for private GitHub Repo
       contents: read
       deployments: write
       pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
-      - name: Setup Node.js & pnpm
-        uses: unlike-ltd/github-actions/setup-pnpm@4f6c1e5b04525aa73e680f900c9f588f868735e3 #v1.0.0
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20.x
-      - name: Build
-        run: pnpm run build
-      - name: Publish to Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@8c09c46bd39321b4aa3784852491d9e4f09e1566 #v1.2.0
+          node_version: 20
+      - run: npm ci
+        run: npm run build
+      - name: Deploy to Cloudflare Pages
+        uses: unlike-ltd/github-actions-cloudflare-pages@v1.2.0
         id: pages
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -89,7 +88,7 @@ jobs:
 ```yaml
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 
-name: 'delete deployments'
+name: 'Deployment Deletion'
 on:
   pull_request:
     types:
@@ -98,16 +97,17 @@ on:
       - main
 
 jobs:
-  delete:
+  deploy-delete:
     permissions:
+      actions: read # Only required for private GitHub Repo
       contents: read
       deployments: write
       pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: 'Delete Cloudflare Pages deployments'
-        uses: unlike-ltd/github-actions-cloudflare-pages@8c09c46bd39321b4aa3784852491d9e4f09e1566 #v1.2.0
+      - name: Deploy deletion Cloudflare Pages
+        uses: unlike-ltd/github-actions-cloudflare-pages@v1.2.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -133,7 +133,7 @@ directory:
   description: 'Directory of static files to upload'
   required: true
 github-token:
-  description: 'Github API key'
+  description: 'Github API key, make sure to add the required permissions for this action.'
   required: true
 github-environment:
   description: 'GitHub environment to deploy to. You need to manually create this for the github repo'
@@ -163,9 +163,11 @@ alias:
 
 ## Deleting Deployments
 
-Deployments are only deleted when the GitHub Action Event triggered is `pull_request` and the event payload action is `closed`.
+If on the `main` branch the last 5 deployments will not be deleted.
 
-It will only delete deployments that it created for that pull request. This is because it requires a certain payload in a GitHub deployment response.
+Other branche deployments are only deleted when the GitHub Action Event triggered is `pull_request` and the event payload action is `closed`.
+
+It will only delete deployments that it created. This is because it requires a certain payload in a GitHub deployment response.
 
 ### GitHub Deployment payload example response
 
