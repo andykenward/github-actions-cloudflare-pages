@@ -1,6 +1,6 @@
 import {strict} from 'node:assert'
 
-import {setOutput, summary} from '@unlike/github-actions-core'
+import {info, setOutput, summary} from '@unlike/github-actions-core'
 
 import {useContext} from '../../github/context.js'
 import {useInputs} from '../../inputs.js'
@@ -41,12 +41,16 @@ export const createCloudflareDeployment = async () => {
     /**
      * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
      */
-    await execAsync(
+    const {stdout} = await execAsync(
       `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
       {
         env: process.env
       }
     )
+    /**
+     * Log out wrangler output.
+     */
+    info(stdout)
     /**
      * Get the latest deployment by commitHash and poll until required status.
      */
