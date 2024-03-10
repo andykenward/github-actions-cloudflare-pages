@@ -26,6 +26,18 @@ For example manually create two GitHub Environments called "production" & "previ
 github-environemnt: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
 ```
 
+### Permissions
+
+The [permissions] required for this GitHub Action when using the created [`GITHUB_TOKEN`] by the workflow for the `github-token` field.
+
+```yaml
+permissions:
+  actions: read # Only required for a private GitHub Repo.
+  contents: read
+  deployments: write
+  pull-requests: write
+```
+
 ### Examples
 
 See the GitHub Workflow examples below or [deploy.yml](./.github/workflows/deploy.yml) & [deploy-delete.yml](./.github/workflows/deploy-delete.yml)
@@ -197,3 +209,5 @@ All actions ran while this secret is enabled contain additional diagnostic log f
 [pull request]: https://docs.github.com/en/pull-requests
 [GitHub Environments]: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
 [GitHub Deployment]: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
+[permissions]: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
+[`GITHUB_TOKEN`]: https://docs.github.com/en/actions/security-guides/automatic-token-authentication
