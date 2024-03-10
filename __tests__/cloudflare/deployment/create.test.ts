@@ -171,7 +171,7 @@ describe('createCloudflareDeployment', () => {
           'Branch Preview URL:',
           `<a href='https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'>https://unknown-branch.cloudflare-pages-action-a5z.pages.dev</a>`
         ],
-        ['Wrangler Output:', 'success']
+        ['Wrangler Output:', `<pre><code>success</code></pre>`]
       ])
     })
   })
