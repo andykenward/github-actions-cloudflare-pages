@@ -1,5 +1,37 @@
 # github-actions-cloudflare-pages
 
+## 1.3.0
+
+### Minor Changes
+
+- [#256](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/256) [`eac850d`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/eac850d5ebd29a0f4152a1ab7d6a9d56cfb43a8a) Thanks [@andykenward](https://github.com/andykenward)! - feat: wrangler output shown in summary and PR comment
+
+- [#252](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/252) [`4048f91`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/4048f91dba786d67c669738bbe6819dd35a429bd) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): Updates `wrangler` from 3.28.1 to 3.32.0
+
+### Patch Changes
+
+- [#255](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/255) [`21dce1a`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/21dce1a3e306226ff145f9a9998d096e5f44fad7) Thanks [@andykenward](https://github.com/andykenward)! - docs: permissions
+
+- [#255](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/255) [`4627ef3`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/4627ef3085643829b237345e6a0f86daa6c668b9) Thanks [@andykenward](https://github.com/andykenward)! - feat: enable esbuild minifying
+
+- [`75c03ec`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/75c03ec2a37dae5536cca1c13edf5deac0505a11) Thanks [@andykenward](https://github.com/andykenward)! - Error on unsupported GitHub Action event name
+
+- [`fffd89b`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/fffd89b51399a3cfae646a2496604bc64510b75b) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): bump @graphql-codegen/client-preset from 4.2.2 to 4.2.4
+
+- [#248](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/248) [`7c79d45`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/7c79d459deae6df8d39e8dd842ff4f1d5c0d786e) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): upgrade @octokit/plugin-paginate-rest from 9.1.5 to 10.0.0. Which is now [ESM](https://github.com/octokit/plugin-paginate-rest.js/pull/596) and we can tree shake.
+
+  chore(deps-dev): bump @octokit/graphql-schema from 14.56.0 to 14.56.0
+
+- [#255](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/255) [`19f26f7`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/19f26f7be493025857be5f7e816f4cd34823c551) Thanks [@andykenward](https://github.com/andykenward)! - feat: call setFailed for missing GitHub environments
+
+- [#255](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/255) [`1814865`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/18148659a99d53bed9aed62d942d7dddcaa220ca) Thanks [@andykenward](https://github.com/andykenward)! - refactor: remove usage of barrel files
+
+- [`3f3692c`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/3f3692c8409e8883cc98a94f45dce298343301c8) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): upgrade @octokit/graphql-schema from 14.58.0 to 15.2.0
+
+- [`091175e`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/091175e145a592703139c426e6c558b656fa04da) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): bump esbuild from 0.20.0 to 0.20.1
+
+- [#232](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/232) [`fcb1d78`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/fcb1d780fbb54c56bb32fb66cb6494a68dca573d) Thanks [@andykenward](https://github.com/andykenward)! - test: enable vitest reporter for github-action. Bump vitest from 1.3.0 to 1.3.1. Bump eslint-plugin-vitest from 0.3.22 to 0.3.24.
+
 ## 1.2.0
 
 ### Minor Changes
