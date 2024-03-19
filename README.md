@@ -72,7 +72,7 @@ jobs:
       - run: npm ci
         run: npm run build
       - name: Deploy to Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@v1.2.0
+        uses: unlike-ltd/github-actions-cloudflare-pages@v1.3.1
         id: pages
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -107,7 +107,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Deploy deletion Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@v1.2.0
+        uses: unlike-ltd/github-actions-cloudflare-pages@v1.3.1
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
