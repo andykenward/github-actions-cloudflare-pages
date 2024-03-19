@@ -1,5 +1,11 @@
 # github-actions-cloudflare-pages
 
+## 1.3.1
+
+### Patch Changes
+
+- [#269](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/269) [`12ada06`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/12ada069b766d7129a6c92805c0394337ebcd331) Thanks [@andykenward](https://github.com/andykenward)! - feat: get GitHub deployments based on branch & environment
+
 ## 1.3.0
 
 ### Minor Changes
