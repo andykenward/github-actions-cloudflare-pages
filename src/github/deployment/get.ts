@@ -1,5 +1,6 @@
 import type {PaginateResponse} from '../api/paginate.js'
 
+import {useInputs} from '../../inputs.js'
 import {paginate} from '../api/paginate.js'
 import {useContext} from '../context.js'
 
@@ -9,13 +10,15 @@ import {useContext} from '../context.js'
 export const getGitHubDeployments = async (): Promise<
   PaginateResponse<'GET /repos/{owner}/{repo}/deployments'>
 > => {
+  const {gitHubEnvironment} = useInputs()
   const {repo, branch} = useContext()
 
   const deployments = await paginate('GET /repos/{owner}/{repo}/deployments', {
     owner: repo.owner,
     repo: repo.repo,
     ref: branch,
-    per_page: 100
+    per_page: 100,
+    environment: gitHubEnvironment
   })
 
   return deployments
