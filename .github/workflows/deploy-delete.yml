@@ -20,6 +20,7 @@ concurrency:
 jobs:
   cloudflare-pages-deploy-delete:
     permissions:
+      actions: read
       contents: read
       deployments: write
       pull-requests: write
