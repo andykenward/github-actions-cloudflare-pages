@@ -7749,6 +7749,8 @@ export type FundingLink = {
 
 /** The possible funding platforms for repository funding links. */
 export enum FundingPlatform {
+  /** Buy Me a Coffee funding platform. */
+  BuyMeACoffee = 'BUY_ME_A_COFFEE',
   /** Community Bridge funding platform. */
   CommunityBridge = 'COMMUNITY_BRIDGE',
   /** Custom funding platform. */

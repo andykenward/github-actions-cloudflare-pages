@@ -1,10 +1,13 @@
 import type {
+  BranchProtectionConfigurationEvent,
   BranchProtectionRuleEvent,
   CheckRunEvent,
   CheckSuiteEvent,
   CodeScanningAlertEvent,
   CommitCommentEvent,
   CreateEvent,
+  CustomPropertyEvent,
+  CustomPropertyValuesEvent,
   DeleteEvent,
   DependabotAlertEvent,
   DeployKeyEvent,
@@ -67,12 +70,15 @@ import type {
 } from '@octokit/webhooks-types'
 
 export const EVENT_NAMES = [
+  'branch_protection_configuration',
   'branch_protection_rule',
   'check_run',
   'check_suite',
   'code_scanning_alert',
   'commit_comment',
   'create',
+  'custom_property',
+  'custom_property_values',
   'delete',
   'dependabot_alert',
   'deploy_key',
@@ -138,6 +144,10 @@ export interface WorkflowEventBase {
 }
 export type WorkflowEvent =
   | {
+      eventName: 'branch_protection_configuration'
+      payload: BranchProtectionConfigurationEvent
+    }
+  | {
       eventName: 'branch_protection_rule'
       payload: BranchProtectionRuleEvent
     }
@@ -160,6 +170,14 @@ export type WorkflowEvent =
   | {
       eventName: 'create'
       payload: CreateEvent
+    }
+  | {
+      eventName: 'custom_property'
+      payload: CustomPropertyEvent
+    }
+  | {
+      eventName: 'custom_property_values'
+      payload: CustomPropertyValuesEvent
     }
   | {
       eventName: 'delete'
