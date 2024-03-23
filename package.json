@@ -3,53 +3,48 @@
   "version": "1.3.1",
   "private": true,
   "description": "A Github Action to deploy to Cloudflare Pages",
+  "keywords": [
+    "actions",
+    "node",
+    "setup"
+  ],
+  "bugs": "https://github.com/unlike-ltd/github-actions-cloudflare-pages/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unlike-ltd/github-actions-cloudflare-pages.git"
+  },
+  "license": "MIT",
+  "author": "Unlike Ltd <hi@unlike.dev> (https://unlike.dev/)",
   "type": "module",
   "exports": "./dist/index.js",
   "scripts": {
-    "start": "node -r dotenv/config ./dist/index.js",
+    "act:d": "act -j delete --secret-file .env",
+    "all": "pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls && pnpm run format && pnpm run lint:ls && pnpm run test && pnpm run build",
     "build": "node ./esbuild.config.js",
     "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=esm --keep-names --legal-comments=external  --sourcemap --analyze --outfile=dist/index.js --tree-shaking=true",
-    "tsc:check": "tsc --noEmit --checkJs",
-    "tsc:watch": "pnpm run tsc:check --watch",
-    "tsc:ls": "pnpm run tsc:check --listFilesOnly",
-    "tsc:types": "pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls",
+    "changeset": "changeset",
+    "codegen": "graphql-codegen-esm --config graphql.config.js",
+    "codegen:events": "tsx bin/codegen/index.ts",
+    "codegen:watch": "pnpm run codegen --watch",
+    "deployments:delete": "tsx bin/deployments/index.ts",
+    "download": "tsx bin/download/index.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "pnpm run tsc:check && eslint .",
     "lint:debug": "pnpm run lint -- --debug",
     "lint:fix": "pnpm run lint -- --fix",
     "lint:ls": "DEBUG=eslint:cli-engine pnpm run lint",
+    "release": "changeset publish",
+    "start": "node -r dotenv/config ./dist/index.js",
     "test": "vitest run",
     "test:ci": "vitest run --reporter=github-actions",
     "test:watch": "vitest",
-    "all": "pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls && pnpm run format && pnpm run lint:ls && pnpm run test && pnpm run build",
-    "act:d": "act -j delete --secret-file .env",
-    "codegen": "graphql-codegen-esm --config graphql.config.js",
-    "codegen:watch": "pnpm run codegen --watch",
-    "codegen:events": "tsx bin/codegen/index.ts",
-    "download": "tsx bin/download/index.ts",
-    "deployments:delete": "tsx bin/deployments/index.ts",
-    "changeset": "changeset",
-    "version": "changeset version",
-    "release": "changeset publish"
+    "tsc:check": "tsc --noEmit --checkJs",
+    "tsc:ls": "pnpm run tsc:check --listFilesOnly",
+    "tsc:types": "pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls",
+    "tsc:watch": "pnpm run tsc:check --watch",
+    "version": "changeset version"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/unlike-ltd/github-actions-cloudflare-pages.git"
-  },
-  "bugs": "https://github.com/unlike-ltd/github-actions-cloudflare-pages/issues",
-  "keywords": [
-    "actions",
-    "node",
-    "setup"
-  ],
-  "author": "Unlike Ltd <hi@unlike.dev> (https://unlike.dev/)",
-  "license": "MIT",
-  "engines": {
-    "node": "^20.11.0",
-    "pnpm": "^8.15.1"
-  },
-  "packageManager": "pnpm@8.15.1",
   "dependencies": {
     "@octokit-next/core": "2.7.1",
     "@octokit/plugin-paginate-rest": "10.0.0",
@@ -83,10 +78,16 @@
     "graphql": "16.8.1",
     "graphql-tag": "2.12.6",
     "prettier": "3.2.5",
+    "prettier-plugin-packagejson": "2.4.12",
     "tsx": "4.7.1",
     "typescript": "5.4.3",
     "undici": "6.7.1",
     "vitest": "1.4.0"
+  },
+  "packageManager": "pnpm@8.15.1",
+  "engines": {
+    "node": "^20.11.0",
+    "pnpm": "^8.15.1"
   },
   "pnpm": {
     "peerDependencyRules": {

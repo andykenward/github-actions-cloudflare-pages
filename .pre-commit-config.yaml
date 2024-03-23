@@ -20,4 +20,5 @@ repos:
       - id: prettier
         additional_dependencies:
           - prettier@3.2.5
-          - '@ianvs/prettier-plugin-sort-imports@4.1.1'
+          - '@ianvs/prettier-plugin-sort-imports@4.2.1'
+          - prettier-plugin-packagejson@2.4.12

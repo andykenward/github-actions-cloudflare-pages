@@ -1,6 +1,9 @@
 /** @type {import("@ianvs/prettier-plugin-sort-imports").PrettierConfig} */
 const config = {
-  plugins: [require.resolve('@ianvs/prettier-plugin-sort-imports')],
+  plugins: [
+    require.resolve('@ianvs/prettier-plugin-sort-imports'),
+    'prettier-plugin-packagejson'
+  ],
   importOrder: [
     '',
     '<TYPES>',
