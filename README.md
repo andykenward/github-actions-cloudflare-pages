@@ -11,6 +11,7 @@ When used in context of a [pull request], the action will create a deployment fo
 - Comment on pull requests with deployment URL.
 - On pull request close, deletes Cloudflare Pages, GitHub deployments & comments
 - Production branch keeps latest 5 deployments.
+- Define a `working-directory` input for the `wrangler` cli command to execute from. Useful for monorepos where the `functions` folder may not be in the root directory.
 
 ## Usage
 
@@ -138,6 +139,9 @@ github-token:
 github-environment:
   description: 'GitHub environment to deploy to. You need to manually create this for the github repo'
   required: true
+working-directory:
+  description: 'Directory to run wrangler cli from'
+  required: false
 ```
 
 ## Outputs

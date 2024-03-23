@@ -24,6 +24,9 @@ inputs:
   github-environment:
     description: 'GitHub environment to deploy to. You need to manually create this for the github repo'
     required: true
+  working-directory:
+    description: 'Directory to run wrangler cli from'
+    required: false
 
 outputs:
   id:

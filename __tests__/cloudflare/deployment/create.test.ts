@@ -13,6 +13,9 @@ import {
 } from '@/src/cloudflare/deployment/create.js'
 import {execAsync} from '@/src/utils.js'
 import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/api.js'
+import {stubInputEnv} from '@/tests/helpers/inputs.js'
+
+import {INPUT_KEY_WORKING_DIRECTORY} from '../../../input-keys.js'
 
 vi.mock('@/src/utils.js')
 vi.mock('@unlike/github-actions-core')
@@ -26,11 +29,12 @@ describe('createCloudflareDeployment', () => {
     afterEach(async () => {
       mockApi.mockAgent.assertNoPendingInterceptors()
       await mockApi.mockAgent.close()
+      vi.mocked(execAsync).mockReset()
     })
 
     test('handles thrown error from wrangler deploy', async () => {
       expect.assertions(10)
-      vi.mocked(execAsync).mockRejectedValue({stderr: 'Oh no!', stdout: ''})
+      vi.mocked(execAsync).mockRejectedValueOnce({stderr: 'Oh no!', stdout: ''})
 
       // Expect Cloudflare Api Token and Account Id to be undefined.
       expect(process.env[CLOUDFLARE_API_TOKEN]).toBeUndefined()
@@ -47,7 +51,8 @@ describe('createCloudflareDeployment', () => {
           env: expect.objectContaining({
             CLOUDFLARE_ACCOUNT_ID: 'mock-cloudflare-account-id',
             CLOUDFLARE_API_TOKEN: 'mock-cloudflare-api-token'
-          })
+          }),
+          cwd: ''
         }
       )
 
@@ -66,7 +71,7 @@ describe('createCloudflareDeployment', () => {
 
     test('handles thrown error from getDeployments', async () => {
       expect.assertions(5)
-      vi.mocked(execAsync).mockResolvedValue({
+      vi.mocked(execAsync).mockResolvedValueOnce({
         stdout: 'success',
         stderr: ''
       })
@@ -89,8 +94,10 @@ describe('createCloudflareDeployment', () => {
     })
 
     test('handles success', async () => {
-      expect.assertions(14)
-      vi.mocked(execAsync).mockResolvedValue({
+      expect.assertions(15)
+      stubInputEnv(INPUT_KEY_WORKING_DIRECTORY)
+
+      vi.mocked(execAsync).mockResolvedValueOnce({
         stdout: 'success',
         stderr: ''
       })
@@ -110,6 +117,18 @@ describe('createCloudflareDeployment', () => {
       )
 
       const {deployment, wranglerOutput} = await createCloudflareDeployment()
+
+      expect(execAsync).toHaveBeenCalledWith(
+        `npx wrangler@${process.env.npm_package_dependencies_wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
+        {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          env: expect.objectContaining({
+            CLOUDFLARE_ACCOUNT_ID: 'mock-cloudflare-account-id',
+            CLOUDFLARE_API_TOKEN: 'mock-cloudflare-api-token'
+          }),
+          cwd: 'mock-working-directory'
+        }
+      )
 
       expect(wranglerOutput).toMatchInlineSnapshot(`"success"`)
       expect(deployment).toMatchSnapshot()
