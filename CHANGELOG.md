@@ -1,5 +1,17 @@
 # github-actions-cloudflare-pages
 
+## 1.3.2
+
+### Patch Changes
+
+- [#277](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/277) [`6a049b5`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/6a049b5e6d0d588443ef47cab80f662c6d6f99d8) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump @octokit/graphql-schema from 15.2.0 to 15.3.0
+  chore(deps-dev): bump @octokit/webhooks-schemas from 7.3.2 to 7.4.0
+  chore(deps-dev): bump @octokit/webhooks-types from 7.3.2 to 7.4.0
+
+- [#281](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/281) [`3cb82ad`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/3cb82ad6d6ceb02c10e10471747847390ce6d3d9) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 3.32.0 to 3.37.0
+
+- [#282](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/282) [`47de0c7`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/47de0c7017aaf3e6fd519b12a1c6ae2bc55ea458) Thanks [@andykenward](https://github.com/andykenward)! - feat: support input `working-directory` for `wrangler` cli command
+
 ## 1.3.1
 
 ### Patch Changes
