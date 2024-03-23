@@ -41,14 +41,14 @@ devDependencies:
     specifier: 4.2.1
     version: 4.2.1(prettier@3.2.5)
   '@octokit/graphql-schema':
-    specifier: 15.2.0
-    version: 15.2.0
+    specifier: 15.3.0
+    version: 15.3.0
   '@octokit/webhooks-schemas':
-    specifier: 7.3.2
-    version: 7.3.2
+    specifier: 7.4.0
+    version: 7.4.0
   '@octokit/webhooks-types':
-    specifier: 7.3.2
-    version: 7.3.2
+    specifier: 7.4.0
+    version: 7.4.0
   '@total-typescript/ts-reset':
     specifier: 0.5.1
     version: 0.5.1
@@ -2514,8 +2514,8 @@ packages:
       universal-user-agent: 7.0.2
     dev: false
 
-  /@octokit/graphql-schema@15.2.0:
-    resolution: {integrity: sha512-th6cxLv9PfrWX3/Lr2pLgC/HI7neCrfiE+G64buNWqMdvs+MOhU5MFQ5VRIupJUUzhJZhTcPSa4blRcwEbBTDw==}
+  /@octokit/graphql-schema@15.3.0:
+    resolution: {integrity: sha512-yGj0haNZY1/4DZO72KpJdOzvKQFYPUkD5d6PdntPSbekABUoOdStAtEsOtuwZz52cPrbQEEoZ0wN7aemA1y8PA==}
     dependencies:
       graphql: 16.8.1
       graphql-tag: 2.12.6(graphql@16.8.1)
@@ -2567,12 +2567,12 @@ packages:
       '@octokit/openapi-types': 20.0.0
     dev: false
 
-  /@octokit/webhooks-schemas@7.3.2:
-    resolution: {integrity: sha512-v7vOoE84ZyG0MPS7YmB76zmI8cT1OAwyep2RNWwrKp53S1jloktM9wE5Y3wGjPhBxcoWe9EcvDKoMVveBmb5Aw==}
+  /@octokit/webhooks-schemas@7.4.0:
+    resolution: {integrity: sha512-+RQp4Nx2Ykmo2K5ugomEfF8Kb3hB2NeyIunNR2SfbskADUYRWK9RTMPuSbOhVCbRxZKiV4af00ydzi24aEg/lg==}
     dev: true
 
-  /@octokit/webhooks-types@7.3.2:
-    resolution: {integrity: sha512-JWOoOgtWTFnTSAamPXXyjTY5/apttvNxF+vPBnwdSu5cj5snrd7FO0fyw4+wTXy8fHduq626JjhO+TwCyyA6vA==}
+  /@octokit/webhooks-types@7.4.0:
+    resolution: {integrity: sha512-FE2V+QZ2UYlh+9wWd5BPLNXG+J/XUD/PPq0ovS+nCcGX4+3qVbi3jYOmCTW48hg9SBBLtInx9+o7fFt4H5iP0Q==}
     dev: true
 
   /@peculiar/asn1-schema@2.3.8:
