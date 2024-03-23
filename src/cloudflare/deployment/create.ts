@@ -22,7 +22,8 @@ export const createCloudflareDeployment = async (): Promise<{
     cloudflareAccountId,
     cloudflareProjectName,
     directory,
-    cloudflareApiToken
+    cloudflareApiToken,
+    workingDirectory
   } = useInputs()
 
   process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken
@@ -49,7 +50,8 @@ export const createCloudflareDeployment = async (): Promise<{
     const {stdout} = await execAsync(
       `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${cloudflareProjectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
       {
-        env: process.env
+        env: process.env,
+        cwd: workingDirectory
       }
     )
     /**

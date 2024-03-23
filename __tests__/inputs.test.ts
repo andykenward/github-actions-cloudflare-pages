@@ -22,6 +22,7 @@ describe('inputs', () => {
         "directory": "mock-directory",
         "gitHubApiToken": "mock-github-token",
         "gitHubEnvironment": "mock-github-environment",
+        "workingDirectory": ".",
       }
     `)
   })
