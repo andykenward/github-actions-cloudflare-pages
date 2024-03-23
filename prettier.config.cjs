@@ -2,7 +2,7 @@
 const config = {
   plugins: [
     require.resolve('@ianvs/prettier-plugin-sort-imports'),
-    'prettier-plugin-packagejson'
+    require.resolve('prettier-plugin-packagejson')
   ],
   importOrder: [
     '',
