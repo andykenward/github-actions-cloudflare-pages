@@ -53,8 +53,8 @@ devDependencies:
     specifier: 0.5.1
     version: 0.5.1
   '@tsconfig/node20':
-    specifier: 20.1.2
-    version: 20.1.2
+    specifier: 20.1.3
+    version: 20.1.3
   '@types/eslint':
     specifier: 8.56.6
     version: 8.56.6
@@ -2722,8 +2722,8 @@ packages:
     resolution: {integrity: sha512-AqlrT8YA1o7Ff5wPfMOL0pvL+1X+sw60NN6CcOCqs658emD6RfiXhF7Gu9QcfKBH7ELY2nInLhKSCWVoNL70MQ==}
     dev: true
 
-  /@tsconfig/node20@20.1.2:
-    resolution: {integrity: sha512-madaWq2k+LYMEhmcp0fs+OGaLFk0OenpHa4gmI4VEmCKX4PJntQ6fnnGADVFrVkBj0wIdAlQnK/MrlYTHsa1gQ==}
+  /@tsconfig/node20@20.1.3:
+    resolution: {integrity: sha512-XeWn6Gms5MaQWdj+C4fuxuo/Icy8ckh+BwAIijhX2LKRHHt1OuctLLLlB0F4EPi55m2IUJNTnv8FH9kSBI7Ogw==}
     dev: true
 
   /@types/eslint@8.56.6:
