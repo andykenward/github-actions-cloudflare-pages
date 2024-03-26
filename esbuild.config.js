@@ -2,10 +2,11 @@
 
 import * as esbuild from 'esbuild'
 
+// deploy
 await esbuild.build({
   entryPoints: ['src/index.ts'],
   bundle: true,
-  outdir: './dist',
+  outdir: './dist/deploy',
   format: 'esm',
   keepNames: true,
   target: 'node20',
