@@ -16,11 +16,11 @@
   "license": "MIT",
   "author": "Unlike Ltd <hi@unlike.dev> (https://unlike.dev/)",
   "type": "module",
-  "exports": "./dist/index.js",
+  "exports": "./dist/deploy/index.js",
   "scripts": {
     "act:d": "act -j delete --secret-file .env",
     "all": "pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls && pnpm run format && pnpm run lint:ls && pnpm run test && pnpm run build",
-    "build": "node ./esbuild.config.js",
+    "build": "rm -rf ./dist/* && node ./esbuild.config.js",
     "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=esm --keep-names --legal-comments=external  --sourcemap --analyze --outfile=dist/index.js --tree-shaking=true",
     "changeset": "changeset",
     "codegen": "graphql-codegen-esm --config graphql.config.js",
