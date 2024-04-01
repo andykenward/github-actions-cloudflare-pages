@@ -15,8 +15,8 @@ dependencies:
     specifier: 1.0.0
     version: 1.0.0
   wrangler:
-    specifier: 3.37.0
-    version: 3.37.0
+    specifier: 3.41.0
+    version: 3.41.0
 
 devDependencies:
   '@changesets/changelog-github':
@@ -26,8 +26,8 @@ devDependencies:
     specifier: 2.27.1
     version: 2.27.1
   '@cloudflare/types':
-    specifier: 6.27.0
-    version: 6.27.0
+    specifier: 6.29.0
+    version: 6.29.0
   '@graphql-codegen/cli':
     specifier: 5.0.2
     version: 5.0.2(@types/node@20.11.17)(graphql@16.8.1)(typescript@5.4.3)
@@ -957,8 +957,8 @@ packages:
       mime: 3.0.0
     dev: false
 
-  /@cloudflare/types@6.27.0:
-    resolution: {integrity: sha512-mmSHUTlB/NrRzr87yzA6zy50jbuxChX6P+uq/R09CgxEgy4QBDPKVDb+2nivkjYquYnnT3CxzAUUkTbY5fp1TQ==}
+  /@cloudflare/types@6.29.0:
+    resolution: {integrity: sha512-ddiYaMqYlS/5cQeQrrk3H4W405JxvB7quj8E7+xXQGEwnbs8Cd+ThGh/XhIcL2uMPPUroQ5ghGr91kx10qetYA==}
     peerDependencies:
       react: ^15.0.0-0 || ^16.0.0-0 || ^17.0.0-0
     peerDependenciesMeta:
@@ -972,8 +972,8 @@ packages:
   /@cloudflare/util-en-garde@8.0.10:
     resolution: {integrity: sha512-qdCFf90hoZzT4o4xEmxOKUf9+bEJNGh4ANnRYApo6BMyVnHoHEHAQ3nWmGSHBmo+W9hOk2Ik7r1oHLbI0O/RRg==}
     dependencies:
-      fp-ts: 2.16.2
-      io-ts: 2.2.21(fp-ts@2.16.2)
+      fp-ts: 2.16.5
+      io-ts: 2.2.21(fp-ts@2.16.5)
     dev: true
 
   /@cloudflare/workerd-darwin-64@1.20240320.1:
@@ -4356,8 +4356,8 @@ packages:
       is-callable: 1.2.7
     dev: true
 
-  /fp-ts@2.16.2:
-    resolution: {integrity: sha512-CkqAjnIKFqvo3sCyoBTqgJvF+bHrSik584S9nhTjtBESLx26cbtVMR/T9a6ApChOcSDAaM3JydDmWDUn4EEXng==}
+  /fp-ts@2.16.5:
+    resolution: {integrity: sha512-N8T8PwMSeTKKtkm9lkj/zSTAnPC/aJIIrQhnHxxkL0KLsRCNUPANksJOlMXxcKKCo7H1ORP3No9EMD+fP0tsdA==}
     dev: true
 
   /fs-extra@7.0.1:
@@ -4800,12 +4800,12 @@ packages:
       loose-envify: 1.4.0
     dev: true
 
-  /io-ts@2.2.21(fp-ts@2.16.2):
+  /io-ts@2.2.21(fp-ts@2.16.5):
     resolution: {integrity: sha512-zz2Z69v9ZIC3mMLYWIeoUcwWD6f+O7yP92FMVVaXEOSZH1jnVBmET/urd/uoarD1WGBY4rCj8TAyMPzsGNzMFQ==}
     peerDependencies:
       fp-ts: ^2.5.0
     dependencies:
-      fp-ts: 2.16.2
+      fp-ts: 2.16.5
     dev: true
 
   /is-absolute@1.0.0:
@@ -5390,8 +5390,8 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /miniflare@3.20240320.0:
-    resolution: {integrity: sha512-4M2QRxs+J5sUsybBzKT++tlbrjjjGZdtWxKmj2sqLsT26dGaKDz7DxjAeF5XIhKa5cADcffygjxx4EvfWocMmw==}
+  /miniflare@3.20240320.1:
+    resolution: {integrity: sha512-MoHhT+XaFPQtplNIkJc5NtWOi5u/7VkmBUWyyxDH7ehHk4xRT2PDkMCvVOUIcaqbHNIBzigyoYegdYmZcYtdCg==}
     engines: {node: '>=16.13'}
     hasBin: true
     dependencies:
@@ -7074,8 +7074,8 @@ packages:
       '@cloudflare/workerd-windows-64': 1.20240320.1
     dev: false
 
-  /wrangler@3.37.0:
-    resolution: {integrity: sha512-dffPF92EApW77lIYXxz0DMoMm2LPMlFNlgrQ0jNj7g7Mm/AaogtSuY7jXNLSeoniYNHL/57V7wlVBn82aYIqyg==}
+  /wrangler@3.41.0:
+    resolution: {integrity: sha512-iPFHF+88ZchnoZaQnq69Qkcpt0/LwkD44FzTxHWGzuBiNFwWwaNZ5zJ1G7Ga4nyipwcgtj+ykGlB/Amdgmut7w==}
     engines: {node: '>=16.17.0'}
     hasBin: true
     peerDependencies:
@@ -7090,7 +7090,7 @@ packages:
       blake3-wasm: 2.1.5
       chokidar: 3.6.0
       esbuild: 0.17.19
-      miniflare: 3.20240320.0
+      miniflare: 3.20240320.1
       nanoid: 3.3.7
       path-to-regexp: 6.2.1
       resolve: 1.22.8
