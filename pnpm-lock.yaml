@@ -14,6 +14,9 @@ dependencies:
   '@unlike/github-actions-core':
     specifier: 1.0.0
     version: 1.0.0
+  type-fest:
+    specifier: 4.14.0
+    version: 4.14.0
   wrangler:
     specifier: 3.37.0
     version: 3.37.0
@@ -2452,7 +2455,7 @@ packages:
     dependencies:
       '@octokit-next/types': 2.7.1
       is-plain-obj: 4.1.0
-      type-fest: 4.12.0
+      type-fest: 4.14.0
       universal-user-agent: 7.0.2
     dev: false
 
@@ -2476,7 +2479,7 @@ packages:
       '@octokit-next/endpoint': 2.7.1
       '@octokit-next/types': 2.7.1
       is-plain-object: 5.0.0
-      type-fest: 4.12.0
+      type-fest: 4.14.0
       universal-user-agent: 7.0.2
     dev: false
 
@@ -2485,7 +2488,7 @@ packages:
     dependencies:
       '@octokit-next/request-error': 2.7.1
       before-after-hook: 3.0.2
-      type-fest: 4.12.0
+      type-fest: 4.14.0
     dev: false
 
   /@octokit/auth-token@5.0.1:
@@ -6698,8 +6701,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /type-fest@4.12.0:
-    resolution: {integrity: sha512-5Y2/pp2wtJk8o08G0CMkuFPCO354FGwk/vbidxrdhRGZfd0tFnb4Qb8anp9XxXriwBgVPjdWbKpGl4J9lJY2jQ==}
+  /type-fest@4.14.0:
+    resolution: {integrity: sha512-on5/Cw89wwqGZQu+yWO0gGMGu8VNxsaW9SB2HE8yJjllEk7IDTwnSN1dUVldYILhYPN5HzD7WAaw2cc/jBfn0Q==}
     engines: {node: '>=16'}
     dev: false
 
