@@ -1,11 +1,11 @@
 import {MockAgent, setGlobalDispatcher} from 'undici'
 
-import type {FetchResult} from '@/src/cloudflare/types.js'
+import type {FetchResult} from '@/common/cloudflare/types.js'
 import type {
   GraphqlResponse,
   RequestParams,
   Variables
-} from '@/src/github/api/client.js'
+} from '@/common/github/api/client.js'
 
 export const setMockApi = () => {
   return getMockApi()
