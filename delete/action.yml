@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 
 name: 'GitHub Action for Cloudflare Pages Delete'
-description: 'Delete Deployments to Cloudflare Pages using "GitHub Action for Cloudflare Pages"'
+description: 'Delete Deployments to Cloudflare Pages using "unlike-ltd/github-actions-cloudflare-pages"'
 branding:
   icon: 'delete'
   color: 'orange'
