@@ -1,6 +1,6 @@
-import 'dotenv/config'
+import type {FetchResult, PagesDeployment} from '@/common/cloudflare/types.js'
 
-import type {FetchResult, PagesDeployment} from '../../src/cloudflare/types.js'
+import 'dotenv/config'
 
 const API_ENDPOINT = 'https://api.cloudflare.com'
 const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID
