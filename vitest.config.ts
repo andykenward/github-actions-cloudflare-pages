@@ -27,12 +27,15 @@ export default defineConfig({
        * Used to resolve vi.mock() files
        * These have to match with tsconfig.json paths
        */
+      '@/common/': `${resolve(process.cwd(), 'src/common')}/`,
+      '@/delete/': `${resolve(process.cwd(), 'src/delete')}/`,
+      '@/deploy/': `${resolve(process.cwd(), 'src/deploy')}/`,
+      '@/gql/': `${resolve(process.cwd(), '__generated__/gql')}/`,
+      '@/input-keys': `${resolve(process.cwd(), 'input-keys.ts')}`,
       '@/payloads/': `${resolve(process.cwd(), '__generated__/payloads')}/`,
       '@/responses/': `${resolve(process.cwd(), '__generated__/responses')}/`,
-      '@/src/': `${resolve(process.cwd(), 'src')}/`,
       '@/tests/': `${resolve(process.cwd(), '__tests__')}/`,
-      '@/types/': `${resolve(process.cwd(), '__generated__/types')}/`,
-      '@/gql/': `${resolve(process.cwd(), '__generated__/gql')}/`
+      '@/types/': `${resolve(process.cwd(), '__generated__/types')}/`
     }
   }
 })
