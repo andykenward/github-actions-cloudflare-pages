@@ -18,4 +18,4 @@ inputs:
 
 runs:
   using: node20
-  main: dist/delete/index.js
+  main: ../dist/delete/index.js
