@@ -7,9 +7,6 @@ on:
       - closed
     branches:
       - main
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 concurrency:
