@@ -4,18 +4,15 @@
 
 This action deploys your build output to [Cloudflare Pages] using [Wrangler]. [GitHub Environments] and [GitHub Deployment] are used to keep track of the [Cloudflare Pages] deployments.
 
-When used in context of a [pull request], the action will create a deployment for the pull request and add a comment with the URL of the deployment. On closing the [pull request], all the deployments for that pull request will be deleted from [Cloudflare Pages], GitHub Deployment and the related comment. **The action is only able to delete deployments & comments that it created, as it requires a certain payload in a GitHub deployment.**
+When used in context of a [pull request], the action will create a deployment for the pull request and add a comment with the URL of the deployment.
 
 - Deploy to [Cloudflare Pages].
 - Use [GitHub Environments] & [GitHub Deployment].
 - Comment on pull requests with deployment URL.
-- On pull request close, deletes Cloudflare Pages, GitHub deployments & comments
-- Production branch keeps latest 5 deployments.
+- Delete deployments using [`unlike-ltd/github-actions-cloudflare-pages/delete`](./delete/README.md)
 - Define a `working-directory` input for the `wrangler` cli command to execute from. Useful for monorepos where the `functions` folder may not be in the root directory.
 
-## Usage
-
-### GitHub Environments - **(Required)**
+## GitHub Environments - **(Required)**
 
 > **This GitHub Action doesn't create the required [GitHub Environments], see below for more information.**
 
@@ -27,7 +24,7 @@ For example manually create two GitHub Environments called "production" & "previ
 github-environemnt: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
 ```
 
-### Permissions
+## Permissions
 
 The [permissions] required for this GitHub Action when using the created [`GITHUB_TOKEN`] by the workflow for the `github-token` field.
 
@@ -37,85 +34,6 @@ permissions:
   contents: read
   deployments: write
   pull-requests: write
-```
-
-### Examples
-
-See the GitHub Workflow examples below or [deploy.yml](./.github/workflows/deploy.yml) & [deploy-delete.yml](./.github/workflows/deploy-delete.yml)
-
-### `push` & `pull_request`
-
-```yaml
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: 'Deployment'
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    permissions:
-      actions: read # Only required for private GitHub Repo
-      contents: read
-      deployments: write
-      pull-requests: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node_version: 20
-      - run: npm ci
-        run: npm run build
-      - name: Deploy to Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@v1.3.1
-        id: pages
-        with:
-          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
-          directory: dist
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-environment: ${{ vars.CLOUDFLARE_PROJECT_NAME }} ${{ (github.ref == 'refs/heads/main' && '(Production)') || '(Preview)' }}
-```
-
-### `pull_request` `closed`
-
-```yaml
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-
-name: 'Deployment Deletion'
-on:
-  pull_request:
-    types:
-      - closed
-    branches:
-      - main
-
-jobs:
-  deploy-delete:
-    permissions:
-      actions: read # Only required for private GitHub Repo
-      contents: read
-      deployments: write
-      pull-requests: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Deploy deletion Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@v1.3.1
-        with:
-          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
-          directory: 'example/dist'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-environment: ${{ vars.CLOUDFLARE_PROJECT_NAME }} ${{ (github.ref == 'refs/heads/main' && '(Production)') || '(Preview)' }}
 ```
 
 ## Inputs
@@ -162,6 +80,51 @@ alias:
 wrangler:
   description: 'Wrangler cli output'
   values: ${{ steps.action.outputs.wrangler }}
+```
+
+## Examples
+
+See the GitHub Workflow examples below or [deploy.yml](./.github/workflows/deploy.yml)
+
+### `push` & `pull_request`
+
+```yaml
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: 'Deployment'
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    permissions:
+      actions: read # Only required for private GitHub Repo
+      contents: read
+      deployments: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node_version: 20
+      - run: npm ci
+        run: npm run build
+      - name: Deploy to Cloudflare Pages
+        uses: unlike-ltd/github-actions-cloudflare-pages@v1.3.1
+        id: pages
+        with:
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+          directory: dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-environment: ${{ vars.CLOUDFLARE_PROJECT_NAME }} ${{ (github.ref == 'refs/heads/main' && '(Production)') || '(Preview)' }}
 ```
 
 ## Comment Example
