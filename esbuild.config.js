@@ -50,3 +50,10 @@ await esbuild.build({
   entryPoints: ['src/deploy/index.ts'],
   outdir: './dist/deploy'
 })
+
+// delete
+await esbuild.build({
+  ...config,
+  entryPoints: ['src/delete/index.ts'],
+  outdir: './dist/delete'
+})

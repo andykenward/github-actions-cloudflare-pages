@@ -7,6 +7,9 @@ on:
       - closed
     branches:
       - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       environment:
@@ -29,11 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
       - id: 'cloudflare-pages'
-        uses: ./
+        uses: ./delete
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
-          directory: 'example/dist'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-environment: ${{ inputs.environment || 'preview' }}
