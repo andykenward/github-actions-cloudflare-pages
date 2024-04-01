@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+
+name: 'GitHub Action for Cloudflare Pages Delete'
+description: 'Delete Deployments to Cloudflare Pages using "GitHub Action for Cloudflare Pages"'
+branding:
+  icon: 'delete'
+  color: 'orange'
+inputs:
+  cloudflare-api-token:
+    description: 'Cloudflare API Token'
+    required: true
+  github-token:
+    description: 'Github API key'
+    required: true
+  github-environment:
+    description: 'GitHub environment to delete deployments from. If not defined any deployments link to the branch/pr are deleted.'
+    required: false
+
+runs:
+  using: node20
+  main: dist/delete/index.js
