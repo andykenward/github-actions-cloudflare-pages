@@ -1,15 +1,15 @@
 import {getInput} from '@unlike/github-actions-core'
 
+import {
+  INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
+  INPUT_KEY_CLOUDFLARE_PROJECT_NAME
+} from '@/input-keys'
+
 import type {getGitHubDeployments} from './get.js'
 import type {
   PayloadGithubDeployment,
   PayloadGithubDeploymentV2
 } from './types.js'
-
-import {
-  INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
-  INPUT_KEY_CLOUDFLARE_PROJECT_NAME
-} from '../../../../input-keys.js'
 
 export type Payload = Awaited<
   ReturnType<typeof getGitHubDeployments>

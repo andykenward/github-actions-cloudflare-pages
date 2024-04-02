@@ -15,8 +15,7 @@ import {
   createCloudflareDeployment
 } from '@/common/cloudflare/deployment/create.js'
 import {execAsync} from '@/common/utils.js'
-
-import {INPUT_KEY_WORKING_DIRECTORY} from '../../../../input-keys.js'
+import {INPUT_KEY_WORKING_DIRECTORY} from '@/input-keys'
 
 vi.mock('@/common/utils.js')
 vi.mock('@unlike/github-actions-core')

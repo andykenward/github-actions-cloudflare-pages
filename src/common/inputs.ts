@@ -4,7 +4,7 @@ import {
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN
-} from '../../input-keys.js'
+} from '@/input-keys'
 
 type Inputs = {
   /** Cloudflare API token */

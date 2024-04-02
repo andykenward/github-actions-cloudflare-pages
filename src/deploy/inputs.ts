@@ -3,13 +3,12 @@ import type {InputOptions} from '@unlike/github-actions-core'
 import {getInput} from '@unlike/github-actions-core'
 
 import {checkWorkingDirectory} from '@/common/utils.js'
-
 import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
   INPUT_KEY_CLOUDFLARE_PROJECT_NAME,
   INPUT_KEY_DIRECTORY,
   INPUT_KEY_WORKING_DIRECTORY
-} from '../../input-keys.js'
+} from '@/input-keys'
 
 const OPTIONS: InputOptions = {
   required: true

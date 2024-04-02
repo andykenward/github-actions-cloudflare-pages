@@ -3,12 +3,11 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 import {useCommonInputs} from '@/common/inputs.js'
-
 import {
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN
-} from '../../input-keys.js'
+} from '@/input-keys'
 
 describe('common', () => {
   describe('inputs', () => {
