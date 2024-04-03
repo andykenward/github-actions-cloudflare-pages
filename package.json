@@ -81,7 +81,7 @@
     "prettier-plugin-packagejson": "2.4.12",
     "tsx": "4.7.1",
     "typescript": "5.4.3",
-    "undici": "6.10.1",
+    "undici": "6.11.1",
     "vitest": "1.4.0"
   },
   "packageManager": "pnpm@8.15.1",
