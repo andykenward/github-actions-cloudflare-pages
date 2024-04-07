@@ -1,6 +1,6 @@
 import {vi} from 'vitest'
 
-import {addComment as originalAddComment} from '../comment.js'
+import type {addComment as originalAddComment} from '../comment.js'
 
 export const addComment = vi
   .fn()

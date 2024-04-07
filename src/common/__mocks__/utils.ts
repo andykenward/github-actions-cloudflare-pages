@@ -1,6 +1,6 @@
 import {vi} from 'vitest'
 
-import * as utils from '../utils.js'
+import type * as utils from '../utils.js'
 
 export * from '../utils.js'
 

@@ -49,6 +49,7 @@ const config = {
     }
   ],
   rules: {
+    '@typescript-eslint/consistent-type-imports': 'error',
     'unicorn/prefer-top-level-await': 'off',
     'unicorn/prevent-abbreviations': 'off',
     'no-console': 'error'
