@@ -86,8 +86,8 @@ devDependencies:
     specifier: 52.0.0
     version: 52.0.0(eslint@8.57.0)
   eslint-plugin-vitest:
-    specifier: 0.3.26
-    version: 0.3.26(@typescript-eslint/eslint-plugin@7.6.0)(eslint@8.57.0)(typescript@5.4.3)(vitest@1.4.0)
+    specifier: 0.4.1
+    version: 0.4.1(@typescript-eslint/eslint-plugin@7.6.0)(eslint@8.57.0)(typescript@5.4.3)(vitest@1.4.0)
   graphql:
     specifier: 16.8.1
     version: 16.8.1
@@ -4122,8 +4122,8 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-plugin-vitest@0.3.26(@typescript-eslint/eslint-plugin@7.6.0)(eslint@8.57.0)(typescript@5.4.3)(vitest@1.4.0):
-    resolution: {integrity: sha512-oxe5JSPgRjco8caVLTh7Ti8PxpwJdhSV0hTQAmkFcNcmy/9DnqLB/oNVRA11RmVRP//2+jIIT6JuBEcpW3obYg==}
+  /eslint-plugin-vitest@0.4.1(@typescript-eslint/eslint-plugin@7.6.0)(eslint@8.57.0)(typescript@5.4.3)(vitest@1.4.0):
+    resolution: {integrity: sha512-+PnZ2u/BS+f5FiuHXz4zKsHPcMKHie+K+1Uvu/x91ovkCMEOJqEI8E9Tw1Wzx2QRz4MHOBHYf1ypO8N1K0aNAA==}
     engines: {node: ^18.0.0 || >= 20.0.0}
     peerDependencies:
       '@typescript-eslint/eslint-plugin': '*'
