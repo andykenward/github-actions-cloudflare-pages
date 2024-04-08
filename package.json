@@ -46,7 +46,7 @@
     "version": "changeset version"
   },
   "dependencies": {
-    "@octokit-next/core": "2.7.1",
+    "@octokit-next/core": "2.8.0",
     "@octokit/plugin-paginate-rest": "10.0.0",
     "@unlike/github-actions-core": "1.1.1",
     "wrangler": "3.37.0"
