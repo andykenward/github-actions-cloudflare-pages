@@ -48,7 +48,7 @@
   "dependencies": {
     "@octokit-next/core": "2.8.0",
     "@octokit/plugin-paginate-rest": "11.0.0",
-    "@unlike/github-actions-core": "1.1.1",
+    "@unlike/github-actions-core": "1.1.2",
     "wrangler": "3.37.0"
   },
   "devDependencies": {

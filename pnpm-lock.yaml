@@ -12,8 +12,8 @@ dependencies:
     specifier: 11.0.0
     version: 11.0.0(@octokit/core@6.1.1)
   '@unlike/github-actions-core':
-    specifier: 1.1.1
-    version: 1.1.1
+    specifier: 1.1.2
+    version: 1.1.2
   wrangler:
     specifier: 3.37.0
     version: 3.37.0
@@ -2937,15 +2937,15 @@ packages:
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
     dev: true
 
-  /@unlike/github-actions-core@1.1.1:
-    resolution: {integrity: sha512-AewGQ1nc9sdTK6sO8/iukmD1tWGZeEcYhfLRz5KTtaHvKjRRgqCaLkTcIG8djFFOgzxcGQcc8Sn+HB8Yh/RHuw==}
+  /@unlike/github-actions-core@1.1.2:
+    resolution: {integrity: sha512-dLN5pZjvFVEXowBzvU5Sso+YRJwblneOdXxNk7ALRhLgOv8lm74b0vHzpiLrWkjNu4/bwgFDzNCo6z4KYD/58g==}
     engines: {node: '>=20.10.0'}
     dependencies:
-      '@unlike/github-actions-http-client': 0.2.0
+      '@unlike/github-actions-http-client': 0.2.1
     dev: false
 
-  /@unlike/github-actions-http-client@0.2.0:
-    resolution: {integrity: sha512-A0A2u0o3+GDj47ZSlj40krnA3EvD2jyKdTn5EU3rULyuYtMqyL8Tu1+4/EFCRvZyXD4ZV13LyZBt69KMbVF8oQ==}
+  /@unlike/github-actions-http-client@0.2.1:
+    resolution: {integrity: sha512-F43ynPWPLtQfQRPjFCZs3lxh6xUfzgMjghyDlE+K9TeDH+ctC9WSGZxx9XFcHHiX5oXjp3n/Bw6eNCZX+/kXZA==}
     engines: {node: '>=20.10.0'}
     dependencies:
       tunnel: 0.0.6
