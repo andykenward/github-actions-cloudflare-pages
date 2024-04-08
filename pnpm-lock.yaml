@@ -9,8 +9,8 @@ dependencies:
     specifier: 2.8.0
     version: 2.8.0
   '@octokit/plugin-paginate-rest':
-    specifier: 10.0.0
-    version: 10.0.0(@octokit/core@6.1.1)
+    specifier: 11.0.0
+    version: 11.0.0(@octokit/core@6.1.1)
   '@unlike/github-actions-core':
     specifier: 1.1.1
     version: 1.1.1
@@ -2531,14 +2531,14 @@ packages:
     resolution: {integrity: sha512-xx+Xd6I7rYvul/hgUDqv6TeGX0IOGnhSg9IOeYgd/uI7IAqUy6DE2B6Ipv2M4mWoxaMcWjIzgTIcv8pMO3F3vw==}
     dev: false
 
-  /@octokit/plugin-paginate-rest@10.0.0(@octokit/core@6.1.1):
-    resolution: {integrity: sha512-G1Z67qOiFneKDJyMafHQkWnKm1kU3FfbRZLzxgsFg4dOa3pRNdABbdk+xo/oev6P88lnbt7GKdBNB6dJZuPphA==}
+  /@octokit/plugin-paginate-rest@11.0.0(@octokit/core@6.1.1):
+    resolution: {integrity: sha512-HLz6T9HWeNkX3SVqc7FUYlh+TAg3G7gCc1MGuNcov8mSrFU9dc4ABmRmgqR9TsY1doUx42vLN5UxxWlnqBX8xw==}
     engines: {node: '>= 18'}
     peerDependencies:
       '@octokit/core': '>=6'
     dependencies:
       '@octokit/core': 6.1.1
-      '@octokit/types': 12.6.0
+      '@octokit/types': 13.1.0
     dev: false
 
   /@octokit/request-error@6.1.0:
