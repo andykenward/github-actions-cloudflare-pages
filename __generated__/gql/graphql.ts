@@ -17069,6 +17069,8 @@ export type PropertyTargetDefinition = {
   name: Scalars['String']['output'];
   /** The values to match for */
   propertyValues: Array<Scalars['String']['output']>;
+  /** The source of the property. Choose 'custom' or 'system'. Defaults to 'custom' if not specified */
+  source?: Maybe<Scalars['String']['output']>;
 };
 
 /** A property that must match */
@@ -17077,6 +17079,8 @@ export type PropertyTargetDefinitionInput = {
   name: Scalars['String']['input'];
   /** The values to match for */
   propertyValues: Array<Scalars['String']['input']>;
+  /** The source of the property. Choose 'custom' or 'system'. Defaults to 'custom' if not specified */
+  source?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A user's public key. */
@@ -20869,6 +20873,8 @@ export type Repository = Node & PackageOwner & ProjectOwner & ProjectV2Recent & 
   pinnedDiscussions: PinnedDiscussionConnection;
   /** A list of pinned issues for this repository. */
   pinnedIssues?: Maybe<PinnedIssueConnection>;
+  /** Returns information about the availability of certain features and limits based on the repository's billing plan. */
+  planFeatures: RepositoryPlanFeatures;
   /** The primary language of the repository's code. */
   primaryLanguage?: Maybe<Language>;
   /** Find project by number. */
@@ -21960,6 +21966,20 @@ export enum RepositoryPermission {
   /** Can read, clone, and push to this repository. Can also manage issues and pull requests */
   Write = 'WRITE'
 }
+
+/** Information about the availability of features and limits for a repository based on its billing plan. */
+export type RepositoryPlanFeatures = {
+  /** Whether reviews can be automatically requested and enforced with a CODEOWNERS file */
+  codeowners: Scalars['Boolean']['output'];
+  /** Whether pull requests can be created as or converted to draft */
+  draftPullRequests: Scalars['Boolean']['output'];
+  /** Maximum number of users that can be assigned to an issue or pull request */
+  maximumAssignees: Scalars['Int']['output'];
+  /** Maximum number of manually-requested reviews on a pull request */
+  maximumManualReviewRequests: Scalars['Int']['output'];
+  /** Whether teams can be requested to review pull requests */
+  teamReviewRequests: Scalars['Boolean']['output'];
+};
 
 /** The privacy of a repository */
 export enum RepositoryPrivacy {
