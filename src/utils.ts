@@ -1,6 +1,6 @@
 import {exec} from 'node:child_process'
 import {existsSync} from 'node:fs'
-import {normalize} from 'node:path'
+import path from 'node:path'
 import {promisify} from 'node:util'
 
 import {setFailed} from '@unlike/github-actions-core'
@@ -17,7 +17,7 @@ export const raiseFail = (message: string): never => {
 export const execAsync = promisify(exec)
 
 export const checkWorkingDirectory = (directory = '.'): string => {
-  const p = normalize(directory)
+  const p = path.normalize(directory)
   if (existsSync(p)) {
     return p
   }
