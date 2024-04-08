@@ -34,7 +34,7 @@
     "lint:debug": "pnpm run lint -- --debug",
     "lint:fix": "pnpm run lint -- --fix",
     "lint:ls": "DEBUG=eslint:cli-engine pnpm run lint",
-    "release": "changeset publish",
+    "release": "pnpm run all && changeset publish",
     "start": "node -r dotenv/config ./dist/index.js",
     "test": "vitest run",
     "test:ci": "vitest run --reporter=github-actions",
