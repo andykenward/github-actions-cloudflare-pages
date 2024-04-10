@@ -12,6 +12,7 @@
       "@/common/*": ["./src/common/*"],
       "@/delete/*": ["./src/delete/*"],
       "@/deploy/*": ["./src/deploy/*"],
+      "@/fixtures/*": ["./__fixtures__/*"],
       "@/gql/*": ["./__generated__/gql/*"],
       "@/input-keys": ["./input-keys.ts"],
       "@/payloads/*": ["./__generated__/payloads/*"],
