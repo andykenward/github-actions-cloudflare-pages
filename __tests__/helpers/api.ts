@@ -1,11 +1,11 @@
 import {MockAgent, setGlobalDispatcher} from 'undici'
 
-import type {FetchResult} from '@/src/cloudflare/types.js'
+import type {FetchResult} from '@/common/cloudflare/types.js'
 import type {
   GraphqlResponse,
   RequestParams,
   Variables
-} from '@/src/github/api/client.js'
+} from '@/common/github/api/client.js'
 
 export const setMockApi = () => {
   return getMockApi()
@@ -21,12 +21,13 @@ export const getMockApi = () => {
   const interceptCloudflare = <T = unknown>(
     path: string,
     response: FetchResult<T>,
-    statusCode?: number
+    statusCode?: number,
+    method: 'GET' | 'POST' | 'DELETE' = 'GET'
   ) => {
     return mockPoolCloudflare
       .intercept({
         path,
-        method: 'GET'
+        method
       })
       .reply(statusCode || 200, response)
   }
@@ -56,8 +57,10 @@ export const getMockApi = () => {
 }
 export type MockApi = ReturnType<typeof getMockApi>
 
-const MOCK_ACCOUNT_ID = 'mock-cloudflare-account-id'
-const MOCK_PROJECT_NAME = 'mock-cloudflare-project-name'
+export const MOCK_ACCOUNT_ID = 'mock-cloudflare-account-id'
+export const MOCK_PROJECT_NAME = 'mock-cloudflare-project-name'
+export const MOCK_DEPLOYMENT_ID = 'mock-deployment-id'
 
 export const MOCK_API_PATH = `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`
 export const MOCK_API_PATH_DEPLOYMENTS = `${MOCK_API_PATH}/deployments`
+export const MOCK_API_PATH_DEPLOYMENTS_DELETE = `${MOCK_API_PATH}/deployments/${MOCK_DEPLOYMENT_ID}?force=true`
