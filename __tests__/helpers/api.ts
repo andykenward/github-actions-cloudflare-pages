@@ -21,12 +21,13 @@ export const getMockApi = () => {
   const interceptCloudflare = <T = unknown>(
     path: string,
     response: FetchResult<T>,
-    statusCode?: number
+    statusCode?: number,
+    method: 'GET' | 'POST' | 'DELETE' = 'GET'
   ) => {
     return mockPoolCloudflare
       .intercept({
         path,
-        method: 'GET'
+        method
       })
       .reply(statusCode || 200, response)
   }
