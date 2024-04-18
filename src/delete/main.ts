@@ -33,18 +33,20 @@ export async function run() {
         .addBreak()
         .addTable([
           [
-            {data: 'deploymentId', header: true},
-            {data: 'success', header: true},
-            {data: 'environment', header: true},
-            {data: 'environmentUrl', header: true},
-            {data: 'commentId', header: true},
-            {data: 'error', header: true}
+            {data: 'GitHub Deployment Id', header: true},
+            {data: 'Success', header: true},
+            {data: 'Environment', header: true},
+            {data: 'Environment Url', header: true},
+            {data: 'Comment Id', header: true},
+            {data: 'Error', header: true}
           ],
           ...values.map(value => [
             value.deploymentId,
             value.success.toString(),
             value.environment,
-            value.environmentUrl || '',
+            value.environmentUrl
+              ? `<a href='${value.environmentUrl}'><code>${value.environmentUrl}</code></a>`
+              : '',
             value.commentId || '',
             value.error || ''
           ])
