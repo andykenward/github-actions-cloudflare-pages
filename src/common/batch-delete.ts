@@ -120,11 +120,12 @@ export const batchDelete = async (
       commentId
     }
   } catch (error) {
-    info(`${PREFIX} Deployment payload is not valid : ${JSON.stringify(error)}`)
+    const message = error instanceof Error ? error.message : 'unknown error'
+    info(`${PREFIX} Deployment payload is not valid : ${message}`)
 
     return {
       success: false,
-      error: JSON.stringify(error),
+      error: message,
       environment: deployment.environment,
       deploymentId: deployment.node_id
     }
