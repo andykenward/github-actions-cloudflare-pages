@@ -24,6 +24,10 @@ For example manually create two GitHub Environments called "production" & "previ
 github-environemnt: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
 ```
 
+## Upgrading
+
+If you have previous deployments using an older version of this GitHub Action please see the [CHANGELOG.md](../CHANGELOG.md) for breaking changes.
+
 ## Permissions
 
 The [permissions] required for this GitHub Action when using the created [`GITHUB_TOKEN`] by the workflow for the `github-token` field.

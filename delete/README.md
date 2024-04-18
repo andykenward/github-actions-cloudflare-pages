@@ -11,6 +11,10 @@ On closing the [pull request], all the deployments for that pull request will be
 - Delete GitHub deployment and related comment.
 - Output [job summary] of deletion.
 
+## Upgrading
+
+If you have previous deployments using an older version of this GitHub Action please see the [CHANGELOG.md](../CHANGELOG.md) for breaking changes.
+
 ## Permissions
 
 The [permissions] required for this GitHub Action when using the created [`GITHUB_TOKEN`] by the workflow for the `github-token` field.
