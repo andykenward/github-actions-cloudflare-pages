@@ -16,9 +16,18 @@ import {MutationCreateGitHubDeploymentStatus} from './github/deployment/status.j
 
 const PREFIX = `delete -`
 
+type BatchDeleteItem = {
+  deploymentId: string
+  success: boolean
+  environment: string
+  environmentUrl?: string
+  commentId?: string
+  error?: string
+}
+
 export const batchDelete = async (
   deployment: Awaited<ReturnType<typeof getGitHubDeployments>>[number]
-) => {
+): Promise<BatchDeleteItem> => {
   const payload = deployment.payload
 
   try {
@@ -29,7 +38,16 @@ export const batchDelete = async (
      */
     const deletedCloudflareDeployment =
       await deleteCloudflareDeployment(cloudflare)
-    if (!deletedCloudflareDeployment) return
+
+    if (!deletedCloudflareDeployment)
+      return {
+        success: false,
+        error: 'Deleting Cloudflare deployment failed',
+        environment: deployment.environment,
+        environmentUrl: url,
+        deploymentId: deployment.node_id,
+        commentId
+      }
     /**
      * On success of Cloudflare deployment delete GitHub deployment & comment.
      */
@@ -54,7 +72,14 @@ export const batchDelete = async (
           updateStatusGitHubDeployment.errors
         )}`
       )
-      return
+      return {
+        success: false,
+        error: 'Updating GitHub deployment status failed',
+        environment: deployment.environment,
+        environmentUrl: url,
+        deploymentId: deployment.node_id,
+        commentId
+      }
     }
 
     const deletedGitHubDeployment = commentId
@@ -87,13 +112,21 @@ export const batchDelete = async (
     }
     info(`${PREFIX} GitHub Deployment Deleted: ${deployment.node_id}`)
 
-    // TODO: return meaningful value to log and use in summary;
+    return {
+      success: true,
+      environment: deployment.environment,
+      environmentUrl: url,
+      deploymentId: deployment.node_id,
+      commentId
+    }
   } catch (error) {
     info(`${PREFIX} Deployment payload is not valid : ${JSON.stringify(error)}`)
-    // TODO: return meaningful value to log and use in summary;
-    return
+
+    return {
+      success: false,
+      error: JSON.stringify(error),
+      environment: deployment.environment,
+      deploymentId: deployment.node_id
+    }
   }
-  /**
-   * Add comment with summary of deleted deployments etc?
-   */
 }
