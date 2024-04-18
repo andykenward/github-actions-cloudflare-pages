@@ -54,6 +54,9 @@ export async function run() {
         .write()
     }
   } catch (error) {
-    setFailed(`${PREFIX} Error deleting deployments: ${JSON.stringify(error)}`)
+    const message =
+      error instanceof Error ? error.message : JSON.stringify(error)
+
+    setFailed(`${PREFIX} Error deleting deployments: ${message}`)
   }
 }
