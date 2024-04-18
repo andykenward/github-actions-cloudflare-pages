@@ -4,10 +4,12 @@ Delete deployments made using [`unlike-ltd/github-actions-cloudflare-pages`](../
 
 **The action is only able to delete deployments & comments that are created by `unlike-ltd/github-actions-cloudflare-pages`, as it requires a certain payload in a GitHub deployment.**
 
-On closing the [pull request], all the deployments for that pull request will be deleted from [Cloudflare Pages], GitHub Deployment and the related comment.
+On closing the [pull request], all the deployments for that pull request will be deleted from [Cloudflare Pages], [GitHub Deployment] and related comments.
 
-- Delete deployment comments created on pull requests.
-- Production branch keeps latest 5 deployments.
+- Delete Cloudflare Pages deployment.
+- Update GitHub deployment status to `INACTIVE` on successfully deleting the Cloudflare Pages deployment.
+- Delete GitHub deployment and related comment.
+- Output [job summary] of deletion.
 
 ## Permissions
 
@@ -63,8 +65,15 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Deploy deletion Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@v1.3.1
+        uses: unlike-ltd/github-actions-cloudflare-pages/delete@v1.3.1
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+[pull request]: https://docs.github.com/en/pull-requests
+[Cloudflare Pages]: https://pages.cloudflare.com/
+[permissions]: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions
+[`GITHUB_TOKEN`]: https://docs.github.com/en/actions/security-guides/automatic-token-authentication
+[GitHub Deployment]: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
+[job summary]: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary
