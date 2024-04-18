@@ -26,7 +26,7 @@ github-environemnt: ${{ (github.ref == 'refs/heads/main' && 'production') || 'pr
 
 ## Upgrading
 
-If you have previous deployments using an older version of this GitHub Action please see the [CHANGELOG.md](../CHANGELOG.md) for breaking changes.
+If you have previous deployments using an older version of this GitHub Action please see the [CHANGELOG.md](./CHANGELOG.md) for breaking changes.
 
 ## Permissions
 
