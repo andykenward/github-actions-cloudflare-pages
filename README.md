@@ -144,7 +144,11 @@ It will only delete deployments that it created. This is because it requires a c
 ```json
 {
   "payload": {
-    "cloudflareId": "1234",
+    "cloudflare": {
+      "id": "123",
+      "projectName": "cloudflare-pages-project-name",
+      "accountId": "123"
+    },
     "url": "https://example.com",
     "commentId": "1234"
   }
