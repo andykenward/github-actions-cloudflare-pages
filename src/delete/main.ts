@@ -42,7 +42,7 @@ export async function run() {
           ],
           ...values.map(value => [
             value.deploymentId,
-            value.success.toString(),
+            value.success ? '✅' : '❌',
             value.environment,
             value.environmentUrl
               ? `<a href='${value.environmentUrl}'><code>${value.environmentUrl}</code></a>`
