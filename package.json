@@ -78,7 +78,7 @@
     "graphql": "16.8.1",
     "graphql-tag": "2.12.6",
     "prettier": "3.2.5",
-    "prettier-plugin-packagejson": "2.4.12",
+    "prettier-plugin-packagejson": "2.5.0",
     "tsx": "4.7.1",
     "typescript": "5.4.3",
     "undici": "6.13.0",
