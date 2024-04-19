@@ -1,5 +1,30 @@
 # github-actions-cloudflare-pages
 
+## 2.0.0
+
+### Major Changes
+
+- [#291](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/291) [`824753d`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/824753d77273786b4e4dc36ef92ee596d0025fd3) Thanks [@andykenward](https://github.com/andykenward)! - - **BREAKING CHANGES:** use the sub-action `unlike-ltd/github-actions-cloudflare-pages/delete` to delete deployments. The main action `unlike-ltd/github-actions-cloudflare-pages` no longer deletes any deployments.
+  - **BREAKING CHANGES:** new payload format saved to the GitHub deployments to allow for the sub-action `unlike-ltd/github-actions-cloudflare-pages/delete` to work. To support the older payload the action inputs of `cloudflare-account-id` & `cloudflare_project_name` are required. If an older payload is found and the action inputs are missing, it will silently error and continue; but output in the job summary the deployment.
+
+### Patch Changes
+
+- [`c8b06d3`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/c8b06d3bbdbe571ff33fc9ad5cd716e0cb4fd657) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): bump eslint dep
+
+- [`fa7dc9d`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/fa7dc9df266d4fb4b3497100f856830c7965a50a) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): bump @octokit packages
+
+- [`9ac63c7`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/9ac63c77ce83eed3db12dbef20ab98c7a7708465) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump @unlike/github-actions-core from 1.1.1 to 1.1.2
+
+- [`cd858e3`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/cd858e3b2a437604e7f7bbc17cd892e30df8f392) Thanks [@andykenward](https://github.com/andykenward)! - feat(deps): bump @unlike/github-actions-core from 1.0.0 to 1.1.1
+
+- [#330](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/330) [`174129b`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/174129bd26a7667dd38e6186bd5e93d8a31340d5) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 3.37.0 to 3.51.2
+
+- [`1660ebe`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/1660ebee8fe8faea03243e98070c1d2d663f3733) Thanks [@andykenward](https://github.com/andykenward)! - feat(deps): bump @octokit-next/core from 2.7.1 to 2.8.0
+
+- [`09a25c6`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/09a25c6ee3c9cbfd91b93364e9afbb567fe3430f) Thanks [@andykenward](https://github.com/andykenward)! - feat(deps): upgrade @octokit/plugin-paginate-rest from 10.0.0 to 11.0.0
+
+- [#331](https://github.com/unlike-ltd/github-actions-cloudflare-pages/pull/331) [`a484fbd`](https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/a484fbd8db123e52ce63d4082c0dfe30b6ae6ed7) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump the octokit npm packages
+
 ## 1.3.2
 
 ### Patch Changes
