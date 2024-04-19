@@ -1,7 +1,7 @@
 import type {Deployment} from '@cloudflare/types'
+import type wrangler from 'wrangler'
 
 import {vi} from 'vitest'
-import wrangler from 'wrangler'
 
 export default {
   unstable_pages: {

@@ -18,6 +18,11 @@ jobs:
     name: Release
     if: ${{ github.repository == 'unlike-ltd/github-actions-cloudflare-pages' && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2

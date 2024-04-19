@@ -9,10 +9,14 @@
        * These have to match with vitest.config.ts alias.
        * Otherwise vi.mock() will not resolve in __tests__.
        */
+      "@/common/*": ["./src/common/*"],
+      "@/delete/*": ["./src/delete/*"],
+      "@/deploy/*": ["./src/deploy/*"],
+      "@/fixtures/*": ["./__fixtures__/*"],
       "@/gql/*": ["./__generated__/gql/*"],
+      "@/input-keys": ["./input-keys.ts"],
       "@/payloads/*": ["./__generated__/payloads/*"],
       "@/responses/*": ["./__generated__/responses/*"],
-      "@/src/*": ["./src/*"],
       "@/tests/*": ["./__tests__/*"],
       "@/types/*": ["./__generated__/types/*"]
     }

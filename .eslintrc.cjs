@@ -46,9 +46,17 @@ const config = {
       rules: {
         '@typescript-eslint/no-var-requires': 'off'
       }
+    },
+    {
+      files: ['__fixtures__/**'],
+      rules: {
+        'unicorn/no-null': 'off',
+        'unicorn/numeric-separators-style': 'off'
+      }
     }
   ],
   rules: {
+    '@typescript-eslint/consistent-type-imports': 'error',
     'unicorn/prefer-top-level-await': 'off',
     'unicorn/prevent-abbreviations': 'off',
     'no-console': 'error'

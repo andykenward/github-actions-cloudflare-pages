@@ -2,10 +2,11 @@
 
 import * as esbuild from 'esbuild'
 
-await esbuild.build({
-  entryPoints: ['src/index.ts'],
+/**
+ * @type esbuild.SameShape<esbuild.BuildOptions, esbuild.BuildOptions>
+ */
+const config = {
   bundle: true,
-  outdir: './dist',
   format: 'esm',
   keepNames: true,
   target: 'node20',
@@ -41,4 +42,18 @@ await esbuild.build({
     ),
     'process.env.NODE_ENV': JSON.stringify('production')
   }
+}
+
+// deploy
+await esbuild.build({
+  ...config,
+  entryPoints: ['src/deploy/index.ts'],
+  outdir: './dist/deploy'
+})
+
+// delete
+await esbuild.build({
+  ...config,
+  entryPoints: ['src/delete/index.ts'],
+  outdir: './dist/delete'
 })
