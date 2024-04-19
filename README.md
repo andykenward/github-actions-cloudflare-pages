@@ -137,11 +137,7 @@ jobs:
 
 ## Deleting Deployments
 
-If on the `main` branch the last 5 deployments will not be deleted.
-
-Other branche deployments are only deleted when the GitHub Action Event triggered is `pull_request` and the event payload action is `closed`.
-
-It will only delete deployments that it created. This is because it requires a certain payload in a GitHub deployment response.
+See the sub-action [`unlike-ltd/github-actions-cloudflare-pages/delete`](./delete/README.md) about deleting deployments.
 
 ### GitHub Deployment payload example response
 
