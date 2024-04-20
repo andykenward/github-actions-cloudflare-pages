@@ -12,7 +12,7 @@ describe('getGitHubContext', () => {
     expect(repo).toMatchInlineSnapshot(`
       {
         "node_id": "MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=",
-        "owner": "unlike-ltd",
+        "owner": "andykenward",
         "repo": "github-actions-cloudflare-pages",
       }
     `)

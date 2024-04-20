@@ -12,7 +12,7 @@ export async function run() {
     info(`${PREFIX} No deployments found to delete`)
 
     await summary
-      .addHeading('unlike-ltd/github-actions-cloudflare-pages')
+      .addHeading('andykenward/github-actions-cloudflare-pages')
       .addBreak()
       .addTable([['No deployments found to delete']])
       .write()
@@ -27,7 +27,7 @@ export async function run() {
 
     if (values.length > 0) {
       await summary
-        .addHeading('unlike-ltd/github-actions-cloudflare-pages')
+        .addHeading('andykenward/github-actions-cloudflare-pages')
         .addBreak()
         .addHeading('Deleted Deployments')
         .addBreak()

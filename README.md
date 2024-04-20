@@ -1,4 +1,4 @@
-[![test](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/test.yml/badge.svg)](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/test.yml) [![Check dist/](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/check-dist.yml/badge.svg)](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/check-dist.yml) [![release](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/release.yml/badge.svg)](https://github.com/unlike-ltd/github-actions-cloudflare-pages/actions/workflows/release.yml) [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/unlike-ltd/github-actions-cloudflare-pages/main.svg)](https://results.pre-commit.ci/latest/github/unlike-ltd/github-actions-cloudflare-pages/main)
+[![test](https://github.com/andykenward/github-actions-cloudflare-pages/actions/workflows/test.yml/badge.svg)](https://github.com/andykenward/github-actions-cloudflare-pages/actions/workflows/test.yml) [![Check dist/](https://github.com/andykenward/github-actions-cloudflare-pages/actions/workflows/check-dist.yml/badge.svg)](https://github.com/andykenward/github-actions-cloudflare-pages/actions/workflows/check-dist.yml) [![release](https://github.com/andykenward/github-actions-cloudflare-pages/actions/workflows/release.yml/badge.svg)](https://github.com/andykenward/github-actions-cloudflare-pages/actions/workflows/release.yml) [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/andykenward/github-actions-cloudflare-pages/main.svg)](https://results.pre-commit.ci/latest/github/andykenward/github-actions-cloudflare-pages/main)
 
 # GitHub Action Cloudflare Pages
 
@@ -9,7 +9,7 @@ When used in context of a [pull request], the action will create a deployment fo
 - Deploy to [Cloudflare Pages].
 - Use [GitHub Environments] & [GitHub Deployment].
 - Comment on pull requests with deployment URL.
-- Delete deployments using [`unlike-ltd/github-actions-cloudflare-pages/delete`](./delete/README.md)
+- Delete deployments using [`andykenward/github-actions-cloudflare-pages/delete`](./delete/README.md)
 - Define a `working-directory` input for the `wrangler` cli command to execute from. Useful for monorepos where the `functions` folder may not be in the root directory.
 
 ## GitHub Environments - **(Required)**
@@ -120,7 +120,7 @@ jobs:
       - run: npm ci
         run: npm run build
       - name: Deploy to Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages@v2.0.0
+        uses: andykenward/github-actions-cloudflare-pages@v2.0.0
         id: pages
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -137,7 +137,7 @@ jobs:
 
 ## Deleting Deployments
 
-See the sub-action [`unlike-ltd/github-actions-cloudflare-pages/delete`](./delete/README.md) about deleting deployments.
+See the sub-action [`andykenward/github-actions-cloudflare-pages/delete`](./delete/README.md) about deleting deployments.
 
 ### GitHub Deployment payload example response
 

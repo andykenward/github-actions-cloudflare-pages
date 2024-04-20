@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "unlike-ltd/github-actions-cloudflare-pages"
+      "repo": "andykenward/github-actions-cloudflare-pages"
     }
   ],
   "commit": false,

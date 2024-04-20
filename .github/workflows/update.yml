@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
-      - uses: unlike-ltd/github-actions/setup-pnpm@74ca078e70cb5bfc9f6c33afc3b63a66f050311f #v1.0.1
+      - uses: andykenward/github-actions/setup-pnpm@74ca078e70cb5bfc9f6c33afc3b63a66f050311f #v1.0.1
         with:
           node-version: 20
       - name: cli download payloads
@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 #v4.1.2
-      - uses: unlike-ltd/github-actions/setup-pnpm@74ca078e70cb5bfc9f6c33afc3b63a66f050311f #v1.0.1
+      - uses: andykenward/github-actions/setup-pnpm@74ca078e70cb5bfc9f6c33afc3b63a66f050311f #v1.0.1
         with:
           node-version: 20
       - name: cli all

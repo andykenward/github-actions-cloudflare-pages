@@ -189,11 +189,11 @@ describe('createCloudflareDeployment', () => {
         ['Environment:', `production`],
         [
           'Branch:',
-          `<a href='https://github.com/unlike-ltd/github-actions-cloudflare-pages/tree/main'><code>main</code></a>`
+          `<a href='https://github.com/andykenward/github-actions-cloudflare-pages/tree/main'><code>main</code></a>`
         ],
         [
           'Commit Hash:',
-          `<a href='https://github.com/unlike-ltd/github-actions-cloudflare-pages/commit/mock-github-sha'><code>mock-github-sha</code></a>`
+          `<a href='https://github.com/andykenward/github-actions-cloudflare-pages/commit/mock-github-sha'><code>mock-github-sha</code></a>`
         ],
         ['Commit Message:', `chore(deps-dev): update eslint packages`],
         ['Status:', `<strong>SUCCESS</strong>`],

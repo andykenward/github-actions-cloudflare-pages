@@ -24,7 +24,7 @@ export const TEST_ENV_VARS = (
   GITHUB_REF_NAME: 'mock-github-ref-name',
   GITHUB_SHA: 'mock-github-sha',
   GITHUB_EVENT_NAME: eventName,
-  GITHUB_REPOSITORY: 'unlike-ltd/github-actions-cloudflare-pages',
+  GITHUB_REPOSITORY: 'andykenward/github-actions-cloudflare-pages',
   GITHUB_REPOSITORY_ID: 'R_kgDOJn0nrA',
   GITHUB_EVENT_PATH: getPayload(eventName),
   GITHUB_GRAPHQL_URL: 'https://api.github.com/graphql'

@@ -9,7 +9,7 @@ import type {getGitHubDeployments} from '@/common/github/deployment/get.js'
 export const DEPLOYMENT: Awaited<
   ReturnType<typeof getGitHubDeployments>
 >[number] = {
-  url: 'https://api.github.com/repos/unlike-ltd/github-actions-cloudflare-pages/deployments/1423939219',
+  url: 'https://api.github.com/repos/andykenward/github-actions-cloudflare-pages/deployments/1423939219',
   id: 1423939219,
   node_id: 'DE_kwDOJn0nrM5U35aT',
   task: 'deploy',
@@ -20,9 +20,9 @@ export const DEPLOYMENT: Awaited<
   created_at: '2024-04-01T21:03:56Z',
   updated_at: '2024-04-01T21:03:56Z',
   statuses_url:
-    'https://api.github.com/repos/unlike-ltd/github-actions-cloudflare-pages/deployments/1423939219/statuses',
+    'https://api.github.com/repos/andykenward/github-actions-cloudflare-pages/deployments/1423939219/statuses',
   repository_url:
-    'https://api.github.com/repos/unlike-ltd/github-actions-cloudflare-pages',
+    'https://api.github.com/repos/andykenward/github-actions-cloudflare-pages',
   creator: {
     login: 'github-actions[bot]',
     id: 41898282,

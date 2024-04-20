@@ -1,8 +1,8 @@
-# unlike-ltd/github-actions-cloudflare-pages/delete
+# andykenward/github-actions-cloudflare-pages/delete
 
-Delete deployments made using [`unlike-ltd/github-actions-cloudflare-pages`](../README.md) for the current branch or pull request.
+Delete deployments made using [`andykenward/github-actions-cloudflare-pages`](../README.md) for the current branch or pull request.
 
-**The action is only able to delete deployments & comments that are created by `unlike-ltd/github-actions-cloudflare-pages`, as it requires a certain payload in a GitHub deployment.**
+**The action is only able to delete deployments & comments that are created by `andykenward/github-actions-cloudflare-pages`, as it requires a certain payload in a GitHub deployment.**
 
 On closing the [pull request], all the deployments for that pull request will be deleted from [Cloudflare Pages], [GitHub Deployment] and related comments.
 
@@ -69,7 +69,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Deploy deletion Cloudflare Pages
-        uses: unlike-ltd/github-actions-cloudflare-pages/delete@v2.0.0
+        uses: andykenward/github-actions-cloudflare-pages/delete@v2.0.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

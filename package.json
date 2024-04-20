@@ -8,10 +8,10 @@
     "node",
     "setup"
   ],
-  "bugs": "https://github.com/unlike-ltd/github-actions-cloudflare-pages/issues",
+  "bugs": "https://github.com/andykenward/github-actions-cloudflare-pages/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/unlike-ltd/github-actions-cloudflare-pages.git"
+    "url": "https://github.com/andykenward/github-actions-cloudflare-pages.git"
   },
   "license": "MIT",
   "author": "Unlike Ltd <hi@unlike.dev> (https://unlike.dev/)",

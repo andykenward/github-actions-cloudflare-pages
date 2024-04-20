@@ -28,7 +28,7 @@ describe('environment', () => {
       {
         query: QueryGetEnvironment,
         variables: {
-          owner: 'unlike-ltd',
+          owner: 'andykenward',
           repo: 'github-actions-cloudflare-pages',
           environment_name: 'mock-github-environment',
           qualifiedName: 'mock-github-head-ref'
