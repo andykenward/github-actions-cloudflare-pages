@@ -1,5 +1,11 @@
 # github-actions-cloudflare-pages
 
+## 2.1.0
+
+### Minor Changes
+
+- [`41d9f3c`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/41d9f3ce5375090c0a75cd0c4ec8cc2b91ca5943) Thanks [@andykenward](https://github.com/andykenward)! - rename unlike-ltd to andykenward. Transfer of repo owner.
+
 ## 2.0.0
 
 ### Major Changes
