@@ -1,4 +1,4 @@
-import {info, warning} from '@unlike/github-actions-core'
+import {info, warning} from '@actions/core'
 
 import {DeploymentStatusState} from '@/gql/graphql.js'
 

@@ -1,4 +1,4 @@
-import {error, notice} from '@unlike/github-actions-core'
+import {error, notice} from '@actions/core'
 
 import {graphql} from '@/gql/gql.js'
 

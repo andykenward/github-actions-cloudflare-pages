@@ -1,4 +1,4 @@
-import {getInput} from '@unlike/github-actions-core'
+import {getInput} from '@actions/core'
 
 import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,

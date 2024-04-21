@@ -1,4 +1,4 @@
-import {debug, info, setFailed, summary} from '@unlike/github-actions-core'
+import {debug, info, setFailed, summary} from '@actions/core'
 
 import {batchDelete} from '@/common/batch-delete.js'
 import {getGitHubDeployments} from '@/common/github/deployment/get.js'

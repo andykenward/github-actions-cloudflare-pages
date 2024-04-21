@@ -1,4 +1,4 @@
-import {debug} from '@unlike/github-actions-core'
+import {debug} from '@actions/core'
 
 import type {CloudflareApiEndpoint} from '../api/endpoints.js'
 import type {PagesDeployment} from '../types.js'

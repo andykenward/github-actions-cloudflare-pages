@@ -3,7 +3,7 @@ import {existsSync} from 'node:fs'
 import path from 'node:path'
 import {promisify} from 'node:util'
 
-import {setFailed} from '@unlike/github-actions-core'
+import {setFailed} from '@actions/core'
 
 export const raise = (message: string): never => {
   throw new Error(message)

@@ -1,4 +1,4 @@
-import {error} from '@unlike/github-actions-core'
+import {error} from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
@@ -14,7 +14,7 @@ const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
 const RESOURCE_URL_PATH = `/client/v4/accounts`
 const RESOURCE_URL = `${RESOURCE_URL_DOMAIN}${RESOURCE_URL_PATH}`
 
-vi.mock('@unlike/github-actions-core')
+vi.mock('@actions/core')
 describe('api', () => {
   describe('fetchResult', () => {
     let mockApi: MockApi
