@@ -1,6 +1,6 @@
 import {strict} from 'node:assert'
 
-import {info, setOutput, summary} from '@unlike/github-actions-core'
+import {info, setOutput, summary} from '@actions/core'
 
 import {useContext} from '@/common/github/context.js'
 import {useCommonInputs} from '@/common/inputs.js'

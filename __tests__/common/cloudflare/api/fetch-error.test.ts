@@ -1,4 +1,4 @@
-import * as core from '@unlike/github-actions-core'
+import * as core from '@actions/core'
 import {describe, expect, test, vi} from 'vitest'
 
 import type {FetchResult} from '@/common/cloudflare/types.js'
@@ -7,7 +7,7 @@ import {throwFetchError} from '@/common/cloudflare/api/fetch-error.js'
 
 const RESOURCE_URL = `https://api.cloudflare.com/path`
 
-vi.mock('@unlike/github-actions-core')
+vi.mock('@actions/core')
 describe('throwFetchError', () => {
   test('throws parsed error with notes', () => {
     expect.assertions(3)

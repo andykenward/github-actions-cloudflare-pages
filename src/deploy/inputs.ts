@@ -1,6 +1,6 @@
-import type {InputOptions} from '@unlike/github-actions-core'
+import type {InputOptions} from '@actions/core'
 
-import {getInput} from '@unlike/github-actions-core'
+import {getInput} from '@actions/core'
 
 import {checkWorkingDirectory} from '@/common/utils.js'
 import {

@@ -1,4 +1,4 @@
-import {error, notice, setFailed} from '@unlike/github-actions-core'
+import {error, notice, setFailed} from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {GetEnvironmentQuery} from '@/gql/graphql.js'
@@ -16,7 +16,7 @@ import {
   QueryGetEnvironment
 } from '@/common/github/environment.js'
 
-vi.mock('@unlike/github-actions-core')
+vi.mock('@actions/core')
 describe('environment', () => {
   let mockApi: MockApi
 
