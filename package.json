@@ -14,7 +14,7 @@
     "url": "https://github.com/andykenward/github-actions-cloudflare-pages.git"
   },
   "license": "MIT",
-  "author": "Unlike Ltd <hi@unlike.dev> (https://unlike.dev/)",
+  "author": "Andy Kenward <andy@unlike.dev> (https://unlike.dev/)",
   "type": "module",
   "exports": "./dist/deploy/index.js",
   "scripts": {
