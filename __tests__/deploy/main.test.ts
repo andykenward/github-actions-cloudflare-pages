@@ -1,4 +1,4 @@
-import {setOutput} from '@unlike/github-actions-core'
+import {setOutput} from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
@@ -14,7 +14,7 @@ import {execAsync} from '@/common/utils.js'
 // import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
 import {run} from '@/deploy/main.js'
 
-vi.mock('@unlike/github-actions-core')
+vi.mock('@actions/core')
 vi.mock('@/common/utils.js')
 vi.mock('@/common/github/environment.js')
 vi.mock('@/common/github/deployment/create.js')

@@ -1,4 +1,4 @@
-import {info, setOutput, summary} from '@unlike/github-actions-core'
+import {info, setOutput, summary} from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
@@ -18,7 +18,7 @@ import {execAsync} from '@/common/utils.js'
 import {INPUT_KEY_WORKING_DIRECTORY} from '@/input-keys'
 
 vi.mock('@/common/utils.js')
-vi.mock('@unlike/github-actions-core')
+vi.mock('@actions/core')
 describe('createCloudflareDeployment', () => {
   describe('api calls', () => {
     let mockApi: MockApi

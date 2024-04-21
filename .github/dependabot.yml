@@ -6,15 +6,17 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: monday
+      day: sunday
   - package-ecosystem: 'devcontainers'
     directory: '/'
     schedule:
       interval: weekly
+      day: sunday
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      day: sunday
     groups:
       graphql:
         patterns:
@@ -41,6 +43,7 @@ updates:
           - 'prettier'
           - 'eslint-config-prettier'
           - '@ianvs/prettier-plugin-sort-imports'
+          - 'prettier-plugin-packagejson'
       octokit:
         patterns:
           - '@octokit/*'
@@ -48,3 +51,6 @@ updates:
         patterns:
           - '@cloudflare/*'
           - 'wrangler'
+      changesets:
+        patterns:
+          - '@changesets/*'

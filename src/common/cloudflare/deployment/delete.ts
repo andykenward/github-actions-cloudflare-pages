@@ -1,4 +1,4 @@
-import {error, info, warning} from '@unlike/github-actions-core'
+import {error, info, warning} from '@actions/core'
 
 import {getCloudflareApiEndpoint} from '../api/endpoints.js'
 import {fetchSuccess} from '../api/fetch-result.js'

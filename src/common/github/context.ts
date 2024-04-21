@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import {debug, isDebug} from '@unlike/github-actions-core'
+import {debug, isDebug} from '@actions/core'
 
 import {raise} from '../utils.js'
 import {getWorkflowEvent} from './workflow-event/workflow-event.js'

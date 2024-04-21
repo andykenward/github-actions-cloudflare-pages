@@ -1,6 +1,6 @@
 {
   "name": "github-actions-cloudflare-pages",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "A Github Action to deploy to Cloudflare Pages",
   "keywords": [
@@ -14,7 +14,7 @@
     "url": "https://github.com/andykenward/github-actions-cloudflare-pages.git"
   },
   "license": "MIT",
-  "author": "Unlike Ltd <hi@unlike.dev> (https://unlike.dev/)",
+  "author": "Andy Kenward <andy@unlike.dev> (https://unlike.dev/)",
   "type": "module",
   "exports": "./dist/deploy/index.js",
   "scripts": {
@@ -46,9 +46,9 @@
     "version": "changeset version"
   },
   "dependencies": {
+    "@actions/core": "1.10.1",
     "@octokit-next/core": "2.8.0",
     "@octokit/plugin-paginate-rest": "11.1.1",
-    "@unlike/github-actions-core": "1.1.2",
     "wrangler": "3.51.2"
   },
   "devDependencies": {

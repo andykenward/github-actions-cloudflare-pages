@@ -12,7 +12,7 @@ import type {WorkflowEventExtract} from '@/common/github/workflow-event/types.js
 import {addComment, MutationAddComment} from '@/common/github/comment.js'
 import * as Context from '@/common/github/context.js'
 
-vi.mock('@unlike/github-actions-core')
+vi.mock('@actions/core')
 describe('addComment', () => {
   const mockData = RESPONSE_DEPLOYMENTS.result[0] as unknown as PagesDeployment
   let mockApi: MockApi

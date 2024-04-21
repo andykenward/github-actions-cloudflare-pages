@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import {setFailed} from '@unlike/github-actions-core'
+import {setFailed} from '@actions/core'
 
 import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.js'
 import {addComment} from '@/common/github/comment.js'

@@ -1,4 +1,4 @@
-import * as core from '@unlike/github-actions-core'
+import * as core from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {DeploymentState, DeploymentStatusState} from '@/gql/graphql.js'
@@ -20,7 +20,7 @@ import {
   setMockApi
 } from '../helpers/api.js'
 
-vi.mock('@unlike/github-actions-core')
+vi.mock('@actions/core')
 describe('batch-delete', () => {
   let mockApi: MockApi
 

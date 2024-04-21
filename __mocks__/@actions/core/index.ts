@@ -1,4 +1,4 @@
-import * as core from '@unlike/github-actions-core'
+import * as core from '@actions/core'
 import {vi} from 'vitest'
 
 export const getInput = vi.fn<

@@ -2,7 +2,7 @@ import {strict as assert} from 'node:assert'
 import {existsSync, readFileSync} from 'node:fs'
 import {EOL} from 'node:os'
 
-import {debug, isDebug} from '@unlike/github-actions-core'
+import {debug, isDebug} from '@actions/core'
 
 import type {EventName} from '@/types/github/workflow-events.js'
 
