@@ -21,7 +21,7 @@ The GitHub Action uses [GitHub Environments] for the deployments. **This GitHub 
 For example manually create two GitHub Environments called "production" & "preview". Then you can define them in the workflow yaml step for `github-environment` as the below example. The check for `github.ref == 'refs/heads/main'` is used to switch between these two GitHub Environments, `main` Git branch for `"production"` and any other branch will use `"preview"`.
 
 ```yaml
-github-environemnt: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
+github-environment: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
 ```
 
 ## Upgrading
