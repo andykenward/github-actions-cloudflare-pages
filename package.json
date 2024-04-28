@@ -88,12 +88,5 @@
   "engines": {
     "node": "^20.11.0",
     "pnpm": "^9.0.4"
-  },
-  "pnpm": {
-    "peerDependencyRules": {
-      "ignoreMissing": [
-        "react"
-      ]
-    }
   }
 }
