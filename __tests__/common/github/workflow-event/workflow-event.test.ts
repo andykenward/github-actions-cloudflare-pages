@@ -1,6 +1,7 @@
-import {describe, expect, it, vi} from 'vitest'
-import {getWorkflowEvent} from '@/common/github/workflow-event/workflow-event'
 import {stubTestEnvVars} from '__tests__/helpers/env'
+import {describe, expect, it, vi} from 'vitest'
+
+import {getWorkflowEvent} from '@/common/github/workflow-event/workflow-event'
 
 describe('workflow-event', () => {
   describe('workflow_dispatch event', () => {
