@@ -120,7 +120,7 @@ jobs:
       - run: npm ci
         run: npm run build
       - name: Deploy to Cloudflare Pages
-        uses: andykenward/github-actions-cloudflare-pages@v2.1.0
+        uses: andykenward/github-actions-cloudflare-pages@v2.2.0
         id: pages
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
