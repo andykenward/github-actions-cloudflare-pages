@@ -1,5 +1,19 @@
 # github-actions-cloudflare-pages
 
+## 2.2.0
+
+### Minor Changes
+
+- [#341](https://github.com/andykenward/github-actions-cloudflare-pages/pull/341) [`d7aa1cd`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/d7aa1cdc2001eb319f0c75d13fb14531e307652f) Thanks [@andykenward](https://github.com/andykenward)! - refactor: replace [@unlike/github-actions-core](https://www.npmjs.com/package/@unlike/github-actions-core) with [@actions/core](https://www.npmjs.com/package/@actions/core) . It increases the bundle size from 30.6kb to 600.5kb because of [actions/toolkit#1436](https://github.com/actions/toolkit/issues/1436) & [actions/toolkit#1697](https://github.com/actions/toolkit/issues/1697). But we no longer want to maintain the fork of that repo. Rather they fix these issues.
+
+### Patch Changes
+
+- [`b5d3187`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/b5d3187554abb5073fbfea0a101b4ce221933f92) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump @octokit/plugin-paginate-rest from 11.1.1 to 11.2.0
+
+- [#346](https://github.com/andykenward/github-actions-cloudflare-pages/pull/346) [`44d1334`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/44d1334e30a8d8bbf7ab32dea17b5b6286ed11ff) Thanks [@andykenward](https://github.com/andykenward)! - feat(deps): bump @octokit/plugin-paginate-rest from 11.2.0 to 11.3.0
+
+- [#346](https://github.com/andykenward/github-actions-cloudflare-pages/pull/346) [`5d78212`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5d782129627c0f4b1abcd218582396f86d4cbde7) Thanks [@andykenward](https://github.com/andykenward)! - feat(deps): bump wrangler from 3.51.2 to 3.53.0
+
 ## 2.1.0
 
 ### Minor Changes
