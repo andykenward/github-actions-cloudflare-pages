@@ -1,0 +1,6 @@
+{
+  "name": "Cloudflare Pages Deploy Deletion Workflow",
+  "description": "Deploy deletion from Cloudflare Pages using andykenward/github-actions-cloudflare-pages/delete",
+  "iconName": "octicon trash",
+  "categories": ["Deployment"]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Cloudflare Pages Deploy Workflow",
+  "description": "Deploy to Cloudflare Pages using andykenward/github-actions-cloudflare-pages",
+  "iconName": "octicon cloud",
+  "categories": ["Deployment"]
+}

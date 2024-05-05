@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: Cloudflare Pages Delete
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - $default-branch
+jobs:
+  deploy:
+    permissions:
+      actions: read # Only required for private GitHub Repo
+      contents: read
+      deployments: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 'Checkout Github Action'
+        uses: actions/checkout@v4
+      - name: 'Deploy deletion from Cloudflare Pages'
+        uses: andykenward/github-actions-cloudflare-pages/delete@v2
+        with:
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
