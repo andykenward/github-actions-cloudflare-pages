@@ -43,7 +43,7 @@ github-environment:
 
 ## Examples
 
-See GitHub Workflow example below or [deploy-delete.yml](../.github/workflows/deploy-delete.yml)
+See GitHub Workflow example below or [.github/workflow-templates/delete.yml](../.github/workflow-templates/delete.yml)
 
 ### `pull_request` `closed`
 
