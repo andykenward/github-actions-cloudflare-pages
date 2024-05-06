@@ -5,6 +5,7 @@ export const INPUT_KEY_DIRECTORY = 'directory'
 export const INPUT_KEY_GITHUB_ENVIRONMENT = 'github-environment'
 export const INPUT_KEY_GITHUB_TOKEN = 'github-token'
 export const INPUT_KEY_WORKING_DIRECTORY = 'working-directory'
+export const INPUT_KEYS_KEEP_LATEST = 'keep-latest'
 
 export const INPUT_KEYS_REQUIRED = [
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
@@ -12,5 +13,6 @@ export const INPUT_KEYS_REQUIRED = [
   INPUT_KEY_CLOUDFLARE_PROJECT_NAME,
   INPUT_KEY_DIRECTORY,
   INPUT_KEY_GITHUB_ENVIRONMENT,
-  INPUT_KEY_GITHUB_TOKEN
+  INPUT_KEY_GITHUB_TOKEN,
+  INPUT_KEYS_KEEP_LATEST
 ] as const
