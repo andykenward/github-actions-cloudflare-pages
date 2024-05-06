@@ -2157,6 +2157,60 @@ export type CodeOfConduct = Node & {
   url?: Maybe<Scalars['URI']['output']>;
 };
 
+/**
+ * Choose which tools must provide code scanning results before the reference is
+ * updated. When configured, code scanning must be enabled and have results for
+ * both the commit and the reference being updated.
+ */
+export type CodeScanningParameters = {
+  /** Tools that must provide code scanning results for this rule to pass. */
+  codeScanningTools: Array<CodeScanningTool>;
+};
+
+/**
+ * Choose which tools must provide code scanning results before the reference is
+ * updated. When configured, code scanning must be enabled and have results for
+ * both the commit and the reference being updated.
+ */
+export type CodeScanningParametersInput = {
+  /** Tools that must provide code scanning results for this rule to pass. */
+  codeScanningTools: Array<CodeScanningToolInput>;
+};
+
+/** A tool that must provide code scanning results for this rule to pass. */
+export type CodeScanningTool = {
+  /**
+   * The severity level at which code scanning results that raise alerts block a
+   * reference update. For more information on alert severity levels, see "[About code scanning alerts](${externalDocsUrl}/code-security/code-scanning/managing-code-scanning-alerts/about-code-scanning-alerts#about-alert-severity-and-security-severity-levels)."
+   */
+  alertsThreshold: Scalars['String']['output'];
+  /**
+   * The severity level at which code scanning results that raise security alerts
+   * block a reference update. For more information on security severity levels,
+   * see "[About code scanning alerts](${externalDocsUrl}/code-security/code-scanning/managing-code-scanning-alerts/about-code-scanning-alerts#about-alert-severity-and-security-severity-levels)."
+   */
+  securityAlertsThreshold: Scalars['String']['output'];
+  /** The name of a code scanning tool */
+  tool: Scalars['String']['output'];
+};
+
+/** A tool that must provide code scanning results for this rule to pass. */
+export type CodeScanningToolInput = {
+  /**
+   * The severity level at which code scanning results that raise alerts block a
+   * reference update. For more information on alert severity levels, see "[About code scanning alerts](${externalDocsUrl}/code-security/code-scanning/managing-code-scanning-alerts/about-code-scanning-alerts#about-alert-severity-and-security-severity-levels)."
+   */
+  alertsThreshold: Scalars['String']['input'];
+  /**
+   * The severity level at which code scanning results that raise security alerts
+   * block a reference update. For more information on security severity levels,
+   * see "[About code scanning alerts](${externalDocsUrl}/code-security/code-scanning/managing-code-scanning-alerts/about-code-scanning-alerts#about-alert-severity-and-security-severity-levels)."
+   */
+  securityAlertsThreshold: Scalars['String']['input'];
+  /** The name of a code scanning tool */
+  tool: Scalars['String']['input'];
+};
+
 /** Collaborators affiliation level with a subject. */
 export enum CollaboratorAffiliation {
   /** All collaborators the authenticated user can see. */
@@ -22510,6 +22564,12 @@ export enum RepositoryRuleType {
   Authorization = 'AUTHORIZATION',
   /** Branch name pattern */
   BranchNamePattern = 'BRANCH_NAME_PATTERN',
+  /**
+   * Choose which tools must provide code scanning results before the reference is
+   * updated. When configured, code scanning must be enabled and have results for
+   * both the commit and the reference being updated.
+   */
+  CodeScanning = 'CODE_SCANNING',
   /** Committer email pattern */
   CommitterEmailPattern = 'COMMITTER_EMAIL_PATTERN',
   /** Commit author email pattern */
@@ -23380,12 +23440,14 @@ export enum RuleEnforcement {
 }
 
 /** Types which can be parameters for `RepositoryRule` objects. */
-export type RuleParameters = BranchNamePatternParameters | CommitAuthorEmailPatternParameters | CommitMessagePatternParameters | CommitterEmailPatternParameters | FileExtensionRestrictionParameters | FilePathRestrictionParameters | MaxFilePathLengthParameters | MaxFileSizeParameters | PullRequestParameters | RequiredDeploymentsParameters | RequiredStatusChecksParameters | TagNamePatternParameters | UpdateParameters | WorkflowsParameters;
+export type RuleParameters = BranchNamePatternParameters | CodeScanningParameters | CommitAuthorEmailPatternParameters | CommitMessagePatternParameters | CommitterEmailPatternParameters | FileExtensionRestrictionParameters | FilePathRestrictionParameters | MaxFilePathLengthParameters | MaxFileSizeParameters | PullRequestParameters | RequiredDeploymentsParameters | RequiredStatusChecksParameters | TagNamePatternParameters | UpdateParameters | WorkflowsParameters;
 
 /** Specifies the parameters for a `RepositoryRule` object. Only one of the fields should be specified. */
 export type RuleParametersInput = {
   /** Parameters used for the `branch_name_pattern` rule type */
   branchNamePattern?: InputMaybe<BranchNamePatternParametersInput>;
+  /** Parameters used for the `code_scanning` rule type */
+  codeScanning?: InputMaybe<CodeScanningParametersInput>;
   /** Parameters used for the `commit_author_email_pattern` rule type */
   commitAuthorEmailPattern?: InputMaybe<CommitAuthorEmailPatternParametersInput>;
   /** Parameters used for the `commit_message_pattern` rule type */
