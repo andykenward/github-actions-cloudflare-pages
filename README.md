@@ -88,7 +88,7 @@ wrangler:
 
 ## Examples
 
-See the GitHub Workflow examples below or [deploy.yml](./.github/workflows/deploy.yml)
+See the GitHub Workflow examples below or [.github/workflow-templates/deploy.yml](.github/workflow-templates/deploy.yml)
 
 ### `push` & `pull_request`
 
