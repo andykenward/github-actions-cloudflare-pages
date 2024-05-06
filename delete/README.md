@@ -39,11 +39,15 @@ github-token:
 github-environment:
   description: 'GitHub environment to delete deployments from. Leave undefined to delete all deployments referencing the current branch or pull_request.'
   required: false
+keep-latest:
+  description: 'How many deployments to keep. Default is 0.'
+  default: '0'
+  required: false
 ```
 
 ## Examples
 
-See GitHub Workflow example below or [deploy-delete.yml](../.github/workflows/deploy-delete.yml)
+See GitHub Workflow example below or [.github/workflow-templates/delete.yml](../.github/workflow-templates/delete.yml)
 
 ### `pull_request` `closed`
 
