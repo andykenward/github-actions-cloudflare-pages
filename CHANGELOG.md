@@ -1,5 +1,15 @@
 # github-actions-cloudflare-pages
 
+## 2.3.0
+
+### Minor Changes
+
+- [#352](https://github.com/andykenward/github-actions-cloudflare-pages/pull/352) [`1c3239a`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/1c3239ab32fe3b06261d7567552ef23bbfb0df3c) Thanks [@andykenward](https://github.com/andykenward)! - feat: delete workflow keep-latest number of deployments.
+
+### Patch Changes
+
+- [#351](https://github.com/andykenward/github-actions-cloudflare-pages/pull/351) [`4d75383`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/4d753837003958d92bb89c83e4edd8f62f343d84) Thanks [@dependabot](https://github.com/apps/dependabot)! - feat(deps): bump wrangler from 3.53.0 to 3.53.1
+
 ## 2.2.0
 
 ### Minor Changes
