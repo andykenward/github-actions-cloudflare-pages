@@ -39,3 +39,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-environment: ${{ inputs.environment || 'preview' }}
           working-directory: example
+      - id: 'cloudflare-pages-delete'
+        uses: ./delete
+        # if main branch
+        if: github.ref == 'refs/heads/main'
+        with:
+          cloudflare-api-token: ${{secrets.CLOUDFLARE_API_TOKEN}}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Only required for legacy action deployments.
+          github-environment: ${{ inputs.environment || 'preview' }}
+          keep-latest: 2
