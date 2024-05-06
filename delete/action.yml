@@ -15,6 +15,10 @@ inputs:
   github-environment:
     description: 'GitHub environment to delete deployments from. If not defined any deployments link to the branch/pr are deleted.'
     required: false
+  keep-latest:
+    description: 'How many deployments to keep. Default is 0.'
+    default: '0'
+    required: false
 
 runs:
   using: node20

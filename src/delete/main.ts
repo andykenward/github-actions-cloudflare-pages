@@ -3,18 +3,25 @@ import {debug, info, setFailed, summary} from '@actions/core'
 import {batchDelete} from '@/common/batch-delete.js'
 import {getGitHubDeployments} from '@/common/github/deployment/get.js'
 
+import {useInputs} from './inputs.js'
+
 const PREFIX = `delete -`
 
 export async function run() {
-  const deployments = await getGitHubDeployments()
+  let deployments = await getGitHubDeployments()
 
+  const {keepLatest} = useInputs()
+  if (deployments.length > 0 && keepLatest) {
+    info(`${PREFIX} Keeping latest ${keepLatest} deployments`)
+    deployments = deployments.slice(keepLatest)
+  }
   if (deployments.length === 0) {
-    info(`${PREFIX} No deployments found to delete`)
+    info(`${PREFIX} No deployments to delete`)
 
     await summary
       .addHeading('andykenward/github-actions-cloudflare-pages')
       .addBreak()
-      .addTable([['No deployments found to delete']])
+      .addTable([['No deployments to delete']])
       .write()
     return
   }
