@@ -26,7 +26,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
+	"postCreateCommand": "sed -i '/^ZSH_THEME/c\\ZSH_THEME=\"bira\"' ~/.zshrc && pnpm i && pre-commit install",
 	"updateContentCommand": "pnpm i && pre-commit install",
 	"features": {
 		"ghcr.io/devcontainers-contrib/features/act:1": {},
