@@ -2,21 +2,26 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
-import {useCommonInputs} from '@/common/inputs.js'
 import {
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN
 } from '@/input-keys'
 
+const setup = async () => {
+  return await import('@/common/inputs.js')
+}
+
 describe('common', () => {
   describe('inputs', () => {
     beforeEach(() => {
+      vi.resetModules()
       vi.unstubAllEnvs()
     })
 
-    test('should error when missing inputs', () => {
+    test('should error when missing inputs', async () => {
       expect.assertions(3)
+      const {useCommonInputs} = await setup()
 
       expect(() => useCommonInputs()).toThrow(
         /input required and not supplied: cloudflare-api-token/i
@@ -31,40 +36,34 @@ describe('common', () => {
       expect(() => useCommonInputs()).not.toThrow()
     })
 
-    test('returns correct values', () => {
+    test('returns correct values', async () => {
       expect.assertions(1)
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
       stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
       stubInputEnv(INPUT_KEY_GITHUB_ENVIRONMENT)
 
-      const inputs = useCommonInputs()
+      const {useCommonInputs} = await setup()
 
-      expect(inputs).toMatchInlineSnapshot(`
-        {
-          "cloudflareApiToken": "mock-cloudflare-api-token",
-          "gitHubApiToken": "mock-github-token",
-          "gitHubEnvironment": "mock-github-environment",
-        }
-      `)
+      expect(useCommonInputs()).toStrictEqual({
+        cloudflareApiToken: 'mock-cloudflare-api-token',
+        gitHubApiToken: 'mock-github-token',
+        gitHubEnvironment: 'mock-github-environment'
+      })
     })
 
-    test(`returns undefined for optional ${INPUT_KEY_GITHUB_ENVIRONMENT}`, () => {
-      expect.assertions(2)
+    test(`returns undefined for optional ${INPUT_KEY_GITHUB_ENVIRONMENT}`, async () => {
+      expect.assertions(1)
       stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
       stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
 
-      const inputs = useCommonInputs()
+      const {useCommonInputs} = await setup()
 
-      expect(inputs.gitHubEnvironment).toBeUndefined()
-
-      expect(inputs).toMatchInlineSnapshot(`
-        {
-          "cloudflareApiToken": "mock-cloudflare-api-token",
-          "gitHubApiToken": "mock-github-token",
-          "gitHubEnvironment": undefined,
-        }
-      `)
+      expect(useCommonInputs()).toStrictEqual({
+        cloudflareApiToken: 'mock-cloudflare-api-token',
+        gitHubApiToken: 'mock-github-token',
+        gitHubEnvironment: undefined
+      })
     })
   })
 })
