@@ -24,12 +24,17 @@ describe('createCloudflareDeployment', () => {
     let mockApi: MockApi
 
     beforeEach(() => {
+      vi.useFakeTimers({
+        shouldAdvanceTime: true
+      })
       mockApi = setMockApi()
     })
     afterEach(async () => {
       mockApi.mockAgent.assertNoPendingInterceptors()
       await mockApi.mockAgent.close()
       vi.mocked(execAsync).mockReset()
+      vi.runOnlyPendingTimers()
+      vi.useRealTimers()
     })
 
     test('handles thrown error from wrangler deploy', async () => {
@@ -130,6 +135,7 @@ describe('createCloudflareDeployment', () => {
         directory: 'mock-directory',
         workingDirectory: 'mock-working-directory'
       })
+      // vi.advanceTimersByTime(2000)
 
       expect(execAsync).toHaveBeenCalledWith(
         `npx wrangler@${process.env.npm_package_dependencies_wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
