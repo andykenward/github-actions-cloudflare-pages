@@ -2,28 +2,36 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {stubRequiredInputEnv} from '@/tests/helpers/inputs.js'
 
-import {useInputs} from '@/deploy/inputs.js'
-
+const setup = async () => {
+  return await import('@/deploy/inputs.js')
+}
 describe('deploy', () => {
   describe('inputs', () => {
     beforeEach(() => {
+      vi.resetModules()
       vi.unstubAllEnvs()
     })
 
-    test('returns correct values', () => {
+    test('returns correct values', async () => {
       expect.assertions(1)
 
       stubRequiredInputEnv()
-      const inputs = useInputs()
+      const {useInputs} = await setup()
 
-      expect(inputs).toMatchInlineSnapshot(`
-      {
-        "cloudflareAccountId": "mock-cloudflare-account-id",
-        "cloudflareProjectName": "mock-cloudflare-project-name",
-        "directory": "mock-directory",
-        "workingDirectory": ".",
-      }
-    `)
+      expect(useInputs()).toStrictEqual({
+        cloudflareAccountId: 'mock-cloudflare-account-id',
+        cloudflareProjectName: 'mock-cloudflare-project-name',
+        directory: 'mock-directory',
+        workingDirectory: '.'
+      })
+    })
+
+    test('throws error', async () => {
+      expect.assertions(1)
+      const {useInputs} = await setup()
+      expect(() => useInputs()).toThrow(
+        'Input required and not supplied: cloudflare-account-id'
+      )
     })
   })
 })
