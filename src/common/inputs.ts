@@ -31,7 +31,5 @@ type UseCommonInputs = ReturnType<typeof getInputs>
 let _inputs: UseCommonInputs
 
 export const useCommonInputs = (): UseCommonInputs => {
-  return process.env.NODE_ENV === 'test'
-    ? getInputs()
-    : _inputs ?? (_inputs = getInputs())
+  return _inputs ?? (_inputs = getInputs())
 }

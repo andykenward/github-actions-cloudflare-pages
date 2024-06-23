@@ -1,10 +1,14 @@
-import {describe, expect, test} from 'vitest'
-
-import {useContext} from '@/common/github/context.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 describe('getGitHubContext', () => {
-  test('returns eventName ', () => {
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  test('returns eventName ', async () => {
     expect.assertions(8)
+
+    const {useContext} = await import('@/common/github/context.js')
 
     const {repo, event, branch, sha, graphqlEndpoint, ref} = useContext()
 
