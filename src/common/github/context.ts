@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import {debug, isDebug} from '@actions/core'
 
 import {raise} from '../utils.js'

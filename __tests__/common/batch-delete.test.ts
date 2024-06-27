@@ -33,7 +33,6 @@ describe('batch-delete', () => {
     await mockApi.mockAgent.close()
   })
 
-  // eslint-disable-next-line vitest/prefer-expect-assertions
   test('should delete a deployment with valid payload', async () => {
     expect.assertions(3)
 

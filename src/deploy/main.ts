@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import {setFailed} from '@actions/core'
 
 import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.js'
