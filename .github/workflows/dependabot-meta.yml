@@ -1,23 +1,20 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 
 name: Dependabot fetch metadata
-on:
-  pull_request:
-    branches:
-      - main
-
-permissions:
-  pull-requests: write
-  issues: write
-  repository-projects: write
-
+on: pull_request_target
 jobs:
   dependabot:
+    permissions:
+      pull-requests: write
+      issues: write
+      repository-projects: write
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
       - name: Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v2
+        uses: dependabot/fetch-metadata@5e5f99653a5b510e8555840e80cbf1514ad4af38 #v2.1.0
         with:
+          alert-lookup: true
+          compat-lookup: true
           github-token: '${{ secrets.GITHUB_TOKEN }}'
