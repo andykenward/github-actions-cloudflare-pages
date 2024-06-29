@@ -24,7 +24,7 @@ const config = {
     '',
     '^[./]'
   ],
-  importOrderTypeScriptVersion: '5.4.3',
+  importOrderTypeScriptVersion: '5.4.5',
   semi: false,
   singleQuote: true,
   trailingComma: 'none',
