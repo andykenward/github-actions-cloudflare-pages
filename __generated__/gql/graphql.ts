@@ -17956,6 +17956,8 @@ export type PropertyTargetDefinition = {
   name: Scalars['String']['output'];
   /** The values to match for */
   propertyValues: Array<Scalars['String']['output']>;
+  /** The source of the property. Choose 'custom' or 'system'. Defaults to 'custom' if not specified */
+  source?: Maybe<Scalars['String']['output']>;
 };
 
 /** A property that must match */
@@ -17964,6 +17966,8 @@ export type PropertyTargetDefinitionInput = {
   name: Scalars['String']['input'];
   /** The values to match for */
   propertyValues: Array<Scalars['String']['input']>;
+  /** The source of the property. Choose 'custom' or 'system'. Defaults to 'custom' if not specified */
+  source?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** A user's public key. */
