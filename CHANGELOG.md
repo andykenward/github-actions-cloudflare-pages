@@ -1,5 +1,23 @@
 # github-actions-cloudflare-pages
 
+## 2.3.1
+
+### Patch Changes
+
+- [#384](https://github.com/andykenward/github-actions-cloudflare-pages/pull/384) [`47db26a`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/47db26ad73bc7f74cb61fe9bb0c1bd891b53a537) Thanks [@andykenward](https://github.com/andykenward)! - ESLint upgrade to 9
+
+- [`4eb722c`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/4eb722c67d0559c629b168af5bf09de60df8c7d3) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): bump @octokit/graphql-schema from 15.15.0 to 15.18.0
+
+- [#386](https://github.com/andykenward/github-actions-cloudflare-pages/pull/386) [`4f3fa1c`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/4f3fa1c418a0f0626dd67f53412284db47c5a74e) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 3.61.0 to 3.62.0
+
+- [#379](https://github.com/andykenward/github-actions-cloudflare-pages/pull/379) [`3e64f3e`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/3e64f3e306515e5bc2e19b335835fb7c07d0b3e7) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 3.53.1 to 3.61.0
+
+- [#383](https://github.com/andykenward/github-actions-cloudflare-pages/pull/383) [`4a04751`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/4a04751a6991f48d1514bb98e2ff77fd96a1951a) Thanks [@andykenward](https://github.com/andykenward)! - test: remove need for checking process.env in test environment.
+
+- [`21b577d`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/21b577d78080e66009bd21627fada671d7c30d86) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): bump @octokit/graphql-schema from 15.22.0 to 15.23.0
+
+- [#380](https://github.com/andykenward/github-actions-cloudflare-pages/pull/380) [`9bd64a6`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/9bd64a6d6a27a73c68b4d6c9bbd7947a444af788) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump @octokit/graphql-schema from 15.18.0 to 15.22.0
+
 ## 2.3.0
 
 ### Minor Changes
