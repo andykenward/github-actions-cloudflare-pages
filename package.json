@@ -48,7 +48,7 @@
   "dependencies": {
     "@actions/core": "1.10.1",
     "@octokit-next/core": "2.8.0",
-    "@octokit/plugin-paginate-rest": "11.3.0",
+    "@octokit/plugin-paginate-rest": "11.3.3",
     "wrangler": "3.62.0"
   },
   "devDependencies": {
@@ -60,7 +60,7 @@
     "@graphql-codegen/client-preset": "4.3.1",
     "@graphql-typed-document-node/core": "3.2.0",
     "@ianvs/prettier-plugin-sort-imports": "4.3.0",
-    "@octokit/graphql-schema": "15.23.0",
+    "@octokit/graphql-schema": "15.24.0",
     "@octokit/webhooks-schemas": "7.5.1",
     "@octokit/webhooks-types": "7.5.1",
     "@total-typescript/ts-reset": "0.5.1",
