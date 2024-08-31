@@ -19,6 +19,7 @@ import {INPUT_KEY_WORKING_DIRECTORY} from '@/input-keys'
 
 vi.mock('@/common/utils.js')
 vi.mock('@actions/core')
+
 describe('createCloudflareDeployment', () => {
   describe('api calls', () => {
     let mockApi: MockApi
@@ -29,6 +30,7 @@ describe('createCloudflareDeployment', () => {
       })
       mockApi = setMockApi()
     })
+
     afterEach(async () => {
       mockApi.mockAgent.assertNoPendingInterceptors()
       await mockApi.mockAgent.close()
@@ -39,6 +41,7 @@ describe('createCloudflareDeployment', () => {
 
     test('handles thrown error from wrangler deploy', async () => {
       expect.assertions(10)
+
       vi.mocked(execAsync).mockRejectedValueOnce({stderr: 'Oh no!', stdout: ''})
 
       // Expect Cloudflare Api Token and Account Id to be undefined.
@@ -80,6 +83,7 @@ describe('createCloudflareDeployment', () => {
 
     test('handles thrown error from getDeployments', async () => {
       expect.assertions(5)
+
       vi.mocked(execAsync).mockResolvedValueOnce({
         stdout: 'success',
         stderr: ''
@@ -108,6 +112,7 @@ describe('createCloudflareDeployment', () => {
 
     test('handles success', async () => {
       expect.assertions(15)
+
       stubInputEnv(INPUT_KEY_WORKING_DIRECTORY)
 
       vi.mocked(execAsync).mockResolvedValueOnce({

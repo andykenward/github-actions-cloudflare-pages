@@ -8,6 +8,7 @@ import {throwFetchError} from '@/common/cloudflare/api/fetch-error.js'
 const RESOURCE_URL = `https://api.cloudflare.com/path`
 
 vi.mock('@actions/core')
+
 describe('throwFetchError', () => {
   test('throws parsed error with notes', () => {
     expect.assertions(3)
@@ -50,7 +51,7 @@ describe('throwFetchError', () => {
         }
       ]
     } satisfies FetchResult
-    9
+
     expect(() =>
       throwFetchError(RESOURCE_URL, ERRORS)
     ).toThrowErrorMatchingInlineSnapshot(

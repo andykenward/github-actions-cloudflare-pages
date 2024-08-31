@@ -13,9 +13,11 @@ import {addComment, MutationAddComment} from '@/common/github/comment.js'
 import * as Context from '@/common/github/context.js'
 
 vi.mock('@actions/core')
+
 describe('addComment', () => {
   const mockData = RESPONSE_DEPLOYMENTS.result[0] as unknown as PagesDeployment
   let mockApi: MockApi
+
   beforeEach(() => {
     mockApi = setMockApi()
   })
@@ -24,6 +26,7 @@ describe('addComment', () => {
     mockApi.mockAgent.assertNoPendingInterceptors()
     await mockApi.mockAgent.close()
   })
+
   test('should add comment', async () => {
     expect.assertions(1)
 
@@ -49,12 +52,14 @@ describe('addComment', () => {
     )
 
     const comment = await addComment(mockData, 'success')
+
     expect(comment).toBe('1')
   })
 
   const eventNames = EVENT_NAMES.filter(
     eventName => eventName !== 'pull_request'
   )
+
   test.each([eventNames])(
     `should return undefined for eventName: %s`,
     async eventName => {

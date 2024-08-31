@@ -5,6 +5,7 @@ import {stubRequiredInputEnv} from '@/tests/helpers/inputs.js'
 const setup = async () => {
   return await import('@/deploy/inputs.js')
 }
+
 describe('deploy', () => {
   describe('inputs', () => {
     beforeEach(() => {
@@ -28,7 +29,9 @@ describe('deploy', () => {
 
     test('throws error', async () => {
       expect.assertions(1)
+
       const {useInputs} = await setup()
+
       expect(() => useInputs()).toThrow(
         'Input required and not supplied: cloudflare-account-id'
       )

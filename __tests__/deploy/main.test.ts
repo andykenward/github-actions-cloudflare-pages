@@ -19,6 +19,7 @@ vi.mock('@/common/utils.js')
 vi.mock('@/common/github/environment.js')
 vi.mock('@/common/github/deployment/create.js')
 vi.mock('@/common/github/comment.js')
+
 describe('deploy', () => {
   describe('main', () => {
     let mockApi: MockApi
@@ -57,6 +58,7 @@ describe('deploy', () => {
           expect(main).toBeUndefined()
 
           expect(spySetOutput).toHaveBeenCalledTimes(5)
+
           // TODO @andykenward add checks for setOutput
           mockApi.mockAgent.assertNoPendingInterceptors()
         })

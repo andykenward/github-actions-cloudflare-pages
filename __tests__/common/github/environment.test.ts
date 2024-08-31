@@ -17,6 +17,7 @@ import {
 } from '@/common/github/environment.js'
 
 vi.mock('@actions/core')
+
 describe('environment', () => {
   let mockApi: MockApi
 
@@ -246,7 +247,9 @@ describe('environment', () => {
 
     test.each(RESPONSES)(`setFailed is called`, async (response, expected) => {
       expect.assertions(2)
+
       mockQueryGetEnvironment(...response)
+
       await expect(checkEnvironment()).rejects.toThrow(expected)
       expect(spySetFailed).toHaveBeenCalledWith(expected)
     })

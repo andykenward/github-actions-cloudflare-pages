@@ -131,6 +131,7 @@ describe('getPayload', () => {
 
     test('throws an error for payloads v1 and missing inputs', () => {
       expect.assertions(3)
+
       vi.unstubAllEnvs()
 
       expect(() => {

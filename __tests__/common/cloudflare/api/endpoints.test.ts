@@ -9,6 +9,7 @@ describe('endpoints', () => {
   describe('getCloudflareApiEndpoint', () => {
     test('returns correct url', () => {
       expect.assertions(1)
+
       const url = getCloudflareApiEndpoint({
         accountId: 'mock-cloudflare-account-id',
         projectName: 'mock-cloudflare-project-name'

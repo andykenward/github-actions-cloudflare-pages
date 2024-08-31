@@ -15,6 +15,7 @@ const RESOURCE_URL_PATH = `/client/v4/accounts`
 const RESOURCE_URL = `${RESOURCE_URL_DOMAIN}${RESOURCE_URL_PATH}`
 
 vi.mock('@actions/core')
+
 describe('api', () => {
   describe('fetchResult', () => {
     let mockApi: MockApi

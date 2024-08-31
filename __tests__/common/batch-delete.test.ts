@@ -21,6 +21,7 @@ import {
 } from '../helpers/api.js'
 
 vi.mock('@actions/core')
+
 describe('batch-delete', () => {
   let mockApi: MockApi
 
