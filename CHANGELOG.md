@@ -1,5 +1,15 @@
 # github-actions-cloudflare-pages
 
+## 2.3.2
+
+### Patch Changes
+
+- [`e70e809`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/e70e809757d3ceaa1ea86f81eb54d592452fbbc8) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump @octokit/plugin-paginate-rest from 11.3.0 to 11.3.3
+
+- [`c8017ea`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/c8017eaae35c6a7581f3711fa969a15184285dcf) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump wrangler from 3.72.2 to 3.73.0
+
+- [`926faf7`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/926faf722306ddebcb0e7df6460f9db3fe1a3546) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump wrangler from 3.62.0 to 3.72.2
+
 ## 2.3.1
 
 ### Patch Changes
