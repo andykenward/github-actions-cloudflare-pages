@@ -29,7 +29,7 @@ importers:
         version: 2.27.7
       '@cloudflare/types':
         specifier: 6.29.1
-        version: 6.29.1(react@18.3.1)
+        version: 6.29.1(react@17.0.2)
       '@eslint/js':
         specifier: 9.9.1
         version: 9.9.1
@@ -2864,8 +2864,8 @@ packages:
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
-  react@18.3.1:
-    resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
+  react@17.0.2:
+    resolution: {integrity: sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA==}
     engines: {node: '>=0.10.0'}
 
   read-pkg-up@7.0.1:
@@ -4080,19 +4080,19 @@ snapshots:
       human-id: 1.0.2
       prettier: 2.8.8
 
-  '@cloudflare/intl-types@1.5.6(react@18.3.1)':
+  '@cloudflare/intl-types@1.5.6(react@17.0.2)':
     dependencies:
-      react: 18.3.1
+      react: 17.0.2
 
   '@cloudflare/kv-asset-handler@0.3.4':
     dependencies:
       mime: 3.0.0
 
-  '@cloudflare/types@6.29.1(react@18.3.1)':
+  '@cloudflare/types@6.29.1(react@17.0.2)':
     dependencies:
-      '@cloudflare/intl-types': 1.5.6(react@18.3.1)
+      '@cloudflare/intl-types': 1.5.6(react@17.0.2)
       '@cloudflare/util-en-garde': 8.0.10
-      react: 18.3.1
+      react: 17.0.2
 
   '@cloudflare/util-en-garde@8.0.10':
     dependencies:
@@ -6627,9 +6627,10 @@ snapshots:
 
   queue-microtask@1.2.3: {}
 
-  react@18.3.1:
+  react@17.0.2:
     dependencies:
       loose-envify: 1.4.0
+      object-assign: 4.1.1
 
   read-pkg-up@7.0.1:
     dependencies:

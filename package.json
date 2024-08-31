@@ -88,5 +88,15 @@
   "engines": {
     "node": "^20.11.0",
     "pnpm": "9.4.0"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@cloudflare/types@6>react": "17"
+      },
+      "ignoreMissing": [
+        "react"
+      ]
+    }
   }
 }
