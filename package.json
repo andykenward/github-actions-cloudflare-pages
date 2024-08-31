@@ -49,12 +49,12 @@
     "@actions/core": "1.10.1",
     "@octokit-next/core": "2.8.0",
     "@octokit/plugin-paginate-rest": "11.3.3",
-    "wrangler": "3.62.0"
+    "wrangler": "3.72.2"
   },
   "devDependencies": {
     "@changesets/changelog-github": "0.5.0",
     "@changesets/cli": "2.27.7",
-    "@cloudflare/types": "6.29.0",
+    "@cloudflare/types": "6.29.1",
     "@eslint/js": "9.6.0",
     "@graphql-codegen/cli": "5.0.2",
     "@graphql-codegen/client-preset": "4.3.3",
