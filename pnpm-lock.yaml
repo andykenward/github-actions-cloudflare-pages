@@ -31,8 +31,8 @@ importers:
         specifier: 6.29.1
         version: 6.29.1(react@17.0.2)
       '@eslint/js':
-        specifier: 9.9.1
-        version: 9.9.1
+        specifier: 9.10.0
+        version: 9.10.0
       '@graphql-codegen/cli':
         specifier: 5.0.2
         version: 5.0.2(@types/node@20.16.2)(enquirer@2.4.1)(graphql@16.9.0)(typescript@5.5.4)
@@ -962,6 +962,10 @@ packages:
 
   '@eslint/eslintrc@3.1.0':
     resolution: {integrity: sha512-4Bfj15dVJdoy3RfZmmo86RK1Fwzn6SstsvK9JS+BaVKqC6QQQQyXekNaC+g+LKNgkQ+2VhGAzm6hO40AhMR3zQ==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@eslint/js@9.10.0':
+    resolution: {integrity: sha512-fuXtbiP5GWIn8Fz+LWoOMVf/Jxm+aajZYkhi6CuEm4SxymFM+eUWzbO9qXT+L0iCkL5+KGYMCSGxo686H19S1g==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@eslint/js@9.9.1':
@@ -4365,6 +4369,8 @@ snapshots:
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
       - supports-color
+
+  '@eslint/js@9.10.0': {}
 
   '@eslint/js@9.9.1': {}
 
