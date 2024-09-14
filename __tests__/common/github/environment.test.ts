@@ -23,7 +23,7 @@ describe('environment', () => {
 
   const mockQueryGetEnvironment = (
     data: GetEnvironmentQuery,
-    errors?: GitHubGraphQLError[] | undefined
+    errors?: GitHubGraphQLError[]
   ): void => {
     mockApi.interceptGithub(
       {
