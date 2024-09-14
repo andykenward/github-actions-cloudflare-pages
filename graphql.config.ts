@@ -1,7 +1,6 @@
-// @ts-check
+import type {CodegenConfig} from '@graphql-codegen/cli'
 
-/** @type {import('@graphql-codegen/cli').CodegenConfig } */
-const config = {
+const config: CodegenConfig = {
   overwrite: true,
   schema: [
     './node_modules/@octokit/graphql-schema/schema.graphql',

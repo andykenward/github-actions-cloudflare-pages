@@ -23,7 +23,7 @@
     "build": "rm -rf ./dist/* && node ./esbuild.config.js",
     "build:cli": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=esm --keep-names --legal-comments=external  --sourcemap --analyze --outfile=dist/index.js --tree-shaking=true",
     "changeset": "changeset",
-    "codegen": "graphql-codegen-esm --config graphql.config.js",
+    "codegen": "graphql-codegen-esm --config graphql.config.ts",
     "codegen:events": "tsx bin/codegen/index.ts",
     "codegen:watch": "pnpm run codegen --watch",
     "deployments:delete": "tsx bin/deployments/index.ts",
