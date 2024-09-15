@@ -1,5 +1,13 @@
 # github-actions-cloudflare-pages
 
+## 2.3.3
+
+### Patch Changes
+
+- [#418](https://github.com/andykenward/github-actions-cloudflare-pages/pull/418) [`2be9de7`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/2be9de78d1d1f16756308985369477bd101bce3f) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 3.73.0 to 3.78.2
+
+- [`7c27466`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/7c27466470ed5bfea184e89196bbaf52a62b46fa) Thanks [@andykenward](https://github.com/andykenward)! - feat: input of wrangler-version to override default version of wrangler used to deploy to cloudflare
+
 ## 2.3.2
 
 ### Patch Changes
