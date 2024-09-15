@@ -27,6 +27,9 @@ inputs:
   working-directory:
     description: 'Directory to run wrangler cli from'
     required: false
+  wrangler-version:
+    description: 'Wrangler version to use'
+    required: false
 
 outputs:
   id:

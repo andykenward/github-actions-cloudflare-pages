@@ -64,6 +64,9 @@ github-environment:
 working-directory:
   description: 'Directory to run wrangler cli from'
   required: false
+wrangler-version:
+  description: 'Override default wrangler version to use'
+  required: false
 ```
 
 ## Outputs

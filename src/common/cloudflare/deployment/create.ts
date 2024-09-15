@@ -29,7 +29,7 @@ export const createCloudflareDeployment = async ({
   deployment: PagesDeployment
   wranglerOutput: string
 }> => {
-  const {cloudflareApiToken} = useCommonInputs()
+  const {cloudflareApiToken, wranglerVersion} = useCommonInputs()
 
   process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken
   process.env[CLOUDFLARE_ACCOUNT_ID] = accountId
@@ -41,13 +41,7 @@ export const createCloudflareDeployment = async ({
   }
 
   try {
-    /**
-     * At build process.env.npm_package_dependencies_wrangler is replaced by esbuild define.
-     * @see {@link ../../esbuild.config.js}
-     * @see {@link https://esbuild.github.io/api/#define | esbuild define}
-     * @see {@link https://docs.npmjs.com/cli/v9/using-npm/scripts#packagejson-vars | package.json vars}
-     */
-    const WRANGLER_VERSION = process.env.npm_package_dependencies_wrangler
+    const WRANGLER_VERSION = wranglerVersion
     strict(WRANGLER_VERSION, 'wrangler version should exist')
     /**
      * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.

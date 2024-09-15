@@ -57,7 +57,7 @@ describe('createCloudflareDeployment', () => {
       ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Oh no!]`)
 
       expect(execAsync).toHaveBeenCalledWith(
-        `npx wrangler@${process.env.npm_package_dependencies_wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
+        `npx wrangler@^3.73.0 pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
         {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           env: expect.objectContaining({
@@ -143,7 +143,7 @@ describe('createCloudflareDeployment', () => {
       // vi.advanceTimersByTime(2000)
 
       expect(execAsync).toHaveBeenCalledWith(
-        `npx wrangler@${process.env.npm_package_dependencies_wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
+        `npx wrangler@^3.73.0 pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
         {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           env: expect.objectContaining({
