@@ -1,6 +1,6 @@
 {
   "name": "github-actions-cloudflare-pages",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "private": true,
   "description": "A Github Action to deploy to Cloudflare Pages",
   "keywords": [
