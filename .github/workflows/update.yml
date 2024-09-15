@@ -31,6 +31,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore: update payloads'
+          sign-commits: true
           branch: 'chore/update-payloads'
           delete-branch: true
           title: 'chore: update payloads'
@@ -55,6 +56,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore: update types'
+          sign-commits: true
           branch: 'chore/types'
           delete-branch: true
           title: 'chore: update types'
