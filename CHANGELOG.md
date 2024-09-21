@@ -1,5 +1,11 @@
 # github-actions-cloudflare-pages
 
+## 2.4.0
+
+### Minor Changes
+
+- [#424](https://github.com/andykenward/github-actions-cloudflare-pages/pull/424) [`18cd3d0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/18cd3d0e58403f13d6af98434234100301311059) Thanks [@andykenward](https://github.com/andykenward)! - support workflow_dispatch event. If the branch used for the action has an open pull request a comment be added.
+
 ## 2.3.3
 
 ### Patch Changes
