@@ -17,9 +17,13 @@ export async function run() {
   const {eventName} = useContextEvent()
 
   /**
-   * Only support eventName push & pull_request.
+   * Only support eventName push, pull_request & workflow_dispatch.
    */
-  if (eventName !== 'push' && eventName !== 'pull_request') {
+  if (
+    eventName !== 'push' &&
+    eventName !== 'pull_request' &&
+    eventName !== 'workflow_dispatch'
+  ) {
     setFailed(`GitHub Action event name '${eventName}' not supported.`)
     return
   }

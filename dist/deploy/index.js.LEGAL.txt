@@ -5,3 +5,11 @@ undici/lib/fetch/body.js:
 
 undici/lib/websocket/frame.js:
   /*! ws. MIT License. Einar Otto Stangvik <einaros@gmail.com> */
+
+is-plain-object/dist/is-plain-object.mjs:
+  /*!
+   * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
+   *
+   * Copyright (c) 2014-2017, Jon Schlinkert.
+   * Released under the MIT License.
+   */
