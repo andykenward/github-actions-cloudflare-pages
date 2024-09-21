@@ -1,4 +1,4 @@
-import {debug} from '@actions/core'
+import {debug, isDebug} from '@actions/core'
 
 import {graphql} from '@/gql/gql.js'
 
@@ -27,21 +27,26 @@ const getNodeIdFromEvent = async () => {
   const {eventName, payload} = useContextEvent()
 
   if (eventName === 'workflow_dispatch') {
-    const {repo} = useContext()
+    const {repo, ref} = useContext()
     const pullRequestsOpen = await paginate('GET /repos/{owner}/{repo}/pulls', {
       owner: repo.owner,
       repo: repo.repo,
       per_page: 100,
+      head: ref,
       state: 'open'
     })
 
-    debug(JSON.stringify(pullRequestsOpen))
+    if (isDebug()) {
+      debug(JSON.stringify(pullRequestsOpen))
+    }
 
     const pullRequest = pullRequestsOpen.find(item => {
       return item.head.ref === payload.ref
     })
 
-    debug(JSON.stringify(pullRequest))
+    if (isDebug()) {
+      debug(JSON.stringify(pullRequest))
+    }
 
     return pullRequest?.node_id ?? raise('No pull request node id')
   }
