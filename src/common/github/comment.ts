@@ -25,12 +25,11 @@ const getNodeIdFromEvent = async () => {
   const {eventName, payload} = useContextEvent()
 
   if (eventName === 'workflow_dispatch') {
-    const {repo, ref} = useContext()
+    const {repo} = useContext()
     const pullRequestsOpen = await paginate('GET /repos/{owner}/{repo}/pulls', {
       owner: repo.owner,
       repo: repo.repo,
-      per_page: 100,
-      base: ref
+      per_page: 100
     })
 
     // eslint-disable-next-line no-console
