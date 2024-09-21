@@ -25,7 +25,7 @@ const getNodeIdFromEvent = async () => {
   const {eventName, payload} = useContextEvent()
 
   if (eventName === 'workflow_dispatch') {
-    const {repo} = useContext()
+    const {repo, branch} = useContext()
     const pullRequestsOpen = await paginate('GET /repos/{owner}/{repo}/pulls', {
       owner: repo.owner,
       repo: repo.repo,
@@ -36,7 +36,7 @@ const getNodeIdFromEvent = async () => {
     console.log(JSON.stringify(pullRequestsOpen))
 
     const pullRequest = pullRequestsOpen.find(item => {
-      return item.head.ref === payload.ref
+      return item.head.ref === branch
     })
 
     // if (isDebug()) {
@@ -44,7 +44,7 @@ const getNodeIdFromEvent = async () => {
     console.log(JSON.stringify(pullRequest))
     // }
 
-    return pullRequest?.node_id ?? raise('No pull request node id')
+    return pullRequest?.node_id
   }
   if (eventName === 'pull_request' && payload.action !== 'closed') {
     return payload.pull_request.node_id ?? raise('No pull request node id')

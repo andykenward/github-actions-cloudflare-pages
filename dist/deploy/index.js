@@ -188,7 +188,7 @@ ${"  ".repeat(level)}- ${renderError(chainedError,level+1)}`).join(`
       }
     }
   }
-`),getNodeIdFromEvent=__name(async()=>{let{eventName,payload}=useContextEvent();if(eventName==="workflow_dispatch"){let{repo}=useContext(),pullRequestsOpen=await paginate2("GET /repos/{owner}/{repo}/pulls",{owner:repo.owner,repo:repo.repo,per_page:100});console.log(JSON.stringify(pullRequestsOpen));let pullRequest=pullRequestsOpen.find(item=>item.head.ref===payload.ref);return console.log(JSON.stringify(pullRequest)),pullRequest?.node_id??raise("No pull request node id")}if(eventName==="pull_request"&&payload.action!=="closed")return payload.pull_request.node_id??raise("No pull request node id")},"getNodeIdFromEvent"),addComment=__name(async(deployment,output)=>{let prNodeId=await getNodeIdFromEvent();if(prNodeId){let{sha}=useContext(),rawBody=`## Cloudflare Pages Deployment
+`),getNodeIdFromEvent=__name(async()=>{let{eventName,payload}=useContextEvent();if(eventName==="workflow_dispatch"){let{repo,branch}=useContext(),pullRequestsOpen=await paginate2("GET /repos/{owner}/{repo}/pulls",{owner:repo.owner,repo:repo.repo,per_page:100});console.log(JSON.stringify(pullRequestsOpen));let pullRequest=pullRequestsOpen.find(item=>item.head.ref===branch);return console.log(JSON.stringify(pullRequest)),pullRequest?.node_id}if(eventName==="pull_request"&&payload.action!=="closed")return payload.pull_request.node_id??raise("No pull request node id")},"getNodeIdFromEvent"),addComment=__name(async(deployment,output)=>{let prNodeId=await getNodeIdFromEvent();if(prNodeId){let{sha}=useContext(),rawBody=`## Cloudflare Pages Deployment
 **Environment:** ${deployment.environment}
 **Project:** ${deployment.project_name}
 **Built with commit:** ${sha}
