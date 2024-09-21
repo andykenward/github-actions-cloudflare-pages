@@ -1,3 +1,5 @@
+import {info} from '@actions/core'
+
 import {graphql} from '@/gql/gql.js'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
@@ -32,17 +34,9 @@ const getNodeIdFromEvent = async () => {
       per_page: 100
     })
 
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify(pullRequestsOpen))
-
     const pullRequest = pullRequestsOpen.find(item => {
       return item.head.ref === branch
     })
-
-    // if (isDebug()) {
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify(pullRequest))
-    // }
 
     return pullRequest?.node_id
   }
@@ -55,12 +49,14 @@ export const addComment = async (
   deployment: PagesDeployment,
   output: string
 ): Promise<string | undefined> => {
+  const {eventName} = useContextEvent()
+
   const prNodeId = await getNodeIdFromEvent()
 
   if (prNodeId) {
     const {sha} = useContext()
 
-    const rawBody = `## Cloudflare Pages Deployment\n**Environment:** ${deployment.environment}\n**Project:** ${deployment.project_name}\n**Built with commit:** ${sha}\n**Preview URL:** ${deployment.url}\n**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}\n\n### Wrangler Output\n${output}`
+    const rawBody = `## Cloudflare Pages Deployment\n**Event Name:** ${eventName}\n**Environment:** ${deployment.environment}\n**Project:** ${deployment.project_name}\n**Built with commit:** ${sha}\n**Preview URL:** ${deployment.url}\n**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}\n\n### Wrangler Output\n${output}`
 
     const comment = await request({
       query: MutationAddComment,
@@ -71,4 +67,5 @@ export const addComment = async (
     })
     return comment.data.addComment?.commentEdge?.node?.id
   }
+  info('addComment - No Pull Request could be found to post comment.')
 }
