@@ -27,12 +27,12 @@ const getNodeIdFromEvent = async () => {
   const {eventName, payload} = useContextEvent()
 
   if (eventName === 'workflow_dispatch') {
-    const {repo, ref} = useContext()
+    const {repo, branch} = useContext()
     const pullRequestsOpen = await paginate('GET /repos/{owner}/{repo}/pulls', {
       owner: repo.owner,
       repo: repo.repo,
       per_page: 100,
-      head: ref,
+      base: branch,
       state: 'open'
     })
 
