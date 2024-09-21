@@ -1,5 +1,3 @@
-import {debug, isDebug} from '@actions/core'
-
 import {graphql} from '@/gql/gql.js'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
@@ -36,17 +34,17 @@ const getNodeIdFromEvent = async () => {
       state: 'open'
     })
 
-    if (isDebug()) {
-      debug(JSON.stringify(pullRequestsOpen))
-    }
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify(pullRequestsOpen))
 
     const pullRequest = pullRequestsOpen.find(item => {
       return item.head.ref === payload.ref
     })
 
-    if (isDebug()) {
-      debug(JSON.stringify(pullRequest))
-    }
+    // if (isDebug()) {
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify(pullRequest))
+    // }
 
     return pullRequest?.node_id ?? raise('No pull request node id')
   }
