@@ -62,7 +62,7 @@
     "@octokit/webhooks-schemas": "7.6.1",
     "@octokit/webhooks-types": "7.6.1",
     "@total-typescript/ts-reset": "0.6.0",
-    "@tsconfig/node20": "20.1.4",
+    "@tsconfig/node22": "22.0.0",
     "@types/json-schema": "7.0.15",
     "@types/node": "20.16.2",
     "@vitest/eslint-plugin": "1.1.7",
@@ -86,10 +86,10 @@
   "peerDependencies": {
     "wrangler": "^3.78.7"
   },
-  "packageManager": "pnpm@9.4.0",
+  "packageManager": "pnpm@9.12.3",
   "engines": {
-    "node": "^20.11.0",
-    "pnpm": "9.4.0"
+    "node": "^22.11.0",
+    "pnpm": "9.12.3"
   },
   "pnpm": {
     "peerDependencyRules": {

@@ -54,9 +54,9 @@ importers:
       '@total-typescript/ts-reset':
         specifier: 0.6.0
         version: 0.6.0
-      '@tsconfig/node20':
-        specifier: 20.1.4
-        version: 20.1.4
+      '@tsconfig/node22':
+        specifier: 22.0.0
+        version: 22.0.0
       '@types/json-schema':
         specifier: 7.0.15
         version: 7.0.15
@@ -1573,8 +1573,8 @@ packages:
   '@total-typescript/ts-reset@0.6.0':
     resolution: {integrity: sha512-HWZnkM+5z3INAUZMohVXvX8/vm9sjmfmV2NRAswvv5WsU2m+OZsHAVZ0fl8xf2QH9kyPkinghVW6g3DOQ2xt5Q==}
 
-  '@tsconfig/node20@20.1.4':
-    resolution: {integrity: sha512-sqgsT69YFeLWf5NtJ4Xq/xAF8p4ZQHlmGW74Nu2tD4+g5fAsposc4ZfaaPixVu4y01BEiDCWLRDCvDM5JOsRxg==}
+  '@tsconfig/node22@22.0.0':
+    resolution: {integrity: sha512-twLQ77zevtxobBOD4ToAtVmuYrpeYUh3qh+TEp+08IWhpsrIflVHqQ1F1CiPxQGL7doCdBIOOCF+1Tm833faNg==}
 
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
@@ -5161,7 +5161,7 @@ snapshots:
 
   '@total-typescript/ts-reset@0.6.0': {}
 
-  '@tsconfig/node20@20.1.4': {}
+  '@tsconfig/node22@22.0.0': {}
 
   '@types/estree@1.0.6': {}
 
