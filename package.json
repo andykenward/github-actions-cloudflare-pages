@@ -81,10 +81,10 @@
     "typescript-eslint": "8.8.1",
     "undici": "6.20.0",
     "vitest": "2.1.2",
-    "wrangler": "^3.78.7"
+    "wrangler": "^3.87.0"
   },
   "peerDependencies": {
-    "wrangler": "^3.78.7"
+    "wrangler": "^3.87.0"
   },
   "packageManager": "pnpm@9.4.0",
   "engines": {
