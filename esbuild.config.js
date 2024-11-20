@@ -17,7 +17,7 @@ const config = {
   minify: false,
   minifySyntax: true,
   minifyWhitespace: true,
-  external: ['wrangler'],
+  external: ['wrangler', 'undici'],
   treeShaking: true,
   banner: {
     /**
