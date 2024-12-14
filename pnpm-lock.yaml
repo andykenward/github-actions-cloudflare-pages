@@ -1478,6 +1478,9 @@ packages:
   '@octokit/types@13.6.1':
     resolution: {integrity: sha512-PHZE9Z+kWXb23Ndik8MKPirBPziOc0D2/3KH1P+6jK5nGWe96kadZuE4jev2/Jq7FvIfTlT2Ltg8Fv2x1v0a5g==}
 
+  '@octokit/types@13.6.2':
+    resolution: {integrity: sha512-WpbZfZUcZU77DrSW4wbsSgTPfKcp286q3ItaIgvSbBpZJlu6mnYXAkjZz6LVZPXkEvLIM8McanyZejKTYUHipA==}
+
   '@octokit/webhooks-schemas@7.6.1':
     resolution: {integrity: sha512-qW0Bwtb76r4m2WzVhKDyfEeEnt1GEQoRjkCqmq2ZeB0nNVDJ+Z2LBDS9FDPyduuMXf/ZTWiCJp9PFFHgRfBe3A==}
 
@@ -2722,8 +2725,8 @@ packages:
   mute-stream@0.0.8:
     resolution: {integrity: sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==}
 
-  nanoid@3.3.7:
-    resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
+  nanoid@3.3.8:
+    resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -4812,7 +4815,7 @@ snapshots:
   '@graphql-tools/optimize@2.0.0(graphql@16.9.0)':
     dependencies:
       graphql: 16.9.0
-      tslib: 2.6.3
+      tslib: 2.8.1
 
   '@graphql-tools/prisma-loader@8.0.17(@types/node@20.17.6)(graphql@16.9.0)':
     dependencies:
@@ -4845,7 +4848,7 @@ snapshots:
       '@ardatan/relay-compiler': 12.0.0(graphql@16.9.0)
       '@graphql-tools/utils': 10.5.6(graphql@16.9.0)
       graphql: 16.9.0
-      tslib: 2.6.3
+      tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -5030,13 +5033,13 @@ snapshots:
       '@octokit/graphql': 8.1.1
       '@octokit/request': 9.1.3
       '@octokit/request-error': 6.1.5
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.6.2
       before-after-hook: 3.0.2
       universal-user-agent: 7.0.2
 
   '@octokit/endpoint@10.1.1':
     dependencies:
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.6.2
       universal-user-agent: 7.0.2
 
   '@octokit/graphql-schema@15.25.0':
@@ -5047,7 +5050,7 @@ snapshots:
   '@octokit/graphql@8.1.1':
     dependencies:
       '@octokit/request': 9.1.3
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.6.2
       universal-user-agent: 7.0.2
 
   '@octokit/openapi-types@22.2.0': {}
@@ -5059,16 +5062,20 @@ snapshots:
 
   '@octokit/request-error@6.1.5':
     dependencies:
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.6.2
 
   '@octokit/request@9.1.3':
     dependencies:
       '@octokit/endpoint': 10.1.1
       '@octokit/request-error': 6.1.5
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.6.2
       universal-user-agent: 7.0.2
 
   '@octokit/types@13.6.1':
+    dependencies:
+      '@octokit/openapi-types': 22.2.0
+
+  '@octokit/types@13.6.2':
     dependencies:
       '@octokit/openapi-types': 22.2.0
 
@@ -6423,7 +6430,7 @@ snapshots:
 
   mute-stream@0.0.8: {}
 
-  nanoid@3.3.7: {}
+  nanoid@3.3.8: {}
 
   natural-compare@1.4.0: {}
 
@@ -6588,7 +6595,7 @@ snapshots:
 
   postcss@8.4.49:
     dependencies:
-      nanoid: 3.3.7
+      nanoid: 3.3.8
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
@@ -7144,7 +7151,7 @@ snapshots:
       esbuild: 0.17.19
       itty-time: 1.0.6
       miniflare: 3.20241106.0
-      nanoid: 3.3.7
+      nanoid: 3.3.8
       path-to-regexp: 6.3.0
       resolve: 1.22.8
       resolve.exports: 2.0.2
