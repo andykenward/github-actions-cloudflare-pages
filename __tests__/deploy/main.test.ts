@@ -1,3 +1,5 @@
+/* eslint-disable vitest/no-commented-out-tests */
+
 import {setOutput} from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 

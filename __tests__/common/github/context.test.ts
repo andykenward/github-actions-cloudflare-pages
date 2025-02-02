@@ -5,7 +5,7 @@ describe('getGitHubContext', () => {
     vi.resetModules()
   })
 
-  test('returns eventName ', async () => {
+  test('returns eventName', async () => {
     expect.assertions(8)
 
     const {useContext} = await import('@/common/github/context.js')

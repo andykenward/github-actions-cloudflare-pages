@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`getGitHubContext > returns eventName  2`] = `
+exports[`getGitHubContext > returns eventName 2`] = `
 {
   "action": "opened",
   "installation": {
