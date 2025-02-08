@@ -67,8 +67,8 @@ importers:
         specifier: 1.1.26
         version: 1.1.26(@typescript-eslint/utils@8.23.0(eslint@9.20.0(jiti@2.4.2))(typescript@5.7.3))(eslint@9.20.0(jiti@2.4.2))(typescript@5.7.3)(vitest@3.0.5(@types/node@20.17.16)(jiti@2.4.2)(tsx@4.19.2)(yaml@2.7.0))
       dotenv:
-        specifier: 16.4.5
-        version: 16.4.5
+        specifier: 16.4.7
+        version: 16.4.7
       esbuild:
         specifier: 0.25.0
         version: 0.25.0
@@ -2066,8 +2066,8 @@ packages:
   dot-case@3.0.4:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
 
-  dotenv@16.4.5:
-    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
+  dotenv@16.4.7:
+    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
 
   dotenv@8.6.0:
@@ -4864,7 +4864,7 @@ snapshots:
       '@whatwg-node/fetch': 0.10.3
       chalk: 4.1.2
       debug: 4.4.0
-      dotenv: 16.4.5
+      dotenv: 16.4.7
       graphql: 16.10.0
       graphql-request: 6.1.0(graphql@16.10.0)
       http-proxy-agent: 7.0.2
@@ -5679,7 +5679,7 @@ snapshots:
       no-case: 3.0.4
       tslib: 2.6.3
 
-  dotenv@16.4.5: {}
+  dotenv@16.4.7: {}
 
   dotenv@8.6.0: {}
 
