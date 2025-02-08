@@ -64,7 +64,7 @@ describe('addComment', () => {
     `should return undefined for eventName: %s`,
     async eventName => {
       expect.assertions(2)
-      expect(EVENT_NAMES.includes(eventName)).toBeTruthy()
+      expect(EVENT_NAMES).toContain(eventName)
 
       vi.spyOn(Context, 'useContextEvent').mockReturnValue({
         eventName,
