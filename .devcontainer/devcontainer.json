@@ -32,7 +32,7 @@
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
 		"ghcr.io/devcontainers/features/node:1": {
 			"version": "20.18.2",
-			"pnpmVersion": "9.12.3"
+			"pnpmVersion": "10.2.1"
 		},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers-contrib/features/pre-commit:2": {}
