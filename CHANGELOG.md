@@ -1,5 +1,19 @@
 # github-actions-cloudflare-pages
 
+## 2.5.0
+
+### Minor Changes
+
+- [`d5efd99`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/d5efd9904385ec0f323c7557ea59c5aa474d01cc) Thanks [@andykenward](https://github.com/andykenward)! - bump wrangler default version from ^3.73.0 to ^3.107.2
+
+### Patch Changes
+
+- [`27caa51`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/27caa510d2fe19a69c77a34fe22e8fe2b7899eca) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump undici
+
+- [`c7ccb49`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/c7ccb49f6dec266d6f9b9293d673c30473a55547) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): bump esbuild from 0.24.2 to 0.25.0
+
+- [`4ccc82d`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/4ccc82d2f2972febf56c97569cbf1ff56dda2a99) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump @octokit/plugin-paginate-rest from 11.3.5 to 11.4.0
+
 ## 2.4.1
 
 ### Patch Changes
