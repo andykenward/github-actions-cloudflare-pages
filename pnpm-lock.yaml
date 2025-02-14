@@ -1468,8 +1468,8 @@ packages:
     resolution: {integrity: sha512-z+j7DixNnfpdToYsOutStDgeRzJSMnbj8T1C/oQjB6Aa+kRfNjs/Fn7W6c8bmlt6mfy3FkgeKBRnDjxQow5dow==}
     engines: {node: '>= 18'}
 
-  '@octokit/endpoint@10.1.2':
-    resolution: {integrity: sha512-XybpFv9Ms4hX5OCHMZqyODYqGTZ3H6K6Vva+M9LR7ib/xr1y1ZnlChYv9H680y77Vd/i/k+thXApeRASBQkzhA==}
+  '@octokit/endpoint@10.1.3':
+    resolution: {integrity: sha512-nBRBMpKPhQUxCsQQeW+rCJ/OPSMcj3g0nfHn01zGYZXuNDvvXudF/TYY6APj5THlurerpFN4a/dQAIAaM6BYhA==}
     engines: {node: '>= 18'}
 
   '@octokit/graphql-schema@15.25.0':
@@ -1488,12 +1488,12 @@ packages:
     peerDependencies:
       '@octokit/core': '>=6'
 
-  '@octokit/request-error@6.1.6':
-    resolution: {integrity: sha512-pqnVKYo/at0NuOjinrgcQYpEbv4snvP3bKMRqHaD9kIsk9u1LCpb2smHZi8/qJfgeNqLo5hNW4Z7FezNdEo0xg==}
+  '@octokit/request-error@6.1.7':
+    resolution: {integrity: sha512-69NIppAwaauwZv6aOzb+VVLwt+0havz9GT5YplkeJv7fG7a40qpLt/yZKyiDxAhgz0EtgNdNcb96Z0u+Zyuy2g==}
     engines: {node: '>= 18'}
 
-  '@octokit/request@9.2.0':
-    resolution: {integrity: sha512-kXLfcxhC4ozCnAXy2ff+cSxpcF0A1UqxjvYMqNuPIeOAzJbVWQ+dy5G2fTylofB/gTbObT8O6JORab+5XtA1Kw==}
+  '@octokit/request@9.2.1':
+    resolution: {integrity: sha512-TqHLIdw1KFvx8WvLc7Jv94r3C3+AzKY2FWq7c20zvrxmCIa6MCVkLCE/826NCXnml3LFJjLsidDh1BhMaGEDQw==}
     engines: {node: '>= 18'}
 
   '@octokit/types@13.8.0':
@@ -5020,13 +5020,13 @@ snapshots:
     dependencies:
       '@octokit/auth-token': 5.1.2
       '@octokit/graphql': 8.2.0
-      '@octokit/request': 9.2.0
-      '@octokit/request-error': 6.1.6
+      '@octokit/request': 9.2.1
+      '@octokit/request-error': 6.1.7
       '@octokit/types': 13.8.0
       before-after-hook: 3.0.2
       universal-user-agent: 7.0.2
 
-  '@octokit/endpoint@10.1.2':
+  '@octokit/endpoint@10.1.3':
     dependencies:
       '@octokit/types': 13.8.0
       universal-user-agent: 7.0.2
@@ -5038,7 +5038,7 @@ snapshots:
 
   '@octokit/graphql@8.2.0':
     dependencies:
-      '@octokit/request': 9.2.0
+      '@octokit/request': 9.2.1
       '@octokit/types': 13.8.0
       universal-user-agent: 7.0.2
 
@@ -5049,14 +5049,14 @@ snapshots:
       '@octokit/core': 6.1.3
       '@octokit/types': 13.8.0
 
-  '@octokit/request-error@6.1.6':
+  '@octokit/request-error@6.1.7':
     dependencies:
       '@octokit/types': 13.8.0
 
-  '@octokit/request@9.2.0':
+  '@octokit/request@9.2.1':
     dependencies:
-      '@octokit/endpoint': 10.1.2
-      '@octokit/request-error': 6.1.6
+      '@octokit/endpoint': 10.1.3
+      '@octokit/request-error': 6.1.7
       '@octokit/types': 13.8.0
       fast-content-type-parse: 2.0.1
       universal-user-agent: 7.0.2
