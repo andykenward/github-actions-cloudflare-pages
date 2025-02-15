@@ -1,5 +1,17 @@
 # github-actions-cloudflare-pages
 
+## 2.5.1
+
+### Patch Changes
+
+- [`b540ab9`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/b540ab9467cb8ee59e7a90738c2368813e352a8b) Thanks [@dependabot[bot]](https://github.com/dependabot%5Bbot%5D)! - chore(deps): bump @octokit/endpoint in the npm_and_yarn group
+
+- [#508](https://github.com/andykenward/github-actions-cloudflare-pages/pull/508) [`0c50a60`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/0c50a605286334decd18a6fd75d17c880bdd9762) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump @graphql-codegen/cli from 5.0.4 to 5.0.5
+
+  chore(deps-dev): bump @graphql-codegen/client-preset from 4.6.1 to 4.6.2
+
+- [#505](https://github.com/andykenward/github-actions-cloudflare-pages/pull/505) [`bccb816`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/bccb816671788005aa13d7a9e22109bc936fa6bc) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-rest from 11.4.0 to 11.4.1 in the npm_and_yarn group
+
 ## 2.5.0
 
 ### Minor Changes
