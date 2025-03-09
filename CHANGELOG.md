@@ -1,5 +1,13 @@
 # github-actions-cloudflare-pages
 
+## 2.5.2
+
+### Patch Changes
+
+- [#520](https://github.com/andykenward/github-actions-cloudflare-pages/pull/520) [`5379212`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5379212d8b44abdc4b2583c3996bb19c66901f22) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump @octokit/graphql-schema from 15.25.0 to 15.26.0
+
+- [#520](https://github.com/andykenward/github-actions-cloudflare-pages/pull/520) [`5379212`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5379212d8b44abdc4b2583c3996bb19c66901f22) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-reset from 11.4.1 to 11.4.3
+
 ## 2.5.1
 
 ### Patch Changes
