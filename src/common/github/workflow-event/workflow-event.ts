@@ -29,7 +29,7 @@ const getPayload = (): unknown => {
 export const getWorkflowEvent = () => {
   const eventName = process.env.GITHUB_EVENT_NAME as EventName
 
-  assert(
+  assert.ok(
     EVENT_NAMES.includes(eventName),
     `eventName ${eventName} is not supported`
   )

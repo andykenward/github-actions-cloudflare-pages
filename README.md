@@ -65,7 +65,7 @@ working-directory:
   description: 'Directory to run wrangler cli from'
   required: false
 wrangler-version:
-  description: 'Override default wrangler version to use'
+  description: 'Wrangler version to use. Otherwise a default version of ^4.6.0 will be used.'
   required: false
 ```
 
