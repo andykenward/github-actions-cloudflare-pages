@@ -84,7 +84,7 @@
     "wrangler": "^4.6.0"
   },
   "peerDependencies": {
-    "wrangler": "^3.107.2"
+    "wrangler": "^4.6.0"
   },
   "packageManager": "pnpm@10.2.1",
   "engines": {

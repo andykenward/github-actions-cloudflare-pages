@@ -70,7 +70,7 @@ describe('common', () => {
         cloudflareApiToken: 'mock-cloudflare-api-token',
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
-        wranglerVersion: '^3.107.2'
+        wranglerVersion: '^4.6.0'
       })
     })
 
@@ -84,7 +84,7 @@ describe('common', () => {
 
       expect(useCommonInputs()).toStrictEqual(
         expect.objectContaining({
-          wranglerVersion: '^3.107.2'
+          wranglerVersion: '^4.6.0'
         })
       )
     })
