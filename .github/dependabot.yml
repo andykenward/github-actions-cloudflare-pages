@@ -36,6 +36,7 @@ updates:
           - 'eslint'
           - 'eslint-config-*'
           - 'eslint-plugin-*'
+          - 'globals'
         exclude-patterns:
           - 'eslint-config-prettier'
       prettier:
