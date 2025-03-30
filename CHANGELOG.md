@@ -1,5 +1,19 @@
 # github-actions-cloudflare-pages
 
+## 3.0.0
+
+### Major Changes
+
+- [#535](https://github.com/andykenward/github-actions-cloudflare-pages/pull/535) [`a7f06d0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/a7f06d049e511b4482607c01a4cda7f6f54263e8) Thanks [@andykenward](https://github.com/andykenward)! - feat: upgrade default wrangler from ^3.107.2 to ^4.6.0
+
+### Patch Changes
+
+- [#535](https://github.com/andykenward/github-actions-cloudflare-pages/pull/535) [`a7f06d0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/a7f06d049e511b4482607c01a4cda7f6f54263e8) Thanks [@andykenward](https://github.com/andykenward)! - chore(dep): bump @octokit/plugin-paginate-rest from 11.4.3 to 11.6.0
+
+- [#520](https://github.com/andykenward/github-actions-cloudflare-pages/pull/520) [`5379212`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5379212d8b44abdc4b2583c3996bb19c66901f22) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump @octokit/graphql-schema from 15.25.0 to 15.26.0
+
+- [#520](https://github.com/andykenward/github-actions-cloudflare-pages/pull/520) [`5379212`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5379212d8b44abdc4b2583c3996bb19c66901f22) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-reset from 11.4.1 to 11.4.3
+
 ## 2.5.1
 
 ### Patch Changes
