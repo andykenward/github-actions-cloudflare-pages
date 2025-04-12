@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {DeploymentState, DeploymentStatusState} from '@/gql/graphql.js'
-import RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete.response.json'
+import RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete.response.json' with {type: 'json'}
 
 import {batchDelete} from '@/common/batch-delete.js'
 import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
