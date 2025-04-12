@@ -9,8 +9,9 @@ name: check dist
 
 on:
   workflow_run:
-    workflows: [test]
-    types: [completed]
+    workflows: ['test']
+    types:
+      - completed
   workflow_dispatch:
 
 concurrency:
