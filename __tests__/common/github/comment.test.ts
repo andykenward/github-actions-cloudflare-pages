@@ -1,16 +1,13 @@
+import * as core from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
 
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {setMockApi} from '@/tests/helpers/api.js'
-import {EVENT_NAMES} from '@/types/github/workflow-events.js'
+import {stubTestEnvVars} from '@/tests/helpers/env.js'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
-import type {WorkflowEventExtract} from '@/common/github/workflow-event/types.js'
-
-import {addComment, MutationAddComment} from '@/common/github/comment.js'
-import * as Context from '@/common/github/context.js'
 
 vi.mock('@actions/core')
 
@@ -19,23 +16,46 @@ describe('addComment', () => {
   let mockApi: MockApi
 
   beforeEach(() => {
+    vi.resetModules()
     mockApi = setMockApi()
+    vi.spyOn(core, 'info').mockImplementation(() => {})
   })
 
   afterEach(async () => {
     mockApi.mockAgent.assertNoPendingInterceptors()
     await mockApi.mockAgent.close()
+
+    vi.restoreAllMocks()
   })
 
-  test('should add comment', async () => {
-    expect.assertions(1)
+  test.each([
+    ['pull_request', 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3', 'mock-github-sha'],
+    // ['workflow_dispatch', '123', 'mock-github-sha']
+    ['workflow_run', 'MDExOldvcmtmbG93UnVuMjg5NzgyNDUx', 'mock-github-sha']
+  ] as const)('should add comment', async (eventName, subjectId, sha) => {
+    expect.assertions(2)
+
+    stubTestEnvVars(eventName)
+    const {addComment, MutationAddComment} = await import(
+      '@/common/github/comment.js'
+    )
 
     mockApi.interceptGithub(
       {
         query: MutationAddComment,
         variables: {
-          subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-          body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+          subjectId: subjectId,
+          body:
+            '## Cloudflare Pages Deployment\n' +
+            `**Event Name:** ${eventName}\n` +
+            '**Environment:** production\n' +
+            '**Project:** cloudflare-pages-action\n' +
+            `**Built with commit:** ${sha}\n` +
+            '**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n' +
+            '**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n' +
+            '\n' +
+            '### Wrangler Output\n' +
+            'success'
         }
       },
       {
@@ -50,28 +70,11 @@ describe('addComment', () => {
         }
       }
     )
-
     const comment = await addComment(mockData, 'success')
 
     expect(comment).toBe('1')
+    expect(core.info).not.toHaveBeenCalled()
+
+    vi.unstubAllEnvs()
   })
-
-  const eventNames = EVENT_NAMES.filter(
-    eventName => eventName !== 'pull_request'
-  )
-
-  test.each([eventNames])(
-    `should return undefined for eventName: %s`,
-    async eventName => {
-      expect.assertions(2)
-      expect(EVENT_NAMES).toContain(eventName)
-
-      vi.spyOn(Context, 'useContextEvent').mockReturnValue({
-        eventName,
-        payload: {}
-      } as Readonly<WorkflowEventExtract<typeof eventName>>)
-
-      await expect(addComment(mockData, 'success')).resolves.toBeUndefined()
-    }
-  )
 })

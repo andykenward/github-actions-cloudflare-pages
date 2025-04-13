@@ -22,7 +22,8 @@ export async function run() {
   if (
     eventName !== 'push' &&
     eventName !== 'pull_request' &&
-    eventName !== 'workflow_dispatch'
+    eventName !== 'workflow_dispatch' &&
+    eventName !== 'workflow_run'
   ) {
     setFailed(`GitHub Action event name '${eventName}' not supported.`)
     return

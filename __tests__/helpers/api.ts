@@ -1,3 +1,5 @@
+import type {MockInterceptor} from 'undici/types/mock-interceptor.js'
+
 import {MockAgent, setGlobalDispatcher} from 'undici'
 
 import type {FetchResult} from '@/common/cloudflare/types.js'
@@ -49,10 +51,25 @@ export const getMockApi = () => {
       .reply(statusCode || 200, response)
   }
 
+  const interceptGithubHttp = <T extends object = object>(
+    path: string,
+    response: MockInterceptor.MockResponseDataHandler<T>,
+    statusCode?: number,
+    method: 'GET' | 'POST' | 'DELETE' = 'GET'
+  ) => {
+    mockPoolGitHub
+      .intercept({
+        path,
+        method
+      })
+      .reply(statusCode || 200, response)
+  }
+
   return {
     mockAgent,
     interceptCloudflare,
-    interceptGithub
+    interceptGithub,
+    interceptGithubHttp
   }
 }
 export type MockApi = ReturnType<typeof getMockApi>
