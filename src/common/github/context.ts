@@ -71,16 +71,24 @@ const getGitHubContext = (): Context => {
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
 
   const ref = ((): Context['ref'] => {
-    let ref = process.env.GITHUB_HEAD_REF
-    if (!ref) {
-      if ('ref' in event.payload) {
-        ref = event.payload.ref // refs/heads/feature-branch-1
-      } else if (event.eventName === 'pull_request') {
-        ref = event.payload.pull_request.head.ref // andykenward/issue18
-      }
-      if (!ref) return raise('context: no ref')
+    if (process.env.GITHUB_HEAD_REF) {
+      return process.env.GITHUB_HEAD_REF
     }
-    return ref
+
+    if ('ref' in event.payload) {
+      return event.payload.ref // refs/heads/feature-branch-1
+    }
+    switch (event.eventName) {
+      case 'pull_request': {
+        return event.payload.pull_request.head.ref // andykenward/issue18
+      }
+      case 'workflow_run': {
+        return event.payload.workflow_run.head_branch // andykenward/issue18
+      }
+      default: {
+        return raise('context: no ref')
+      }
+    }
   })()
 
   const context = {

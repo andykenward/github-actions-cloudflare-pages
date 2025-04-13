@@ -10,6 +10,9 @@ const getPayload = (eventName: WebhookEventName): string => {
     case 'workflow_dispatch': {
       return '__generated__/payloads/api.github.com/workflow_dispatch/payload.json'
     }
+    case 'workflow_run': {
+      return '__generated__/payloads/api.github.com/workflow_run/completed.payload.json'
+    }
     default: {
       throw new Error('No payload to test for')
     }
