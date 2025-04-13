@@ -4,9 +4,12 @@ name: release
 
 on:
   workflow_run:
-    workflows: [test, check dist]
-    branches: [main]
-    types: [completed]
+    workflows:
+      - test
+    branches:
+      - main
+    types:
+      - completed
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
