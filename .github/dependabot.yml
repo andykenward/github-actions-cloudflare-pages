@@ -28,7 +28,6 @@ updates:
         patterns:
           - '@vitest*'
           - 'vitest'
-          - 'vite'
       eslint:
         patterns:
           - '@types/eslint'
