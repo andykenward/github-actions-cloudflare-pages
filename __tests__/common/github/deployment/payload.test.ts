@@ -30,7 +30,7 @@ const PAYLOAD_V2 = {
   url: 'https://example.com'
 } as const satisfies PayloadGithubDeploymentV2
 
-describe('getPayload', () => {
+describe(getPayload, () => {
   //   const spyGetInput = vi.spyOn(core, 'getInput')
 
   test('returns payload if it is already a PayloadGithubDeploymentV2', () => {

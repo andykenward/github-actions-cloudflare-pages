@@ -6,7 +6,7 @@ import {
 } from '@/common/cloudflare/api/endpoints.js'
 
 describe('endpoints', () => {
-  describe('getCloudflareApiEndpoint', () => {
+  describe(getCloudflareApiEndpoint, () => {
     test('returns correct url', () => {
       expect.assertions(1)
 
@@ -45,7 +45,7 @@ describe('endpoints', () => {
     })
   })
 
-  describe('getCloudflareLogEndpoint', () => {
+  describe(getCloudflareLogEndpoint, () => {
     test('returns correct url', () => {
       expect.assertions(2)
 

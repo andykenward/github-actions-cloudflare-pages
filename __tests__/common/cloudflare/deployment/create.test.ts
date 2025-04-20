@@ -20,7 +20,7 @@ import {INPUT_KEY_WORKING_DIRECTORY} from '@/input-keys'
 vi.mock('@/common/utils.js')
 vi.mock('@actions/core')
 
-describe('createCloudflareDeployment', () => {
+describe(createCloudflareDeployment, () => {
   describe('api calls', () => {
     let mockApi: MockApi
 

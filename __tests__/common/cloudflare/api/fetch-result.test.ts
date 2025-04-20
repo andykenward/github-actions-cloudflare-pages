@@ -17,7 +17,7 @@ const RESOURCE_URL = `${RESOURCE_URL_DOMAIN}${RESOURCE_URL_PATH}`
 vi.mock('@actions/core')
 
 describe('api', () => {
-  describe('fetchResult', () => {
+  describe(fetchResult, () => {
     let mockApi: MockApi
 
     beforeEach(() => {

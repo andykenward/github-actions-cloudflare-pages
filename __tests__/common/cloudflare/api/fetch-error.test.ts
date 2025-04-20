@@ -9,7 +9,7 @@ const RESOURCE_URL = `https://api.cloudflare.com/path`
 
 vi.mock('@actions/core')
 
-describe('throwFetchError', () => {
+describe(throwFetchError, () => {
   test('throws parsed error with notes', () => {
     expect.assertions(3)
 

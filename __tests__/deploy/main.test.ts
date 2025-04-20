@@ -37,7 +37,7 @@ describe('deploy', () => {
       await mockApi.mockAgent.close()
     })
 
-    describe('run', () => {
+    describe(run, () => {
       describe('handles resolve', () => {
         beforeEach(() => {
           vi.mocked(execAsync).mockResolvedValue({

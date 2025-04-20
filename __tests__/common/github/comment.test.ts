@@ -14,7 +14,7 @@ import * as Context from '@/common/github/context.js'
 
 vi.mock('@actions/core')
 
-describe('addComment', () => {
+describe(addComment, () => {
   const mockData = RESPONSE_DEPLOYMENTS.result[0] as unknown as PagesDeployment
   let mockApi: MockApi
 

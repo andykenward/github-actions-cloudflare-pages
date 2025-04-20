@@ -51,7 +51,7 @@ describe('environment', () => {
     await mockApi.mockAgent.close()
   })
 
-  describe('createEnvironment', () => {
+  describe(createEnvironment, () => {
     test('success', async () => {
       expect.assertions(3)
 
@@ -142,7 +142,7 @@ describe('environment', () => {
     })
   })
 
-  describe('checkEnvironment', () => {
+  describe(checkEnvironment, () => {
     const spySetFailed = vi.mocked(setFailed)
 
     test('success', async () => {

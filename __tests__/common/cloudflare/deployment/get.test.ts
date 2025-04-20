@@ -4,7 +4,7 @@ import type {PagesDeployment} from '@/common/cloudflare/types.js'
 
 import {getCloudflareDeploymentAlias} from '@/common/cloudflare/deployment/get.js'
 
-describe('getCloudflareDeploymentAlias', () => {
+describe(getCloudflareDeploymentAlias, () => {
   test('returns deployment url when aliases is null', () => {
     expect.assertions(1)
 
