@@ -8,10 +8,16 @@
 name: check dist
 
 on:
-  workflow_run:
-    workflows: ['test']
-    types:
-      - completed
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
   workflow_dispatch:
 
 concurrency:
@@ -20,7 +26,6 @@ concurrency:
 
 jobs:
   check-dist:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
