@@ -1,5 +1,11 @@
 # github-actions-cloudflare-pages
 
+## 3.0.1
+
+### Patch Changes
+
+- [`7a65fea`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/7a65fea07373fb108f7892398ebc0c9bc2425478) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump @octokit/plugin-paginate-rest from 11.6.0 to 12.0.0 in the octokit group (#548)
+
 ## 3.0.0
 
 ### Major Changes
