@@ -28,14 +28,17 @@ updates:
         patterns:
           - '@vitest*'
           - 'vitest'
+          - 'vite'
       eslint:
         patterns:
+          - '@eslint/*'
           - '@types/eslint'
           - '@typescript-eslint/*'
           - 'eslint'
           - 'eslint-config-*'
           - 'eslint-plugin-*'
           - 'globals'
+          - 'typescript-eslint'
         exclude-patterns:
           - 'eslint-config-prettier'
       prettier:
