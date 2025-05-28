@@ -106,8 +106,8 @@ importers:
         specifier: 8.33.0
         version: 8.33.0(eslint@9.27.0(jiti@2.4.2))(typescript@5.8.3)
       undici:
-        specifier: 7.6.0
-        version: 7.6.0
+        specifier: 7.10.0
+        version: 7.10.0
       vite:
         specifier: 6.2.6
         version: 6.2.6(@types/node@20.17.28)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.7.1)
@@ -3003,8 +3003,8 @@ packages:
     resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
     engines: {node: '>=14.0'}
 
-  undici@7.6.0:
-    resolution: {integrity: sha512-gaFsbThjrDGvAaD670r81RZro/s6H2PVZF640Qn0p5kZK+/rim7/mmyfp2W7VB5vOMaFM8vuFBJUaMlaZTYHlA==}
+  undici@7.10.0:
+    resolution: {integrity: sha512-u5otvFBOBZvmdjWLVW+5DAc9Nkq8f24g0O9oY7qw2JVIF1VocIFoyz9JFkuVOS2j41AufeO0xnlweJ2RLT8nGw==}
     engines: {node: '>=20.18.1'}
 
   unenv@2.0.0-rc.15:
@@ -6317,7 +6317,7 @@ snapshots:
     dependencies:
       '@fastify/busboy': 2.1.1
 
-  undici@7.6.0: {}
+  undici@7.10.0: {}
 
   unenv@2.0.0-rc.15:
     dependencies:
