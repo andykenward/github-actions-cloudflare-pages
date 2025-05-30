@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/deploy/index.ts", "src/delete/index.ts"],
+  "ignore": [
+    "__generated__/**",
+    "dist/**",
+    "example/**",
+    "src/**/fragments.ts"
+  ],
+  "ignoreBinaries": ["act"],
+  "ignoreDependencies": [
+    "@octokit/graphql-schema",
+    "@octokit/webhooks-schemas",
+    "graphql-tag",
+    "vite",
+    "wrangler"
+  ]
+}

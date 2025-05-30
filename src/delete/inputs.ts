@@ -2,7 +2,7 @@ import {getInput} from '@actions/core'
 
 import {INPUT_KEYS_KEEP_LATEST} from '@/input-keys'
 
-export interface Inputs {
+interface Inputs {
   /** How many deployments to keep. */
   keepLatest: number
 }

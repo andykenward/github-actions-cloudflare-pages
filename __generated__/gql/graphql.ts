@@ -31525,8 +31525,6 @@ export type CreateGitHubDeploymentStatusMutationVariables = Exact<{
 
 export type CreateGitHubDeploymentStatusMutation = { createDeploymentStatus?: { deploymentStatus?: { deployment: { id: string, environment?: string | null, state?: DeploymentState | null } } | null } | null };
 
-export type EnvironmentFragmentFragment = { name: string, id: string };
-
 export type CreateEnvironmentMutationVariables = Exact<{
   repositoryId: Scalars['ID']['input'];
   name: Scalars['String']['input'];
@@ -31544,6 +31542,8 @@ export type GetEnvironmentQueryVariables = Exact<{
 
 
 export type GetEnvironmentQuery = { repository?: { environment?: { name: string, id: string } | null, ref?: { id: string, name: string, prefix: string } | null } | null };
+
+export type EnvironmentFragmentFragment = { name: string, id: string };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String

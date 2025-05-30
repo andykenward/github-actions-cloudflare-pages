@@ -35,22 +35,3 @@ export type WorkflowEventPayload<E extends EventName> = Extract<
   WorkflowEvent,
   {eventName: E}
 >['payload']
-
-/**
- * Extracts a workflow event payload from the WorkflowEvent Union using the
- * eventName property & the payload action property.
- *
- * Example:
- * ```ts
- * type PullRequestAssigned = WorkflowEventPayloadAction<
- *   'pull_request',
- *   'assigned'
- * >
- *
- * type PullRequestAssigned = PullRequestAssignedEvent
- * ```
- */
-export type WorkflowEventPayloadAction<
-  E extends EventName,
-  A extends string
-> = Extract<Extract<WorkflowEvent, {eventName: E}>['payload'], {action: A}>

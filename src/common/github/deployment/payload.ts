@@ -19,9 +19,7 @@ function isObject(obj: unknown): obj is {[key: string]: unknown} {
   return typeof obj === 'object' && obj !== null
 }
 
-export const isPayload = (
-  payload: Payload
-): payload is PayloadGithubDeployment => {
+const isPayload = (payload: Payload): payload is PayloadGithubDeployment => {
   const parsedPayload =
     typeof payload === 'string' ? JSON.parse(payload) : payload
 
@@ -35,7 +33,7 @@ export const isPayload = (
   return requiredKeys.every(key => key in parsedPayload)
 }
 
-export const isPayloadV2 = (
+const isPayloadV2 = (
   payload: Payload
 ): payload is PayloadGithubDeploymentV2 => {
   const parsedPayload =

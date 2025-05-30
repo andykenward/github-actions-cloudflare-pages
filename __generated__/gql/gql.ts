@@ -22,9 +22,9 @@ type Documents = {
     "\n  mutation DeleteGitHubDeploymentAndComment(\n    $deploymentId: ID!\n    $commentId: ID!\n  ) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n": typeof types.DeleteGitHubDeploymentAndCommentDocument,
     "\n  fragment DeploymentFragment on Deployment {\n    id\n    environment\n    state\n  }\n": typeof types.DeploymentFragmentFragmentDoc,
     "\n  mutation CreateGitHubDeploymentStatus(\n    $deploymentId: ID!\n    $environment: String\n    $environmentUrl: String!\n    $logUrl: String!\n    $state: DeploymentStatusState!\n  ) {\n    createDeploymentStatus(\n      input: {\n        autoInactive: false\n        deploymentId: $deploymentId\n        environment: $environment\n        environmentUrl: $environmentUrl\n        logUrl: $logUrl\n        state: $state\n      }\n    ) {\n      deploymentStatus {\n        deployment {\n          ...DeploymentFragment\n        }\n      }\n    }\n  }\n": typeof types.CreateGitHubDeploymentStatusDocument,
-    "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": typeof types.EnvironmentFragmentFragmentDoc,
     "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": typeof types.CreateEnvironmentDocument,
     "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": typeof types.GetEnvironmentDocument,
+    "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": typeof types.EnvironmentFragmentFragmentDoc,
 };
 const documents: Documents = {
     "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": types.FilesDocument,
@@ -34,9 +34,9 @@ const documents: Documents = {
     "\n  mutation DeleteGitHubDeploymentAndComment(\n    $deploymentId: ID!\n    $commentId: ID!\n  ) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n": types.DeleteGitHubDeploymentAndCommentDocument,
     "\n  fragment DeploymentFragment on Deployment {\n    id\n    environment\n    state\n  }\n": types.DeploymentFragmentFragmentDoc,
     "\n  mutation CreateGitHubDeploymentStatus(\n    $deploymentId: ID!\n    $environment: String\n    $environmentUrl: String!\n    $logUrl: String!\n    $state: DeploymentStatusState!\n  ) {\n    createDeploymentStatus(\n      input: {\n        autoInactive: false\n        deploymentId: $deploymentId\n        environment: $environment\n        environmentUrl: $environmentUrl\n        logUrl: $logUrl\n        state: $state\n      }\n    ) {\n      deploymentStatus {\n        deployment {\n          ...DeploymentFragment\n        }\n      }\n    }\n  }\n": types.CreateGitHubDeploymentStatusDocument,
-    "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": types.EnvironmentFragmentFragmentDoc,
     "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n": types.CreateEnvironmentDocument,
     "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n": types.GetEnvironmentDocument,
+    "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n": types.EnvironmentFragmentFragmentDoc,
 };
 
 /**
@@ -70,15 +70,15 @@ export function graphql(source: "\n  mutation CreateGitHubDeploymentStatus(\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n"): typeof import('./graphql.js').EnvironmentFragmentFragmentDoc;
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
 export function graphql(source: "\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n"): typeof import('./graphql.js').CreateEnvironmentDocument;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n"): typeof import('./graphql.js').GetEnvironmentDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n"): typeof import('./graphql.js').EnvironmentFragmentFragmentDoc;
 
 
 export function graphql(source: string) {
