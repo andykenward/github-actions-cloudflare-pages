@@ -10,13 +10,6 @@ import {useContext} from './context.js'
 
 const PREFIX = `GitHub Environment:`
 
-export const EnvironmentFragment = graphql(/* GraphQL */ `
-  fragment EnvironmentFragment on Environment {
-    name
-    id
-  }
-`)
-
 /**
  * MutationCreateEnvironment will either return the environment if it exists or create it.
  * GITHUB_TOKEN Action permissions don't allow for creating environments.

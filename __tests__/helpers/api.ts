@@ -61,6 +61,6 @@ export const MOCK_ACCOUNT_ID = 'mock-cloudflare-account-id'
 export const MOCK_PROJECT_NAME = 'mock-cloudflare-project-name'
 export const MOCK_DEPLOYMENT_ID = 'mock-deployment-id'
 
-export const MOCK_API_PATH = `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`
+const MOCK_API_PATH = `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`
 export const MOCK_API_PATH_DEPLOYMENTS = `${MOCK_API_PATH}/deployments`
 export const MOCK_API_PATH_DEPLOYMENTS_DELETE = `${MOCK_API_PATH}/deployments/${MOCK_DEPLOYMENT_ID}?force=true`
