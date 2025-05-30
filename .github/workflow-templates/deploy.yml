@@ -22,7 +22,7 @@ jobs:
       - name: 'Checkout Github Action'
         uses: actions/checkout@v4
       - name: 'Deploy to Cloudflare Pages'
-        uses: andykenward/github-actions-cloudflare-pages@v2.3.2
+        uses: andykenward/github-actions-cloudflare-pages@v3.0.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
