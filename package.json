@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@actions/core": "1.11.1",
-    "@octokit-next/core": "2.8.0",
+    "@octokit-next/core": "3.0.0",
     "@octokit/plugin-paginate-rest": "13.0.1"
   },
   "devDependencies": {
