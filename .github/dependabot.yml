@@ -50,6 +50,7 @@ updates:
       octokit:
         patterns:
           - '@octokit/*'
+          - '@octokit-next/*'
       cloudflare:
         patterns:
           - '@cloudflare/*'
