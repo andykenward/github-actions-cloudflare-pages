@@ -1,5 +1,19 @@
 # github-actions-cloudflare-pages
 
+## 3.0.1
+
+### Patch Changes
+
+- [#571](https://github.com/andykenward/github-actions-cloudflare-pages/pull/571) [`9104c81`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/9104c81d805e2e3d546c2a9a53a56c0d834caeab) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-rest from 12.0.0 to 13.0.1
+
+- [#551](https://github.com/andykenward/github-actions-cloudflare-pages/pull/551) [`8c337dc`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8c337dcf47b1939da9409c55b2a44f0f8451a2b7) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore: bump wrangler from ^4.6.0 to ^4.13.2
+
+- [#574](https://github.com/andykenward/github-actions-cloudflare-pages/pull/574) [`d317ec0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/d317ec0c14b4da929c44910ce8ea0830114f4d76) Thanks [@dependabot](https://github.com/apps/dependabot)! - bump @octokit-next/core from 2.8.0 to 3.0.0
+
+- [`7a65fea`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/7a65fea07373fb108f7892398ebc0c9bc2425478) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump @octokit/plugin-paginate-rest from 11.6.0 to 12.0.0 in the octokit group (#548)
+
+- [#567](https://github.com/andykenward/github-actions-cloudflare-pages/pull/567) [`b40b8e1`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/b40b8e1c4b680aaa34f9581c0356e9018c9d9040) Thanks [@andykenward](https://github.com/andykenward)! - feat: setup [knip](https://knip.dev) to help declutter project
+
 ## 3.0.0
 
 ### Major Changes
