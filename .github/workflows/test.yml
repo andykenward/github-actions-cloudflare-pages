@@ -30,7 +30,7 @@ jobs:
             ~/.cache/
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/prettier.config.cjs', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: Lint
-        run: pnpm run lint -cache-strategy content
+        run: pnpm run lint --cache-strategy content
       - name: Typecheck
         run: pnpm run tsc:check
       - name: Test
