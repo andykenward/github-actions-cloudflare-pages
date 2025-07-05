@@ -91,7 +91,7 @@
   },
   "packageManager": "pnpm@10.12.4",
   "engines": {
-    "node": "^20.19.3",
+    "node": "^20.19.2",
     "pnpm": "^10.12.4"
   },
   "pnpm": {
