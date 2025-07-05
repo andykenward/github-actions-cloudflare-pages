@@ -29,7 +29,7 @@ jobs:
           languages: ${{ matrix.language }}
       - uses: andykenward/github-actions/setup-pnpm@32471b1e0a5df8a09500a54b1254e3f0f881e52d #v1.0.3
         with:
-          node-version: 20.x
+          node-version: 20
       - name: Rebuild the dist/ directory
         run: pnpm run build
       - name: Perform CodeQL Analysis

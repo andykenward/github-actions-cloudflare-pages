@@ -19,7 +19,7 @@
   "exports": "./dist/deploy/index.js",
   "scripts": {
     "act:d": "act -j delete --secret-file .env",
-    "all": "pnpm run knip && pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls && pnpm run format && pnpm run lint:ls && pnpm run test && pnpm run build",
+    "all": "pnpm run knip && pnpm run codegen && pnpm run codegen:events && pnpm run tsc:check && pnpm run format && pnpm run lint && pnpm run test && pnpm run build",
     "build": "rm -rf ./dist/* && node ./esbuild.config.js",
     "changeset": "changeset",
     "codegen": "graphql-codegen-esm --config graphql.config.ts",
@@ -27,13 +27,13 @@
     "codegen:watch": "pnpm run codegen --watch",
     "deployments:delete": "tsx bin/deployments/index.ts",
     "download": "tsx bin/download/index.ts",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "knip": "knip",
-    "lint": "eslint .",
+    "format": "prettier --write . --cache --cache-location '.cache/prettier/'",
+    "format:check": "pnpm run format --check",
+    "knip": "knip --cache --cache-location '.cache/knip'",
+    "lint": "eslint --cache --cache-location '.cache/eslint/' .",
     "lint:debug": "pnpm run lint --debug",
     "lint:fix": "pnpm run lint --fix",
-    "lint:ls": "DEBUG=eslint:cli-engine pnpm run lint",
+    "lint:ls": "DEBUG=eslint:eslint pnpm run lint",
     "release": "pnpm run all && changeset publish",
     "start": "node -r dotenv/config ./dist/index.js",
     "test": "vitest run",
@@ -89,10 +89,10 @@
   "peerDependencies": {
     "wrangler": "^4.13.2"
   },
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.12.4",
   "engines": {
-    "node": "^20.11.0",
-    "pnpm": "^10.2.1"
+    "node": "^20.19.2",
+    "pnpm": "^10.12.4"
   },
   "pnpm": {
     "peerDependencyRules": {

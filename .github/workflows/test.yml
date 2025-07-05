@@ -23,8 +23,14 @@ jobs:
       - uses: andykenward/github-actions/setup-pnpm@32471b1e0a5df8a09500a54b1254e3f0f881e52d #v1.0.3
         with:
           node-version: 20
+      - name: Cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 #v4.2.3
+        with:
+          path: |
+            ~/.cache/
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/prettier.config.cjs', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: Lint
-        run: pnpm run lint
+        run: pnpm run lint --cache-strategy content
       - name: Typecheck
         run: pnpm run tsc:check
       - name: Test
