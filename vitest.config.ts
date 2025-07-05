@@ -7,6 +7,7 @@ import path from 'node:path'
 import {defaultExclude, defineConfig} from 'vitest/config'
 
 export default defineConfig({
+  cacheDir: '.cache/.vitest',
   test: {
     environment: 'node',
     setupFiles: ['vitest.setup.ts'],
