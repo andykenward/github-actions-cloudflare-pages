@@ -89,10 +89,10 @@
   "peerDependencies": {
     "wrangler": "^4.13.2"
   },
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.12.4",
   "engines": {
-    "node": "^20.11.0",
-    "pnpm": "^10.2.1"
+    "node": "^20.19.3",
+    "pnpm": "^10.12.4"
   },
   "pnpm": {
     "peerDependencyRules": {
