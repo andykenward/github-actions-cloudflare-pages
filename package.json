@@ -19,7 +19,7 @@
   "exports": "./dist/deploy/index.js",
   "scripts": {
     "act:d": "act -j delete --secret-file .env",
-    "all": "pnpm run knip && pnpm run codegen && pnpm run codegen:events && pnpm run tsc:ls && pnpm run format && pnpm run lint:ls && pnpm run test && pnpm run build",
+    "all": "pnpm run knip && pnpm run codegen && pnpm run codegen:events && pnpm run tsc:check && pnpm run format && pnpm run lint && pnpm run test && pnpm run build",
     "build": "rm -rf ./dist/* && node ./esbuild.config.js",
     "changeset": "changeset",
     "codegen": "graphql-codegen-esm --config graphql.config.ts",
