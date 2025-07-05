@@ -29,7 +29,7 @@
     "download": "tsx bin/download/index.ts",
     "format": "prettier --write . --cache --cache-location '.cache/prettier/'",
     "format:check": "pnpm run format --check",
-    "knip": "knip",
+    "knip": "knip --cache --cache-location '.cache/knip'",
     "lint": "eslint --cache --cache-location '.cache/eslint/' .",
     "lint:debug": "pnpm run lint --debug",
     "lint:fix": "pnpm run lint --fix",
