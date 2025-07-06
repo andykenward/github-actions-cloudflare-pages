@@ -67,8 +67,8 @@ importers:
         specifier: 1.2.7
         version: 1.2.7(eslint@9.27.0(jiti@2.4.2))(typescript@5.8.3)(vitest@3.2.4(@types/node@20.17.28)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.8.0))
       dotenv:
-        specifier: 16.4.7
-        version: 16.4.7
+        specifier: 17.0.1
+        version: 17.0.1
       esbuild:
         specifier: 0.25.3
         version: 0.25.3
@@ -1198,8 +1198,8 @@ packages:
     resolution: {integrity: sha512-KRA7VTGdVyJlh0cP5Tf94hTiYVVqmt2f3I6mnimmaVz4UG3gQV/k4mDJlJv3X67iX6rmN7gSHCF8ssqeMnmhZg==}
     engines: {node: '>= 20'}
 
-  '@octokit/request@10.0.2':
-    resolution: {integrity: sha512-iYj4SJG/2bbhh+iIpFmG5u49DtJ4lipQ+aPakjL9OKpsGY93wM8w06gvFbEQxcMsZcCvk5th5KkIm2m8o14aWA==}
+  '@octokit/request@10.0.3':
+    resolution: {integrity: sha512-V6jhKokg35vk098iBqp2FBKunk3kMTXlmq+PtbV9Gl3TfskWlebSofU9uunVKhUN7xl+0+i5vt0TGTG8/p/7HA==}
     engines: {node: '>= 20'}
 
   '@octokit/types@14.1.0':
@@ -1903,6 +1903,10 @@ packages:
 
   dotenv@16.4.7:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
+    engines: {node: '>=12'}
+
+  dotenv@17.0.1:
+    resolution: {integrity: sha512-GLjkduuAL7IMJg/ZnOPm9AnWKJ82mSE2tzXLaJ/6hD6DhwGfZaXG77oB8qbReyiczNxnbxQKyh0OE5mXq0bAHA==}
     engines: {node: '>=12'}
 
   dotenv@8.6.0:
@@ -4646,7 +4650,7 @@ snapshots:
     dependencies:
       '@octokit/auth-token': 6.0.0
       '@octokit/graphql': 9.0.1
-      '@octokit/request': 10.0.2
+      '@octokit/request': 10.0.3
       '@octokit/request-error': 7.0.0
       '@octokit/types': 14.1.0
       before-after-hook: 4.0.0
@@ -4664,7 +4668,7 @@ snapshots:
 
   '@octokit/graphql@9.0.1':
     dependencies:
-      '@octokit/request': 10.0.2
+      '@octokit/request': 10.0.3
       '@octokit/types': 14.1.0
       universal-user-agent: 7.0.3
 
@@ -4679,7 +4683,7 @@ snapshots:
     dependencies:
       '@octokit/types': 14.1.0
 
-  '@octokit/request@10.0.2':
+  '@octokit/request@10.0.3':
     dependencies:
       '@octokit/endpoint': 11.0.0
       '@octokit/request-error': 7.0.0
@@ -5364,6 +5368,8 @@ snapshots:
       tslib: 2.6.3
 
   dotenv@16.4.7: {}
+
+  dotenv@17.0.1: {}
 
   dotenv@8.6.0: {}
 
