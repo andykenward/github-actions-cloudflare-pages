@@ -48,7 +48,7 @@
   "dependencies": {
     "@actions/core": "1.11.1",
     "@octokit-next/core": "3.0.0",
-    "@octokit/plugin-paginate-rest": "13.0.1"
+    "@octokit/plugin-paginate-rest": "13.1.1"
   },
   "devDependencies": {
     "@changesets/changelog-github": "0.5.1",
