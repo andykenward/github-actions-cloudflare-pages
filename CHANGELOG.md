@@ -1,5 +1,11 @@
 # github-actions-cloudflare-pages
 
+## 3.0.2
+
+### Patch Changes
+
+- [#589](https://github.com/andykenward/github-actions-cloudflare-pages/pull/589) [`ca8c960`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/ca8c9600f4b165747242bce4b1ec33177f69ab54) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-rest from 13.0.1 to 13.1.0
+
 ## 3.0.1
 
 ### Patch Changes
