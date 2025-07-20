@@ -109,8 +109,8 @@ importers:
         specifier: 8.37.0
         version: 8.37.0(eslint@9.31.0(jiti@2.4.2))(typescript@5.8.3)
       undici:
-        specifier: 7.10.0
-        version: 7.10.0
+        specifier: 7.12.0
+        version: 7.12.0
       vite:
         specifier: 6.2.7
         version: 6.2.7(@types/node@20.17.28)(jiti@2.4.2)(tsx@4.20.3)(yaml@2.8.0)
@@ -3122,8 +3122,8 @@ packages:
     resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
     engines: {node: '>=14.0'}
 
-  undici@7.10.0:
-    resolution: {integrity: sha512-u5otvFBOBZvmdjWLVW+5DAc9Nkq8f24g0O9oY7qw2JVIF1VocIFoyz9JFkuVOS2j41AufeO0xnlweJ2RLT8nGw==}
+  undici@7.12.0:
+    resolution: {integrity: sha512-GrKEsc3ughskmGA9jevVlIOPMiiAHJ4OFUtaAH+NhfTUSiZ1wMPIQqQvAJUrJspFXJt3EBWgpAeoHEDVT1IBug==}
     engines: {node: '>=20.18.1'}
 
   unenv@2.0.0-rc.17:
@@ -6003,7 +6003,7 @@ snapshots:
       glob-to-regexp: 0.4.1
       sharp: 0.33.5
       stoppable: 1.1.0
-      undici: 7.10.0
+      undici: 7.12.0
       workerd: 1.20250712.0
       ws: 8.18.0
       youch: 4.1.0-beta.10
@@ -6583,7 +6583,7 @@ snapshots:
     dependencies:
       '@fastify/busboy': 2.1.1
 
-  undici@7.10.0: {}
+  undici@7.12.0: {}
 
   unenv@2.0.0-rc.17:
     dependencies:
