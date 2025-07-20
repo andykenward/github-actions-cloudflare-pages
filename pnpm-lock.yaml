@@ -91,8 +91,8 @@ importers:
         specifier: 2.12.6
         version: 2.12.6(graphql@16.11.0)
       knip:
-        specifier: 5.61.0
-        version: 5.61.0(@types/node@20.17.28)(typescript@5.8.3)
+        specifier: 5.62.0
+        version: 5.62.0(@types/node@20.17.28)(typescript@5.8.3)
       prettier:
         specifier: 3.6.2
         version: 3.6.2
@@ -2422,8 +2422,8 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
-  knip@5.61.0:
-    resolution: {integrity: sha512-g4zwSPUoSCWXWTHshNgtsiuM90jnLpZyBZ6J7BQaydfoOjclgh4NfrD7BL+TjChgDbeYg5bEQcERKK/vdJlpmA==}
+  knip@5.62.0:
+    resolution: {integrity: sha512-hfTUVzmrMNMT1khlZfAYmBABeehwWUUrizLQoLamoRhSFkygsGIXWx31kaWKBgEaIVL77T3Uz7IxGvSw+CvQ6A==}
     engines: {node: '>=18.18.0'}
     hasBin: true
     peerDependencies:
@@ -5877,7 +5877,7 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  knip@5.61.0(@types/node@20.17.28)(typescript@5.8.3):
+  knip@5.62.0(@types/node@20.17.28)(typescript@5.8.3):
     dependencies:
       '@nodelib/fs.walk': 1.2.8
       '@types/node': 20.17.28
