@@ -75,7 +75,7 @@
     "globals": "16.3.0",
     "graphql": "16.11.0",
     "graphql-tag": "2.12.6",
-    "knip": "5.62.0",
+    "knip": "5.63.1",
     "prettier": "3.6.2",
     "prettier-plugin-packagejson": "2.5.19",
     "tsx": "4.20.3",
