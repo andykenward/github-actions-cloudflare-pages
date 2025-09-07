@@ -22,8 +22,8 @@
 		"ghcr.io/devcontainers-extra/features/act:1": {},
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
 		"ghcr.io/devcontainers/features/node:1": {
-			"version": "20.19.3",
-			"pnpmVersion": "10.12.4"
+			"version": "24.7.0",
+			"pnpmVersion": "10.15.1"
 		},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers-extra/features/pre-commit:2": {}

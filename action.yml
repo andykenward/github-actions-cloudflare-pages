@@ -44,5 +44,5 @@ outputs:
     description: 'Wrangler cli output'
 
 runs:
-  using: node20
+  using: node24
   main: dist/deploy/index.js
