@@ -9,7 +9,7 @@ const config = {
   bundle: true,
   format: 'esm',
   keepNames: true,
-  target: 'node20',
+  target: 'node24',
   platform: 'node',
   sourcemap: true,
   legalComments: 'external',
