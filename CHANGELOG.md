@@ -1,5 +1,19 @@
 # github-actions-cloudflare-pages
 
+## 3.1.0
+
+### Minor Changes
+
+- [#616](https://github.com/andykenward/github-actions-cloudflare-pages/pull/616) [`705addb`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/705addba382864cf22a0387da0712ef8dc9da02b) Thanks [@andykenward](https://github.com/andykenward)! - Upgrade action from node.js 20 to 24
+
+### Patch Changes
+
+- [#602](https://github.com/andykenward/github-actions-cloudflare-pages/pull/602) [`d7070e4`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/d7070e464556736c889cc4b476e57d7b8bfe494d) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 4.13.2 to 4.34.0
+
+- [#589](https://github.com/andykenward/github-actions-cloudflare-pages/pull/589) [`ca8c960`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/ca8c9600f4b165747242bce4b1ec33177f69ab54) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-rest from 13.0.1 to 13.1.0
+
+- [#622](https://github.com/andykenward/github-actions-cloudflare-pages/pull/622) [`b47c847`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/b47c847cb72314c4a287b8e5ef14e7e73f7a1735) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump esbuild from 0.25.8 to 0.25.9
+
 ## 3.0.1
 
 ### Patch Changes
