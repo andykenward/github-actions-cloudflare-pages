@@ -58,7 +58,7 @@
     "@graphql-codegen/cli": "5.0.7",
     "@graphql-codegen/client-preset": "4.8.3",
     "@graphql-typed-document-node/core": "3.2.0",
-    "@ianvs/prettier-plugin-sort-imports": "4.5.1",
+    "@ianvs/prettier-plugin-sort-imports": "4.7.0",
     "@octokit/graphql-schema": "15.26.0",
     "@octokit/webhooks-schemas": "7.6.1",
     "@octokit/webhooks-types": "7.6.1",
