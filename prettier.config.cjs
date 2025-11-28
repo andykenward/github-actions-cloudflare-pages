@@ -43,6 +43,13 @@ const config = {
       options: {
         parser: 'typescript'
       }
+    },
+    {
+      files: ['.github/**/*.{yml,yaml}'],
+      options: {
+        parser: 'yaml',
+        singleQuote: false
+      }
     }
   ]
 }
