@@ -18,9 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: 'Checkout Github Action'
+      - name: "Checkout Github Action"
         uses: actions/checkout@v4
-      - name: 'Deploy deletion from Cloudflare Pages'
+      - name: "Deploy deletion from Cloudflare Pages"
         uses: andykenward/github-actions-cloudflare-pages/delete@v2.3.2
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}

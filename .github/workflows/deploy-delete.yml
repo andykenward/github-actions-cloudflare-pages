@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
-      - id: 'cloudflare-pages'
+      - id: "cloudflare-pages"
         uses: ./delete
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
