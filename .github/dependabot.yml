@@ -7,8 +7,8 @@ updates:
     schedule:
       interval: weekly
       day: sunday
-  - package-ecosystem: 'devcontainers'
-    directory: '/'
+  - package-ecosystem: "devcontainers"
+    directory: "/"
     schedule:
       interval: weekly
       day: sunday
@@ -25,41 +25,41 @@ updates:
     groups:
       graphql:
         patterns:
-          - '@graphql-codegen/*'
-          - '@graphql-typed-document-node/*'
-          - 'graphql'
-          - 'graphql-tag'
+          - "@graphql-codegen/*"
+          - "@graphql-typed-document-node/*"
+          - "graphql"
+          - "graphql-tag"
       vitest:
         patterns:
-          - '@vitest*'
-          - 'vitest'
-          - 'vite'
+          - "@vitest*"
+          - "vitest"
+          - "vite"
       eslint:
         patterns:
-          - '@eslint/*'
-          - '@types/eslint'
-          - '@typescript-eslint/*'
-          - 'eslint'
-          - 'eslint-config-*'
-          - 'eslint-plugin-*'
-          - 'globals'
-          - 'typescript-eslint'
+          - "@eslint/*"
+          - "@types/eslint"
+          - "@typescript-eslint/*"
+          - "eslint"
+          - "eslint-config-*"
+          - "eslint-plugin-*"
+          - "globals"
+          - "typescript-eslint"
         exclude-patterns:
-          - 'eslint-config-prettier'
+          - "eslint-config-prettier"
       prettier:
         patterns:
-          - 'prettier'
-          - 'eslint-config-prettier'
-          - '@ianvs/prettier-plugin-sort-imports'
-          - 'prettier-plugin-packagejson'
+          - "prettier"
+          - "eslint-config-prettier"
+          - "@ianvs/prettier-plugin-sort-imports"
+          - "prettier-plugin-packagejson"
       octokit:
         patterns:
-          - '@octokit/*'
-          - '@octokit-next/*'
+          - "@octokit/*"
+          - "@octokit-next/*"
       cloudflare:
         patterns:
-          - '@cloudflare/*'
-          - 'wrangler'
+          - "@cloudflare/*"
+          - "wrangler"
       changesets:
         patterns:
-          - '@changesets/*'
+          - "@changesets/*"
