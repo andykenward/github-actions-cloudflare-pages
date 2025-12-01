@@ -126,7 +126,7 @@ describe(getPayload, () => {
 
       expect(() => {
         getPayload(payload)
-      }).toThrow('Payload is not valid')
+      }).toThrowError('Payload is not valid')
     })
 
     test('throws an error for payloads v1 and missing inputs', () => {
@@ -136,19 +136,21 @@ describe(getPayload, () => {
 
       expect(() => {
         getPayload(PAYLOAD_V1)
-      }).toThrow('Input required and not supplied: cloudflare-account-id')
+      }).toThrowError('Input required and not supplied: cloudflare-account-id')
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID)
 
       expect(() => {
         getPayload(PAYLOAD_V1)
-      }).toThrow('Input required and not supplied: cloudflare-project-name')
+      }).toThrowError(
+        'Input required and not supplied: cloudflare-project-name'
+      )
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_PROJECT_NAME)
 
       expect(() => {
         getPayload(PAYLOAD_V1)
-      }).not.toThrow()
+      }).not.toThrowError()
     })
   })
 })

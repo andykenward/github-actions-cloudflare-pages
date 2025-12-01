@@ -32,7 +32,7 @@ describe('deploy', () => {
 
       const {useInputs} = await setup()
 
-      expect(() => useInputs()).toThrow(
+      expect(() => useInputs()).toThrowError(
         'Input required and not supplied: cloudflare-account-id'
       )
     })

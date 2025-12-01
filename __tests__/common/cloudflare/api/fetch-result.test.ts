@@ -88,7 +88,7 @@ describe('api', () => {
           200
         )
 
-        await expect(fetchResult(RESOURCE_URL)).rejects.toThrow(
+        await expect(fetchResult(RESOURCE_URL)).rejects.toThrowError(
           `Cloudflare API: response missing 'result'`
         )
       }
