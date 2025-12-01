@@ -9,6 +9,8 @@ import {
   INPUT_KEY_WRANGLER_VERSION
 } from '@/input-keys'
 
+import packageJson from '../../package.json' with {type: 'json'}
+
 const setup = async () => {
   return await import('@/common/inputs.js')
 }
@@ -70,7 +72,7 @@ describe('common', () => {
         cloudflareApiToken: 'mock-cloudflare-api-token',
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
-        wranglerVersion: '^4.34.0'
+        wranglerVersion: packageJson.devDependencies.wrangler
       })
     })
 
@@ -84,7 +86,7 @@ describe('common', () => {
 
       expect(useCommonInputs()).toStrictEqual(
         expect.objectContaining({
-          wranglerVersion: '^4.34.0'
+          wranglerVersion: packageJson.devDependencies.wrangler
         })
       )
     })

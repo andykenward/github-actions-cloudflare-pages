@@ -16,7 +16,7 @@ import {
   QueryGetEnvironment
 } from '@/common/github/environment.js'
 
-vi.mock('@actions/core')
+vi.mock(import('@actions/core'))
 
 describe('environment', () => {
   let mockApi: MockApi
