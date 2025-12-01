@@ -1,5 +1,11 @@
 # github-actions-cloudflare-pages
 
+## 3.2.0
+
+### Minor Changes
+
+- [`5cc518b`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5cc518bcac1841380c90931298c080fe1bc5b46e) Thanks [@andykenward](https://github.com/andykenward)! - Use an exact version of wrangler as the default version. This avoids using a version published that may have a potential security issue.
+
 ## 3.1.0
 
 ### Minor Changes
