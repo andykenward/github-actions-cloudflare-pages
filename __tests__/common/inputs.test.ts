@@ -9,6 +9,8 @@ import {
   INPUT_KEY_WRANGLER_VERSION
 } from '@/input-keys'
 
+import packageJson from '../../package.json' with {type: 'json'}
+
 const setup = async () => {
   return await import('@/common/inputs.js')
 }
@@ -25,19 +27,19 @@ describe('common', () => {
 
       const {useCommonInputs} = await setup()
 
-      expect(() => useCommonInputs()).toThrow(
+      expect(() => useCommonInputs()).toThrowError(
         /input required and not supplied: cloudflare-api-token/i
       )
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
 
-      expect(() => useCommonInputs()).toThrow(
+      expect(() => useCommonInputs()).toThrowError(
         /input required and not supplied: github-token/i
       )
 
       stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
 
-      expect(() => useCommonInputs()).not.toThrow()
+      expect(() => useCommonInputs()).not.toThrowError()
     })
 
     test('returns correct values', async () => {
@@ -70,7 +72,7 @@ describe('common', () => {
         cloudflareApiToken: 'mock-cloudflare-api-token',
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
-        wranglerVersion: '^4.34.0'
+        wranglerVersion: packageJson.devDependencies.wrangler
       })
     })
 
@@ -84,7 +86,7 @@ describe('common', () => {
 
       expect(useCommonInputs()).toStrictEqual(
         expect.objectContaining({
-          wranglerVersion: '^4.34.0'
+          wranglerVersion: packageJson.devDependencies.wrangler
         })
       )
     })

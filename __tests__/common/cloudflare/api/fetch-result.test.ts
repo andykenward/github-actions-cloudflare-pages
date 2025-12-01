@@ -14,7 +14,7 @@ const RESOURCE_URL_DOMAIN = `https://api.cloudflare.com`
 const RESOURCE_URL_PATH = `/client/v4/accounts`
 const RESOURCE_URL = `${RESOURCE_URL_DOMAIN}${RESOURCE_URL_PATH}`
 
-vi.mock('@actions/core')
+vi.mock(import('@actions/core'))
 
 describe('api', () => {
   describe(fetchResult, () => {
@@ -88,7 +88,7 @@ describe('api', () => {
           200
         )
 
-        await expect(fetchResult(RESOURCE_URL)).rejects.toThrow(
+        await expect(fetchResult(RESOURCE_URL)).rejects.toThrowError(
           `Cloudflare API: response missing 'result'`
         )
       }

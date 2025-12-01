@@ -16,7 +16,7 @@ import {
   QueryGetEnvironment
 } from '@/common/github/environment.js'
 
-vi.mock('@actions/core')
+vi.mock(import('@actions/core'))
 
 describe('environment', () => {
   let mockApi: MockApi
@@ -250,7 +250,7 @@ describe('environment', () => {
 
       mockQueryGetEnvironment(...response)
 
-      await expect(checkEnvironment()).rejects.toThrow(expected)
+      await expect(checkEnvironment()).rejects.toThrowError(expected)
       expect(spySetFailed).toHaveBeenCalledWith(expected)
     })
   })

@@ -16,11 +16,11 @@ import {execAsync} from '@/common/utils.js'
 // import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
 import {run} from '@/deploy/main.js'
 
-vi.mock('@actions/core')
-vi.mock('@/common/utils.js')
-vi.mock('@/common/github/environment.js')
-vi.mock('@/common/github/deployment/create.js')
-vi.mock('@/common/github/comment.js')
+vi.mock(import('@actions/core'))
+vi.mock(import('@/common/utils.js'))
+vi.mock(import('@/common/github/environment.js'))
+vi.mock(import('@/common/github/deployment/create.js'))
+vi.mock(import('@/common/github/comment.js'))
 
 describe('deploy', () => {
   describe('main', () => {

@@ -3,7 +3,7 @@
 name: update
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
       - uses: andykenward/github-actions/setup-pnpm@32471b1e0a5df8a09500a54b1254e3f0f881e52d #v1.0.3
         with:
           node-version: 24
@@ -33,14 +33,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e #v7.0.8
+        uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 #v7.0.9
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore: update payloads'
+          commit-message: "chore: update payloads"
           sign-commits: true
-          branch: 'chore/update-payloads'
+          branch: "chore/update-payloads"
           delete-branch: true
-          title: 'chore: update payloads'
+          title: "chore: update payloads"
           body: |
             This is an automated PR to update payloads.
   types:
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
       - uses: andykenward/github-actions/setup-pnpm@32471b1e0a5df8a09500a54b1254e3f0f881e52d #v1.0.3
         with:
           node-version: 24
@@ -64,13 +64,13 @@ jobs:
         run: pnpm run tsc:types
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e #v7.0.8
+        uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 #v7.0.9
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore: update types'
+          commit-message: "chore: update types"
           sign-commits: true
-          branch: 'chore/types'
+          branch: "chore/types"
           delete-branch: true
-          title: 'chore: update types'
+          title: "chore: update types"
           body: |
             This is an automated PR to update generated types.
