@@ -79,7 +79,7 @@
     "prettier": "3.7.3",
     "prettier-plugin-packagejson": "2.5.20",
     "tsx": "4.20.5",
-    "typescript": "5.9.2",
+    "typescript": "5.9.3",
     "typescript-eslint": "8.48.0",
     "undici": "7.15.0",
     "vite": "7.2.6",
