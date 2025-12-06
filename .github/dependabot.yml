@@ -7,11 +7,15 @@ updates:
     schedule:
       interval: weekly
       day: sunday
+    cooldown:
+      default-days: 5
   - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:
       interval: weekly
       day: sunday
+    cooldown:
+      default-days: 5
   - package-ecosystem: npm
     directory: /
     schedule:
