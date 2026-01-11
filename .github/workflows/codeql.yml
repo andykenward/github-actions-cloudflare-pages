@@ -27,7 +27,7 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-      - uses: andykenward/github-actions/setup-pnpm@32471b1e0a5df8a09500a54b1254e3f0f881e52d #v1.0.3
+      - uses: andykenward/github-actions/setup-pnpm@29a88e7e0d84f5c1de18a54e5435a7c9be824971 #v2.0.0
         with:
           node-version: 24
       - name: Cache
