@@ -78,7 +78,7 @@
     "knip": "5.71.0",
     "prettier": "3.7.3",
     "prettier-plugin-packagejson": "2.5.20",
-    "tsx": "4.20.5",
+    "tsx": "4.21.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.48.0",
     "undici": "7.18.2",
