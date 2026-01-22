@@ -1,5 +1,11 @@
 # github-actions-cloudflare-pages
 
+## 3.3.0
+
+### Minor Changes
+
+- [#672](https://github.com/andykenward/github-actions-cloudflare-pages/pull/672) [`9679106`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/967910678874247accbefdc4860cde852187c1e2) Thanks [@dependabot](https://github.com/apps/dependabot)! - Upgrade default version of wrangler from 4.51.0 to 4.59.1 to fix https://github.com/andykenward/github-actions-cloudflare-pages/security/dependabot/64
+
 ## 3.2.0
 
 ### Minor Changes
