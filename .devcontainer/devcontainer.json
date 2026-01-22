@@ -12,7 +12,8 @@
 				"yoavbls.pretty-ts-errors",
 				"redhat.vscode-yaml",
 				"GraphQL.vscode-graphql",
-				"GraphQL.vscode-graphql-syntax"
+				"GraphQL.vscode-graphql-syntax",
+				"vitest.explorer"
 			]
 		}
 	},
