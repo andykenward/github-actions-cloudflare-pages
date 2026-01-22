@@ -26,7 +26,7 @@ const getInputs = (): Inputs => {
     gitHubApiToken: getInput(INPUT_KEY_GITHUB_TOKEN, {required: true}),
     gitHubEnvironment:
       getInput(INPUT_KEY_GITHUB_ENVIRONMENT, {required: false}) || undefined,
-    wranglerVersion: getInput(INPUT_KEY_WRANGLER_VERSION) || '4.51.0'
+    wranglerVersion: getInput(INPUT_KEY_WRANGLER_VERSION) || '4.59.1'
   }
 }
 

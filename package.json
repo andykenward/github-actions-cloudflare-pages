@@ -84,10 +84,10 @@
     "undici": "7.18.2",
     "vite": "7.2.6",
     "vitest": "4.0.15",
-    "wrangler": "4.51.0"
+    "wrangler": "4.59.1"
   },
   "peerDependencies": {
-    "wrangler": "4.51.0"
+    "wrangler": "4.59.1"
   },
   "packageManager": "pnpm@10.15.1",
   "engines": {
