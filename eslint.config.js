@@ -38,9 +38,11 @@ export default tseslint.config(
   {
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-useless-default-assignment': 'error',
       'unicorn/prefer-top-level-await': 'off',
       'unicorn/prevent-abbreviations': 'off',
-      'no-console': 'error'
+      'no-console': 'error',
+      'no-useless-assignment': 'off'
     }
   },
   eslintConfigPrettier,
