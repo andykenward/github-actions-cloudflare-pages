@@ -109,8 +109,8 @@ importers:
         specifier: 8.48.0
         version: 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3)
       undici:
-        specifier: 7.18.2
-        version: 7.18.2
+        specifier: 7.22.0
+        version: 7.22.0
       vite:
         specifier: 7.3.1
         version: 7.3.1(@types/node@24.10.1)(jiti@2.6.1)(tsx@4.20.5)(yaml@2.8.2)
@@ -3484,8 +3484,8 @@ packages:
     resolution: {integrity: sha512-Vqs8HTzjpQXZeXdpsfChQTlafcMQaaIwnGwLam1wudSSjlJeQ3bw1j+TLPePgrCnCpUXx7Ba5Pdpf5OBih62NQ==}
     engines: {node: '>=20.18.1'}
 
-  undici@7.18.2:
-    resolution: {integrity: sha512-y+8YjDFzWdQlSE9N5nzKMT3g4a5UBX1HKowfdXh0uvAnTaqqwqB92Jt4UXBAeKekDs5IaDKyJFR4X1gYVCgXcw==}
+  undici@7.22.0:
+    resolution: {integrity: sha512-RqslV2Us5BrllB+JeiZnK4peryVTndy9Dnqq62S3yYRRTj0tFQCwEniUy2167skdGOy3vqRzEvl1Dm4sV2ReDg==}
     engines: {node: '>=20.18.1'}
 
   unenv@2.0.0-rc.24:
@@ -7213,7 +7213,7 @@ snapshots:
 
   undici@7.14.0: {}
 
-  undici@7.18.2: {}
+  undici@7.22.0: {}
 
   unenv@2.0.0-rc.24:
     dependencies:
