@@ -46,7 +46,7 @@
     "version": "changeset version"
   },
   "dependencies": {
-    "@actions/core": "1.11.1",
+    "@actions/core": "3.0.0",
     "@octokit-next/core": "3.0.0",
     "@octokit/plugin-paginate-rest": "14.0.0"
   },
