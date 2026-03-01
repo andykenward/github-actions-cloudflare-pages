@@ -42,7 +42,7 @@ export const createCloudflareDeployment = async ({
 
   try {
     const WRANGLER_VERSION = wranglerVersion
-    strict(WRANGLER_VERSION, 'wrangler version should exist')
+    strict.ok(WRANGLER_VERSION, 'wrangler version should exist')
     /**
      * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
      */
@@ -118,8 +118,8 @@ export const createCloudflareDeployment = async ({
       'stderr' in error &&
       typeof error.stderr === 'string'
     ) {
-      throw new Error(error.stderr)
+      throw new Error(error.stderr, {cause: error})
     }
-    throw new Error(`${ERROR_KEY} unknown error`)
+    throw new Error(`${ERROR_KEY} unknown error`, {cause: error})
   }
 }

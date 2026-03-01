@@ -20,13 +20,13 @@ const schema = createRequire(import.meta.url)(
   '@octokit/webhooks-schemas'
 ) as Schema
 
-export const capitalize = (str: string) => {
+const capitalize = (str: string) => {
   assert.ok(str.length > 0 && str[0], 'unable to capitalize string')
 
   return `${str[0].toUpperCase()}${str.slice(1)}`
 }
 
-export const guessAtInterfaceName = (schema: JSONSchema7): string => {
+const guessAtInterfaceName = (schema: JSONSchema7): string => {
   const str = schema.title || schema.$id
 
   assert.ok(str, 'unable to guess interface name')

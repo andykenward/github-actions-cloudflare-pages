@@ -7,9 +7,9 @@ import {throwFetchError} from '@/common/cloudflare/api/fetch-error.js'
 
 const RESOURCE_URL = `https://api.cloudflare.com/path`
 
-vi.mock('@actions/core')
+vi.mock(import('@actions/core'))
 
-describe('throwFetchError', () => {
+describe(throwFetchError, () => {
   test('throws parsed error with notes', () => {
     expect.assertions(3)
 

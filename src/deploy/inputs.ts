@@ -14,7 +14,7 @@ const OPTIONS: InputOptions = {
   required: true
 }
 
-export interface Inputs {
+interface Inputs {
   /** Cloudflare Account Id */
   cloudflareAccountId: string
   /**  Cloudflare Pages Project Name */

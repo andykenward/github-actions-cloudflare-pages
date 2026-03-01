@@ -122,3 +122,5 @@ const run = async (folder: string) => {
 
 void run('pull_request')
 void run('push')
+void run('workflow_run')
+void run('workflow_dispatch')

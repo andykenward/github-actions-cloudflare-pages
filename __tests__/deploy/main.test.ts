@@ -1,9 +1,11 @@
+/* eslint-disable vitest/no-commented-out-tests */
+
 import {setOutput} from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
 
-import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json'
+import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {
   // MOCK_API_PATH,
   MOCK_API_PATH_DEPLOYMENTS,
@@ -14,16 +16,15 @@ import {execAsync} from '@/common/utils.js'
 // import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
 import {run} from '@/deploy/main.js'
 
-vi.mock('@actions/core')
-vi.mock('@/common/utils.js')
-vi.mock('@/common/github/environment.js')
-vi.mock('@/common/github/deployment/create.js')
-vi.mock('@/common/github/comment.js')
+vi.mock(import('@actions/core'))
+vi.mock(import('@/common/utils.js'))
+vi.mock(import('@/common/github/environment.js'))
+vi.mock(import('@/common/github/deployment/create.js'))
+vi.mock(import('@/common/github/comment.js'))
 
 describe('deploy', () => {
   describe('main', () => {
     let mockApi: MockApi
-    const spySetOutput = vi.mocked(setOutput)
 
     beforeEach(() => {
       mockApi = setMockApi()
@@ -35,7 +36,7 @@ describe('deploy', () => {
       await mockApi.mockAgent.close()
     })
 
-    describe('run', () => {
+    describe(run, () => {
       describe('handles resolve', () => {
         beforeEach(() => {
           vi.mocked(execAsync).mockResolvedValue({
@@ -57,7 +58,7 @@ describe('deploy', () => {
 
           expect(main).toBeUndefined()
 
-          expect(spySetOutput).toHaveBeenCalledTimes(5)
+          expect(setOutput).toHaveBeenCalledTimes(5)
 
           // TODO @andykenward add checks for setOutput
           mockApi.mockAgent.assertNoPendingInterceptors()

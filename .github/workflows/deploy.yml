@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to run actiomn against'
+        description: "Environment to run actiomn against"
         type: environment
         required: false
 
@@ -28,8 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
-      - id: 'cloudflare-pages'
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+      - id: "cloudflare-pages"
         uses: ./
         with:
           cloudflare-api-token: ${{secrets.CLOUDFLARE_API_TOKEN}}
@@ -39,7 +39,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-environment: ${{ inputs.environment || 'preview' }}
           working-directory: example
-      - id: 'cloudflare-pages-delete'
+      - id: "cloudflare-pages-delete"
         uses: ./delete
         # if main branch
         if: github.ref == 'refs/heads/main'

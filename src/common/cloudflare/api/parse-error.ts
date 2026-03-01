@@ -3,14 +3,14 @@
  * https://github.com/cloudflare/workers-sdk/blob/55703e52da35b15f5c11f9e3936cc5b1ad5836dc/packages/wrangler/src/parse.ts
  */
 
-export type Message = {
+type Message = {
   text: string
   location?: Location
   notes?: Message[]
   kind?: 'warning' | 'error'
 }
 
-export type Location = File & {
+type Location = File & {
   line: number
   column: number
   length?: number
@@ -18,7 +18,7 @@ export type Location = File & {
   suggestion?: string
 }
 
-export type File = {
+type File = {
   file?: string
   fileText?: string
 }

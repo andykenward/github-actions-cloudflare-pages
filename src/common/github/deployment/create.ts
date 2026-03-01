@@ -19,7 +19,7 @@ import {MutationCreateGitHubDeploymentStatus} from './status.js'
  * @see {@link https://docs.github.com/en/graphql/overview/schema-previews#deployments-preview | Deployments Preview}
  * @see {@link https://docs.github.com/en/graphql/reference/mutations#createdeployment | createDeployment}
  */
-export const MutationCreateGitHubDeployment = graphql(/* GraphQL */ `
+const MutationCreateGitHubDeployment = graphql(/* GraphQL */ `
   mutation CreateGitHubDeployment(
     $repositoryId: ID!
     $environmentName: String!

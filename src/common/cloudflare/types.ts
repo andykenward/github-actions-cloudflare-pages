@@ -6,7 +6,7 @@ export interface FetchError {
   error_chain?: FetchError[]
 }
 
-export interface FetchNoResult {
+interface FetchNoResult {
   success: boolean
   errors: FetchError[]
 }

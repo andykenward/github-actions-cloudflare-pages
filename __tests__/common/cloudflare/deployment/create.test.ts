@@ -3,9 +3,9 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
 
-import RESPONSE_NOT_FOUND_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments-not-found.response.json'
-import RESPONSE_DEPLOYMENTS_IDLE from '@/responses/api.cloudflare.com/pages/deployments/deployments.idle.response.json'
-import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json'
+import RESPONSE_NOT_FOUND_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments-not-found.response.json' with {type: 'json'}
+import RESPONSE_DEPLOYMENTS_IDLE from '@/responses/api.cloudflare.com/pages/deployments/deployments.idle.response.json' with {type: 'json'}
+import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/api.js'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
@@ -17,10 +17,12 @@ import {
 import {execAsync} from '@/common/utils.js'
 import {INPUT_KEY_WORKING_DIRECTORY} from '@/input-keys'
 
-vi.mock('@/common/utils.js')
-vi.mock('@actions/core')
+import packageJson from '../../../../package.json' with {type: 'json'}
 
-describe('createCloudflareDeployment', () => {
+vi.mock(import('@/common/utils.js'))
+vi.mock(import('@actions/core'))
+
+describe(createCloudflareDeployment, () => {
   describe('api calls', () => {
     let mockApi: MockApi
 
@@ -57,7 +59,7 @@ describe('createCloudflareDeployment', () => {
       ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Oh no!]`)
 
       expect(execAsync).toHaveBeenCalledWith(
-        `npx wrangler@^3.73.0 pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
+        `npx wrangler@${packageJson.devDependencies.wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
         {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           env: expect.objectContaining({
@@ -143,7 +145,7 @@ describe('createCloudflareDeployment', () => {
       // vi.advanceTimersByTime(2000)
 
       expect(execAsync).toHaveBeenCalledWith(
-        `npx wrangler@^3.73.0 pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
+        `npx wrangler@${packageJson.devDependencies.wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
         {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           env: expect.objectContaining({

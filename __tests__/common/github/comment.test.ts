@@ -2,7 +2,7 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
 
-import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json'
+import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {setMockApi} from '@/tests/helpers/api.js'
 import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 
@@ -12,9 +12,9 @@ import type {WorkflowEventExtract} from '@/common/github/workflow-event/types.js
 import {addComment, MutationAddComment} from '@/common/github/comment.js'
 import * as Context from '@/common/github/context.js'
 
-vi.mock('@actions/core')
+vi.mock(import('@actions/core'))
 
-describe('addComment', () => {
+describe(addComment, () => {
   const mockData = RESPONSE_DEPLOYMENTS.result[0] as unknown as PagesDeployment
   let mockApi: MockApi
 
@@ -64,7 +64,7 @@ describe('addComment', () => {
     `should return undefined for eventName: %s`,
     async eventName => {
       expect.assertions(2)
-      expect(EVENT_NAMES.includes(eventName)).toBeTruthy()
+      expect(EVENT_NAMES).toContain(eventName)
 
       vi.spyOn(Context, 'useContextEvent').mockReturnValue({
         eventName,

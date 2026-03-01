@@ -1,5 +1,91 @@
 # github-actions-cloudflare-pages
 
+## 3.3.0
+
+### Minor Changes
+
+- [#672](https://github.com/andykenward/github-actions-cloudflare-pages/pull/672) [`9679106`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/967910678874247accbefdc4860cde852187c1e2) Thanks [@dependabot](https://github.com/apps/dependabot)! - Upgrade default version of wrangler from 4.51.0 to 4.59.1 to fix https://github.com/andykenward/github-actions-cloudflare-pages/security/dependabot/64
+
+## 3.2.0
+
+### Minor Changes
+
+- [`5cc518b`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5cc518bcac1841380c90931298c080fe1bc5b46e) Thanks [@andykenward](https://github.com/andykenward)! - Use an exact version of wrangler as the default version. This avoids using a version published that may have a potential security issue.
+
+## 3.1.0
+
+### Minor Changes
+
+- [#616](https://github.com/andykenward/github-actions-cloudflare-pages/pull/616) [`705addb`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/705addba382864cf22a0387da0712ef8dc9da02b) Thanks [@andykenward](https://github.com/andykenward)! - Upgrade action from node.js 20 to 24
+
+### Patch Changes
+
+- [#602](https://github.com/andykenward/github-actions-cloudflare-pages/pull/602) [`d7070e4`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/d7070e464556736c889cc4b476e57d7b8bfe494d) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 4.13.2 to 4.34.0
+
+- [#589](https://github.com/andykenward/github-actions-cloudflare-pages/pull/589) [`ca8c960`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/ca8c9600f4b165747242bce4b1ec33177f69ab54) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-rest from 13.0.1 to 13.1.0
+
+- [#622](https://github.com/andykenward/github-actions-cloudflare-pages/pull/622) [`b47c847`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/b47c847cb72314c4a287b8e5ef14e7e73f7a1735) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump esbuild from 0.25.8 to 0.25.9
+
+## 3.0.1
+
+### Patch Changes
+
+- [#571](https://github.com/andykenward/github-actions-cloudflare-pages/pull/571) [`9104c81`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/9104c81d805e2e3d546c2a9a53a56c0d834caeab) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-rest from 12.0.0 to 13.0.1
+
+- [#551](https://github.com/andykenward/github-actions-cloudflare-pages/pull/551) [`8c337dc`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8c337dcf47b1939da9409c55b2a44f0f8451a2b7) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore: bump wrangler from ^4.6.0 to ^4.13.2
+
+- [#574](https://github.com/andykenward/github-actions-cloudflare-pages/pull/574) [`d317ec0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/d317ec0c14b4da929c44910ce8ea0830114f4d76) Thanks [@dependabot](https://github.com/apps/dependabot)! - bump @octokit-next/core from 2.8.0 to 3.0.0
+
+- [`7a65fea`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/7a65fea07373fb108f7892398ebc0c9bc2425478) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump @octokit/plugin-paginate-rest from 11.6.0 to 12.0.0 in the octokit group (#548)
+
+- [#567](https://github.com/andykenward/github-actions-cloudflare-pages/pull/567) [`b40b8e1`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/b40b8e1c4b680aaa34f9581c0356e9018c9d9040) Thanks [@andykenward](https://github.com/andykenward)! - feat: setup [knip](https://knip.dev) to help declutter project
+
+## 3.0.0
+
+### Major Changes
+
+- [#535](https://github.com/andykenward/github-actions-cloudflare-pages/pull/535) [`a7f06d0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/a7f06d049e511b4482607c01a4cda7f6f54263e8) Thanks [@andykenward](https://github.com/andykenward)! - feat: upgrade default wrangler from ^3.107.2 to ^4.6.0
+
+### Patch Changes
+
+- [#535](https://github.com/andykenward/github-actions-cloudflare-pages/pull/535) [`a7f06d0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/a7f06d049e511b4482607c01a4cda7f6f54263e8) Thanks [@andykenward](https://github.com/andykenward)! - chore(dep): bump @octokit/plugin-paginate-rest from 11.4.3 to 11.6.0
+
+- [#520](https://github.com/andykenward/github-actions-cloudflare-pages/pull/520) [`5379212`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5379212d8b44abdc4b2583c3996bb19c66901f22) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump @octokit/graphql-schema from 15.25.0 to 15.26.0
+
+- [#520](https://github.com/andykenward/github-actions-cloudflare-pages/pull/520) [`5379212`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5379212d8b44abdc4b2583c3996bb19c66901f22) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-reset from 11.4.1 to 11.4.3
+
+## 2.5.1
+
+### Patch Changes
+
+- [`b540ab9`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/b540ab9467cb8ee59e7a90738c2368813e352a8b) Thanks [@dependabot[bot]](https://github.com/dependabot%5Bbot%5D)! - chore(deps): bump @octokit/endpoint in the npm_and_yarn group
+
+- [#508](https://github.com/andykenward/github-actions-cloudflare-pages/pull/508) [`0c50a60`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/0c50a605286334decd18a6fd75d17c880bdd9762) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump @graphql-codegen/cli from 5.0.4 to 5.0.5
+
+  chore(deps-dev): bump @graphql-codegen/client-preset from 4.6.1 to 4.6.2
+
+- [#505](https://github.com/andykenward/github-actions-cloudflare-pages/pull/505) [`bccb816`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/bccb816671788005aa13d7a9e22109bc936fa6bc) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @octokit/plugin-paginate-rest from 11.4.0 to 11.4.1 in the npm_and_yarn group
+
+## 2.5.0
+
+### Minor Changes
+
+- [`d5efd99`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/d5efd9904385ec0f323c7557ea59c5aa474d01cc) Thanks [@andykenward](https://github.com/andykenward)! - bump wrangler default version from ^3.73.0 to ^3.107.2
+
+### Patch Changes
+
+- [`27caa51`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/27caa510d2fe19a69c77a34fe22e8fe2b7899eca) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump undici
+
+- [`c7ccb49`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/c7ccb49f6dec266d6f9b9293d673c30473a55547) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): bump esbuild from 0.24.2 to 0.25.0
+
+- [`4ccc82d`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/4ccc82d2f2972febf56c97569cbf1ff56dda2a99) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump @octokit/plugin-paginate-rest from 11.3.5 to 11.4.0
+
+## 2.4.1
+
+### Patch Changes
+
+- [`cfb3898`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/cfb389840bd4d144429ad11df9b8540aa6bb660b) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump `"@actions/core"` from `1.10.1` to `1.11.1`
+
 ## 2.4.0
 
 ### Minor Changes

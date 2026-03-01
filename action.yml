@@ -28,7 +28,7 @@ inputs:
     description: 'Directory to run wrangler cli from'
     required: false
   wrangler-version:
-    description: 'Wrangler version to use'
+    description: 'Wrangler version to use. Otherwise a default version from the action will be used.'
     required: false
 
 outputs:
@@ -44,5 +44,5 @@ outputs:
     description: 'Wrangler cli output'
 
 runs:
-  using: node20
+  using: node24
   main: dist/deploy/index.js

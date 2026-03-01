@@ -49,12 +49,11 @@ export const addComment = async (
   deployment: PagesDeployment,
   output: string
 ): Promise<string | undefined> => {
-  const {eventName} = useContextEvent()
-
   const prNodeId = await getNodeIdFromEvent()
 
   if (prNodeId) {
     const {sha} = useContext()
+    const {eventName} = useContextEvent()
 
     const rawBody = `## Cloudflare Pages Deployment\n**Event Name:** ${eventName}\n**Environment:** ${deployment.environment}\n**Project:** ${deployment.project_name}\n**Built with commit:** ${sha}\n**Preview URL:** ${deployment.url}\n**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}\n\n### Wrangler Output\n${output}`
 

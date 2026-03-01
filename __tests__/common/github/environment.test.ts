@@ -16,7 +16,7 @@ import {
   QueryGetEnvironment
 } from '@/common/github/environment.js'
 
-vi.mock('@actions/core')
+vi.mock(import('@actions/core'))
 
 describe('environment', () => {
   let mockApi: MockApi
@@ -51,7 +51,7 @@ describe('environment', () => {
     await mockApi.mockAgent.close()
   })
 
-  describe('createEnvironment', () => {
+  describe(createEnvironment, () => {
     test('success', async () => {
       expect.assertions(3)
 
@@ -142,9 +142,7 @@ describe('environment', () => {
     })
   })
 
-  describe('checkEnvironment', () => {
-    const spySetFailed = vi.mocked(setFailed)
-
+  describe(checkEnvironment, () => {
     test('success', async () => {
       expect.assertions(4)
 
@@ -165,7 +163,7 @@ describe('environment', () => {
       const environment = await checkEnvironment()
 
       expect(error).not.toHaveBeenCalled()
-      expect(spySetFailed).not.toHaveBeenCalled()
+      expect(setFailed).not.toHaveBeenCalled()
       expect(notice).not.toHaveBeenCalled()
       expect(environment).toMatchInlineSnapshot(`
         {
@@ -250,8 +248,8 @@ describe('environment', () => {
 
       mockQueryGetEnvironment(...response)
 
-      await expect(checkEnvironment()).rejects.toThrow(expected)
-      expect(spySetFailed).toHaveBeenCalledWith(expected)
+      await expect(checkEnvironment()).rejects.toThrowError(expected)
+      expect(setFailed).toHaveBeenCalledWith(expected)
     })
   })
 })
