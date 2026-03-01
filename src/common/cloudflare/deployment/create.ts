@@ -118,8 +118,8 @@ export const createCloudflareDeployment = async ({
       'stderr' in error &&
       typeof error.stderr === 'string'
     ) {
-      throw new Error(error.stderr)
+      throw new Error(error.stderr, {cause: error})
     }
-    throw new Error(`${ERROR_KEY} unknown error`)
+    throw new Error(`${ERROR_KEY} unknown error`, {cause: error})
   }
 }
