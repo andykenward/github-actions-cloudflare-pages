@@ -30,14 +30,14 @@ jobs:
         with:
           node-version: 24
       - name: Cache
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb #v5.0.1
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 #v5.0.3
         with:
           path: |
             ~/.cache/
           key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/prettier.config.cjs', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: Create Release Pull Request
         id: changesets
-        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba #v1.5.3
+        uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf #v1.7.0
         with:
           publish: pnpm release
         env:
