@@ -1,5 +1,19 @@
 # github-actions-cloudflare-pages
 
+## 3.3.1
+
+### Patch Changes
+
+- [`3c5a8f2`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/3c5a8f218a2d3ebca6bafdcc261ac73ae3e40e25) Thanks [@andykenward](https://github.com/andykenward)! - @octokit/plugin-paginate-rest upgraded from 13.1.1 to 14.0.0
+
+- [#693](https://github.com/andykenward/github-actions-cloudflare-pages/pull/693) [`0843ec3`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/0843ec35c607bf3c1717bdb0603a32986af0c976) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): upgrade @actions/core from 1.11.1 to 3.0.0 #693
+
+- [#692](https://github.com/andykenward/github-actions-cloudflare-pages/pull/692) [`d306ffd`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/d306ffdacd172bd01e403e63b9fcf6cd8f54e6f5) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 4.59.1 to 4.67.0 #692
+
+- [`6776129`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/6776129de15ac78164186d6826791e42462eb8de) Thanks [@andykenward](https://github.com/andykenward)! - throw errors with cause
+
+- [#662](https://github.com/andykenward/github-actions-cloudflare-pages/pull/662) [`a1c26f2`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/a1c26f25aa0307e43196b0ba86c5fbfd0c7add4d) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump esbuild from 0.25.9 to 0.27.3 #662
+
 ## 3.3.0
 
 ### Minor Changes
