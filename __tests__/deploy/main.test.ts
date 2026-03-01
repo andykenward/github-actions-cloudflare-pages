@@ -25,7 +25,6 @@ vi.mock(import('@/common/github/comment.js'))
 describe('deploy', () => {
   describe('main', () => {
     let mockApi: MockApi
-    const spySetOutput = vi.mocked(setOutput)
 
     beforeEach(() => {
       mockApi = setMockApi()
@@ -59,7 +58,7 @@ describe('deploy', () => {
 
           expect(main).toBeUndefined()
 
-          expect(spySetOutput).toHaveBeenCalledTimes(5)
+          expect(setOutput).toHaveBeenCalledTimes(5)
 
           // TODO @andykenward add checks for setOutput
           mockApi.mockAgent.assertNoPendingInterceptors()
