@@ -143,8 +143,6 @@ describe('environment', () => {
   })
 
   describe(checkEnvironment, () => {
-    const spySetFailed = vi.mocked(setFailed)
-
     test('success', async () => {
       expect.assertions(4)
 
@@ -165,7 +163,7 @@ describe('environment', () => {
       const environment = await checkEnvironment()
 
       expect(error).not.toHaveBeenCalled()
-      expect(spySetFailed).not.toHaveBeenCalled()
+      expect(setFailed).not.toHaveBeenCalled()
       expect(notice).not.toHaveBeenCalled()
       expect(environment).toMatchInlineSnapshot(`
         {
@@ -251,7 +249,7 @@ describe('environment', () => {
       mockQueryGetEnvironment(...response)
 
       await expect(checkEnvironment()).rejects.toThrowError(expected)
-      expect(spySetFailed).toHaveBeenCalledWith(expected)
+      expect(setFailed).toHaveBeenCalledWith(expected)
     })
   })
 })
