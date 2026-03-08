@@ -73,7 +73,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-unicorn": "63.0.0",
     "globals": "17.4.0",
-    "graphql": "16.13.0",
+    "graphql": "16.13.1",
     "graphql-tag": "2.12.6",
     "knip": "5.85.0",
     "prettier": "3.8.1",
