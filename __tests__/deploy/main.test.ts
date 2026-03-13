@@ -5,16 +5,15 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
 
+import {execAsync} from '@/common/utils.js'
+// import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
+import {run} from '@/deploy/main.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {
   // MOCK_API_PATH,
   MOCK_API_PATH_DEPLOYMENTS,
   setMockApi
 } from '@/tests/helpers/api.js'
-
-import {execAsync} from '@/common/utils.js'
-// import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
-import {run} from '@/deploy/main.js'
 
 vi.mock(import('@actions/core'))
 vi.mock(import('@/common/utils.js'))

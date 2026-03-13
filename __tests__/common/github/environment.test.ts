@@ -1,13 +1,9 @@
 import {error, notice, setFailed} from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
+import type {GitHubGraphQLError} from '@/common/github/api/client.js'
 import type {GetEnvironmentQuery} from '@/gql/graphql.js'
 import type {MockApi} from '@/tests/helpers/api.js'
-
-import {getMockApi} from '@/tests/helpers/api.js'
-import {TEST_ENV_VARS} from '@/tests/helpers/env.js'
-
-import type {GitHubGraphQLError} from '@/common/github/api/client.js'
 
 import {
   checkEnvironment,
@@ -15,6 +11,8 @@ import {
   MutationCreateEnvironment,
   QueryGetEnvironment
 } from '@/common/github/environment.js'
+import {getMockApi} from '@/tests/helpers/api.js'
+import {TEST_ENV_VARS} from '@/tests/helpers/env.js'
 
 vi.mock(import('@actions/core'))
 

@@ -1,10 +1,10 @@
+import type {getGitHubDeployments} from '@/common/github/deployment/get.js'
+
 import {
   MOCK_ACCOUNT_ID,
   MOCK_DEPLOYMENT_ID,
   MOCK_PROJECT_NAME
 } from '@/tests/helpers/api.js'
-
-import type {getGitHubDeployments} from '@/common/github/deployment/get.js'
 
 export const DEPLOYMENT: Awaited<
   ReturnType<typeof getGitHubDeployments>

@@ -3,7 +3,7 @@
     "dbaeumer.vscode-eslint",
     "github.vscode-github-actions",
     "eamodio.gitlens",
-    "esbenp.prettier-vscode",
+    "oxc.oxc-vscode",
     "yoavbls.pretty-ts-errors",
     "redhat.vscode-yaml",
     "graphql.vscode-graphql-syntax",

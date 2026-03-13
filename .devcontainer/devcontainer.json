@@ -1,35 +1,35 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 {
-	"name": "Container - Cloudflare Pages Action",
-	"image": "mcr.microsoft.com/devcontainers/base:jammy",
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"dbaeumer.vscode-eslint",
-				"eamodio.gitlens",
-				"esbenp.prettier-vscode",
-				"github.vscode-github-actions",
-				"yoavbls.pretty-ts-errors",
-				"redhat.vscode-yaml",
-				"GraphQL.vscode-graphql",
-				"GraphQL.vscode-graphql-syntax",
-				"vitest.explorer"
-			]
-		}
-	},
-	"postCreateCommand": "sed -i '/^ZSH_THEME/c\\ZSH_THEME=\"bira\"' ~/.zshrc && pnpm i && pre-commit install",
-	"updateContentCommand": "rm -rf .cache && pnpm i && pre-commit install",
-	"features": {
-		"ghcr.io/devcontainers-extra/features/act:1": {},
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-		"ghcr.io/devcontainers/features/node:1": {
-			"version": "24.7.0",
-			"pnpmVersion": "10.15.1"
-		},
-		"ghcr.io/devcontainers/features/github-cli:1": {},
-		"ghcr.io/devcontainers-extra/features/pre-commit:2": {}
-	}
+  "name": "Container - Cloudflare Pages Action",
+  "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "eamodio.gitlens",
+        "oxc.oxc-vscode",
+        "github.vscode-github-actions",
+        "yoavbls.pretty-ts-errors",
+        "redhat.vscode-yaml",
+        "GraphQL.vscode-graphql",
+        "GraphQL.vscode-graphql-syntax",
+        "vitest.explorer"
+      ]
+    }
+  },
+  "postCreateCommand": "sed -i '/^ZSH_THEME/c\\ZSH_THEME=\"bira\"' ~/.zshrc && pnpm i && pre-commit install",
+  "updateContentCommand": "rm -rf .cache && pnpm i && pre-commit install",
+  "features": {
+    "ghcr.io/devcontainers-extra/features/act:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24.7.0",
+      "pnpmVersion": "10.15.1"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers-extra/features/pre-commit:2": {}
+  }
 
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+  // "remoteUser": "root"
 }

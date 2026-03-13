@@ -1,10 +1,8 @@
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.formatOnSave": true,
   "eslint.enable": true,
   "eslint.validate": ["javascript", "typescript"],
-  "prettier.enable": true,
-  "prettier.prettierPath": "node_modules/prettier",
   "files.associations": {
     "action.yml": "yaml"
   },
@@ -27,5 +25,7 @@
     "comments": false,
     "strings": false
   },
-  "editor.suggest.showKeywords": false
+  "editor.suggest.showKeywords": false,
+  "oxc.enable.oxfmt": true,
+  "oxc.enable.oxlint": false
 }

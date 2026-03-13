@@ -1,11 +1,10 @@
 import {info} from '@actions/core'
 
-import {graphql} from '@/gql/gql.js'
-
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
 
 import {getCloudflareDeploymentAlias} from '@/common/cloudflare/deployment/get.js'
 import {raise} from '@/common/utils.js'
+import {graphql} from '@/gql/gql.js'
 
 import {request} from './api/client.js'
 import {paginate} from './api/paginate.js'

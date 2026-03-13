@@ -34,7 +34,7 @@ jobs:
         with:
           path: |
             ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/prettier.config.cjs', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: Create Release Pull Request
         id: changesets
         uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf #v1.7.0

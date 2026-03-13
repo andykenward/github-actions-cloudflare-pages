@@ -1,12 +1,11 @@
+import 'dotenv/config'
+import {existsSync} from 'node:fs'
+import {mkdir, writeFile} from 'node:fs/promises'
+
 import type {
   FilesQuery,
   FilesQueryVariables
 } from '../../../__generated__/gql/graphql.js'
-
-import 'dotenv/config'
-
-import {existsSync} from 'node:fs'
-import {mkdir, writeFile} from 'node:fs/promises'
 
 const OWNER = 'octokit'
 const REPO = 'webhooks'
