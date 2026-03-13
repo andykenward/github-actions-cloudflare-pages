@@ -17,8 +17,12 @@
   "semi": false,
   "singleQuote": true,
   "sortImports": {
+    "customGroups": [
+      {"groupName": "node:", "elementNamePattern": ["node:*", "node:*/*"]}
+    ],
     "groups": [
       "type-import",
+      "node:",
       ["value-builtin", "value-external"],
       "type-internal",
       "value-internal",
