@@ -1,7 +1,5 @@
 import {describe, expect, test, vi} from 'vitest'
 
-import {stubInputEnv} from '@/tests/helpers/inputs.js'
-
 import type {Payload} from '@/common/github/deployment/payload.js'
 import type {
   PayloadGithubDeployment,
@@ -13,6 +11,7 @@ import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
   INPUT_KEY_CLOUDFLARE_PROJECT_NAME
 } from '@/input-keys'
+import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 const PAYLOAD_V1 = {
   cloudflareId: 'cf-id',

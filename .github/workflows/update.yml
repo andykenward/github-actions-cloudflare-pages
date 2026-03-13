@@ -3,7 +3,7 @@
 name: update
 on:
   schedule:
-    - cron: "0 0 * * 0" # every sunday at midnight
+    - cron: '0 0 * * 0' # every sunday at midnight
   workflow_dispatch:
 
 concurrency:
@@ -26,7 +26,7 @@ jobs:
         with:
           path: |
             ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/prettier.config.cjs', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: cli download payloads
         run: pnpm run download
         env:
@@ -36,11 +36,11 @@ jobs:
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 #v8.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update payloads"
+          commit-message: 'chore: update payloads'
           sign-commits: true
-          branch: "chore/update-payloads"
+          branch: 'chore/update-payloads'
           delete-branch: true
-          title: "chore: update payloads"
+          title: 'chore: update payloads'
           body: |
             This is an automated PR to update payloads.
   types:
@@ -59,7 +59,7 @@ jobs:
         with:
           path: |
             ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/prettier.config.cjs', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: cli all
         run: pnpm run tsc:types
       - name: Create Pull Request
@@ -67,10 +67,10 @@ jobs:
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 #v8.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update types"
+          commit-message: 'chore: update types'
           sign-commits: true
-          branch: "chore/types"
+          branch: 'chore/types'
           delete-branch: true
-          title: "chore: update types"
+          title: 'chore: update types'
           body: |
             This is an automated PR to update generated types.

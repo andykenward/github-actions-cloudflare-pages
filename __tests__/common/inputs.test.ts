@@ -1,13 +1,12 @@
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
-import {stubInputEnv} from '@/tests/helpers/inputs.js'
-
 import {
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN,
   INPUT_KEY_WRANGLER_VERSION
 } from '@/input-keys'
+import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 import packageJson from '../../package.json' with {type: 'json'}
 

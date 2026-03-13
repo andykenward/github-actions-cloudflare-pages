@@ -1,10 +1,9 @@
-import {graphql} from '@/gql/gql.js'
-import {DeploymentStatusState} from '@/gql/graphql.js'
-
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
 
 import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
 import {raise} from '@/common/utils.js'
+import {graphql} from '@/gql/gql.js'
+import {DeploymentStatusState} from '@/gql/graphql.js'
 
 import type {PayloadGithubDeploymentV2} from './types.js'
 

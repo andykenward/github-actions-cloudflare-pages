@@ -1,9 +1,8 @@
 import {error, notice} from '@actions/core'
 
-import {graphql} from '@/gql/gql.js'
-
 import {useCommonInputs} from '@/common/inputs.js'
 import {raiseFail} from '@/common/utils.js'
+import {graphql} from '@/gql/gql.js'
 
 import {request} from './api/client.js'
 import {useContext} from './context.js'

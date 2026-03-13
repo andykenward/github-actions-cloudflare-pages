@@ -14,12 +14,12 @@ on:
     branches:
       - main
     paths-ignore:
-      - "**.md"
+      - '**.md'
   pull_request:
     branches:
       - main
     paths-ignore:
-      - "**.md"
+      - '**.md'
   workflow_dispatch:
 
 concurrency:
@@ -40,7 +40,7 @@ jobs:
         with:
           path: |
             ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/prettier.config.cjs', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: Rebuild the dist/ directory
         run: pnpm run build
 

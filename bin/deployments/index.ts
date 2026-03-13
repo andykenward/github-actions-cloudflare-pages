@@ -1,5 +1,4 @@
 import type {FetchResult, PagesDeployment} from '@/common/cloudflare/types.js'
-
 import 'dotenv/config'
 
 const API_ENDPOINT = 'https://api.cloudflare.com'

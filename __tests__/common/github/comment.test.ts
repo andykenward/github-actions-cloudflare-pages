@@ -1,16 +1,14 @@
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
-import type {MockApi} from '@/tests/helpers/api.js'
-
-import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
-import {setMockApi} from '@/tests/helpers/api.js'
-import {EVENT_NAMES} from '@/types/github/workflow-events.js'
-
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
 import type {WorkflowEventExtract} from '@/common/github/workflow-event/types.js'
+import type {MockApi} from '@/tests/helpers/api.js'
 
 import {addComment, MutationAddComment} from '@/common/github/comment.js'
 import * as Context from '@/common/github/context.js'
+import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
+import {setMockApi} from '@/tests/helpers/api.js'
+import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 
 vi.mock(import('@actions/core'))
 

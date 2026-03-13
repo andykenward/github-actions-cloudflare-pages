@@ -1,14 +1,13 @@
 import * as core from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
-import {DeploymentState, DeploymentStatusState} from '@/gql/graphql.js'
-import RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete.response.json' with {type: 'json'}
-
 import {batchDelete} from '@/common/batch-delete.js'
 import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
 import {MutationDeleteGitHubDeploymentAndComment} from '@/common/github/deployment/delete.js'
 import {MutationCreateGitHubDeploymentStatus} from '@/common/github/deployment/status.js'
 import {DEPLOYMENT} from '@/fixtures/github-deployment.js'
+import {DeploymentState, DeploymentStatusState} from '@/gql/graphql.js'
+import RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete.response.json' with {type: 'json'}
 
 import type {MockApi} from '../helpers/api.js'
 
