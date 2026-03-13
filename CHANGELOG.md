@@ -1,5 +1,13 @@
 # github-actions-cloudflare-pages
 
+## 3.3.2
+
+### Patch Changes
+
+- [#704](https://github.com/andykenward/github-actions-cloudflare-pages/pull/704) [`2b7ebba`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/2b7ebba306d99a5916db821703a42e804f1ca25c) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): replace prettier with oxfmt for code formatting
+
+- [#694](https://github.com/andykenward/github-actions-cloudflare-pages/pull/694) [`3dd06dc`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/3dd06dc75bbfb2d6aa40d9f5adf1b713c36d5906) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 4.67.0 to 4.71.0
+
 ## 3.3.1
 
 ### Patch Changes
