@@ -5,8 +5,6 @@ import {existsSync} from 'node:fs'
 import {mkdir, writeFile} from 'node:fs/promises'
 import {createRequire} from 'node:module'
 
-import prettier from 'prettier'
-
 interface Schema extends JSONSchema7 {
   oneOf: Array<JSONSchema7 & Required<Pick<JSONSchema7, '$ref'>>>
 }
@@ -132,16 +130,13 @@ const run = async () => {
     buildWorkflowEvent()
   ].join('\n')
 
-  const text = await prettier.resolveConfig(import.meta.url).then(options => {
-    return prettier.format(ts, options || undefined)
-  })
   const DIR = '__generated__/types/github'
   if (!existsSync(DIR)) {
     await mkdir(DIR, {recursive: true})
   }
   const FILENAME = 'workflow-events.ts'
 
-  await writeFile(`${DIR}/${FILENAME}`, text)
+  await writeFile(`${DIR}/${FILENAME}`, ts)
 
   process.stdout.write(`${DIR}/${FILENAME} written${'\n'}`)
 }

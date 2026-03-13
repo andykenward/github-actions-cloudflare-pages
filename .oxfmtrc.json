@@ -1,0 +1,34 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "arrowParens": "avoid",
+  "bracketSpacing": false,
+  "ignorePatterns": [
+    "dist/**",
+    "example/",
+    "payload-examples/",
+    "tsconfig.tsnode.json",
+    "__generated__/gql/",
+    "__generated__/payloads/",
+    "__generated__/responses/",
+    ".cache",
+    ".changeset/*.md"
+  ],
+  "printWidth": 80,
+  "semi": false,
+  "singleQuote": true,
+  "sortImports": {
+    "groups": [
+      "type-import",
+      ["value-builtin", "value-external"],
+      "type-internal",
+      "value-internal",
+      ["type-parent", "type-sibling", "type-index"],
+      ["value-parent", "value-sibling", "value-index"],
+      "unknown"
+    ]
+  },
+  "sortPackageJson": {
+    "sortScripts": true
+  },
+  "trailingComma": "none"
+}

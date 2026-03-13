@@ -9,12 +9,12 @@
     "setup"
   ],
   "bugs": "https://github.com/andykenward/github-actions-cloudflare-pages/issues",
+  "license": "MIT",
+  "author": "Andy Kenward <andy@unlike.dev> (https://unlike.dev/)",
   "repository": {
     "type": "git",
     "url": "https://github.com/andykenward/github-actions-cloudflare-pages.git"
   },
-  "license": "MIT",
-  "author": "Andy Kenward <andy@unlike.dev> (https://unlike.dev/)",
   "type": "module",
   "exports": "./dist/deploy/index.js",
   "scripts": {
@@ -23,11 +23,11 @@
     "build": "rm -rf ./dist/* && node ./esbuild.config.js",
     "changeset": "changeset",
     "codegen": "graphql-codegen-esm --config graphql.config.ts",
-    "codegen:events": "tsx bin/codegen/index.ts",
+    "codegen:events": "tsx bin/codegen/index.ts && pnpm run format",
     "codegen:watch": "pnpm run codegen --watch",
     "deployments:delete": "tsx bin/deployments/index.ts",
     "download": "tsx bin/download/index.ts",
-    "format": "prettier --write . --cache --cache-location '.cache/prettier/'",
+    "format": "oxfmt --write .",
     "format:check": "pnpm run format --check",
     "knip": "knip --cache --cache-location '.cache/knip'",
     "lint": "eslint --cache --cache-location '.cache/eslint/' .",
@@ -58,7 +58,6 @@
     "@graphql-codegen/cli": "6.1.2",
     "@graphql-codegen/client-preset": "5.2.3",
     "@graphql-typed-document-node/core": "3.2.0",
-    "@ianvs/prettier-plugin-sort-imports": "4.7.1",
     "@octokit/graphql-schema": "15.26.1",
     "@octokit/webhooks-schemas": "7.6.1",
     "@octokit/webhooks-types": "7.6.1",
@@ -76,8 +75,7 @@
     "graphql": "16.13.1",
     "graphql-tag": "2.12.6",
     "knip": "5.85.0",
-    "prettier": "3.8.1",
-    "prettier-plugin-packagejson": "3.0.0",
+    "oxfmt": "0.40.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.56.1",
@@ -89,11 +87,11 @@
   "peerDependencies": {
     "wrangler": "4.67.0"
   },
-  "packageManager": "pnpm@10.15.1",
   "engines": {
     "node": "^24.7.0",
     "pnpm": "^10.15.1"
   },
+  "packageManager": "pnpm@10.15.1",
   "pnpm": {
     "peerDependencyRules": {
       "allowedVersions": {
