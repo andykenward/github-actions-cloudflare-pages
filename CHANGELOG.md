@@ -1,5 +1,17 @@
 # github-actions-cloudflare-pages
 
+## 3.3.2
+
+### Patch Changes
+
+- [#704](https://github.com/andykenward/github-actions-cloudflare-pages/pull/704) [`2b7ebba`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/2b7ebba306d99a5916db821703a42e804f1ca25c) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): replace prettier with oxfmt for code formatting
+
+- [#708](https://github.com/andykenward/github-actions-cloudflare-pages/pull/708) [`9c3e5b6`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/9c3e5b611f60cffad0ac9fdf68b755963f0905d8) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump undici from 7.22.0 to 7.24.0
+
+- [#694](https://github.com/andykenward/github-actions-cloudflare-pages/pull/694) [`3dd06dc`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/3dd06dc75bbfb2d6aa40d9f5adf1b713c36d5906) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 4.67.0 to 4.71.0
+
+- [#712](https://github.com/andykenward/github-actions-cloudflare-pages/pull/712) [`7790067`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/7790067297a7383fdca6ca3309c4f21a9f3b9f42) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump wrangler from 4.71.0 to 4.75.0
+
 ## 3.3.1
 
 ### Patch Changes
