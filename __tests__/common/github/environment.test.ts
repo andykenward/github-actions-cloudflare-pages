@@ -246,7 +246,7 @@ describe('environment', () => {
 
       mockQueryGetEnvironment(...response)
 
-      await expect(checkEnvironment()).rejects.toThrowError(expected)
+      await expect(checkEnvironment()).rejects.toThrow(expected)
       expect(setFailed).toHaveBeenCalledWith(expected)
     })
   })

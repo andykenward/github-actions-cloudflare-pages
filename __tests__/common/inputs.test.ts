@@ -26,19 +26,19 @@ describe('common', () => {
 
       const {useCommonInputs} = await setup()
 
-      expect(() => useCommonInputs()).toThrowError(
+      expect(() => useCommonInputs()).toThrow(
         /input required and not supplied: cloudflare-api-token/i
       )
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
 
-      expect(() => useCommonInputs()).toThrowError(
+      expect(() => useCommonInputs()).toThrow(
         /input required and not supplied: github-token/i
       )
 
       stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
 
-      expect(() => useCommonInputs()).not.toThrowError()
+      expect(() => useCommonInputs()).not.toThrow()
     })
 
     test('returns correct values', async () => {
