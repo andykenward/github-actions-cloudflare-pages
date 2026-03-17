@@ -79,7 +79,7 @@
     "tsx": "4.21.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.57.1",
-    "undici": "7.22.0",
+    "undici": "7.24.0",
     "vite": "8.0.0",
     "vitest": "4.1.0",
     "wrangler": "4.72.0"
