@@ -75,7 +75,7 @@
     "graphql": "16.13.1",
     "graphql-tag": "2.12.6",
     "knip": "5.87.0",
-    "oxfmt": "0.40.0",
+    "oxfmt": "0.41.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.57.1",
