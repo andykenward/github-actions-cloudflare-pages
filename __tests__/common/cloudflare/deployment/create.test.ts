@@ -60,7 +60,7 @@ describe(createCloudflareDeployment, () => {
       expect(execAsync).toHaveBeenCalledWith(
         `npx wrangler@${packageJson.devDependencies.wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
         {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          // oxlint-disable-next-line typescript/no-unsafe-assignment
           env: expect.objectContaining({
             CLOUDFLARE_ACCOUNT_ID: 'mock-cloudflare-account-id',
             CLOUDFLARE_API_TOKEN: 'mock-cloudflare-api-token'
@@ -146,7 +146,7 @@ describe(createCloudflareDeployment, () => {
       expect(execAsync).toHaveBeenCalledWith(
         `npx wrangler@${packageJson.devDependencies.wrangler} pages deploy mock-directory --project-name=mock-cloudflare-project-name --branch=mock-github-head-ref --commit-dirty=true --commit-hash=mock-github-sha`,
         {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          // oxlint-disable-next-line typescript/no-unsafe-assignment
           env: expect.objectContaining({
             CLOUDFLARE_ACCOUNT_ID: 'mock-cloudflare-account-id',
             CLOUDFLARE_API_TOKEN: 'mock-cloudflare-api-token'

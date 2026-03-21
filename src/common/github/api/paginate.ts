@@ -21,7 +21,7 @@ export const paginate = async <T extends keyof PaginatingEndpoints>(
   const {gitHubApiToken} = useCommonInputs()
 
   // TODO:@andykenward #32 fix types in @octokit-next/core or @octokit/plugin-paginate-rest . Can then remove the ts-expect-error & as Promise<PaginateResponse<T>>
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // oxlint-disable-next-line typescript/ban-ts-comment
   // @ts-expect-error
   return new (Octokit.withPlugins([paginateRest]))({
     auth: gitHubApiToken

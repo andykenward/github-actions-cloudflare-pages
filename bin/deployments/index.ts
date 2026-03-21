@@ -47,7 +47,7 @@ const run = async () => {
 
     if (previewDeployments?.length === 0) {
       deleting = false
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.log('---> No more deployments to delete')
       break
     }
@@ -58,9 +58,9 @@ const run = async () => {
         headers: getHeaders()
       }).then(response => response.json() as unknown as FetchResult<null>)
 
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.log(`---> Deleted deployment: ${item.id}`)
-      // eslint-disable-next-line no-console, unicorn/no-null
+      // oxlint-disable-next-line no-console, unicorn/no-null
       console.dir(result, {depth: null})
     }
   }

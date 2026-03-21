@@ -1,19 +1,12 @@
-/* eslint-disable vitest/no-commented-out-tests */
-
 import {setOutput} from '@actions/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
 
 import {execAsync} from '@/common/utils.js'
-// import RESPONSE_PROJECT from '@/responses/api.cloudflare.com/pages/projects/project.response.json'
 import {run} from '@/deploy/main.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
-import {
-  // MOCK_API_PATH,
-  MOCK_API_PATH_DEPLOYMENTS,
-  setMockApi
-} from '@/tests/helpers/api.js'
+import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/api.js'
 
 vi.mock(import('@actions/core'))
 vi.mock(import('@/common/utils.js'))
@@ -63,46 +56,6 @@ describe('deploy', () => {
           mockApi.mockAgent.assertNoPendingInterceptors()
         })
       })
-
-      // describe.skip('handles rejected', () => {
-      //   test('401 - unauthorized to cloudflare', async () => {
-      //     expect.assertions(2)
-
-      //     mockApi.mockPoolCloudflare
-      //       .intercept({
-      //         path: `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`,
-      //         method: `GET`
-      //       })
-      //       .reply(401, RESPONSE_UNAUTHORIZED)
-
-      //     await expect(() => run()).rejects.toThrow(
-      //       `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-accountId/pages/projects/mock-projectName) failed.`
-      //     )
-      //     expect(core.error).toHaveBeenCalledWith(
-      //       'Cloudflare API: Authentication error [code: 10000]'
-      //     )
-      //     mockApi.mockAgent.assertNoPendingInterceptors()
-      //   })
-
-      //   test('404 - cloudflare project is not found', async () => {
-      //     expect.assertions(2)
-
-      //     mockApi.mockPoolCloudflare
-      //       .intercept({
-      //         path: `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`,
-      //         method: `GET`
-      //       })
-      //       .reply(404, RESPONSE_NOT_FOUND)
-
-      //     await expect(() => run()).rejects.toThrow(
-      //       `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-accountId/pages/projects/mock-projectName) failed.`
-      //     )
-      //     expect(core.error).toHaveBeenCalledWith(
-      //       'Cloudflare API: Project not found. The specified project name does not match any of your existing projects. [code: 8000007]'
-      //     )
-      //     mockApi.mockAgent.assertNoPendingInterceptors()
-      //   })
-      // })
     })
   })
 })

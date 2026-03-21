@@ -20,9 +20,6 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-# eslint
-.eslintcache
-
 # TypeScript cache
 *.tsbuildinfo
 

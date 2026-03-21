@@ -1,12 +1,12 @@
 {
   "recommendations": [
-    "dbaeumer.vscode-eslint",
     "github.vscode-github-actions",
     "eamodio.gitlens",
     "oxc.oxc-vscode",
     "yoavbls.pretty-ts-errors",
     "redhat.vscode-yaml",
     "graphql.vscode-graphql-syntax",
-    "graphql.vscode-graphql"
+    "graphql.vscode-graphql",
+    "webpro.vscode-knip"
   ]
 }
