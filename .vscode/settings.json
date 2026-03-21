@@ -1,8 +1,6 @@
 {
   "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.formatOnSave": true,
-  "eslint.enable": true,
-  "eslint.validate": ["javascript", "typescript"],
   "files.associations": {
     "action.yml": "yaml"
   },
@@ -15,11 +13,9 @@
     "pnpm-lock.yaml": true
   },
   "npm.packageManager": "pnpm",
-  "javascript.preferences.importModuleSpecifierEnding": "js",
-  "typescript.preferences.importModuleSpecifierEnding": "js",
-  "typescript.preferences.importModuleSpecifier": "shortest",
-  "javascript.preferences.importModuleSpecifier": "shortest",
-  "typescript.tsdk": "node_modules/typescript/lib",
+  "js/ts.preferences.importModuleSpecifierEnding": "js",
+  "js/ts.preferences.importModuleSpecifier": "shortest",
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
   "editor.quickSuggestions": {
     "other": false,
     "comments": false,
@@ -27,5 +23,5 @@
   },
   "editor.suggest.showKeywords": false,
   "oxc.enable.oxfmt": true,
-  "oxc.enable.oxlint": false
+  "oxc.enable.oxlint": true
 }

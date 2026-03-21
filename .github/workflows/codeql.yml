@@ -35,7 +35,7 @@ jobs:
         with:
           path: |
             ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/.oxlintrc.json', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: Rebuild the dist/ directory
         run: pnpm run build
       - name: Perform CodeQL Analysis

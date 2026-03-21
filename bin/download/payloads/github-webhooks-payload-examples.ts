@@ -109,7 +109,7 @@ const run = async (folder: string) => {
       }
 
       const filename = `${PATH_WRITE}/${data.name}`
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.log(filename)
       /**
        * Save each file to the file system

@@ -3,20 +3,8 @@ import type {JSONSchema7} from 'json-schema'
 import {strict as assert} from 'node:assert'
 import {existsSync} from 'node:fs'
 import {mkdir, writeFile} from 'node:fs/promises'
-import {createRequire} from 'node:module'
 
-interface Schema extends JSONSchema7 {
-  oneOf: Array<JSONSchema7 & Required<Pick<JSONSchema7, '$ref'>>>
-}
-/**
- * The assert for importing JSON files isn't supported by some tooling at the moment.
- * ```
- * import schema from '@octokit/webhooks-schemas/schema.json' assert {type: 'json'}
- * ```
- */
-const schema = createRequire(import.meta.url)(
-  '@octokit/webhooks-schemas'
-) as Schema
+import octokitWebhooksSchema from '@octokit/webhooks-schemas/schema.json' with {type: 'json'}
 
 const capitalize = (str: string) => {
   assert.ok(str.length > 0 && str[0], 'unable to capitalize string')
@@ -54,7 +42,7 @@ const getEventName = (ref: string): string => {
 }
 
 const buildEventNames = (): string => {
-  const properties = schema.oneOf.map(({$ref}) => {
+  const properties = octokitWebhooksSchema.oneOf.map(({$ref}) => {
     if (!$ref) return
     const eventName = getEventName($ref)
 
@@ -79,7 +67,7 @@ const buildWorkflowBase = (): string => {
 }
 
 const buildWorkflowEvent = (): string => {
-  const properties = schema.oneOf.map(({$ref}) => {
+  const properties = octokitWebhooksSchema.oneOf.map(({$ref}) => {
     if (!$ref) return
     const eventName = getEventName($ref)
     const interfaceName = guessAtInterfaceName({$id: `${eventName}_event`})
@@ -97,7 +85,7 @@ const buildWorkflowEvent = (): string => {
 }
 
 const buildImports = (): string => {
-  const properties = schema.oneOf.map(({$ref}) => {
+  const properties = octokitWebhooksSchema.oneOf.map(({$ref}) => {
     if (!$ref) return
     const eventName = getEventName($ref)
     const interfaceName = guessAtInterfaceName({$id: `${eventName}_event`})

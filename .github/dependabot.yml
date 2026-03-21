@@ -38,16 +38,11 @@ updates:
           - '@vitest*'
           - 'vitest'
           - 'vite'
-      eslint:
+      ox:
         patterns:
-          - '@eslint/*'
-          - '@types/eslint'
-          - '@typescript-eslint/*'
-          - 'eslint'
-          - 'eslint-config-*'
-          - 'eslint-plugin-*'
-          - 'globals'
-          - 'typescript-eslint'
+          - 'oxfmt'
+          - 'oxlint'
+          - 'oxlint-tsgolint'
       octokit:
         patterns:
           - '@octokit/*'

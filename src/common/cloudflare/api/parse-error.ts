@@ -35,7 +35,7 @@ export class ParseError extends Error implements Message {
 
   constructor({text, notes, location, kind}: Message) {
     super(text)
-    // eslint-disable-next-line unicorn/custom-error-definition
+    // oxlint-disable-next-line unicorn/custom-error-definition
     this.name = this.constructor.name
     this.text = text
     this.notes = notes ?? []

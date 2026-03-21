@@ -5,7 +5,6 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "dbaeumer.vscode-eslint",
         "eamodio.gitlens",
         "oxc.oxc-vscode",
         "github.vscode-github-actions",
@@ -13,7 +12,8 @@
         "redhat.vscode-yaml",
         "GraphQL.vscode-graphql",
         "GraphQL.vscode-graphql-syntax",
-        "vitest.explorer"
+        "vitest.explorer",
+        "webpro.vscode-knip"
       ]
     }
   },

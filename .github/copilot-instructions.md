@@ -123,7 +123,7 @@ See implementation in [src/common/utils.ts](../src/common/utils.ts).
 ### Code Quality
 
 - **Knip**: Dead code detection ([knip.json](../knip.json)) - ignores [**generated**/](../__generated__/), fragments, wrangler, act
-- **ESLint**: Flat config ([eslint.config.js](../eslint.config.js)) with unicorn plugin (some rules disabled: `prefer-top-level-await`, `prevent-abbreviations`)
+- **Oxlint**: TypeScript linting with custom rules ([.oxlintrc.json](../.oxlintrc.json))
 - **TypeScript**: Strict mode with `verbatimModuleSyntax`, `noEmit`, `checkJs`
 - **No console.log**: Use `@actions/core` methods (`info`, `debug`, `warning`, `error`, `setFailed`)
 

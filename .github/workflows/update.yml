@@ -26,7 +26,7 @@ jobs:
         with:
           path: |
             ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/.oxlintrc.json', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: cli download payloads
         run: pnpm run download
         env:
@@ -59,7 +59,7 @@ jobs:
         with:
           path: |
             ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/eslint.config.js', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/.oxlintrc.json', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
       - name: cli all
         run: pnpm run tsc:types
       - name: Create Pull Request
