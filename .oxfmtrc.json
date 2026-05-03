@@ -3,6 +3,7 @@
   "arrowParens": "avoid",
   "bracketSpacing": false,
   "ignorePatterns": [
+    ".devcontainer/devcontainer-lock.json",
     "dist/**",
     "example/",
     "payload-examples/",
