@@ -10,4 +10,4 @@ You can update these example files by running the below command.
 pnpm run download
 ```
 
-See [../bin/download/payloads](../bin/download/payloads)
+See [../bin/download](../bin/download/payloads/downloads/index.ts)
