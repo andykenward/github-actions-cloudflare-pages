@@ -126,6 +126,7 @@ See implementation in [src/common/utils.ts](../src/common/utils.ts).
 - **Oxlint**: TypeScript linting with custom rules ([.oxlintrc.json](../.oxlintrc.json))
 - **TypeScript**: Strict mode with `verbatimModuleSyntax`, `noEmit`, `checkJs`
 - **No console.log**: Use `@actions/core` methods (`info`, `debug`, `warning`, `error`, `setFailed`)
+- **Hook Sync Rule**: When changing formatter/linter hook behavior or script paths, update these together: [.pre-commit-config.yaml](../.pre-commit-config.yaml), [.github/hooks/format-and-lint-after-edit.json](../.github/hooks/format-and-lint-after-edit.json), and the usage header in [.github/hooks/scripts/pre-commit-oxc.sh](../.github/hooks/scripts/pre-commit-oxc.sh).
 
 ### File Organization
 

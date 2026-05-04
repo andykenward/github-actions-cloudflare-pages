@@ -14,3 +14,11 @@ repos:
     rev: v1.0.1
     hooks:
       - id: check-json5
+  - repo: local
+    hooks:
+      - id: oxc-format-and-lint
+        name: oxfmt + oxlint
+        entry: bash ./.github/hooks/scripts/pre-commit-oxc.sh
+        language: system
+        pass_filenames: true
+        files: \.(js|jsx|cjs|mjs|ts|tsx|cts|mts|json|md|markdown|graphql|gql|yml|yaml)$
