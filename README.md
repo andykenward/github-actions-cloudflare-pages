@@ -136,7 +136,7 @@ jobs:
 
 ### Fork pull requests with `workflow_run`
 
-When pull requests come from forks, the initial `pull_request` workflow may not have access to secrets. Use a second workflow triggered by `workflow_run` to deploy from the original repository context after approval.
+When pull requests come from forks, the initial `pull_request` workflow may not have access to secrets. Use a second workflow triggered by `workflow_run` to deploy from the original repository context after approval, and set the `pr-number` input so the action can resolve the correct pull request to comment on.
 
 ```yaml
 name: Deploy PR Preview (Fork Safe)
@@ -168,9 +168,10 @@ jobs:
           directory: dist
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-environment: preview
+          pr-number: ${{ github.event.number }}
 ```
 
-This action supports the `workflow_run` event and will use the `workflow_run` head commit SHA and branch for deployment metadata and PR comments.
+This action supports the `workflow_run` event and will use the `workflow_run` head commit SHA and branch for deployment metadata.
 
 ## Comment Example
 
