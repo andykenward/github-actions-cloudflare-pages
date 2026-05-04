@@ -19,6 +19,12 @@ jobs:
     steps:
       - name: Fork PR notice
         run: echo 'Fork pull request detected; skipping deploy job that requires repository secrets.'
+      - name: Get PR number
+        run: |
+          echo "PR Number: ${{ github.event.number }}"
+      - name: Get PR number other
+        run: |
+          echo "PR Number: ${{ github.event.pull_request.number }}"
 
   deploy:
     if: ${{ !github.event.pull_request.head.repo.fork }}
