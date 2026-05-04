@@ -61,6 +61,9 @@ github-token:
 github-environment:
   description: 'GitHub environment to deploy to. You need to manually create this for the github repo'
   required: true
+pr-number:
+  description: 'GitHub pull request number to comment on. If not set, the action auto-detects from the event payload.'
+  required: false
 working-directory:
   description: 'Directory to run wrangler cli from'
   required: false
@@ -168,7 +171,7 @@ jobs:
           directory: dist
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-environment: preview
-          pr-number: ${{ github.event.number }}
+          pr-number: # The PR number
 ```
 
 This action supports the `workflow_run` event and will use the `workflow_run` head commit SHA and branch for deployment metadata.
