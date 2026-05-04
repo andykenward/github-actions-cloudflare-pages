@@ -31496,6 +31496,24 @@ export type AddCommentMutationVariables = Exact<{
 
 export type AddCommentMutation = { readonly addComment?: { readonly commentEdge?: { readonly node?: { readonly id: string } | null } | null } | null };
 
+export type PullRequestNodeIdQueryVariables = Exact<{
+  owner: Scalars['String']['input'];
+  repo: Scalars['String']['input'];
+  number: Scalars['Int']['input'];
+}>;
+
+
+export type PullRequestNodeIdQuery = { readonly repository?: { readonly pullRequest?: { readonly id: string } | null } | null };
+
+export type PullRequestNodeIdByBranchQueryVariables = Exact<{
+  owner: Scalars['String']['input'];
+  repo: Scalars['String']['input'];
+  headRefName: Scalars['String']['input'];
+}>;
+
+
+export type PullRequestNodeIdByBranchQuery = { readonly repository?: { readonly pullRequests: { readonly nodes?: ReadonlyArray<{ readonly id: string } | null> | null } } | null };
+
 export type CreateGitHubDeploymentMutationVariables = Exact<{
   repositoryId: Scalars['ID']['input'];
   environmentName: Scalars['String']['input'];
@@ -31621,6 +31639,26 @@ export const AddCommentDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<AddCommentMutation, AddCommentMutationVariables>;
+export const PullRequestNodeIdDocument = new TypedDocumentString(`
+    query PullRequestNodeId($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $number) {
+      id
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<PullRequestNodeIdQuery, PullRequestNodeIdQueryVariables>;
+export const PullRequestNodeIdByBranchDocument = new TypedDocumentString(`
+    query PullRequestNodeIdByBranch($owner: String!, $repo: String!, $headRefName: String!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequests(first: 1, states: [OPEN], headRefName: $headRefName) {
+      nodes {
+        id
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<PullRequestNodeIdByBranchQuery, PullRequestNodeIdByBranchQueryVariables>;
 export const CreateGitHubDeploymentDocument = new TypedDocumentString(`
     mutation CreateGitHubDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!, $description: String) {
   createDeployment(

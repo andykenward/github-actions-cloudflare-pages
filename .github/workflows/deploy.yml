@@ -2,12 +2,11 @@
 
 name: deploy
 on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows:
+      - test
+    types:
+      - completed
   workflow_dispatch:
     inputs:
       environment:
@@ -20,6 +19,7 @@ concurrency:
 
 jobs:
   cloudflare-pages-deploy:
+    if: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.head_branch != 'main') }}
     permissions:
       actions: read
       contents: read
@@ -28,7 +28,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+      - if: github.event_name == 'workflow_run'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+        with:
+          repository: ${{ github.event.workflow_run.head_repository.full_name }}
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - if: github.event_name != 'workflow_run'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
       - id: 'cloudflare-pages'
         uses: ./
         with:
@@ -39,13 +45,3 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-environment: ${{ inputs.environment || 'preview' }}
           working-directory: example
-      - id: 'cloudflare-pages-delete'
-        uses: ./delete
-        # if main branch
-        if: github.ref == 'refs/heads/main'
-        with:
-          cloudflare-api-token: ${{secrets.CLOUDFLARE_API_TOKEN}}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          # Only required for legacy action deployments.
-          github-environment: ${{ inputs.environment || 'preview' }}
-          keep-latest: 2
