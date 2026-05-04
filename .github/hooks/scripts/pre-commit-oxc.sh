@@ -14,7 +14,7 @@ fi
 
 # Step 1: Format every matched file first.
 # If formatting fails, the script exits immediately because of `set -e`.
-npx --no-install --no-scripts oxfmt --write "$@"
+pnpm exec oxfmt --write "$@"
 
 # Step 2: Build a list of files oxlint can analyze.
 # We intentionally keep this separate from formatting so unsupported
@@ -34,5 +34,5 @@ done
 # Step 3: Lint only when at least one supported file remains.
 # This ensures lint runs only after successful formatting.
 if [[ "${#lintable_files[@]}" -gt 0 ]]; then
-  npx --no-install --no-scripts oxlint "${lintable_files[@]}"
+  pnpm exec oxlint "${lintable_files[@]}"
 fi
