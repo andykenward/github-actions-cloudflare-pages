@@ -7,6 +7,7 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
     "resolveJsonModule": true,
+    "types": ["node"],
     "paths": {
       /**
        * These have to match with vitest.config.ts alias.
