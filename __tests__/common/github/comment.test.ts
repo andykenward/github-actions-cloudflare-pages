@@ -69,7 +69,24 @@ describe(addComment, () => {
         eventName: 'workflow_run',
         payload: {
           workflow_run: {
-            pull_requests: [{number: 2}]
+            head_branch: 'master',
+            head_sha: '3484a3fb816e0859fd6e1cea078d76385ff50625',
+            pull_requests: [
+              {
+                number: 2,
+                head: {
+                  ref: 'other-branch',
+                  sha: 'different-sha'
+                }
+              },
+              {
+                number: 3,
+                head: {
+                  ref: 'master',
+                  sha: '3484a3fb816e0859fd6e1cea078d76385ff50625'
+                }
+              }
+            ]
           }
         }
       } as Readonly<WorkflowEventExtract<'workflow_run'>>)
@@ -96,7 +113,7 @@ describe(addComment, () => {
           variables: {
             owner: 'andykenward',
             repo: 'github-actions-cloudflare-pages',
-            number: 2
+            number: 3
           }
         },
         {
@@ -143,13 +160,49 @@ describe(addComment, () => {
         eventName: 'workflow_run',
         payload: {
           workflow_run: {
+            head_branch: 'master',
+            head_sha: '3484a3fb816e0859fd6e1cea078d76385ff50625',
             pull_requests: []
           }
         }
       } as unknown as Readonly<WorkflowEventExtract<'workflow_run'>>)
 
       await expect(addComment(mockData, 'success')).rejects.toThrow(
-        'No pull request number found in workflow_run event'
+        'No pull request found in workflow_run event matching head branch and sha'
+      )
+    })
+
+    test('should throw when workflow_run has multiple matching pull requests', async () => {
+      expect.assertions(1)
+
+      vi.spyOn(Context, 'useContextEvent').mockReturnValue({
+        eventName: 'workflow_run',
+        payload: {
+          workflow_run: {
+            head_branch: 'master',
+            head_sha: '3484a3fb816e0859fd6e1cea078d76385ff50625',
+            pull_requests: [
+              {
+                number: 2,
+                head: {
+                  ref: 'master',
+                  sha: '3484a3fb816e0859fd6e1cea078d76385ff50625'
+                }
+              },
+              {
+                number: 3,
+                head: {
+                  ref: 'master',
+                  sha: '3484a3fb816e0859fd6e1cea078d76385ff50625'
+                }
+              }
+            ]
+          }
+        }
+      } as unknown as Readonly<WorkflowEventExtract<'workflow_run'>>)
+
+      await expect(addComment(mockData, 'success')).rejects.toThrow(
+        'Multiple pull requests found in workflow_run event matching head branch and sha'
       )
     })
   })

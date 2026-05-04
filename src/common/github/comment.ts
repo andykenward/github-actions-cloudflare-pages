@@ -69,7 +69,27 @@ const getNodeIdFromEvent = async () => {
       )
     }
     case 'workflow_run': {
-      const pullRequestNumber = payload.workflow_run.pull_requests[0]?.number
+      const pullRequestsMatchingHead =
+        payload.workflow_run.pull_requests.filter(pullRequest => {
+          return (
+            pullRequest.head.ref === payload.workflow_run.head_branch &&
+            pullRequest.head.sha === payload.workflow_run.head_sha
+          )
+        })
+
+      if (pullRequestsMatchingHead.length === 0) {
+        raise(
+          'No pull request found in workflow_run event matching head branch and sha'
+        )
+      }
+
+      if (pullRequestsMatchingHead.length > 1) {
+        raise(
+          'Multiple pull requests found in workflow_run event matching head branch and sha'
+        )
+      }
+
+      const pullRequestNumber = pullRequestsMatchingHead[0]?.number
 
       if (!pullRequestNumber) {
         raise('No pull request number found in workflow_run event')
