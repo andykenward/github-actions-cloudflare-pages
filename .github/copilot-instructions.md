@@ -4,6 +4,8 @@
 
 Dual-mode GitHub Action for Cloudflare Pages deployments: `deploy` creates deployments via Wrangler CLI and links them to GitHub Deployments/Environments, `delete` batch-removes old deployments. Built with TypeScript ESM, GraphQL-typed GitHub API integration, and comprehensive vitest testing.
 
+**See [HOOKS.md](./HOOKS.md) for agent hook setup, behavior, and sync requirements.**
+
 ## Architecture
 
 ### Dual Entry Points
@@ -127,6 +129,7 @@ See implementation in [src/common/utils.ts](../src/common/utils.ts).
 - **TypeScript**: Strict mode with `verbatimModuleSyntax`, `noEmit`, `checkJs`
 - **No console.log**: Use `@actions/core` methods (`info`, `debug`, `warning`, `error`, `setFailed`)
 - **Hook Sync Rule**: When changing formatter/linter hook behavior or script paths, update these together: [.pre-commit-config.yaml](../.pre-commit-config.yaml), [.github/hooks/format-and-lint-after-edit.json](../.github/hooks/format-and-lint-after-edit.json), and the usage header in [.github/hooks/scripts/pre-commit-oxc.sh](../.github/hooks/scripts/pre-commit-oxc.sh).
+- **Type Check on Session End**: [.github/hooks/type-check-at-stop.json](../.github/hooks/type-check-at-stop.json) runs `pnpm run tsc:check` when the agent finishes and blocks the session if type errors are found, forcing resolution before the session ends.
 
 ### File Organization
 

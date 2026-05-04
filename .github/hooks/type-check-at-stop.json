@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "bash ./.github/hooks/scripts/stop-type-check.sh",
+        "timeout": 60
+      }
+    ]
+  }
+}
