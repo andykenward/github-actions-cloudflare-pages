@@ -136,6 +136,44 @@ jobs:
           github-environment: ${{ vars.CLOUDFLARE_PROJECT_NAME }} ${{ (github.ref == 'refs/heads/main' && '(Production)') || '(Preview)' }}
 ```
 
+### Fork pull requests with `workflow_run`
+
+When pull requests come from forks, the initial `pull_request` workflow may not have access to secrets. Use a second workflow triggered by `workflow_run` to deploy from the original repository context after approval.
+
+```yaml
+name: Deploy PR Preview (Fork Safe)
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.workflow_run.head_repository.full_name }}
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: andykenward/github-actions-cloudflare-pages@v3.0.0
+        with:
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+          directory: dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-environment: preview
+```
+
+This action supports the `workflow_run` event and will use the `workflow_run` head commit SHA and branch for deployment metadata and PR comments.
+
 ## Comment Example
 
 ![pull request comment example](./docs/comment.png)

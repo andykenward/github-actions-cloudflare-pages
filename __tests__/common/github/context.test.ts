@@ -62,4 +62,27 @@ describe('useContext', () => {
 
     vi.unstubAllEnvs()
   })
+
+  test('returns context for `workflow_run`', async () => {
+    expect.assertions(9)
+
+    stubTestEnvVars('workflow_run')
+
+    const {useContext} = await import('@/common/github/context.js')
+
+    const {event, branch, sha, graphqlEndpoint, ref} = useContext()
+
+    expect(event.payload).toBeDefined()
+    expect(event.eventName).toBe('workflow_run')
+
+    expect(branch).toBe('master')
+    expect(branch).not.toBe(`mock-github-head-ref`)
+    expect(sha).toBe('3484a3fb816e0859fd6e1cea078d76385ff50625')
+    expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
+    expect(ref).toBe('master')
+    expect(ref).not.toBe(`mock-github-head-ref`)
+    expect(sha).not.toBe(`mock-github-sha`)
+
+    vi.unstubAllEnvs()
+  })
 })

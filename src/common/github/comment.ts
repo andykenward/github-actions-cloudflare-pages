@@ -7,7 +7,6 @@ import {raise} from '@/common/utils.js'
 import {graphql} from '@/gql/gql.js'
 
 import {request} from './api/client.js'
-import {paginate} from './api/paginate.js'
 import {useContext, useContextEvent} from './context.js'
 
 export const MutationAddComment = graphql(/* GraphQL */ `
@@ -22,25 +21,109 @@ export const MutationAddComment = graphql(/* GraphQL */ `
   }
 `)
 
+export const QueryPullRequestNodeId = graphql(/* GraphQL */ `
+  query PullRequestNodeId($owner: String!, $repo: String!, $number: Int!) {
+    repository(owner: $owner, name: $repo) {
+      pullRequest(number: $number) {
+        id
+      }
+    }
+  }
+`)
+
+export const QueryPullRequestNodeIdByBranch = graphql(/* GraphQL */ `
+  query PullRequestNodeIdByBranch(
+    $owner: String!
+    $repo: String!
+    $headRefName: String!
+  ) {
+    repository(owner: $owner, name: $repo) {
+      pullRequests(first: 1, states: [OPEN], headRefName: $headRefName) {
+        nodes {
+          id
+        }
+      }
+    }
+  }
+`)
+
 const getNodeIdFromEvent = async () => {
   const {eventName, payload} = useContextEvent()
 
-  if (eventName === 'workflow_dispatch') {
-    const {repo, branch} = useContext()
-    const pullRequestsOpen = await paginate('GET /repos/{owner}/{repo}/pulls', {
-      owner: repo.owner,
-      repo: repo.repo,
-      per_page: 100
-    })
+  switch (eventName) {
+    case 'workflow_dispatch': {
+      const {repo, branch} = useContext()
 
-    const pullRequest = pullRequestsOpen.find(item => {
-      return item.head.ref === branch
-    })
+      const pullRequest = await request({
+        query: QueryPullRequestNodeIdByBranch,
+        variables: {
+          owner: repo.owner,
+          repo: repo.repo,
+          headRefName: branch ?? raise('No branch found in context')
+        }
+      })
 
-    return pullRequest?.node_id
-  }
-  if (eventName === 'pull_request' && payload.action !== 'closed') {
-    return payload.pull_request.node_id ?? raise('No pull request node id')
+      return (
+        pullRequest.data.repository?.pullRequests.nodes?.[0]?.id ??
+        raise('No pull request node id found for workflow_dispatch event')
+      )
+    }
+    case 'workflow_run': {
+      const pullRequestsMatchingHead =
+        payload.workflow_run.pull_requests.filter(pullRequest => {
+          return (
+            pullRequest.head.ref === payload.workflow_run.head_branch &&
+            pullRequest.head.sha === payload.workflow_run.head_sha
+          )
+        })
+
+      if (pullRequestsMatchingHead.length === 0) {
+        raise(
+          'No pull request found in workflow_run event matching head branch and sha'
+        )
+      }
+
+      if (pullRequestsMatchingHead.length > 1) {
+        raise(
+          'Multiple pull requests found in workflow_run event matching head branch and sha'
+        )
+      }
+
+      const pullRequestNumber = pullRequestsMatchingHead[0]?.number
+
+      if (!pullRequestNumber) {
+        raise('No pull request number found in workflow_run event')
+      }
+
+      const {repo} = useContext()
+
+      const pullRequest = await request({
+        query: QueryPullRequestNodeId,
+        variables: {
+          owner: repo.owner,
+          repo: repo.repo,
+          number: pullRequestNumber
+        }
+      })
+
+      return (
+        pullRequest.data.repository?.pullRequest?.id ??
+        raise('No pull request node id found for workflow_run event')
+      )
+    }
+    case 'pull_request': {
+      if (payload.action === 'closed') {
+        return
+      }
+
+      return (
+        payload.pull_request.node_id ??
+        raise('No pull request node id found for pull_request event')
+      )
+    }
+    default: {
+      return
+    }
   }
 }
 
