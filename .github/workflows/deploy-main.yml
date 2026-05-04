@@ -27,7 +27,7 @@ jobs:
           cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           directory: dist
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-environment: preview
+          github-environment: production
           working-directory: example
       - id: 'cloudflare-pages-delete'
         uses: ./delete
@@ -35,5 +35,5 @@ jobs:
           cloudflare-api-token: ${{secrets.CLOUDFLARE_API_TOKEN}}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           # Only required for legacy action deployments.
-          github-environment: preview
+          github-environment: production
           keep-latest: 2
