@@ -11,6 +11,7 @@ import {
   QueryPullRequestNodeIdByBranch
 } from '@/common/github/comment.js'
 import * as Context from '@/common/github/context.js'
+import * as CommonInputs from '@/common/inputs.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {setMockApi} from '@/tests/helpers/api.js'
 import {EVENT_NAMES} from '@/types/github/workflow-events.js'
@@ -203,6 +204,102 @@ describe(addComment, () => {
 
       await expect(addComment(mockData, 'success')).rejects.toThrow(
         'Multiple pull requests found in workflow_run event matching head branch and sha'
+      )
+    })
+  })
+
+  describe('pr-number input', () => {
+    test('should use pr-number to resolve pull request node id', async () => {
+      expect.assertions(1)
+
+      vi.spyOn(CommonInputs, 'useCommonInputs').mockReturnValueOnce({
+        cloudflareApiToken: 'mock-cloudflare-api-token',
+        gitHubApiToken: 'mock-github-token',
+        gitHubEnvironment: undefined,
+        prNumber: '123',
+        wranglerVersion: 'mock-wrangler-version'
+      })
+
+      vi.spyOn(Context, 'useContextEvent').mockReturnValue({
+        eventName: 'workflow_dispatch',
+        payload: {}
+      } as Readonly<WorkflowEventExtract<'workflow_dispatch'>>)
+
+      vi.spyOn(Context, 'useContext').mockReturnValue({
+        event: {
+          eventName: 'workflow_dispatch',
+          payload: {} as never
+        },
+        repo: {
+          owner: 'andykenward',
+          repo: 'github-actions-cloudflare-pages',
+          node_id: 'repo_node_id'
+        },
+        branch: undefined,
+        sha: 'mock-github-sha',
+        graphqlEndpoint: 'https://api.github.com/graphql',
+        ref: 'refs/heads/feature-branch'
+      } as unknown as ReturnType<typeof Context.useContext>)
+
+      mockApi.interceptGithub(
+        {
+          query: QueryPullRequestNodeId,
+          variables: {
+            owner: 'andykenward',
+            repo: 'github-actions-cloudflare-pages',
+            number: 123
+          }
+        },
+        {
+          data: {
+            repository: {
+              pullRequest: {
+                id: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3'
+              }
+            }
+          }
+        }
+      )
+
+      mockApi.interceptGithub(
+        {
+          query: MutationAddComment,
+          variables: {
+            subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+            body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+          }
+        },
+        {
+          data: {
+            addComment: {
+              commentEdge: {
+                node: {
+                  id: '1'
+                }
+              }
+            }
+          }
+        }
+      )
+
+      const comment = await addComment(mockData, 'success')
+
+      expect(comment).toBe('1')
+    })
+
+    test('should throw for invalid pr-number input', async () => {
+      expect.assertions(1)
+
+      vi.spyOn(CommonInputs, 'useCommonInputs').mockReturnValueOnce({
+        cloudflareApiToken: 'mock-cloudflare-api-token',
+        gitHubApiToken: 'mock-github-token',
+        gitHubEnvironment: undefined,
+        prNumber: 'abc',
+        wranglerVersion: 'mock-wrangler-version'
+      })
+
+      await expect(addComment(mockData, 'success')).rejects.toThrow(
+        'Invalid pr-number input: abc'
       )
     })
   })

@@ -3,6 +3,7 @@ import {getInput} from '@actions/core'
 import {
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
   INPUT_KEY_GITHUB_ENVIRONMENT,
+  INPUT_KEY_PR_NUMBER,
   INPUT_KEY_GITHUB_TOKEN,
   INPUT_KEY_WRANGLER_VERSION
 } from '@/input-keys'
@@ -14,6 +15,8 @@ type Inputs = {
   gitHubApiToken: string
   /** GitHub Environment to use for deployment */
   gitHubEnvironment?: string
+  /** Pull request number to use for comment creation. */
+  prNumber?: string
   /** Wrangler version to use. */
   wranglerVersion: string
 }
@@ -26,6 +29,7 @@ const getInputs = (): Inputs => {
     gitHubApiToken: getInput(INPUT_KEY_GITHUB_TOKEN, {required: true}),
     gitHubEnvironment:
       getInput(INPUT_KEY_GITHUB_ENVIRONMENT, {required: false}) || undefined,
+    prNumber: getInput(INPUT_KEY_PR_NUMBER, {required: false}) || undefined,
     wranglerVersion: getInput(INPUT_KEY_WRANGLER_VERSION) || '4.75.0'
   }
 }
