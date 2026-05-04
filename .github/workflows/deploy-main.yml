@@ -10,6 +10,7 @@ concurrency:
 
 jobs:
   deploy-main:
+    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
     permissions:
       actions: read
       contents: read

@@ -11,6 +11,7 @@ concurrency:
 
 jobs:
   download:
+    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
     permissions:
       contents: write
       pull-requests: write
@@ -44,6 +45,7 @@ jobs:
           body: |
             This is an automated PR to update payloads.
   types:
+    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
     permissions:
       contents: write
       pull-requests: write
