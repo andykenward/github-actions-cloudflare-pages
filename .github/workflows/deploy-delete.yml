@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   deploy-delete:
+    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
     permissions:
       actions: read
       contents: read
