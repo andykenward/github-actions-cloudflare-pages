@@ -61,16 +61,41 @@ const getGitHubContext = (): Context => {
   })()
 
   /**
-   * Depending on what event triggers the action.
-   * The GITHUB_HEAD_REF may be undefined so we fallback to GITHUB_REF_NAME.
+   * For workflow_run, GitHub provides the source commit/branch in the payload
+   * (`workflow_run.head_sha` and `workflow_run.head_branch`).
+   *
+   * We intentionally prefer those values over environment variables so
+   * downstream deployment metadata and pull request comments point at the
+   * workflow run head commit.
+   *
+   * For other events, continue using the standard env var fallback logic.
+   *
+   * @see https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_run
+   * @see https://docs.github.com/en/actions/reference/variables-reference#default-environment-variables
    */
-  const branch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME
+  const branch =
+    event.eventName === 'workflow_run'
+      ? event.payload.workflow_run.head_branch
+      : process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME
 
-  const sha = process.env.GITHUB_SHA
+  const sha =
+    event.eventName === 'workflow_run'
+      ? event.payload.workflow_run.head_sha
+      : process.env.GITHUB_SHA
 
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
 
   const ref = ((): Context['ref'] => {
+    /**
+     * Keep ref aligned with branch for workflow_run so this action resolves
+     * a consistent source branch/commit pair for deployments and comments.
+     *
+     * @see https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_run
+     */
+    if (event.eventName === 'workflow_run') {
+      return event.payload.workflow_run.head_branch
+    }
+
     let ref = process.env.GITHUB_HEAD_REF
     if (!ref) {
       if ('ref' in event.payload) {
