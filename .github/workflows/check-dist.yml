@@ -28,7 +28,6 @@ concurrency:
 
 jobs:
   check-dist:
-    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
