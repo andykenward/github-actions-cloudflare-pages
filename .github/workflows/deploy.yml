@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
+    if: ${{ !github.event.pull_request.head.repo.fork }}
     permissions:
       actions: read
       contents: read
