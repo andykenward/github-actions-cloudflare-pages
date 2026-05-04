@@ -2,6 +2,8 @@
 
 # GitHub Action Cloudflare Pages
 
+Some change
+
 This action deploys your build output to [Cloudflare Pages] using [Wrangler]. [GitHub Environments] and [GitHub Deployment] are used to keep track of the [Cloudflare Pages] deployments.
 
 When used in context of a [pull request], the action will create a deployment for the pull request and add a comment with the URL of the deployment.
