@@ -6,12 +6,6 @@
       "sourceType": "github",
       "skillPath": "skills/github-actions-docs/SKILL.md",
       "computedHash": "e9ac24e79715ef3060bd4ae376052f8d863b830604e69cb513b39764bf47ee53"
-    },
-    "github-issues": {
-      "source": "github/awesome-copilot",
-      "sourceType": "github",
-      "skillPath": "skills/github-issues/SKILL.md",
-      "computedHash": "3a752d99ddc3178f443fe242d490800398b2b42030a9d221b298b9486d90cc87"
     }
   }
 }
