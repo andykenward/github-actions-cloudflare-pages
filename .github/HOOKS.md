@@ -1,18 +1,27 @@
 # Agent Hooks & Pre-commit Setup
 
-This project uses three complementary hooks to enforce code quality automatically:
+**For AI Agents**: This document is essential reading. Consult it whenever you:
 
-1. **Copilot PostToolUse Hook** (`format-and-lint-after-edit.json`)
-2. **Copilot Stop Hook** (`type-check-at-stop.json`)
-3. **Pre-commit Local Hook** (`.pre-commit-config.yaml`)
+- Modify hook configuration files (`.json` files in `.github/hooks/`)
+- Change hook script paths or entry points
+- Update the shared formatter/linter script behavior
+- Need to understand when and how hooks run
+
+This project uses four complementary hooks to enforce code quality and provide documentation:
+
+1. **Copilot SessionStart Hook** (`session-start-docs.json`)
+2. **Copilot PostToolUse Hook** (`format-and-lint-after-edit.json`)
+3. **Copilot Stop Hook** (`type-check-at-stop.json`)
+4. **Pre-commit Local Hook** (`.pre-commit-config.yaml`)
 
 ## Overview
 
-| Hook                           | Event       | Purpose                                                                      | Files                                                                                          |
-| ------------------------------ | ----------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **format-and-lint-after-edit** | PostToolUse | Runs oxfmt then oxlint after agent edits individual files in VS Code Copilot | [.github/hooks/format-and-lint-after-edit.json](.github/hooks/format-and-lint-after-edit.json) |
-| **type-check-at-stop**         | Stop        | Runs tsc at agent session end; blocks if type errors found                   | [.github/hooks/type-check-at-stop.json](.github/hooks/type-check-at-stop.json)                 |
-| **oxc-format-and-lint**        | pre-commit  | Runs oxfmt then oxlint on staged files before commit (all developers)        | [.pre-commit-config.yaml](.pre-commit-config.yaml)                                             |
+| Hook                           | Event        | Purpose                                                                      | Files                                                                                          |
+| ------------------------------ | ------------ | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **session-start-docs**         | SessionStart | Injects list of available markdown docs for agent reference at session start | [.github/hooks/session-start-docs.json](.github/hooks/session-start-docs.json)                 |
+| **format-and-lint-after-edit** | PostToolUse  | Runs oxfmt then oxlint after agent edits individual files in VS Code Copilot | [.github/hooks/format-and-lint-after-edit.json](.github/hooks/format-and-lint-after-edit.json) |
+| **type-check-at-stop**         | Stop         | Runs tsc at agent session end; blocks if type errors found                   | [.github/hooks/type-check-at-stop.json](.github/hooks/type-check-at-stop.json)                 |
+| **oxc-format-and-lint**        | pre-commit   | Runs oxfmt then oxlint on staged files before commit (all developers)        | [.pre-commit-config.yaml](.pre-commit-config.yaml)                                             |
 
 ## Shared Formatter/Linter Script
 
@@ -72,6 +81,17 @@ files: \.(js|jsx|cjs|mjs|ts|tsx|cts|mts|json|md|markdown|graphql|gql|yml|yaml)$
 
 The script automatically handles linting only for JS/TS files, so adding format-only types is safe.
 
+## Documentation at Session Start
+
+The SessionStart hook ([session-start-docs.json](.github/hooks/session-start-docs.json)) injects available markdown documentation:
+
+- Runs when a new Copilot agent session starts.
+- Lists key markdown files and their purposes in the chat.
+- Helps agents understand what documentation is available without searching.
+- Includes references to AGENTS.md, HOOKS.md, README.md, CHANGELOG.md, and action-specific docs.
+
+This ensures agents are aware of guidance documents and conventions from the very beginning of each session.
+
 ## Type Checking at Session End
 
 The Stop hook ([type-check-at-stop.json](.github/hooks/type-check-at-stop.json)) enforces TypeScript checking:
@@ -81,6 +101,16 @@ The Stop hook ([type-check-at-stop.json](.github/hooks/type-check-at-stop.json))
 - Allows normal session end if tsc passes.
 
 This ensures the agent doesn't leave the codebase with type errors.
+
+## Quick Reference for AI Agents
+
+| Scenario                         | What to Do                                                                                                                                                                                                                    |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Editing hook script behavior** | Update the shared script + update the usage header comment in `pre-commit-oxc.sh`                                                                                                                                             |
+| **Changing hook file paths**     | Update [.pre-commit-config.yaml](.pre-commit-config.yaml), [format-and-lint-after-edit.json](.github/hooks/format-and-lint-after-edit.json), and [type-check-at-stop.json](.github/hooks/type-check-at-stop.json) **in sync** |
+| **Adding new file type support** | Update the `files:` pattern in [.pre-commit-config.yaml](.pre-commit-config.yaml); script handles linting only for JS/TS                                                                                                      |
+| **Agent session ends**           | TypeScript check runs and **blocks** if errors are found; fix them before finishing                                                                                                                                           |
+| **Uncertain about sync**         | Read the Hook Sync Rule in [AGENTS.md](../AGENTS.md) Code Quality section                                                                                                                                                     |
 
 ## Troubleshooting
 

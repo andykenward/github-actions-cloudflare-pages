@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "bash ./.github/hooks/scripts/session-start-docs.sh"
+      }
+    ]
+  }
+}

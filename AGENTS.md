@@ -128,6 +128,7 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 - **Oxlint**: TypeScript linting with custom rules ([.oxlintrc.json](.oxlintrc.json))
 - **TypeScript**: Strict mode with `verbatimModuleSyntax`, `noEmit`, `checkJs`
 - **No console.log**: Use `@actions/core` methods (`info`, `debug`, `warning`, `error`, `setFailed`)
+- **Documentation on Session Start**: [.github/hooks/session-start-docs.json](.github/hooks/session-start-docs.json) injects a list of available markdown files at the beginning of each agent session, helping you understand what guidance is available.
 - **Hook Sync Rule**: When changing formatter/linter hook behavior or script paths, update these together: [.pre-commit-config.yaml](.pre-commit-config.yaml), [.github/hooks/format-and-lint-after-edit.json](.github/hooks/format-and-lint-after-edit.json), and the usage header in [.github/hooks/scripts/pre-commit-oxc.sh](.github/hooks/scripts/pre-commit-oxc.sh).
 - **Type Check on Session End**: [.github/hooks/type-check-at-stop.json](.github/hooks/type-check-at-stop.json) runs `pnpm run tsc:check` when the agent finishes and blocks the session if type errors are found, forcing resolution before the session ends.
 
@@ -159,3 +160,9 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 2. **New Action Inputs**: Update action.yml → add key to input-keys.ts → handle in inputs.ts → stub in test helpers
 3. **Cloudflare API Changes**: Update types in [src/common/cloudflare/types.ts](src/common/cloudflare/types.ts) → add fixtures to [**generated**/responses/](__generated__/responses/)
 4. **Breaking Changes**: Document in [CHANGELOG.md](CHANGELOG.md) using changesets: `pnpm changeset`
+
+## Additional Resources for AI Agents
+
+- **[HOOKS.md](.github/HOOKS.md)** — **Essential reading** for understanding the three-hook ecosystem (formatter/linter automation, type-check enforcement, and pre-commit integration). Must consult this when working with hook behavior or paths.
+- **[README.md](README.md)** — User-facing documentation for the action.
+- **[CHANGELOG.md](CHANGELOG.md)** — Record of changes and breaking changes for this project.
