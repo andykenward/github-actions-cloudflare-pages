@@ -60,7 +60,7 @@ If you modify any of these, keep them in sync:
 
 Also update the usage header comment in [pre-commit-oxc.sh](.github/hooks/scripts/pre-commit-oxc.sh) to document where it's consumed.
 
-**Project rule**: See [.github/copilot-instructions.md](.github/copilot-instructions.md) Hook Sync Rule for details.
+**Project rule**: See [AGENTS.md](../AGENTS.md) Hook Sync Rule for details.
 
 ### Adding New File Types
 
