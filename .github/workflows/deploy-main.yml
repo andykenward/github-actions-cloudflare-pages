@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: deploy-main
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+
+jobs:
+  cloudflare-pages-deploy:
+    permissions:
+      actions: read
+      contents: read
+      deployments: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+      - id: 'cloudflare-pages'
+        uses: ./
+        with:
+          cloudflare-api-token: ${{secrets.CLOUDFLARE_API_TOKEN}}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+          directory: dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-environment: preview
+          working-directory: example
+      - id: 'cloudflare-pages-delete'
+        uses: ./delete
+        with:
+          cloudflare-api-token: ${{secrets.CLOUDFLARE_API_TOKEN}}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Only required for legacy action deployments.
+          github-environment: preview
+          keep-latest: 2
