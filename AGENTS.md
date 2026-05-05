@@ -56,6 +56,7 @@ pnpm run act:d         # Test delete action locally with act
 
 - **Node 24**: Strict engine requirement in [package.json](package.json#L102)
 - **pnpm 10.15.1**: Enforced by `packageManager` field
+- **TypeScript Script Execution**: In this repo environment, Node.js can run `.ts` scripts directly without extra runner commands. Prefer `node path/to/script.ts` for one-off script execution (for example, `node bin/sync-versions.ts`).
 - After modifying GraphQL queries/mutations: `pnpm run codegen` before building
 - After changing input keys in [action.yml](action.yml): Update [input-keys.ts](input-keys.ts)
 
