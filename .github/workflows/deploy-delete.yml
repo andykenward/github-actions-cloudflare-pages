@@ -13,7 +13,7 @@ concurrency:
   group: deploy-delete-${{ github.head_ref || github.run_id }}
 
 jobs:
-  cloudflare-pages-deploy-delete:
+  deploy-delete:
     permissions:
       actions: read
       contents: read
