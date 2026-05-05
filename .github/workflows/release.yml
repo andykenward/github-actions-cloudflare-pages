@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
-      - uses: andykenward/github-actions/setup-pnpm@29a88e7e0d84f5c1de18a54e5435a7c9be824971 #v2.0.0
+      - uses: andykenward/github-actions/setup-pnpm@4975fa85f6e689743962bbb5dbac847aaa843edb #v3.0.1
         with:
           node-version: 24
       - name: Cache
