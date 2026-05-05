@@ -1,5 +1,19 @@
 # github-actions-cloudflare-pages
 
+## 3.4.0
+
+### Minor Changes
+
+- [#732](https://github.com/andykenward/github-actions-cloudflare-pages/pull/732) [`1c10be0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/1c10be0363ff8245ae5ae8f0587f8ffb793ffbfe) Thanks [@andykenward](https://github.com/andykenward)! - Added support for the GitHub workflow_run event to enable fork-safe preview deployments and pull request comments. [#729](https://github.com/andykenward/github-actions-cloudflare-pages/issues/729)
+
+- [#737](https://github.com/andykenward/github-actions-cloudflare-pages/pull/737) [`e0a8f58`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/e0a8f589a2247d56806fb0a32979f406eebe3fe8) Thanks [@andykenward](https://github.com/andykenward)! - feat: support a input pr-number to override the event logic. Useful for forked PRs. [#729](https://github.com/andykenward/github-actions-cloudflare-pages/issues/729)
+
+### Patch Changes
+
+- [#738](https://github.com/andykenward/github-actions-cloudflare-pages/pull/738) [`5f1b2d8`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5f1b2d84e92b6daa1e891021bdce8480468224d8) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump wrangler from 4.75.0 to 4.86.0
+
+- [#736](https://github.com/andykenward/github-actions-cloudflare-pages/pull/736) [`947c9c2`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/947c9c21c3b9cc239063c7847cdad8f033d691aa) Thanks [@andykenward](https://github.com/andykenward)! - fix: delete action use node24
+
 ## 3.3.2
 
 ### Patch Changes
