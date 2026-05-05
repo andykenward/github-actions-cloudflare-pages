@@ -30,7 +30,7 @@ const getInputs = (): Inputs => {
     gitHubEnvironment:
       getInput(INPUT_KEY_GITHUB_ENVIRONMENT, {required: false}) || undefined,
     prNumber: getInput(INPUT_KEY_PR_NUMBER, {required: false}) || undefined,
-    wranglerVersion: getInput(INPUT_KEY_WRANGLER_VERSION) || '4.75.0'
+    wranglerVersion: getInput(INPUT_KEY_WRANGLER_VERSION) || '4.86.0'
   }
 }
 
