@@ -55,6 +55,7 @@ describe('common', () => {
         cloudflareApiToken: 'mock-cloudflare-api-token',
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: 'mock-github-environment',
+        prNumber: undefined,
         wranglerVersion: 'mock-wrangler-version'
       })
     })
@@ -71,6 +72,7 @@ describe('common', () => {
         cloudflareApiToken: 'mock-cloudflare-api-token',
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
+        prNumber: undefined,
         wranglerVersion: packageJson.devDependencies.wrangler
       })
     })
