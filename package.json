@@ -75,7 +75,7 @@
     "undici": "7.24.4",
     "vite": "8.0.10",
     "vitest": "4.1.5",
-    "wrangler": "4.75.0"
+    "wrangler": "4.86.0"
   },
   "peerDependencies": {
     "wrangler": "4.72.0"
