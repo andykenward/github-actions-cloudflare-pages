@@ -8,21 +8,21 @@ updates:
       interval: weekly
       day: sunday
     cooldown:
-      default-days: 5
+      default-days: 7
   - package-ecosystem: 'devcontainers'
     directory: '/'
     schedule:
       interval: weekly
       day: sunday
     cooldown:
-      default-days: 5
+      default-days: 7
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
       day: sunday
     cooldown:
-      default-days: 5
+      default-days: 7
       semver-major-days: 30
       semver-minor-days: 7
       semver-patch-days: 3
