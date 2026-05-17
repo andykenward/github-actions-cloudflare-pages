@@ -82,6 +82,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Download GitHub GraphQL schema
+        id: download
         run: |
           # Accept header requests IDL/SDL format; response is a JSON envelope {"data":"...SDL..."}, jq extracts the string
           curl -fsSL \
@@ -90,6 +91,7 @@ jobs:
             https://api.github.com/graphql \
             | jq -r '.data' \
             > schema/github/schema.graphql
+          echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 #v8.1.1
@@ -99,6 +101,6 @@ jobs:
           sign-commits: true
           branch: 'chore/update-graphql-schema'
           delete-branch: true
-          title: 'chore: update GitHub GraphQL schema'
+          title: 'chore: update GitHub GraphQL schema (${{ steps.download.outputs.date }})'
           body: |
             This is an automated PR to update the GitHub GraphQL schema.
