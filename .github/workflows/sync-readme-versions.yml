@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
@@ -28,9 +29,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit and push version reference updates
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md delete/README.md .github/workflow-templates/deploy.yml .github/workflow-templates/delete.yml
-          git diff --staged --quiet || git commit -m "docs: update action version references [skip ci]"
-          git push
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 #v8.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'docs: update action version references [skip ci]'
+          sign-commits: true
+          title: 'docs: update action version references'
+          branch: docs/sync-action-versions
+          delete-branch: true
+          add-paths: |
+            README.md
+            delete/README.md
+            .github/workflow-templates/deploy.yml
+            .github/workflow-templates/delete.yml
