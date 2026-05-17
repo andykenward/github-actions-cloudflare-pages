@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Shared formatter/linter entrypoint used by:
 # - .pre-commit-config.yaml (local hook: oxc-format-and-lint)
-# - .github/hooks/format-and-lint-after-edit.json (Copilot PostToolUse)
+# - .github/hooks/format-and-lint-after-edit.json (PostToolUse)
 # AI agents: keep both wiring points and this usage list in sync when behavior or paths change.
 
 # pre-commit passes staged file paths as positional arguments.
