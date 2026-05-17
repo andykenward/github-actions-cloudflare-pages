@@ -83,11 +83,12 @@ jobs:
           persist-credentials: false
       - name: Download GitHub GraphQL schema
         run: |
-          # Accept header requests IDL/SDL format instead of the default JSON introspection response
+          # Accept header requests IDL/SDL format; response is a JSON envelope {"data":"...SDL..."}, jq extracts the string
           curl -fsSL \
             -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v4.idl" \
             https://api.github.com/graphql \
+            | jq -r '.data' \
             > schema/github/schema.graphql
       - name: Create Pull Request
         id: cpr
