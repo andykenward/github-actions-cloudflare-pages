@@ -34,7 +34,7 @@
     "lint:fix": "pnpm run lint --fix",
     "release": "pnpm run all && changeset publish",
     "start": "node -r dotenv/config ./dist/index.js",
-    "sync:readme": "node bin/sync-readme-versions.ts",
+    "sync:readme": "tsx bin/sync-readme-versions.ts",
     "test": "vitest run",
     "test:ci": "vitest run --reporter=github-actions",
     "test:watch": "vitest",

@@ -26,7 +26,7 @@ export type Scalars = {
   /** An ISO-8601 encoded UTC date string. */
   DateTime: { input: any; output: any; }
   /** A Git object ID. */
-  GitObjectID: { input: any; output: any; }
+  GitObjectID: { input: string; output: string; }
   /** A fully qualified reference name (e.g. `refs/heads/master`). */
   GitRefname: { input: any; output: any; }
   /** Git SSH string */
@@ -38,7 +38,7 @@ export type Scalars = {
   /** An ISO-8601 encoded UTC date string with millisecond precision. */
   PreciseDateTime: { input: any; output: any; }
   /** An RFC 3986, RFC 3987, and RFC 6570 (level 4) compliant URI string. */
-  URI: { input: any; output: any; }
+  URI: { input: string; output: string; }
   /** A valid x509 certificate string */
   X509Certificate: { input: any; output: any; }
 };
@@ -31488,6 +31488,14 @@ export type FilesQuery = { readonly repository?: { readonly object?:
            | null }> | null }
      | null } | null };
 
+export type LatestReleaseQueryVariables = Exact<{
+  owner: Scalars['String']['input'];
+  repo: Scalars['String']['input'];
+}>;
+
+
+export type LatestReleaseQuery = { readonly repository?: { readonly latestRelease?: { readonly tagName: string, readonly tagCommit?: { readonly oid: string } | null } | null } | null };
+
 export type AddCommentMutationVariables = Exact<{
   subjectId: Scalars['ID']['input'];
   body: Scalars['String']['input'];
@@ -31628,6 +31636,18 @@ export const FilesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<FilesQuery, FilesQueryVariables>;
+export const LatestReleaseDocument = new TypedDocumentString(`
+    query LatestRelease($owner: String!, $repo: String!) {
+  repository(owner: $owner, name: $repo) {
+    latestRelease {
+      tagName
+      tagCommit {
+        oid
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<LatestReleaseQuery, LatestReleaseQueryVariables>;
 export const AddCommentDocument = new TypedDocumentString(`
     mutation AddComment($subjectId: ID!, $body: String!) {
   addComment(input: {subjectId: $subjectId, body: $body}) {
