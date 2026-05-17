@@ -8,6 +8,9 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "types": ["node"],
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
     "paths": {
       /**
        * These have to match with vitest.config.ts alias.

@@ -9,9 +9,7 @@ import {fetchResult} from '../api/fetch-result.js'
 export const getCloudflareDeploymentAlias = (
   deployment: PagesDeployment
 ): string => {
-  return deployment.aliases && deployment.aliases.length > 0
-    ? deployment.aliases[0]
-    : deployment.url
+  return deployment.aliases?.at(0) ?? deployment.url
 }
 
 /**

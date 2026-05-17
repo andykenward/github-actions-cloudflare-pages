@@ -40,7 +40,7 @@ export const statusCloudflareDeployment = async (
         }
         default: {
           await new Promise(resolve =>
-            setTimeout(resolve, process.env.NODE_ENV === 'test' ? 1 : 1000)
+            setTimeout(resolve, process.env['NODE_ENV'] === 'test' ? 1 : 1000)
           )
         }
       }

@@ -45,7 +45,14 @@ const getGitHubContext = (): Context => {
   const event = getWorkflowEvent()
 
   const repo = ((): Repo => {
-    const [owner, repo] = process.env.GITHUB_REPOSITORY
+    const [
+      owner = raise(
+        "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+      ),
+      repo = raise(
+        "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+      )
+    ] = process.env.GITHUB_REPOSITORY
       ? process.env.GITHUB_REPOSITORY.split('/')
       : raise(
           "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
