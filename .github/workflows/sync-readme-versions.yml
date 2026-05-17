@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: sync-readme-versions
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  sync:
+    name: Sync action version references
+    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+        with:
+          ref: main
+      - uses: andykenward/github-actions/setup-pnpm@4975fa85f6e689743962bbb5dbac847aaa843edb #v3.0.1
+        with:
+          node-version: 24
+      - name: Sync action version references
+        run: pnpm run sync:readme
+      - name: Commit and push version reference updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md delete/README.md .github/workflow-templates/deploy.yml .github/workflow-templates/delete.yml
+          git diff --staged --quiet || git commit -m "docs: update action version references [skip ci]"
+          git push
