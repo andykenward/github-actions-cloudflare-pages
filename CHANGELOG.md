@@ -1,5 +1,13 @@
 # github-actions-cloudflare-pages
 
+## 3.4.1
+
+### Patch Changes
+
+- [#753](https://github.com/andykenward/github-actions-cloudflare-pages/pull/753) [`4549d45`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/4549d45516bbadbd9147b5f73d755ad058f0002d) Thanks [@andykenward](https://github.com/andykenward)! - Update GitHub API GraphQL schema to latest using GitHub Action. The NPM package [@octokit/graphql-schema](https://github.com/octokit/graphql-schema) is outdated due to https://github.com/octokit/graphql-schema/issues/1030
+
+- [#756](https://github.com/andykenward/github-actions-cloudflare-pages/pull/756) [`e3ed3ad`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/e3ed3ad56c43ff7d89b26b60b985b75243761b6e) Thanks [@andykenward](https://github.com/andykenward)! - refactor: graphql operations
+
 ## 3.4.0
 
 ### Minor Changes
