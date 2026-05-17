@@ -3,6 +3,8 @@
   "entry": ["src/deploy/index.ts", "src/delete/index.ts"],
   "ignore": [
     "__generated__/**",
+    ".agents/**",
+    ".claude/**",
     "dist/**",
     "example/**",
     "src/**/fragments.ts"
