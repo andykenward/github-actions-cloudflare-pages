@@ -14,7 +14,7 @@ fi
 
 # Step 1: Format every matched file first.
 # If formatting fails, the script exits immediately because of `set -e`.
-pnpm exec oxfmt --write "$@"
+pnpm exec oxfmt --write --no-error-on-unmatched-pattern "$@"
 
 # Step 2: Build a list of files oxlint can analyze.
 # We intentionally keep this separate from formatting so unsupported
