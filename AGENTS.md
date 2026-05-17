@@ -18,8 +18,9 @@ All imports use [tsconfig.json](tsconfig.json) path mappings (`@/common/*`, `@/d
 
 ### GraphQL Type Safety
 
-- GitHub GraphQL API queries/mutations in `src/**/` are type-safe via [@graphql-codegen/client-preset](graphql.config.ts)
+- GitHub GraphQL API queries/mutations in `src/**/` and `bin/**/` are type-safe via [@graphql-codegen/client-preset](graphql.config.ts)
 - Run `pnpm run codegen` to regenerate [**generated**/gql/](__generated__/gql/) types from inline `graphql()` calls
+- GraphQL scalar types (e.g. `GitObjectID`, `URI`) are mapped to TypeScript types in [graphql.config.ts](graphql.config.ts) — add a mapping there when a new scalar appears as `any` in generated output
 - Uses fragments pattern (see [src/common/github/fragments.ts](src/common/github/fragments.ts))
 - Custom client: [src/common/github/api/client.ts](src/common/github/api/client.ts) wraps fetch with TypedDocumentString for compile-time validation
 - Preview features added via [schema/github-preview/schema.graphql](schema/github-preview/schema.graphql)
@@ -54,7 +55,8 @@ pnpm run act:d         # Test delete action locally with act
 
 - **Node**: Version enforced by `engines` field in [package.json](package.json)
 - **pnpm**: Version enforced by `packageManager` field in [package.json](package.json)
-- **TypeScript Script Execution**: In this repo environment, Node.js can run `.ts` scripts directly without extra runner commands. Prefer `node path/to/script.ts` for one-off script execution (for example, `node bin/sync-versions.ts`).
+- **TypeScript Script Execution**: Use `node path/to/script.ts` for scripts that only import from `node:*`, relative paths, or `package.json` (e.g. `node bin/sync-versions.ts`). Use `tsx path/to/script.ts` for scripts that import via `@/` path aliases — `tsx` reads `tsconfig.json` paths and resolves `.js`→`.ts` throughout the entire import chain, including generated files. Plain `node` cannot do that substitution. Node.js Subpath imports (`#`-prefixed, defined in `package.json` `imports`) cannot help either because they only redirect the entry import, not relative `.js` imports inside the loaded files.
+- **Bin Script Pattern**: When a `bin/` script must be both importable (for tests) and directly executable, wrap all side-effectful code in `if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href)` and export the pure functions. See [bin/sync-readme-versions.ts](bin/sync-readme-versions.ts) as a reference.
 - After modifying GraphQL queries/mutations: `pnpm run codegen` before building
 - After changing input keys in [action.yml](action.yml): Update [input-keys.ts](input-keys.ts)
 
@@ -92,6 +94,7 @@ Always import using path aliases to match vitest.config.ts aliases.
 
 - Use `describe(functionName)` with actual function reference for IDE navigation
 - Assert `mockApi.mockAgent.assertNoPendingInterceptors()` to catch missed HTTP calls
+- **When adding or modifying an exported function, update its tests.** Tests for `bin/` scripts go in `__tests__/scripts/` (not `__tests__/bin/` — that path is excluded by the vitest config).
 
 ## Project-Specific Conventions
 
@@ -116,6 +119,7 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 
 ### GraphQL Operations
 
+- **Always use GraphQL for GitHub API calls — never the REST API.** Before implementing any GitHub API interaction, read [bin/download/](bin/download/) to understand the existing request pattern.
 - Prefix mutations: `MutationCreateGitHubDeployment`
 - Prefix fragments: `EnvironmentFragment`
 - Place in same file as usage or in [src/common/github/fragments.ts](src/common/github/fragments.ts) if shared
@@ -130,6 +134,7 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 - **No console.log**: Use `@actions/core` methods (`info`, `debug`, `warning`, `error`, `setFailed`)
 - **Hook Sync Rule**: When changing formatter/linter hook behavior or script paths, update these together: [.pre-commit-config.yaml](.pre-commit-config.yaml), [.github/hooks/format-and-lint-after-edit.json](.github/hooks/format-and-lint-after-edit.json), and the usage header in [.github/hooks/scripts/pre-commit-oxc.sh](.github/hooks/scripts/pre-commit-oxc.sh).
 - **Type Check on Session End**: [.github/hooks/type-check-at-stop.json](.github/hooks/type-check-at-stop.json) runs `pnpm run tsc:check` when the agent finishes and blocks the session if type errors are found, forcing resolution before the session ends.
+- **AGENTS.md Review on Session End**: [.github/hooks/review-agents-at-stop.json](.github/hooks/review-agents-at-stop.json) prompts the agent to review AGENTS.md for any learnings worth capturing before the session ends (only fires when working-tree changes are present).
 
 ### File Organization
 
@@ -155,7 +160,7 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 
 ## When Modifying Core Functionality
 
-1. **Adding GitHub API Operations**: Create GraphQL operation in appropriate file → run `pnpm run codegen` → use typed `request()` client
+1. **Adding GitHub API Operations**: Write `graphql(/* GraphQL */ `...`)` operation in the appropriate file → run `pnpm run codegen` (types won't exist until you do) → import generated types from [`__generated__/gql/graphql.ts`](__generated__/gql/graphql.ts) → use typed `request()` client. If a scalar appears as `any` in generated output, add a mapping in [graphql.config.ts](graphql.config.ts) and re-run codegen.
 2. **New Action Inputs**: Update action.yml → add key to input-keys.ts → handle in inputs.ts → stub in test helpers
 3. **Cloudflare API Changes**: Update types in [src/common/cloudflare/types.ts](src/common/cloudflare/types.ts) → add fixtures to [**generated**/responses/](__generated__/responses/)
 4. **Breaking Changes**: Document in [CHANGELOG.md](CHANGELOG.md) using changesets: `pnpm changeset`
