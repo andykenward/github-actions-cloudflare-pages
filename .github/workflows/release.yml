@@ -16,13 +16,8 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 permissions: {}
 
 jobs:
-  setup:
-    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' && github.event.workflow_run.conclusion == 'success' }}
-    permissions:
-      contents: read
-    uses: ./.github/workflows/setup.yml
   release:
-    needs: setup
+    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' && github.event.workflow_run.conclusion == 'success' }}
     name: Release
     runs-on: ubuntu-latest
     permissions:
