@@ -151,9 +151,7 @@ describe('environment', () => {
             id: 'EN_kwDOJn0nrM5D_l8n'
           },
           ref: {
-            id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk=',
-            name: 'mock-github-head-ref',
-            prefix: 'refs/heads/'
+            id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk='
           }
         }
       })
@@ -216,9 +214,7 @@ describe('environment', () => {
             repository: {
               environment: undefined,
               ref: {
-                id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk=',
-                name: 'mock-github-head-ref',
-                prefix: 'refs/heads/'
+                id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk='
               }
             }
           }

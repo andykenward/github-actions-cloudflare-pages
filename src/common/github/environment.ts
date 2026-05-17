@@ -65,8 +65,6 @@ export const QueryGetEnvironment = graphql(/* GraphQL */ `
       }
       ref(qualifiedName: $qualifiedName) {
         id
-        name
-        prefix
       }
     }
   }
