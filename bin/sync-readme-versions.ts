@@ -94,15 +94,19 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   let sha: string
   let version: string
 
-  if (process.env['GITHUB_ACTIONS'] === 'true') {
-    // In CI, the workflow is triggered by a tag push — use local git and
-    // package.json so the SHA matches the commit that was just tagged.
+  if (
+    process.env['GITHUB_ACTIONS'] === 'true' &&
+    process.env['GITHUB_EVENT_NAME'] === 'push'
+  ) {
+    // Tag push — HEAD is the freshly tagged commit, so use local git and
+    // package.json to avoid an extra API call.
     version = packageJson.version
     assert.ok(version, 'Unable to find version in package.json')
     sha = execSync('git rev-parse HEAD').toString().trim()
     assert.ok(sha.length === 40, `Expected full 40-char SHA, got: ${sha}`)
   } else {
-    // Manual run — fetch the latest published release from GitHub.
+    // workflow_dispatch or local run — HEAD may be ahead of the latest release
+    // tag, so fetch the correct SHA and version from GitHub.
     ;({sha, version} = await getLatestRelease())
   }
 
