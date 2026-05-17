@@ -11,9 +11,9 @@
     "__generated__/gql/",
     "__generated__/payloads/",
     "__generated__/responses/",
-    ".agents/**",
+    ".agents",
     ".cache",
-    ".claude/**",
+    ".claude",
     ".changeset/*.md",
     "skills-lock.json"
   ],
