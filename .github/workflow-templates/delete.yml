@@ -21,7 +21,7 @@ jobs:
       - name: 'Checkout Github Action'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
       - name: 'Deploy deletion from Cloudflare Pages'
-        uses: andykenward/github-actions-cloudflare-pages/delete@def80dd70ba3eb3d243520092bd303aa6454ec40 #v3.3.1
+        uses: andykenward/github-actions-cloudflare-pages/delete@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
