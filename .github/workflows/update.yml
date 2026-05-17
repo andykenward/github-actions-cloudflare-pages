@@ -70,3 +70,34 @@ jobs:
           title: 'chore: update types'
           body: |
             This is an automated PR to update generated types.
+  schema:
+    needs: setup
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+        with:
+          persist-credentials: false
+      - name: Download GitHub GraphQL schema
+        run: |
+          # Accept header requests IDL/SDL format instead of the default JSON introspection response
+          curl -fsSL \
+            -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v4.idl" \
+            https://api.github.com/graphql \
+            > schema/github/schema.graphql
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 #v8.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update GitHub GraphQL schema'
+          sign-commits: true
+          branch: 'chore/update-graphql-schema'
+          delete-branch: true
+          title: 'chore: update GitHub GraphQL schema'
+          body: |
+            This is an automated PR to update the GitHub GraphQL schema.

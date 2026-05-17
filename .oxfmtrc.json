@@ -6,6 +6,7 @@
     ".devcontainer/devcontainer-lock.json",
     "dist/**",
     "example/",
+    "schema/",
     "payload-examples/",
     "tsconfig.tsnode.json",
     "__generated__/gql/",

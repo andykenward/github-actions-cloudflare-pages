@@ -20,6 +20,7 @@
     ".vscode",
     "dist",
     "example",
+    "schema",
     "node_modules",
     "payload-examples"
   ],

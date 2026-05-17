@@ -36,9 +36,6 @@ importers:
       '@graphql-typed-document-node/core':
         specifier: 3.2.0
         version: 3.2.0(graphql@16.13.2)
-      '@octokit/graphql-schema':
-        specifier: 15.26.1
-        version: 15.26.1
       '@octokit/webhooks-schemas':
         specifier: 7.6.1
         version: 7.6.1
@@ -1416,9 +1413,6 @@ packages:
   '@octokit/endpoint@11.0.3':
     resolution: {integrity: sha512-FWFlNxghg4HrXkD3ifYbS/IdL/mDHjh9QcsNyhQjN8dplUoZbejsdpmuqdA76nxj2xoWPs7p8uX2SNr9rYu0Ag==}
     engines: {node: '>= 20'}
-
-  '@octokit/graphql-schema@15.26.1':
-    resolution: {integrity: sha512-RFDC2MpRBd4AxSRvUeBIVeBU7ojN/SxDfALUd7iVYOSeEK3gZaqR2MGOysj4Zh2xj2RY5fQAUT+Oqq7hWTraMA==}
 
   '@octokit/graphql@9.0.3':
     resolution: {integrity: sha512-grAEuupr/C1rALFnXTv6ZQhFuL1D8G5y8CN04RgrO4FIPMrtm+mcZzFG7dcBm+nq+1ppNixu+Jd78aeJOYxlGA==}
@@ -4920,11 +4914,6 @@ snapshots:
     dependencies:
       '@octokit/types': 16.0.0
       universal-user-agent: 7.0.3
-
-  '@octokit/graphql-schema@15.26.1':
-    dependencies:
-      graphql: 16.13.2
-      graphql-tag: 2.12.6(graphql@16.13.2)
 
   '@octokit/graphql@9.0.3':
     dependencies:
