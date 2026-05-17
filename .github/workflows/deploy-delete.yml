@@ -12,6 +12,8 @@ on:
 concurrency:
   group: deploy-delete-${{ github.head_ref || github.run_id }}
 
+permissions: {}
+
 jobs:
   deploy-delete:
     permissions:
