@@ -31,7 +31,7 @@
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
   "mounts": [
-    "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume"
+    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind"
   ]
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
