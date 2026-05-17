@@ -8,5 +8,5 @@
     "src/**/fragments.ts"
   ],
   "ignoreBinaries": ["act"],
-  "ignoreDependencies": ["@octokit/graphql-schema", "graphql-tag", "wrangler"]
+  "ignoreDependencies": ["graphql-tag", "wrangler"]
 }
