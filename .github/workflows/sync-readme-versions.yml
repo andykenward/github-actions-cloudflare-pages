@@ -25,6 +25,8 @@ jobs:
           node-version: 24
       - name: Sync action version references
         run: pnpm run sync:readme
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit and push version reference updates
         run: |
           git config user.name "github-actions[bot]"
