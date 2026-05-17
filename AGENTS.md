@@ -122,8 +122,10 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 - **Always use GraphQL for GitHub API calls — never the REST API.** Before implementing any GitHub API interaction, read [bin/download/](bin/download/) to understand the existing request pattern.
 - Prefix mutations: `MutationCreateGitHubDeployment`
 - Prefix fragments: `EnvironmentFragment`
-- Place in same file as usage or in [src/common/github/fragments.ts](src/common/github/fragments.ts) if shared
+- **Fragment placement**: Keep fragment definitions in `**/fragments.ts` files. Knip ignores `src/**/fragments.ts` (see [knip.json](knip.json)) to allow fragment exports that codegen uses without TypeScript imports. Do NOT move a fragment into an implementation file — it will cause an unused-local or unused-export violation. A fragment only used within one subdomain still lives in a peer `fragments.ts` (e.g. [src/common/github/deployment/fragments.ts](src/common/github/deployment/fragments.ts)). Fragments shared across subdirectories go in [src/common/github/fragments.ts](src/common/github/fragments.ts).
+- **Fragment resolution**: Codegen resolves `...FragmentName` spreads by scanning all project files — no TypeScript import of the fragment document is needed in operation files. Codegen inlines the full fragment definition into each parent operation's `TypedDocumentString` at generation time (visible in [`__generate__/gql/graphql.ts`](__generated__/gql/graphql.ts)).
 - Always use `graphql(/* GraphQL */ `...`)` template tag for codegen detection
+- **When changing a selection set**: update all test mock response objects for that operation — multiple test files may mock the same query or mutation, so `grep` for the operation name across `__tests__/`
 
 ### Code Quality
 
