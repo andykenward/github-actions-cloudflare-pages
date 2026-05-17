@@ -30,8 +30,11 @@
     "ghcr.io/devcontainers-extra/features/pre-commit:2": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
+  },
   "mounts": [
-    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind"
+    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind"
   ]
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
