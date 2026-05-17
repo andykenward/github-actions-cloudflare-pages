@@ -11,6 +11,7 @@ import {graphql} from '@/gql/gql.js'
 import packageJson from '../package.json' with {type: 'json'}
 
 const GITHUB_GRAPHQL_API = 'https://api.github.com/graphql'
+const TOKEN = process.env['GITHUB_TOKEN']
 
 /**
  * Replaces all `andykenward/github-actions-cloudflare-pages` action version
@@ -53,14 +54,13 @@ const request = async <TResult, TVariables>(
   query: TypedDocumentString<TResult, TVariables>,
   variables: TVariables
 ): Promise<TResult> => {
-  const token = process.env['GITHUB_TOKEN']
-  const headers: Record<string, string> = {'Content-Type': 'application/json'}
-  if (token) headers['authorization'] = `bearer ${token}`
-
   const res = await fetch(GITHUB_GRAPHQL_API, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({query: query.toString(), variables})
+    headers: {
+      authorization: `bearer ${TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({query, variables})
   })
   assert.ok(res.ok, `GitHub API request failed: ${res.status}`)
   const {data, errors} = (await res.json()) as {data: TResult; errors?: unknown}
