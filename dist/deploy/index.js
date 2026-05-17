@@ -153,18 +153,10 @@ ${"  ".repeat(level)}- ${renderError(chainedError,level+1)}`).join(`
   createDeploymentStatus(
     input: {autoInactive: false, deploymentId: $deploymentId, environment: $environment, environmentUrl: $environmentUrl, logUrl: $logUrl, state: $state}
   ) {
-    deploymentStatus {
-      deployment {
-        ...DeploymentFragment
-      }
-    }
+    clientMutationId
   }
 }
-    fragment DeploymentFragment on Deployment {
-  id
-  environment
-  state
-}`),CreateEnvironmentDocument=new TypedDocumentString(`
+    `),CreateEnvironmentDocument=new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
   createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
     environment {
@@ -183,15 +175,13 @@ ${"  ".repeat(level)}- ${renderError(chainedError,level+1)}`).join(`
     }
     ref(qualifiedName: $qualifiedName) {
       id
-      name
-      prefix
     }
   }
 }
     fragment EnvironmentFragment on Environment {
   name
   id
-}`);var documents={"\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ":FilesDocument,"\n  query LatestRelease($owner: String!, $repo: String!) {\n    repository(owner: $owner, name: $repo) {\n      latestRelease {\n        tagName\n        tagCommit {\n          oid\n        }\n      }\n    }\n  }\n":LatestReleaseDocument,"\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n        }\n      }\n    }\n  }\n":AddCommentDocument,"\n  query PullRequestNodeId($owner: String!, $repo: String!, $number: Int!) {\n    repository(owner: $owner, name: $repo) {\n      pullRequest(number: $number) {\n        id\n      }\n    }\n  }\n":PullRequestNodeIdDocument,"\n  query PullRequestNodeIdByBranch(\n    $owner: String!\n    $repo: String!\n    $headRefName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      pullRequests(first: 1, states: [OPEN], headRefName: $headRefName) {\n        nodes {\n          id\n        }\n      }\n    }\n  }\n":PullRequestNodeIdByBranchDocument,"\n  mutation CreateGitHubDeployment(\n    $repositoryId: ID!\n    $environmentName: String!\n    $refId: ID!\n    $payload: String!\n    $description: String\n  ) {\n    createDeployment(\n      input: {\n        autoMerge: false\n        description: $description\n        environment: $environmentName\n        refId: $refId\n        repositoryId: $repositoryId\n        requiredContexts: []\n        payload: $payload\n      }\n    ) {\n      deployment {\n        ...DeploymentFragment\n      }\n    }\n  }\n":CreateGitHubDeploymentDocument,"\n  mutation DeleteGitHubDeployment($deploymentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n  }\n":DeleteGitHubDeploymentDocument,"\n  mutation DeleteGitHubDeploymentAndComment(\n    $deploymentId: ID!\n    $commentId: ID!\n  ) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n":DeleteGitHubDeploymentAndCommentDocument,"\n  fragment DeploymentFragment on Deployment {\n    id\n    environment\n    state\n  }\n":DeploymentFragmentFragmentDoc,"\n  mutation CreateGitHubDeploymentStatus(\n    $deploymentId: ID!\n    $environment: String\n    $environmentUrl: String!\n    $logUrl: String!\n    $state: DeploymentStatusState!\n  ) {\n    createDeploymentStatus(\n      input: {\n        autoInactive: false\n        deploymentId: $deploymentId\n        environment: $environment\n        environmentUrl: $environmentUrl\n        logUrl: $logUrl\n        state: $state\n      }\n    ) {\n      deploymentStatus {\n        deployment {\n          ...DeploymentFragment\n        }\n      }\n    }\n  }\n":CreateGitHubDeploymentStatusDocument,"\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n":CreateEnvironmentDocument,"\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n        name\n        prefix\n      }\n    }\n  }\n":GetEnvironmentDocument,"\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n":EnvironmentFragmentFragmentDoc};function graphql(source){return documents[source]??{}}__name(graphql,"graphql");var request=__name(async params=>{let{query,variables,options}=params,{errorThrows}=options||{errorThrows:!0},{gitHubApiToken}=useCommonInputs(),{graphqlEndpoint}=useContext();return fetch(graphqlEndpoint,{method:"POST",headers:{authorization:`bearer ${gitHubApiToken}`,"Content-Type":"application/json",Accept:"application/vnd.github.flash-preview+json"},body:JSON.stringify({query:query.toString(),variables})}).then(res=>res.json()).then(res=>{if(res.errors&&errorThrows)throw new Error(JSON.stringify(res.errors));return res})},"request");var MutationAddComment=graphql(`
+}`);var documents={"\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ":FilesDocument,"\n  query LatestRelease($owner: String!, $repo: String!) {\n    repository(owner: $owner, name: $repo) {\n      latestRelease {\n        tagName\n        tagCommit {\n          oid\n        }\n      }\n    }\n  }\n":LatestReleaseDocument,"\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n        }\n      }\n    }\n  }\n":AddCommentDocument,"\n  query PullRequestNodeId($owner: String!, $repo: String!, $number: Int!) {\n    repository(owner: $owner, name: $repo) {\n      pullRequest(number: $number) {\n        id\n      }\n    }\n  }\n":PullRequestNodeIdDocument,"\n  query PullRequestNodeIdByBranch(\n    $owner: String!\n    $repo: String!\n    $headRefName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      pullRequests(first: 1, states: [OPEN], headRefName: $headRefName) {\n        nodes {\n          id\n        }\n      }\n    }\n  }\n":PullRequestNodeIdByBranchDocument,"\n  mutation CreateGitHubDeployment(\n    $repositoryId: ID!\n    $environmentName: String!\n    $refId: ID!\n    $payload: String!\n    $description: String\n  ) {\n    createDeployment(\n      input: {\n        autoMerge: false\n        description: $description\n        environment: $environmentName\n        refId: $refId\n        repositoryId: $repositoryId\n        requiredContexts: []\n        payload: $payload\n      }\n    ) {\n      deployment {\n        ...DeploymentFragment\n      }\n    }\n  }\n":CreateGitHubDeploymentDocument,"\n  mutation DeleteGitHubDeployment($deploymentId: ID!) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n  }\n":DeleteGitHubDeploymentDocument,"\n  mutation DeleteGitHubDeploymentAndComment(\n    $deploymentId: ID!\n    $commentId: ID!\n  ) {\n    deleteDeployment(input: {id: $deploymentId}) {\n      clientMutationId\n    }\n    deleteIssueComment(input: {id: $commentId}) {\n      clientMutationId\n    }\n  }\n":DeleteGitHubDeploymentAndCommentDocument,"\n  fragment DeploymentFragment on Deployment {\n    id\n    environment\n    state\n  }\n":DeploymentFragmentFragmentDoc,"\n  mutation CreateGitHubDeploymentStatus(\n    $deploymentId: ID!\n    $environment: String\n    $environmentUrl: String!\n    $logUrl: String!\n    $state: DeploymentStatusState!\n  ) {\n    createDeploymentStatus(\n      input: {\n        autoInactive: false\n        deploymentId: $deploymentId\n        environment: $environment\n        environmentUrl: $environmentUrl\n        logUrl: $logUrl\n        state: $state\n      }\n    ) {\n      clientMutationId\n    }\n  }\n":CreateGitHubDeploymentStatusDocument,"\n  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {\n    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {\n      environment {\n        ...EnvironmentFragment\n      }\n    }\n  }\n":CreateEnvironmentDocument,"\n  query GetEnvironment(\n    $owner: String!\n    $repo: String!\n    $environment_name: String!\n    $qualifiedName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      environment(name: $environment_name) {\n        ...EnvironmentFragment\n      }\n      ref(qualifiedName: $qualifiedName) {\n        id\n      }\n    }\n  }\n":GetEnvironmentDocument,"\n  fragment EnvironmentFragment on Environment {\n    name\n    id\n  }\n":EnvironmentFragmentFragmentDoc};function graphql(source){return documents[source]??{}}__name(graphql,"graphql");var request=__name(async params=>{let{query,variables,options}=params,{errorThrows}=options||{errorThrows:!0},{gitHubApiToken}=useCommonInputs(),{graphqlEndpoint}=useContext();return fetch(graphqlEndpoint,{method:"POST",headers:{authorization:`bearer ${gitHubApiToken}`,"Content-Type":"application/json",Accept:"application/vnd.github.flash-preview+json"},body:JSON.stringify({query:query.toString(),variables})}).then(res=>res.json()).then(res=>{if(res.errors&&errorThrows)throw new Error(JSON.stringify(res.errors));return res})},"request");var MutationAddComment=graphql(`
   mutation AddComment($subjectId: ID!, $body: String!) {
     addComment(input: {subjectId: $subjectId, body: $body}) {
       commentEdge {
@@ -253,8 +243,6 @@ ${output}`;return(await request({query:MutationAddComment,variables:{subjectId:p
       }
       ref(qualifiedName: $qualifiedName) {
         id
-        name
-        prefix
       }
     }
   }
@@ -276,11 +264,7 @@ ${output}`;return(await request({query:MutationAddComment,variables:{subjectId:p
         state: $state
       }
     ) {
-      deploymentStatus {
-        deployment {
-          ...DeploymentFragment
-        }
-      }
+      clientMutationId
     }
   }
 `);var MutationCreateGitHubDeployment=graphql(`

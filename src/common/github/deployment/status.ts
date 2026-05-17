@@ -24,11 +24,7 @@ export const MutationCreateGitHubDeploymentStatus = graphql(/* GraphQL */ `
         state: $state
       }
     ) {
-      deploymentStatus {
-        deployment {
-          ...DeploymentFragment
-        }
-      }
+      clientMutationId
     }
   }
 `)

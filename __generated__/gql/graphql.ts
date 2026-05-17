@@ -36660,7 +36660,7 @@ export type CreateGitHubDeploymentStatusMutationVariables = Exact<{
 }>;
 
 
-export type CreateGitHubDeploymentStatusMutation = { readonly createDeploymentStatus?: { readonly deploymentStatus?: { readonly deployment: { readonly id: string, readonly environment?: string | null, readonly state?: DeploymentState | null } } | null } | null };
+export type CreateGitHubDeploymentStatusMutation = { readonly createDeploymentStatus?: { readonly clientMutationId?: string | null } | null };
 
 export type CreateEnvironmentMutationVariables = Exact<{
   repositoryId: Scalars['ID']['input'];
@@ -36678,7 +36678,7 @@ export type GetEnvironmentQueryVariables = Exact<{
 }>;
 
 
-export type GetEnvironmentQuery = { readonly repository?: { readonly environment?: { readonly name: string, readonly id: string } | null, readonly ref?: { readonly id: string, readonly name: string, readonly prefix: string } | null } | null };
+export type GetEnvironmentQuery = { readonly repository?: { readonly environment?: { readonly name: string, readonly id: string } | null, readonly ref?: { readonly id: string } | null } | null };
 
 export type EnvironmentFragmentFragment = { readonly name: string, readonly id: string };
 
@@ -36817,18 +36817,10 @@ export const CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
   createDeploymentStatus(
     input: {autoInactive: false, deploymentId: $deploymentId, environment: $environment, environmentUrl: $environmentUrl, logUrl: $logUrl, state: $state}
   ) {
-    deploymentStatus {
-      deployment {
-        ...DeploymentFragment
-      }
-    }
+    clientMutationId
   }
 }
-    fragment DeploymentFragment on Deployment {
-  id
-  environment
-  state
-}`) as unknown as TypedDocumentString<CreateGitHubDeploymentStatusMutation, CreateGitHubDeploymentStatusMutationVariables>;
+    `) as unknown as TypedDocumentString<CreateGitHubDeploymentStatusMutation, CreateGitHubDeploymentStatusMutationVariables>;
 export const CreateEnvironmentDocument = new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
   createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
@@ -36849,8 +36841,6 @@ export const GetEnvironmentDocument = new TypedDocumentString(`
     }
     ref(qualifiedName: $qualifiedName) {
       id
-      name
-      prefix
     }
   }
 }
