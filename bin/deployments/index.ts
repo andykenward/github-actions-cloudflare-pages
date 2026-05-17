@@ -2,9 +2,9 @@ import type {FetchResult, PagesDeployment} from '@/common/cloudflare/types.js'
 import 'dotenv/config'
 
 const API_ENDPOINT = 'https://api.cloudflare.com'
-const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID
-const CLOUDFLARE_PROJECT_NAME = process.env.CLOUDFLARE_PROJECT_NAME
-const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN
+const CLOUDFLARE_ACCOUNT_ID = process.env['CLOUDFLARE_ACCOUNT_ID']
+const CLOUDFLARE_PROJECT_NAME = process.env['CLOUDFLARE_PROJECT_NAME']
+const CLOUDFLARE_API_TOKEN = process.env['CLOUDFLARE_API_TOKEN']
 
 if (!CLOUDFLARE_API_TOKEN)
   throw new Error('CLOUDFLARE_API_TOKEN environment variable not set')

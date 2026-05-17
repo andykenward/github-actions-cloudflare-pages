@@ -16,6 +16,7 @@ import * as types from './graphql.js';
  */
 type Documents = {
     "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": typeof types.FilesDocument,
+    "\n  query LatestRelease($owner: String!, $repo: String!) {\n    repository(owner: $owner, name: $repo) {\n      latestRelease {\n        tagName\n        tagCommit {\n          oid\n        }\n      }\n    }\n  }\n": typeof types.LatestReleaseDocument,
     "\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n        }\n      }\n    }\n  }\n": typeof types.AddCommentDocument,
     "\n  query PullRequestNodeId($owner: String!, $repo: String!, $number: Int!) {\n    repository(owner: $owner, name: $repo) {\n      pullRequest(number: $number) {\n        id\n      }\n    }\n  }\n": typeof types.PullRequestNodeIdDocument,
     "\n  query PullRequestNodeIdByBranch(\n    $owner: String!\n    $repo: String!\n    $headRefName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      pullRequests(first: 1, states: [OPEN], headRefName: $headRefName) {\n        nodes {\n          id\n        }\n      }\n    }\n  }\n": typeof types.PullRequestNodeIdByBranchDocument,
@@ -30,6 +31,7 @@ type Documents = {
 };
 const documents: Documents = {
     "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": types.FilesDocument,
+    "\n  query LatestRelease($owner: String!, $repo: String!) {\n    repository(owner: $owner, name: $repo) {\n      latestRelease {\n        tagName\n        tagCommit {\n          oid\n        }\n      }\n    }\n  }\n": types.LatestReleaseDocument,
     "\n  mutation AddComment($subjectId: ID!, $body: String!) {\n    addComment(input: {subjectId: $subjectId, body: $body}) {\n      commentEdge {\n        node {\n          id\n        }\n      }\n    }\n  }\n": types.AddCommentDocument,
     "\n  query PullRequestNodeId($owner: String!, $repo: String!, $number: Int!) {\n    repository(owner: $owner, name: $repo) {\n      pullRequest(number: $number) {\n        id\n      }\n    }\n  }\n": types.PullRequestNodeIdDocument,
     "\n  query PullRequestNodeIdByBranch(\n    $owner: String!\n    $repo: String!\n    $headRefName: String!\n  ) {\n    repository(owner: $owner, name: $repo) {\n      pullRequests(first: 1, states: [OPEN], headRefName: $headRefName) {\n        nodes {\n          id\n        }\n      }\n    }\n  }\n": types.PullRequestNodeIdByBranchDocument,
@@ -47,6 +49,10 @@ const documents: Documents = {
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n      query Files($owner: String!, $repo: String!, $path: String!) {\n        repository(owner: $owner, name: $repo) {\n          object(expression: $path) {\n            __typename\n            ... on Tree {\n              entries {\n                name\n                type\n                language {\n                  name\n                }\n                object {\n                  __typename\n                  ... on Blob {\n                    text\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    "): typeof import('./graphql.js').FilesDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query LatestRelease($owner: String!, $repo: String!) {\n    repository(owner: $owner, name: $repo) {\n      latestRelease {\n        tagName\n        tagCommit {\n          oid\n        }\n      }\n    }\n  }\n"): typeof import('./graphql.js').LatestReleaseDocument;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

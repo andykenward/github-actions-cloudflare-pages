@@ -63,6 +63,34 @@ describe('useContext', () => {
     vi.unstubAllEnvs()
   })
 
+  test('throws when GITHUB_REPOSITORY is missing', async () => {
+    expect.assertions(1)
+
+    vi.stubEnv('GITHUB_REPOSITORY', '')
+
+    const {useContext} = await import('@/common/github/context.js')
+
+    expect(() => useContext()).toThrow(
+      "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+    )
+
+    vi.unstubAllEnvs()
+  })
+
+  test('throws when GITHUB_REPOSITORY has no slash', async () => {
+    expect.assertions(1)
+
+    vi.stubEnv('GITHUB_REPOSITORY', 'noslash')
+
+    const {useContext} = await import('@/common/github/context.js')
+
+    expect(() => useContext()).toThrow(
+      "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+    )
+
+    vi.unstubAllEnvs()
+  })
+
   test('returns context for `workflow_run`', async () => {
     expect.assertions(9)
 

@@ -17,8 +17,12 @@ const config: CodegenConfig = {
         dedupeFragments: true,
         useExplicitTyping: true,
         skipTypename: true,
-        documentMode: 'string'
-        // flattenGeneratedTypes: true
+        documentMode: 'string',
+        // https://docs.github.com/en/graphql/reference/scalars
+        scalars: {
+          GitObjectID: 'string',
+          URI: 'string'
+        }
       },
       presetConfig: {
         fragmentMasking: false
