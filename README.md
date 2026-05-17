@@ -126,7 +126,7 @@ jobs:
       - run: npm ci
         run: npm run build
       - name: Deploy to Cloudflare Pages
-        uses: andykenward/github-actions-cloudflare-pages@v3.0.0
+        uses: andykenward/github-actions-cloudflare-pages@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
         id: pages
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -163,7 +163,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Deploy to Cloudflare Pages
-        uses: andykenward/github-actions-cloudflare-pages@v3.0.0
+        uses: andykenward/github-actions-cloudflare-pages@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
