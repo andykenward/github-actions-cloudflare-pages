@@ -4,8 +4,6 @@
 
 Dual-mode GitHub Action for Cloudflare Pages deployments: `deploy` creates deployments via Wrangler CLI and links them to GitHub Deployments/Environments, `delete` batch-removes old deployments. Built with TypeScript ESM, GraphQL-typed GitHub API integration, and comprehensive vitest testing.
 
-**See [HOOKS.md](.github/HOOKS.md) for agent hook setup, behavior, and sync requirements.**
-
 ## Architecture
 
 ### Dual Entry Points
@@ -28,8 +26,8 @@ All imports use [tsconfig.json](tsconfig.json) path mappings (`@/common/*`, `@/d
 
 ### Cloudflare Integration
 
-- Executes `wrangler pages deploy` via `execAsync()` (see [src/common/cloudflare/deployment/create.ts](src/common/cloudflare/deployment/create.ts#L47-L56))
-- Wrangler is external dependency (not bundled) - defined in [esbuild.config.js](esbuild.config.js#L20)
+- Executes `wrangler pages deploy` via `execAsync()` (see [src/common/cloudflare/deployment/create.ts](src/common/cloudflare/deployment/create.ts#L49-L54))
+- Wrangler is external dependency (not bundled) - defined in [esbuild.config.js](esbuild.config.js)
 - Uses REST API for deployment status polling and deletion
 
 ### Code Generation
@@ -44,7 +42,7 @@ Two codegen workflows:
 ### Essential Commands
 
 ```bash
-pnpm run all           # Full validation: knip → codegen → tsc → format → lint → test → build
+pnpm run all           # Full validation: sync-versions → knip → codegen → codegen:events → tsc → format → lint → test → build
 pnpm run build         # ESBuild bundle to dist/deploy & dist/delete
 pnpm run test          # Vitest run
 pnpm run test:watch    # Interactive test mode
@@ -54,15 +52,15 @@ pnpm run act:d         # Test delete action locally with act
 
 ### Build Requirements
 
-- **Node 24**: Strict engine requirement in [package.json](package.json#L102)
-- **pnpm 10.15.1**: Enforced by `packageManager` field
+- **Node**: Version enforced by `engines` field in [package.json](package.json)
+- **pnpm**: Version enforced by `packageManager` field in [package.json](package.json)
 - **TypeScript Script Execution**: In this repo environment, Node.js can run `.ts` scripts directly without extra runner commands. Prefer `node path/to/script.ts` for one-off script execution (for example, `node bin/sync-versions.ts`).
 - After modifying GraphQL queries/mutations: `pnpm run codegen` before building
 - After changing input keys in [action.yml](action.yml): Update [input-keys.ts](input-keys.ts)
 
 ### Debugging
 
-- ESBuild sourcemaps enabled ([esbuild.config.js](esbuild.config.js#L11))
+- ESBuild sourcemaps enabled ([esbuild.config.js](esbuild.config.js))
 - Use `pnpm run start` to test built action locally (requires local env vars)
 - Vitest debug mode: Add `debugger` statements and run with Node inspector
 
@@ -125,6 +123,7 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 
 ### Code Quality
 
+- **Line anchors**: A few links in this document use line numbers to point to non-obvious code locations. When you edit code at one of those locations, update the line number in this file to match.
 - **Knip**: Dead code detection ([knip.json](knip.json)) - ignores [**generated**/](__generated__/), fragments, wrangler, act
 - **Oxlint**: TypeScript linting with custom rules ([.oxlintrc.json](.oxlintrc.json))
 - **TypeScript**: Strict mode with `verbatimModuleSyntax`, `noEmit`, `checkJs`
@@ -144,7 +143,7 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 
 ### ESBuild Specifics
 
-- Banner adds `createRequire` shim for dynamic require compatibility ([esbuild.config.js](esbuild.config.js#L24-L35))
+- Banner adds `createRequire` shim for dynamic require compatibility ([esbuild.config.js](esbuild.config.js#L22-L35))
 - External: `wrangler` (peer dependency expected in user's environment)
 - Minification: Syntax and whitespace only (not identifiers) for debugging
 
@@ -152,7 +151,7 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 
 - Requires manual creation of GitHub Environments (action cannot create due to permission requirements)
 - Uses `GITHUB_TOKEN` with permissions: `actions:read`, `contents:read`, `deployments:write`, `pull-requests:write`
-- Supports `push`, `pull_request`, `workflow_dispatch` events only (validated in [src/deploy/main.ts](src/deploy/main.ts#L19-L27))
+- Supports `push`, `pull_request`, `workflow_dispatch`, `workflow_run` events only (validated in [src/deploy/main.ts](src/deploy/main.ts))
 - Deployment payload includes Cloudflare metadata for deletion workflow ([src/common/github/deployment/types.ts](src/common/github/deployment/types.ts))
 
 ## When Modifying Core Functionality
@@ -164,6 +163,5 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 
 ## Additional Resources for AI Agents
 
-- **[HOOKS.md](.github/HOOKS.md)** — **Essential reading** for understanding the three-hook ecosystem (formatter/linter automation, type-check enforcement, and pre-commit integration). Must consult this when working with hook behavior or paths.
 - **[README.md](README.md)** — User-facing documentation for the action.
 - **[CHANGELOG.md](CHANGELOG.md)** — Record of changes and breaking changes for this project.
