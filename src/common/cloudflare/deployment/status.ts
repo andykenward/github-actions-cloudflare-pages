@@ -10,7 +10,7 @@ import {getCloudflareLatestDeployment} from './get.js'
 const ERROR_KEY = `Status Of Deployment:`
 
 type DeploymentStatus = Exclude<
-  PagesDeployment['stages'][number]['status'],
+  PagesDeployment['latest_stage']['status'],
   'idle'
 >
 
@@ -25,19 +25,24 @@ export const statusCloudflareDeployment = async (
   do {
     try {
       deployment = await getCloudflareLatestDeployment(apiEndpoint)
-      const deployStage = deployment.stages.find(
-        stage => stage.name === 'deploy'
-      )
+      const {latest_stage} = deployment
 
-      debug(JSON.stringify(deployStage))
+      debug(JSON.stringify(latest_stage))
 
-      switch (deployStage?.status) {
+      switch (latest_stage.status) {
+        case 'failure':
+        case 'canceled': {
+          deploymentStatus = latest_stage.status
+          break
+        }
         case 'active':
         case 'success':
-        case 'failure':
-        case 'skipped':
-        case 'canceled': {
-          deploymentStatus = deployStage.status
+        case 'skipped': {
+          if (latest_stage.name === 'deploy') {
+            deploymentStatus = latest_stage.status
+            break
+          }
+          await sleep(1000)
           break
         }
         default: {
