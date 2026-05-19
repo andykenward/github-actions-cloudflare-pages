@@ -3,7 +3,7 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
 
-import {execAsync} from '@/common/utils.js'
+import {execFileAsync} from '@/common/utils.js'
 import {run} from '@/deploy/main.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/api.js'
@@ -31,7 +31,7 @@ describe('deploy', () => {
     describe(run, () => {
       describe('handles resolve', () => {
         beforeEach(() => {
-          vi.mocked(execAsync).mockResolvedValue({
+          vi.mocked(execFileAsync).mockResolvedValue({
             stdout: 'success',
             stderr: ''
           })

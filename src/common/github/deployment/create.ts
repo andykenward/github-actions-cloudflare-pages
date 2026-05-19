@@ -5,11 +5,11 @@ import {raise} from '@/common/utils.js'
 import {graphql} from '@/gql/gql.js'
 import {DeploymentStatusState} from '@/gql/graphql.js'
 
+import type {Environment} from '../environment.js'
 import type {PayloadGithubDeploymentV2} from './types.js'
 
 import {request} from '../api/client.js'
 import {useContext} from '../context.js'
-import {checkEnvironment} from '../environment.js'
 import {MutationCreateGitHubDeploymentStatus} from './status.js'
 
 /**
@@ -47,19 +47,14 @@ const MutationCreateGitHubDeployment = graphql(/* GraphQL */ `
 export const createGitHubDeployment = async ({
   cloudflareDeployment: {id, url, project_name: projectName},
   cloudflareAccountId: accountId,
-  commentId
+  commentId,
+  environment: {name, refId}
 }: {
   cloudflareDeployment: PagesDeployment
   cloudflareAccountId: string
   commentId: string | undefined
+  environment: NonNullable<Environment>
 }) => {
-  /**
-   * Check GitHub Environment exists to link GitHub Deployment too.
-   */
-  const {name, refId} =
-    (await checkEnvironment()) ??
-    raise('GitHub Deployment: GitHub Environment is required')
-
   const {repo} = useContext()
 
   const payload: PayloadGithubDeploymentV2 = {

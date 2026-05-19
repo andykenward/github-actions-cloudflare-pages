@@ -4,6 +4,7 @@ import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.
 import {addComment} from '@/common/github/comment.js'
 import {useContextEvent} from '@/common/github/context.js'
 import {createGitHubDeployment} from '@/common/github/deployment/create.js'
+import {checkEnvironment} from '@/common/github/environment.js'
 
 import {useInputs} from './inputs.js'
 
@@ -36,11 +37,15 @@ export async function run() {
       directory,
       workingDirectory
     })
-  const commentId = await addComment(cloudflareDeployment, wranglerOutput)
+  const [commentId, environment] = await Promise.all([
+    addComment(cloudflareDeployment, wranglerOutput),
+    checkEnvironment()
+  ])
 
   await createGitHubDeployment({
     cloudflareDeployment,
     commentId,
-    cloudflareAccountId
+    cloudflareAccountId,
+    environment
   })
 }
