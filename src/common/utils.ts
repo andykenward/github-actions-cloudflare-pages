@@ -16,6 +16,8 @@ export const raiseFail = (message: string): never => {
 
 export const execAsync = promisify(exec)
 export const execFileAsync = promisify(execFile)
+export const sleep = (ms: number): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, ms))
 
 export const checkWorkingDirectory = (directory = '.'): string => {
   const p = path.normalize(directory)

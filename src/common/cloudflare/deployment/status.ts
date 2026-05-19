@@ -1,5 +1,7 @@
 import {debug} from '@actions/core'
 
+import {sleep} from '@/common/utils.js'
+
 import type {CloudflareApiEndpoint} from '../api/endpoints.js'
 import type {PagesDeployment} from '../types.js'
 
@@ -39,9 +41,7 @@ export const statusCloudflareDeployment = async (
           break
         }
         default: {
-          await new Promise(resolve =>
-            setTimeout(resolve, process.env['NODE_ENV'] === 'test' ? 1 : 1000)
-          )
+          await sleep(1000)
         }
       }
     } catch (error) {
