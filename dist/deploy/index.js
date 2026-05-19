@@ -222,31 +222,7 @@ ${"  ".repeat(level)}- ${renderError(chainedError,level+1)}`).join(`
 **Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}
 
 ### Wrangler Output
-${output}`;return(await request({query:MutationAddComment,variables:{subjectId:prNodeId,body:rawBody}})).data.addComment?.commentEdge?.node?.id}info("addComment - No Pull Request could be found to post comment.")},"addComment");var PREFIX="GitHub Environment:",MutationCreateEnvironment=graphql(`
-  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
-    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
-      environment {
-        ...EnvironmentFragment
-      }
-    }
-  }
-`);var QueryGetEnvironment=graphql(`
-  query GetEnvironment(
-    $owner: String!
-    $repo: String!
-    $environment_name: String!
-    $qualifiedName: String!
-  ) {
-    repository(owner: $owner, name: $repo) {
-      environment(name: $environment_name) {
-        ...EnvironmentFragment
-      }
-      ref(qualifiedName: $qualifiedName) {
-        id
-      }
-    }
-  }
-`),checkEnvironment=__name(async()=>{let{gitHubEnvironment}=useCommonInputs(),{repo,ref}=useContext();if(!gitHubEnvironment)return raiseFail(`${PREFIX} missing input gitHubEnvironment ${gitHubEnvironment}`);let environment=await request({query:QueryGetEnvironment,variables:{owner:repo.owner,repo:repo.repo,environment_name:gitHubEnvironment,qualifiedName:ref},options:{errorThrows:!1}});return environment.errors?raiseFail(`${PREFIX} Errors - ${JSON.stringify(environment.errors)}`):environment.data.repository?.environment?environment.data.repository?.ref?.id?{...environment.data.repository.environment,refId:environment.data.repository?.ref?.id}:raiseFail(`${PREFIX} No ref id ${gitHubEnvironment}`):raiseFail(`${PREFIX} Not created for ${gitHubEnvironment}`)},"checkEnvironment");var MutationCreateGitHubDeploymentStatus=graphql(`
+${output}`;return(await request({query:MutationAddComment,variables:{subjectId:prNodeId,body:rawBody}})).data.addComment?.commentEdge?.node?.id}info("addComment - No Pull Request could be found to post comment.")},"addComment");var MutationCreateGitHubDeploymentStatus=graphql(`
   mutation CreateGitHubDeploymentStatus(
     $deploymentId: ID!
     $environment: String
@@ -291,5 +267,29 @@ ${output}`;return(await request({query:MutationAddComment,variables:{subjectId:p
       }
     }
   }
-`),createGitHubDeployment=__name(async({cloudflareDeployment:{id,url,project_name:projectName},cloudflareAccountId:accountId,commentId})=>{let{name,refId}=await checkEnvironment()??raise("GitHub Deployment: GitHub Environment is required"),{repo}=useContext(),payload={cloudflare:{id,projectName,accountId},url,commentId},gitHubDeploymentId=(await request({query:MutationCreateGitHubDeployment,variables:{repositoryId:repo.node_id,environmentName:name,refId,payload:JSON.stringify(payload),description:`Cloudflare Pages Deployment: ${id}`}})).data.createDeployment?.deployment?.id??raise("GitHub Deployment: GitHub deployment id is required");await request({query:MutationCreateGitHubDeploymentStatus,variables:{environment:name,deploymentId:gitHubDeploymentId,environmentUrl:url,logUrl:getCloudflareLogEndpoint({id,accountId,projectName}),state:"SUCCESS"}})},"createGitHubDeployment");var OPTIONS={required:!0},getInputs2=__name(()=>({cloudflareAccountId:getInput(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,OPTIONS),cloudflareProjectName:getInput(INPUT_KEY_CLOUDFLARE_PROJECT_NAME,OPTIONS),directory:getInput(INPUT_KEY_DIRECTORY,OPTIONS),workingDirectory:checkWorkingDirectory(getInput(INPUT_KEY_WORKING_DIRECTORY,{required:!1}))}),"getInputs"),_inputs2,useInputs=__name(()=>_inputs2??(_inputs2=getInputs2()),"useInputs");async function run(){let{cloudflareAccountId,cloudflareProjectName,directory,workingDirectory}=useInputs(),{eventName}=useContextEvent();if(eventName!=="push"&&eventName!=="pull_request"&&eventName!=="workflow_dispatch"&&eventName!=="workflow_run"){setFailed(`GitHub Action event name '${eventName}' not supported.`);return}let{deployment:cloudflareDeployment,wranglerOutput}=await createCloudflareDeployment({accountId:cloudflareAccountId,projectName:cloudflareProjectName,directory,workingDirectory}),commentId=await addComment(cloudflareDeployment,wranglerOutput);await createGitHubDeployment({cloudflareDeployment,commentId,cloudflareAccountId})}__name(run,"run");try{run()}catch(error2){error2 instanceof Error&&setFailed(error2.message)}
+`),createGitHubDeployment=__name(async({cloudflareDeployment:{id,url,project_name:projectName},cloudflareAccountId:accountId,commentId,environment:{name,refId}})=>{let{repo}=useContext(),payload={cloudflare:{id,projectName,accountId},url,commentId},gitHubDeploymentId=(await request({query:MutationCreateGitHubDeployment,variables:{repositoryId:repo.node_id,environmentName:name,refId,payload:JSON.stringify(payload),description:`Cloudflare Pages Deployment: ${id}`}})).data.createDeployment?.deployment?.id??raise("GitHub Deployment: GitHub deployment id is required");await request({query:MutationCreateGitHubDeploymentStatus,variables:{environment:name,deploymentId:gitHubDeploymentId,environmentUrl:url,logUrl:getCloudflareLogEndpoint({id,accountId,projectName}),state:"SUCCESS"}})},"createGitHubDeployment");var PREFIX="GitHub Environment:",MutationCreateEnvironment=graphql(`
+  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
+    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+      environment {
+        ...EnvironmentFragment
+      }
+    }
+  }
+`);var QueryGetEnvironment=graphql(`
+  query GetEnvironment(
+    $owner: String!
+    $repo: String!
+    $environment_name: String!
+    $qualifiedName: String!
+  ) {
+    repository(owner: $owner, name: $repo) {
+      environment(name: $environment_name) {
+        ...EnvironmentFragment
+      }
+      ref(qualifiedName: $qualifiedName) {
+        id
+      }
+    }
+  }
+`),checkEnvironment=__name(async()=>{let{gitHubEnvironment}=useCommonInputs(),{repo,ref}=useContext();if(!gitHubEnvironment)return raiseFail(`${PREFIX} missing input gitHubEnvironment ${gitHubEnvironment}`);let environment=await request({query:QueryGetEnvironment,variables:{owner:repo.owner,repo:repo.repo,environment_name:gitHubEnvironment,qualifiedName:ref},options:{errorThrows:!1}});return environment.errors?raiseFail(`${PREFIX} Errors - ${JSON.stringify(environment.errors)}`):environment.data.repository?.environment?environment.data.repository?.ref?.id?{...environment.data.repository.environment,refId:environment.data.repository?.ref?.id}:raiseFail(`${PREFIX} No ref id ${gitHubEnvironment}`):raiseFail(`${PREFIX} Not created for ${gitHubEnvironment}`)},"checkEnvironment");var OPTIONS={required:!0},getInputs2=__name(()=>({cloudflareAccountId:getInput(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,OPTIONS),cloudflareProjectName:getInput(INPUT_KEY_CLOUDFLARE_PROJECT_NAME,OPTIONS),directory:getInput(INPUT_KEY_DIRECTORY,OPTIONS),workingDirectory:checkWorkingDirectory(getInput(INPUT_KEY_WORKING_DIRECTORY,{required:!1}))}),"getInputs"),_inputs2,useInputs=__name(()=>_inputs2??(_inputs2=getInputs2()),"useInputs");async function run(){let{cloudflareAccountId,cloudflareProjectName,directory,workingDirectory}=useInputs(),{eventName}=useContextEvent();if(eventName!=="push"&&eventName!=="pull_request"&&eventName!=="workflow_dispatch"&&eventName!=="workflow_run"){setFailed(`GitHub Action event name '${eventName}' not supported.`);return}let{deployment:cloudflareDeployment,wranglerOutput}=await createCloudflareDeployment({accountId:cloudflareAccountId,projectName:cloudflareProjectName,directory,workingDirectory}),[commentId,environment]=await Promise.all([addComment(cloudflareDeployment,wranglerOutput),checkEnvironment()]);await createGitHubDeployment({cloudflareDeployment,commentId,cloudflareAccountId,environment})}__name(run,"run");try{run()}catch(error2){error2 instanceof Error&&setFailed(error2.message)}
 //# sourceMappingURL=index.js.map
