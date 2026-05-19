@@ -1,4 +1,4 @@
-import {exec} from 'node:child_process'
+import {exec, execFile} from 'node:child_process'
 import {existsSync} from 'node:fs'
 import path from 'node:path'
 import {promisify} from 'node:util'
@@ -15,6 +15,7 @@ export const raiseFail = (message: string): never => {
 }
 
 export const execAsync = promisify(exec)
+export const execFileAsync = promisify(execFile)
 
 export const checkWorkingDirectory = (directory = '.'): string => {
   const p = path.normalize(directory)
