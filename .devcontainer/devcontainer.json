@@ -6,15 +6,19 @@
     "vscode": {
       "extensions": [
         "eamodio.gitlens",
-        "oxc.oxc-vscode",
         "github.vscode-github-actions",
-        "yoavbls.pretty-ts-errors",
-        "redhat.vscode-yaml",
-        "GraphQL.vscode-graphql",
         "GraphQL.vscode-graphql-syntax",
+        "GraphQL.vscode-graphql",
+        "oxc.oxc-vscode",
+        "redhat.vscode-yaml",
         "vitest.explorer",
-        "webpro.vscode-knip"
-      ]
+        "webpro.vscode-knip",
+        "yoavbls.pretty-ts-errors"
+      ],
+      "settings": {
+        "extensions.autoUpdate": false,
+        "extensions.autoCheckUpdates": true
+      }
     }
   },
   "postCreateCommand": "sed -i '/^ZSH_THEME/c\\ZSH_THEME=\"bira\"' ~/.zshrc && pnpm i && pre-commit install",
