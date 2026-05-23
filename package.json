@@ -67,7 +67,7 @@
     "esbuild": "0.28.0",
     "graphql": "16.14.0",
     "graphql-tag": "2.12.6",
-    "knip": "6.7.0",
+    "knip": "6.14.1",
     "oxfmt": "0.47.0",
     "oxlint": "1.62.0",
     "oxlint-tsgolint": "0.22.1",
