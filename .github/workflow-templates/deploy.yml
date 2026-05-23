@@ -9,6 +9,13 @@ on:
   pull_request:
     branches:
       - $default-branch
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+
+# Deny all permissions by default; grant only what's needed per job
+permissions: {}
+
 jobs:
   deploy:
     permissions:
@@ -21,6 +28,8 @@ jobs:
     steps:
       - name: 'Checkout Github Action'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+        with:
+          persist-credentials: false
       - name: 'Deploy to Cloudflare Pages'
         uses: andykenward/github-actions-cloudflare-pages@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
         with:
