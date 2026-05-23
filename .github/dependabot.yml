@@ -10,6 +10,14 @@ updates:
       semver-major-days: 14
       semver-minor-days: 7
       semver-patch-days: 3
+  - package-ecosystem: docker
+    directory: /.devcontainer
+    schedule:
+      interval: weekly
+    cooldown:
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
   - package-ecosystem: 'devcontainers'
     directory: '/'
     schedule:
