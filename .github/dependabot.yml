@@ -6,24 +6,27 @@ updates:
     directory: /
     schedule:
       interval: weekly
-      day: sunday
+    cooldown:
+      default-days: 7
+  - package-ecosystem: docker
+    directory: /.devcontainer
+    schedule:
+      interval: weekly
     cooldown:
       default-days: 7
   - package-ecosystem: 'devcontainers'
     directory: '/'
     schedule:
       interval: weekly
-      day: sunday
     cooldown:
       default-days: 7
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
-      day: sunday
     cooldown:
       default-days: 7
-      semver-major-days: 30
+      semver-major-days: 14
       semver-minor-days: 7
       semver-patch-days: 3
     groups:

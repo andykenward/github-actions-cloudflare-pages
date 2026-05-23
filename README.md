@@ -94,48 +94,10 @@ wrangler:
 
 ## Examples
 
-See the GitHub Workflow examples below or [.github/workflow-templates/deploy.yml](.github/workflow-templates/deploy.yml)
+See the GitHub Workflow Templates [.github/workflow-templates/](.github/workflow-templates/)
 
-### `push` & `pull_request`
-
-```yaml
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: 'Deployment'
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    permissions:
-      actions: read # Only required for private GitHub Repo
-      contents: read
-      deployments: write
-      pull-requests: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node_version: 20
-      - run: npm ci
-        run: npm run build
-      - name: Deploy to Cloudflare Pages
-        uses: andykenward/github-actions-cloudflare-pages@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
-        id: pages
-        with:
-          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
-          directory: dist
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-environment: ${{ vars.CLOUDFLARE_PROJECT_NAME }} ${{ (github.ref == 'refs/heads/main' && '(Production)') || '(Preview)' }}
-```
+- [.github/workflow-templates/delete.yml](.github/workflow-templates/delete.yml)
+- [.github/workflow-templates/deploy.yml](.github/workflow-templates/deploy.yml)
 
 ### Fork pull requests with `workflow_run`
 

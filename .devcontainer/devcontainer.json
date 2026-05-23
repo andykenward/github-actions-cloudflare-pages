@@ -1,34 +1,39 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 {
   "name": "Container - Cloudflare Pages Action",
-  "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  // mcr.microsoft.com/devcontainers/base:jammy
+  "image": "mcr.microsoft.com/devcontainers/base:jammy@sha256:f2d74267998cfe76acefa5cc8d19ccc86bb2ba4520a5ad2b218def9566dc04cd",
   "customizations": {
     "vscode": {
       "extensions": [
-        "eamodio.gitlens",
-        "oxc.oxc-vscode",
-        "github.vscode-github-actions",
-        "yoavbls.pretty-ts-errors",
-        "redhat.vscode-yaml",
-        "GraphQL.vscode-graphql",
-        "GraphQL.vscode-graphql-syntax",
-        "vitest.explorer",
-        "webpro.vscode-knip"
-      ]
+        "eamodio.gitlens@2026.5.230538",
+        "github.vscode-github-actions@0.31.5",
+        "GraphQL.vscode-graphql-syntax@1.3.10",
+        "GraphQL.vscode-graphql@0.13.4",
+        "oxc.oxc-vscode@1.56.0",
+        "redhat.vscode-yaml@1.24.2026052209",
+        "vitest.explorer@1.50.4",
+        "webpro.vscode-knip@2.1.5",
+        "yoavbls.pretty-ts-errors@0.8.7"
+      ],
+      "settings": {
+        "extensions.autoUpdate": false,
+        "extensions.autoCheckUpdates": true
+      }
     }
   },
   "postCreateCommand": "sed -i '/^ZSH_THEME/c\\ZSH_THEME=\"bira\"' ~/.zshrc && pnpm i && pre-commit install",
   "updateContentCommand": "rm -rf .cache && pnpm i && pre-commit install",
   "features": {
-    "ghcr.io/devcontainers-extra/features/act:1": {},
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-    "ghcr.io/devcontainers/features/node:2": {
+    "ghcr.io/devcontainers-extra/features/act:1.0.15": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.0": {},
+    "ghcr.io/devcontainers/features/node:2.0.0": {
       "version": "24.7.0",
       "pnpmVersion": "11.0.8"
     },
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers-extra/features/pre-commit:2": {},
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+    "ghcr.io/devcontainers/features/github-cli:1.1.0": {},
+    "ghcr.io/devcontainers-extra/features/pre-commit:2.0.18": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0.5": {}
   },
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
