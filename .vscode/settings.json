@@ -23,5 +23,6 @@
   },
   "editor.suggest.showKeywords": false,
   "oxc.enable.oxfmt": true,
-  "oxc.enable.oxlint": true
+  "oxc.enable.oxlint": true,
+  "terminal.integrated.defaultProfile.linux": "zsh"
 }
