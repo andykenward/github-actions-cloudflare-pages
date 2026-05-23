@@ -4,7 +4,7 @@ import {info, setOutput, summary} from '@actions/core'
 
 import {useContext} from '@/common/github/context.js'
 import {useCommonInputs} from '@/common/inputs.js'
-import {execAsync} from '@/common/utils.js'
+import {execFileAsync} from '@/common/utils.js'
 
 import type {PagesDeployment} from '../types.js'
 
@@ -46,8 +46,21 @@ export const createCloudflareDeployment = async ({
     /**
      * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
      */
-    const {stdout} = await execAsync(
-      `npx wrangler@${WRANGLER_VERSION} pages deploy ${directory} --project-name=${projectName} --branch=${branch} --commit-dirty=true --commit-hash=${commitHash}`,
+    const {stdout} = await execFileAsync(
+      'npx',
+      [
+        `wrangler@${WRANGLER_VERSION}`,
+        'pages',
+        'deploy',
+        directory,
+        '--project-name',
+        projectName,
+        '--branch',
+        branch,
+        '--commit-dirty=true',
+        '--commit-hash',
+        commitHash
+      ],
       {
         env: process.env,
         cwd: workingDirectory

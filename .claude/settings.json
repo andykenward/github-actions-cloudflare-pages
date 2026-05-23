@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.github/hooks/scripts/stop-type-check.sh",
+            "timeout": 60
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./.github/hooks/scripts/stop-review-agents.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [[ -n \"$TOOL_INPUT_FILE_PATH\" && -f \"$TOOL_INPUT_FILE_PATH\" ]]; then bash ./.github/hooks/scripts/pre-commit-oxc.sh \"$TOOL_INPUT_FILE_PATH\"; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
