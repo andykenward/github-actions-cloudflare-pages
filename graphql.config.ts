@@ -9,6 +9,7 @@ const config: CodegenConfig = {
     '__generated__/gql/': {
       preset: 'client',
       config: {
+        enumType: 'native',
         useTypeImports: true,
         immutableTypes: true,
         dedupeFragments: true,

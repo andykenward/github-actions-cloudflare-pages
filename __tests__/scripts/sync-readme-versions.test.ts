@@ -165,7 +165,7 @@ describe(getLatestRelease, () => {
   test('throws on non-ok HTTP response', async () => {
     mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
       {query: QueryLatestRelease, variables: VARIABLES},
-      {data: {}},
+      {data: {} as LatestReleaseQuery},
       401
     )
 
@@ -177,7 +177,10 @@ describe(getLatestRelease, () => {
   test('throws when GraphQL errors are present', async () => {
     mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
       {query: QueryLatestRelease, variables: VARIABLES},
-      {data: {}, errors: [{type: 'NOT_FOUND', message: 'Not found'}]}
+      {
+        data: {} as LatestReleaseQuery,
+        errors: [{type: 'NOT_FOUND', message: 'Not found'}]
+      }
     )
 
     await expect(getLatestRelease()).rejects.toThrow('GitHub API errors')
