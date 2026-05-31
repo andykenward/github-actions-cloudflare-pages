@@ -1,8 +1,9 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 {
   "name": "Container - Cloudflare Pages Action",
-  // mcr.microsoft.com/devcontainers/base:jammy
-  "image": "mcr.microsoft.com/devcontainers/base:jammy@sha256:f2d74267998cfe76acefa5cc8d19ccc86bb2ba4520a5ad2b218def9566dc04cd",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -17,8 +18,15 @@
         "yoavbls.pretty-ts-errors@0.8.7"
       ],
       "settings": {
+        "chat.disableAIFeatures": true,
         "extensions.autoUpdate": false,
-        "extensions.autoCheckUpdates": true
+        "extensions.autoCheckUpdates": true,
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/usr/bin/zsh"
+          }
+        }
       }
     }
   },
@@ -27,20 +35,29 @@
   "features": {
     "ghcr.io/devcontainers-extra/features/act:1.0.15": {},
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.0": {},
-    "ghcr.io/devcontainers/features/node:2.0.0": {
-      "version": "24.7.0",
-      "pnpmVersion": "11.0.8"
-    },
     "ghcr.io/devcontainers/features/github-cli:1.1.0": {},
     "ghcr.io/devcontainers-extra/features/pre-commit:2.0.18": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0.5": {}
   },
   "containerEnv": {
-    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
+    "DISABLE_AUTOUPDATER": "1"
   },
+  // Ensure mount sources exist on the host before the container starts.
+  // Without this, Docker would auto-create an empty *directory* at the .claude.json
+  // path (since the source is missing), which breaks Claude Code.
+  // See ./README.md for host setup requirements.
+  "initializeCommand": "touch ${localEnv:HOME}/.claude.json && mkdir -p ${localEnv:HOME}/.claude ${localEnv:HOME}/.config/gh",
   "mounts": [
-    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind"
-  ]
+    // Claude Code credentials — read-only so container processes can't tamper with host auth.
+    "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind,readonly",
+    // Claude Code working state (projects, todos, memory) — must be writable.
+    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
+    // GitHub CLI credentials — read-only; re-auth on the host with `gh auth login`.
+    "source=${localEnv:HOME}/.config/gh,target=/home/node/.config/gh,type=bind,readonly",
+    // Named volume for persistent zsh history across container rebuilds.
+    "source=cloudflare-pages-action-zsh-history,target=/commandhistory,type=volume"
+  ],
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-  // "remoteUser": "root"
+  "remoteUser": "node"
 }
