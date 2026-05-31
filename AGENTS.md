@@ -1,173 +1,133 @@
-# GitHub Actions Cloudflare Pages - AI Agent Instructions
+# GitHub Actions Cloudflare Pages — AI Agent Instructions
 
-## Project Overview
+Dual-mode GitHub Action for Cloudflare Pages. **deploy** creates deployments via the Wrangler CLI and links them to GitHub Deployments/Environments; **delete** batch-removes old deployments. TypeScript ESM, GraphQL-typed GitHub API, vitest.
 
-Dual-mode GitHub Action for Cloudflare Pages deployments: `deploy` creates deployments via Wrangler CLI and links them to GitHub Deployments/Environments, `delete` batch-removes old deployments. Built with TypeScript ESM, GraphQL-typed GitHub API integration, and comprehensive vitest testing.
+## Critical Rules
+
+Non-negotiable. Violating these breaks the build or the type system.
+
+1. **GitHub API → GraphQL only, never REST.** Read [bin/download/](bin/download/) for the request pattern before writing any GitHub call.
+2. **After editing any GraphQL operation → run `pnpm run codegen`** before type-checking or building — generated types do not exist until you do.
+3. **Imports → `@/` path aliases.** Keep [tsconfig.json](tsconfig.json) `paths` in sync with [vitest.config.ts](vitest.config.ts) `resolve.alias`, or `vi.mock()` silently fails.
+4. **Never hand-edit [`__generated__/`](__generated__/)** — it is rebuilt by codegen.
+5. **No `console.log`** — use `@actions/core` methods (`info`, `debug`, `warning`, `error`, `setFailed`).
+6. **Touch an exported function → update its tests.** Tests for `bin/` scripts live in `__tests__/scripts/` (NOT `__tests__/bin/`, which vitest excludes).
+7. **Change a GraphQL selection set → update every test mock** for that operation (`grep` the operation name across `__tests__/`; multiple files may mock it).
+8. **Run scripts with the right runner**: `node` for scripts importing only `node:*` / relative / `package.json`; `tsx` for scripts importing via `@/` aliases (see [Build & Tooling](#build--tooling)).
 
 ## Architecture
 
-### Dual Entry Points
+| Path                                             | Role                                                                                                                        |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| [src/deploy/index.ts](src/deploy/index.ts)       | Deploy entry → bundled to [dist/deploy/index.js](dist/deploy/index.js) → consumed by [action.yml](action.yml)               |
+| [src/delete/index.ts](src/delete/index.ts)       | Delete entry → bundled to [dist/delete/index.js](dist/delete/index.js) → consumed by [delete/action.yml](delete/action.yml) |
+| [src/common/](src/common/)                       | Shared logic for both actions (GitHub API, Cloudflare deploy, batch ops)                                                    |
+| [src/common/github/](src/common/github/)         | GitHub API: deployments, comments, environments                                                                             |
+| [src/common/cloudflare/](src/common/cloudflare/) | Cloudflare Pages API + deployment logic                                                                                     |
+| [`__generated__/`](__generated__/)               | Generated — never edit (gql types, webhook payloads, API responses)                                                         |
+| [`__fixtures__/`](__fixtures__/)                 | Manually maintained test data                                                                                               |
+| [`__tests__/`](__tests__/)                       | Mirrors `src/` with `.test.ts` suffix                                                                                       |
 
-- **Deploy**: [src/deploy/index.ts](src/deploy/index.ts) → bundled to [dist/deploy/index.js](dist/deploy/index.js) → consumed by [action.yml](action.yml)
-- **Delete**: [src/delete/index.ts](src/delete/index.ts) → bundled to [dist/delete/index.js](dist/delete/index.js) → consumed by [delete/action.yml](delete/action.yml)
-- **Shared Logic**: [src/common/](src/common/) contains reusable code for both actions (GitHub API, Cloudflare deployment logic, batch operations)
+**GraphQL type safety**: Inline ``graphql(/* GraphQL */ `...`)`` operations in `src/**` and `bin/**` are typed via [@graphql-codegen/client-preset](graphql.config.ts). The custom client [src/common/github/api/client.ts](src/common/github/api/client.ts) wraps fetch with `TypedDocumentString` for compile-time validation. Preview features come from [schema/github/schema.graphql](schema/github/schema.graphql).
 
-### Path Aliases (`@/` prefix)
+**Cloudflare**: Runs `wrangler pages deploy` via `execAsync()` ([src/common/cloudflare/deployment/create.ts](src/common/cloudflare/deployment/create.ts#L49-L54)). Wrangler is an external (peer) dependency, not bundled. Deployment status polling and deletion use Cloudflare's REST API.
 
-All imports use [tsconfig.json](tsconfig.json) path mappings (`@/common/*`, `@/deploy/*`, `@/gql/*`, etc.). **Critical**: Keep [tsconfig.json](tsconfig.json) paths in sync with [vitest.config.ts](vitest.config.ts) `resolve.alias` - vi.mock() fails otherwise.
+## Commands
 
-### GraphQL Type Safety
+| Command                        | Purpose                                                                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `pnpm run all`                 | Full validation: sync-versions → knip → codegen → codegen:events → tsc → format → lint → test → build         |
+| `pnpm run build`               | ESBuild bundle to `dist/deploy` & `dist/delete`                                                               |
+| `pnpm run codegen`             | Regenerate GraphQL types in [`__generated__/gql/`](__generated__/gql/) from inline `graphql()` calls          |
+| `pnpm run codegen:events`      | Generate GitHub event types via [bin/codegen/index.ts](bin/codegen/index.ts) from `@octokit/webhooks-schemas` |
+| `pnpm run codegen:watch`       | Auto-regenerate types on GraphQL changes                                                                      |
+| `pnpm run tsc:check`           | Type-check (`tsc --noEmit --checkJs`)                                                                         |
+| `pnpm run test` / `test:watch` | Vitest run / interactive                                                                                      |
+| `pnpm run start`               | Run the built action locally (needs local env vars)                                                           |
+| `pnpm run act:d`               | Test the delete action locally with `act`                                                                     |
+| `pnpm changeset`               | Record a changeset for notable/breaking changes                                                               |
 
-- GitHub GraphQL API queries/mutations in `src/**/` and `bin/**/` are type-safe via [@graphql-codegen/client-preset](graphql.config.ts)
-- Run `pnpm run codegen` to regenerate [**generated**/gql/](__generated__/gql/) types from inline `graphql()` calls
-- GraphQL scalar types (e.g. `GitObjectID`, `URI`) are mapped to TypeScript types in [graphql.config.ts](graphql.config.ts) — add a mapping there when a new scalar appears as `any` in generated output
-- Uses fragments pattern (see [src/common/github/fragments.ts](src/common/github/fragments.ts))
-- Custom client: [src/common/github/api/client.ts](src/common/github/api/client.ts) wraps fetch with TypedDocumentString for compile-time validation
-- Preview features added via [schema/github-preview/schema.graphql](schema/github-preview/schema.graphql)
+## Task Playbooks
 
-### Cloudflare Integration
+**Add a GitHub API operation**
 
-- Executes `wrangler pages deploy` via `execAsync()` (see [src/common/cloudflare/deployment/create.ts](src/common/cloudflare/deployment/create.ts#L49-L54))
-- Wrangler is external dependency (not bundled) - defined in [esbuild.config.js](esbuild.config.js)
-- Uses REST API for deployment status polling and deletion
+1. Write a ``graphql(/* GraphQL */ `...`)`` operation in the appropriate file (read [bin/download/](bin/download/) for the pattern first).
+2. `pnpm run codegen` — types won't exist until you do.
+3. Import generated types from [`__generated__/gql/graphql.ts`](__generated__/gql/graphql.ts); call via the typed `request()` client.
+4. If a scalar appears as `any` in generated output, add a mapping in [graphql.config.ts](graphql.config.ts) and re-run codegen.
 
-### Code Generation
+**Change a GraphQL selection set**
 
-Two codegen workflows:
+1. Edit the operation → `pnpm run codegen`.
+2. Update **every** test mock response for that operation — `grep` the operation name across `__tests__/`.
 
-1. **GraphQL**: `pnpm run codegen` → generates [**generated**/gql/](__generated__/gql/) from inline queries
-2. **GitHub Event Types**: `pnpm run codegen:events` → runs [bin/codegen/index.ts](bin/codegen/index.ts) to generate workflow event types from `@octokit/webhooks-schemas`
+**Add an action input**
 
-## Development Workflows
+1. Add the input to [action.yml](action.yml) or [delete/action.yml](delete/action.yml).
+2. Add `INPUT_KEY_*` in [input-keys.ts](input-keys.ts) (and `INPUT_KEYS_REQUIRED` if mandatory).
+3. Handle it in `inputs.ts`.
+4. Stub it in [`__tests__/helpers/inputs.ts`](__tests__/helpers/inputs.ts).
+5. Document it in the Inputs table of [README.md](README.md) (or [delete/README.md](delete/README.md) for the delete action).
 
-### Essential Commands
+**Cloudflare API change**: update types in [src/common/cloudflare/types.ts](src/common/cloudflare/types.ts) → add fixtures to [`__generated__/responses/`](__generated__/responses/).
 
-```bash
-pnpm run all           # Full validation: sync-versions → knip → codegen → codegen:events → tsc → format → lint → test → build
-pnpm run build         # ESBuild bundle to dist/deploy & dist/delete
-pnpm run test          # Vitest run
-pnpm run test:watch    # Interactive test mode
-pnpm run codegen:watch # Auto-regenerate types on GraphQL changes
-pnpm run act:d         # Test delete action locally with act
-```
+**Breaking change**: `pnpm changeset` to record it for [CHANGELOG.md](CHANGELOG.md).
 
-### Build Requirements
+## Conventions
 
-- **Node**: Version enforced by `engines` field in [package.json](package.json)
-- **pnpm**: Version enforced by `packageManager` field in [package.json](package.json)
-- **TypeScript Script Execution**: Use `node path/to/script.ts` for scripts that only import from `node:*`, relative paths, or `package.json` (e.g. `node bin/sync-versions.ts`). Use `tsx path/to/script.ts` for scripts that import via `@/` path aliases — `tsx` reads `tsconfig.json` paths and resolves `.js`→`.ts` throughout the entire import chain, including generated files. Plain `node` cannot do that substitution. Node.js Subpath imports (`#`-prefixed, defined in `package.json` `imports`) cannot help either because they only redirect the entry import, not relative `.js` imports inside the loaded files.
-- **Bin Script Pattern**: When a `bin/` script must be both importable (for tests) and directly executable, wrap all side-effectful code in `if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href)` and export the pure functions. See [bin/sync-readme-versions.ts](bin/sync-readme-versions.ts) as a reference.
-- After modifying GraphQL queries/mutations: `pnpm run codegen` before building
-- After changing input keys in [action.yml](action.yml): Update [input-keys.ts](input-keys.ts)
+**GraphQL operations**
 
-### Debugging
+- Always use the ``graphql(/* GraphQL */ `...`)`` template tag (required for codegen detection).
+- Prefix mutations `MutationCreateGitHubDeployment`; prefix fragments `EnvironmentFragment`.
+- **Fragment placement**: keep fragment definitions in `**/fragments.ts`. Knip ignores `src/**/fragments.ts` ([knip.json](knip.json)) so exports codegen uses without a TS import don't trip dead-code detection. Do NOT move a fragment into an implementation file — it triggers an unused-local/export violation. A fragment used in one subdomain still lives in a peer `fragments.ts` (e.g. [src/common/github/deployment/fragments.ts](src/common/github/deployment/fragments.ts)); fragments shared across subdirectories go in [src/common/github/fragments.ts](src/common/github/fragments.ts).
+- **Fragment resolution**: codegen resolves `...FragmentName` spreads by scanning all project files (no TS import needed in operation files) and inlines the full definition into each operation's `TypedDocumentString` ([`__generated__/gql/graphql.ts`](__generated__/gql/graphql.ts)).
 
-- ESBuild sourcemaps enabled ([esbuild.config.js](esbuild.config.js))
-- Use `pnpm run start` to test built action locally (requires local env vars)
-- Vitest debug mode: Add `debugger` statements and run with Node inspector
+**Error handling**: use `raise()` for inline errors with type narrowing — `const {name} = (await checkEnvironment()) ?? raise('Environment required')`. See [src/common/utils.ts](src/common/utils.ts).
 
-## Testing Patterns
+**Testing**
 
-### Setup & Mocking
+- Global setup [vitest.setup.ts](vitest.setup.ts) stubs required env + input env vars before each test.
+- [`__mocks__/@actions/core.ts`](__mocks__/@actions/core.ts) provides `vi.fn()` wrappers for all `@actions/core` methods.
+- HTTP: undici `MockAgent` (see [`__tests__/helpers/api.ts`](__tests__/helpers/api.ts)); assert `mockApi.mockAgent.assertNoPendingInterceptors()` to catch missed calls.
+- Helpers: `stubTestEnvVars()` ([`__tests__/helpers/env.ts`](__tests__/helpers/env.ts)), `stubRequiredInputEnv()` ([`__tests__/helpers/inputs.ts`](__tests__/helpers/inputs.ts)). Fixtures: [`__generated__/payloads/`](__generated__/payloads/), [`__generated__/responses/`](__generated__/responses/).
+- `vi.mock(import('@/...'))` — always use path aliases to match vitest aliases. `vi.mock(import('@actions/core'))` auto-loads the `__mocks__` file.
+- Use `describe(functionName)` with the actual function reference for IDE navigation.
 
-- **Global Setup**: [vitest.setup.ts](vitest.setup.ts) stubs all required env vars and input env vars before each test
-- **Core Mocking**: [**mocks**/@actions/core.ts](__mocks__/@actions/core.ts) provides vi.fn() wrappers for all @actions/core methods
-- **HTTP Mocking**: Use undici MockAgent pattern (see [**tests**/helpers/api.ts](__tests__/helpers/api.ts))
+**Docs & containers**
 
-### Test Helpers
+- **Keep user-facing docs in sync**: [README.md](README.md) documents the deploy action ([action.yml](action.yml)); [delete/README.md](delete/README.md) documents the delete action ([delete/action.yml](delete/action.yml)). When you add, change, or remove an input or output — or change user-visible behavior — update the matching Inputs/Outputs table and examples in the corresponding README. The pinned `andykenward/...@<sha> #vX.Y.Z` action refs in both are kept current by [bin/sync-readme-versions.ts](bin/sync-readme-versions.ts); don't hand-edit the SHA or version.
+- **Markdown paths**: wrap `__dunder__` path tokens in backticks — e.g. ``[`__generated__/`](__generated__/)`` — because the formatter reads a bare `__x__` as bold emphasis and can mangle both the link text and its target.
+- **Dockerfiles** ([.devcontainer/Dockerfile](.devcontainer/Dockerfile)): keep logically distinct steps in separate `RUN` blocks. Don't merge blocks when it adds complexity (e.g. extra bootstrap or a second `apt-get update` just to consolidate) — favor clarity over layer minimisation.
 
-- `stubTestEnvVars()`: Injects GitHub context env vars (see [**tests**/helpers/env.ts](__tests__/helpers/env.ts))
-- `stubRequiredInputEnv()`: Sets all required action inputs to mock values (see [**tests**/helpers/inputs.ts](__tests__/helpers/inputs.ts))
-- Real webhook payloads: [**generated**/payloads/](__generated__/payloads/) imported as json modules
-- API responses: [**generated**/responses/](__generated__/responses/) for consistent test fixtures
+## Build & Tooling
 
-### Module Mocking
+- **Versions**: Node via `engines`, pnpm via `packageManager` — both in [package.json](package.json).
+- **`node` vs `tsx`**: use `node path/to/script.ts` for scripts importing only `node:*`, relative paths, or `package.json` (e.g. `node bin/sync-versions.ts`). Use `tsx path/to/script.ts` for scripts importing via `@/` aliases — `tsx` reads `tsconfig.json` paths and resolves `.js`→`.ts` through the entire import chain (including generated files); plain `node` cannot, and `#`-prefixed subpath imports only redirect the entry import, not relative `.js` imports inside loaded files.
+- **Bin script pattern**: a `bin/` script that must be both importable (for tests) and directly executable wraps side-effectful code in `if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href)` and exports the pure functions. Reference: [bin/sync-readme-versions.ts](bin/sync-readme-versions.ts).
+- **ESBuild** ([esbuild.config.js](esbuild.config.js)): banner adds a `createRequire` shim for dynamic-require compatibility ([esbuild.config.js](esbuild.config.js#L22-L35)); `wrangler` is external; minification is syntax + whitespace only (identifiers preserved for debugging); sourcemaps enabled.
+- **Sequencing**: run `pnpm run codegen` after GraphQL changes before building; update [input-keys.ts](input-keys.ts) after changing input keys in [action.yml](action.yml).
+- **Debugging**: `pnpm run start` runs the built action locally; add `debugger` statements and run vitest under the Node inspector.
+- **Code quality**: Knip dead-code detection ([knip.json](knip.json), ignores `__generated__`, fragments, wrangler, act); Oxlint ([.oxlintrc.json](.oxlintrc.json)); TypeScript strict mode (`verbatimModuleSyntax`, `noEmit`, `checkJs`).
+- **Line anchors**: a few links here use line numbers (e.g. `create.ts#L49-L54`, `esbuild.config.js#L22-L35`). When you edit code at one of those locations, update the line number in this file.
 
-```typescript
-vi.mock(import('@actions/core')) // Auto-loads __mocks__/@actions/core.ts
-vi.mock(import('@/common/utils.js')) // Mocks specific module
-```
+## Dev Environment Hooks
 
-Always import using path aliases to match vitest.config.ts aliases.
+Formatting, linting, and type-checking are automated via [prek](https://prek.j178.dev) (`prek.toml`) and Claude Code hooks ([.claude/settings.json](.claude/settings.json), scripts in [.claude/scripts/](.claude/scripts/)).
 
-### Writing Tests
-
-- Use `describe(functionName)` with actual function reference for IDE navigation
-- Assert `mockApi.mockAgent.assertNoPendingInterceptors()` to catch missed HTTP calls
-- **When adding or modifying an exported function, update its tests.** Tests for `bin/` scripts go in `__tests__/scripts/` (not `__tests__/bin/` — that path is excluded by the vitest config).
-
-## Project-Specific Conventions
-
-### Input Key Management
-
-All action inputs centralized in [input-keys.ts](input-keys.ts). When adding inputs:
-
-1. Add constant `INPUT_KEY_*`
-2. Update `INPUT_KEYS_REQUIRED` if mandatory
-3. Update corresponding [action.yml](action.yml) or [delete/action.yml](delete/action.yml)
-4. Add to test stub in [**tests**/helpers/inputs.ts](__tests__/helpers/inputs.ts)
-
-### Error Handling
-
-Use `raise()` utility for inline errors with type narrowing:
-
-```typescript
-const {name} = (await checkEnvironment()) ?? raise('Environment required')
-```
-
-See implementation in [src/common/utils.ts](src/common/utils.ts).
-
-### GraphQL Operations
-
-- **Always use GraphQL for GitHub API calls — never the REST API.** Before implementing any GitHub API interaction, read [bin/download/](bin/download/) to understand the existing request pattern.
-- Prefix mutations: `MutationCreateGitHubDeployment`
-- Prefix fragments: `EnvironmentFragment`
-- **Fragment placement**: Keep fragment definitions in `**/fragments.ts` files. Knip ignores `src/**/fragments.ts` (see [knip.json](knip.json)) to allow fragment exports that codegen uses without TypeScript imports. Do NOT move a fragment into an implementation file — it will cause an unused-local or unused-export violation. A fragment only used within one subdomain still lives in a peer `fragments.ts` (e.g. [src/common/github/deployment/fragments.ts](src/common/github/deployment/fragments.ts)). Fragments shared across subdirectories go in [src/common/github/fragments.ts](src/common/github/fragments.ts).
-- **Fragment resolution**: Codegen resolves `...FragmentName` spreads by scanning all project files — no TypeScript import of the fragment document is needed in operation files. Codegen inlines the full fragment definition into each parent operation's `TypedDocumentString` at generation time (visible in [`__generate__/gql/graphql.ts`](__generated__/gql/graphql.ts)).
-- Always use `graphql(/* GraphQL */ `...`)` template tag for codegen detection
-- **When changing a selection set**: update all test mock response objects for that operation — multiple test files may mock the same query or mutation, so `grep` for the operation name across `__tests__/`
-
-### Code Quality
-
-- **Line anchors**: A few links in this document use line numbers to point to non-obvious code locations. When you edit code at one of those locations, update the line number in this file to match.
-- **Knip**: Dead code detection ([knip.json](knip.json)) - ignores [**generated**/](__generated__/), fragments, wrangler, act
-- **Oxlint**: TypeScript linting with custom rules ([.oxlintrc.json](.oxlintrc.json))
-- **TypeScript**: Strict mode with `verbatimModuleSyntax`, `noEmit`, `checkJs`
-- **No console.log**: Use `@actions/core` methods (`info`, `debug`, `warning`, `error`, `setFailed`)
-- **Hook Sync Rule**: When changing formatter/linter hook behavior or script paths, update these together: [.pre-commit-config.yaml](.pre-commit-config.yaml), [.github/hooks/format-and-lint-after-edit.json](.github/hooks/format-and-lint-after-edit.json), and the usage header in [.github/hooks/scripts/pre-commit-oxc.sh](.github/hooks/scripts/pre-commit-oxc.sh).
-- **Type Check on Session End**: [.github/hooks/type-check-at-stop.json](.github/hooks/type-check-at-stop.json) runs `pnpm run tsc:check` when the agent finishes and blocks the session if type errors are found, forcing resolution before the session ends.
-- **AGENTS.md Review on Session End**: [.github/hooks/review-agents-at-stop.json](.github/hooks/review-agents-at-stop.json) prompts the agent to review AGENTS.md for any learnings worth capturing before the session ends (only fires when working-tree changes are present).
-
-### File Organization
-
-- [src/common/](src/common/): Shared between deploy/delete actions
-- [src/common/github/](src/common/github/): GitHub API interactions (deployments, comments, environments)
-- [src/common/cloudflare/](src/common/cloudflare/): Cloudflare Pages API and deployment logic
-- [**generated**/](__generated__/): Never edit manually - regenerated by codegen scripts
-- [**fixtures**/](__fixtures__/): Test data that's manually maintained
-- [**tests**/](__tests__/): Mirrors src/ structure with `.test.ts` suffix
-
-### ESBuild Specifics
-
-- Banner adds `createRequire` shim for dynamic require compatibility ([esbuild.config.js](esbuild.config.js#L22-L35))
-- External: `wrangler` (peer dependency expected in user's environment)
-- Minification: Syntax and whitespace only (not identifiers) for debugging
+- **Hook Sync Rule**: when changing formatter/linter behavior or script paths, update together — the `oxc-format-and-lint` local hook in [prek.toml](prek.toml), the PostToolUse hook in [.claude/settings.json](.claude/settings.json), and the usage header in [.claude/scripts/pre-commit-oxc.sh](.claude/scripts/pre-commit-oxc.sh).
+- **Format + lint after edits**: [.claude/scripts/format-and-lint-after-edit.sh](.claude/scripts/format-and-lint-after-edit.sh) runs oxfmt + oxlint on each edited file and feeds lint errors back to the agent.
+- **Type-check after edits**: [.claude/scripts/type-check-after-edit.sh](.claude/scripts/type-check-after-edit.sh) runs `pnpm run tsc:check` asynchronously (the `asyncRewake` PostToolUse hook); type errors wake the agent without blocking the edit.
+- **Session-end review on stop**: [.claude/scripts/stop-review-agents.sh](.claude/scripts/stop-review-agents.sh) (Stop hook) prompts capturing session learnings in AGENTS.md (shared repo conventions) and auto-memory (user preferences + project context) when the working tree has changes.
 
 ## GitHub Actions Integration
 
-- Requires manual creation of GitHub Environments (action cannot create due to permission requirements)
-- Uses `GITHUB_TOKEN` with permissions: `actions:read`, `contents:read`, `deployments:write`, `pull-requests:write`
-- Supports `push`, `pull_request`, `workflow_dispatch`, `workflow_run` events only (validated in [src/deploy/main.ts](src/deploy/main.ts))
-- Deployment payload includes Cloudflare metadata for deletion workflow ([src/common/github/deployment/types.ts](src/common/github/deployment/types.ts))
+- GitHub Environments must be created manually (the action lacks permission to create them).
+- `GITHUB_TOKEN` permissions: `actions:read`, `contents:read`, `deployments:write`, `pull-requests:write`.
+- Supported events only: `push`, `pull_request`, `workflow_dispatch`, `workflow_run` (validated in [src/deploy/main.ts](src/deploy/main.ts)).
+- The deployment payload embeds Cloudflare metadata so the delete workflow can find deployments ([src/common/github/deployment/types.ts](src/common/github/deployment/types.ts)).
 
-## When Modifying Core Functionality
+## Resources
 
-1. **Adding GitHub API Operations**: Write `graphql(/* GraphQL */ `...`)` operation in the appropriate file → run `pnpm run codegen` (types won't exist until you do) → import generated types from [`__generated__/gql/graphql.ts`](__generated__/gql/graphql.ts) → use typed `request()` client. If a scalar appears as `any` in generated output, add a mapping in [graphql.config.ts](graphql.config.ts) and re-run codegen.
-2. **New Action Inputs**: Update action.yml → add key to input-keys.ts → handle in inputs.ts → stub in test helpers
-3. **Cloudflare API Changes**: Update types in [src/common/cloudflare/types.ts](src/common/cloudflare/types.ts) → add fixtures to [**generated**/responses/](__generated__/responses/)
-4. **Breaking Changes**: Document in [CHANGELOG.md](CHANGELOG.md) using changesets: `pnpm changeset`
-
-## Additional Resources for AI Agents
-
-- **[README.md](README.md)** — User-facing documentation for the action.
-- **[CHANGELOG.md](CHANGELOG.md)** — Record of changes and breaking changes for this project.
+- [README.md](README.md) — user-facing docs for the deploy action.
+- [delete/README.md](delete/README.md) — user-facing docs for the delete action.
+- [CHANGELOG.md](CHANGELOG.md) — changes and breaking changes.
