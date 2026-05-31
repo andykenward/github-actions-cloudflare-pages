@@ -41,4 +41,7 @@ RUN mkdir -p "$PNPM_HOME" \
        | SHELL="$(which bash)" PNPM_VERSION=11.1.1 bash - \
     && chmod -R a+rx "$PNPM_HOME"
 
+# prek v0.4.3 — pre-commit hook manager, copied from the official distroless image
+COPY --from=ghcr.io/j178/prek:v0.4.3@sha256:953593c93d253d44bad97b36b428c13edd074dc35de003ccbf3ff9a40c0c79b9 /prek /usr/local/bin/prek
+
 WORKDIR /workspace
