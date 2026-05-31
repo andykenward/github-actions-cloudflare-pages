@@ -1,4 +1,4 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// For format and config option details, see https://aka.ms/devcontainer.json.
 {
   "name": "Container - Cloudflare Pages Action",
   "build": {
@@ -53,6 +53,7 @@
     // Named volume for persistent zsh history across container rebuilds.
     "source=cloudflare-pages-action-zsh-history,target=/commandhistory,type=volume"
   ],
-  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+  // Connect as the non-root `node` user (the Dockerfile's default USER). Set to
+  // "root" to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   "remoteUser": "node"
 }
