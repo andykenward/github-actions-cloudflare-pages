@@ -1,0 +1,28 @@
+# Zsh config for the devcontainer's `node` user.
+# Installed to /home/node/.zshrc by .devcontainer/Dockerfile.
+
+# History persistence.
+# HISTFILE lives in /commandhistory, a named volume mounted by devcontainer.json
+# so history survives container rebuilds. SHARE_HISTORY writes each command to
+# the file immediately and makes it visible across concurrent shells (useful
+# when VS Code opens multiple terminals against the same container).
+# HIST_IGNORE_DUPS drops a command if it matches the previous one.
+export HISTFILE=/commandhistory/.zsh_history
+export HISTSIZE=10000
+export SAVEHIST=10000
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+
+# Inline grey suggestions from history as you type. Accept with the right arrow
+# key (or End). Installed via the `zsh-autosuggestions` apt package.
+source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# Prompt: cwd + git branch on line 1, input on line 2.
+# vcs_info is a built-in zsh module — no plugin manager or external deps.
+# PROMPT_SUBST is required so ${vcs_info_msg_0_} is re-expanded on every prompt.
+# The $'\n' between the two single-quoted segments inserts a real newline.
+autoload -Uz vcs_info
+precmd() { vcs_info }
+zstyle ':vcs_info:git:*' formats ' (%b)'
+setopt PROMPT_SUBST
+PROMPT='%F{cyan}%~%f%F{yellow}${vcs_info_msg_0_}%f'$'\n''$ '

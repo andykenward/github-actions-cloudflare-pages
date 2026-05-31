@@ -10,10 +10,10 @@
             "created_on": "2023-06-16T18:41:19.07168Z",
             "modified_on": "2023-06-16T18:41:21.226094Z",
             "latest_stage": {
-                "name": "deploy",
-                "started_on": null,
-                "ended_on": "2023-06-16T18:41:21.226094Z",
-                "status": "success"
+                "name": "queued",
+                "started_on": "2023-06-16T18:41:19.07168Z",
+                "ended_on": null,
+                "status": "active"
             },
             "deployment_trigger": {
                 "type": "ad_hoc",

@@ -1,27 +1,55 @@
 # andykenward/github-actions-cloudflare-pages/delete
 
-Delete deployments made using [`andykenward/github-actions-cloudflare-pages`](../README.md) for the current branch or pull request.
+Delete deployments created by [`andykenward/github-actions-cloudflare-pages`](../README.md) for the current branch or pull request. When a [pull request] is closed, it removes that PR's deployments from [Cloudflare Pages] and [GitHub Deployment], along with the related comments.
 
-**The action is only able to delete deployments & comments that are created by `andykenward/github-actions-cloudflare-pages`, as it requires a certain payload in a GitHub deployment.**
+> [!IMPORTANT]
+> This action can only delete deployments and comments created by [`andykenward/github-actions-cloudflare-pages`](../README.md) — it relies on a specific payload stored in the GitHub deployment.
 
-On closing the [pull request], all the deployments for that pull request will be deleted from [Cloudflare Pages], [GitHub Deployment] and related comments.
+**Features**
 
-- Delete Cloudflare Pages deployment.
-- Update GitHub deployment status to `INACTIVE` on successfully deleting the Cloudflare Pages deployment.
-- Delete GitHub deployment and related comment.
-- Output [job summary] of deletion.
+- Delete the Cloudflare Pages deployment.
+- Mark the GitHub deployment status `INACTIVE` once the Cloudflare Pages deployment is deleted.
+- Delete the GitHub deployment and its related comment.
+- Write a [job summary] of what was deleted.
 
-## Upgrading
+## Quick start
 
-If you have previous deployments using an older version of this GitHub Action please see the [CHANGELOG.md](../CHANGELOG.md) for breaking changes.
+Run this on `pull_request: closed` to clean up a PR's preview deployments when it's closed or merged (this mirrors the official template in [.github/workflow-templates/delete.yml](../.github/workflow-templates/delete.yml)):
+
+```yaml
+name: Cloudflare Pages Delete
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+# Deny all permissions by default; grant only what each job needs.
+permissions: {}
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read # Only required for a private repo.
+      contents: read
+      deployments: write
+      pull-requests: write
+    steps:
+      - name: Delete Cloudflare Pages deployment
+        uses: andykenward/github-actions-cloudflare-pages/delete@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
+        with:
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
 
 ## Permissions
 
-The [permissions] required for this GitHub Action when using the created [`GITHUB_TOKEN`] by the workflow for the `github-token` field.
+When using the workflow's built-in [`GITHUB_TOKEN`] for the `github-token` input, grant these [permissions]:
 
 ```yaml
 permissions:
-  actions: read # Only required for a private GitHub Repo.
+  actions: read # Only required for a private GitHub repo.
   contents: read
   deployments: write
   pull-requests: write
@@ -29,55 +57,20 @@ permissions:
 
 ## Inputs
 
-```yaml
-cloudflare-api-token:
-  description: 'Cloudflare API Token.'
-  required: true
-github-token:
-  description: 'Github API key, make sure to add the required permissions for this action.'
-  required: true
-github-environment:
-  description: 'GitHub environment to delete deployments from. Leave undefined to delete all deployments referencing the current branch or pull_request.'
-  required: false
-keep-latest:
-  description: 'How many deployments to keep. Default is 0.'
-  default: '0'
-  required: false
-```
+| Input                  | Required | Default | Description                                                                                                                              |
+| ---------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloudflare-api-token` | yes      | —       | Cloudflare API Token.                                                                                                                    |
+| `github-token`         | yes      | —       | Github API key, make sure to add the required permissions for this action.                                                               |
+| `github-environment`   | no       | —       | GitHub environment to delete deployments from. Leave undefined to delete all deployments referencing the current branch or pull_request. |
+| `keep-latest`          | no       | `0`     | How many deployments to keep. Default is 0.                                                                                              |
 
 ## Examples
 
-See GitHub Workflow example below or [.github/workflow-templates/delete.yml](../.github/workflow-templates/delete.yml)
+A ready-to-use template lives at [.github/workflow-templates/delete.yml](../.github/workflow-templates/delete.yml); the [Quick start](#quick-start) above is the same workflow.
 
-### `pull_request` `closed`
+## Upgrading
 
-```yaml
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-
-name: 'Deployment Deletion'
-on:
-  pull_request:
-    types:
-      - closed
-    branches:
-      - main
-
-jobs:
-  deploy-delete:
-    permissions:
-      actions: read # Only required for private GitHub Repo
-      contents: read
-      deployments: write
-      pull-requests: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Deploy deletion Cloudflare Pages
-        uses: andykenward/github-actions-cloudflare-pages/delete@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
-        with:
-          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-```
+Upgrading from an older version? Check [CHANGELOG.md](../CHANGELOG.md) for breaking changes.
 
 [pull request]: https://docs.github.com/en/pull-requests
 [Cloudflare Pages]: https://pages.cloudflare.com/

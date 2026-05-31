@@ -177,7 +177,8 @@ describe('environment', () => {
         [
           {
             repository: {
-              environment: null
+              environment: null,
+              ref: null
             }
           },
           [
@@ -212,7 +213,7 @@ describe('environment', () => {
         [
           {
             repository: {
-              environment: undefined,
+              environment: null,
               ref: {
                 id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk='
               }
@@ -229,7 +230,7 @@ describe('environment', () => {
                 name: 'unlike-dev (Preview)',
                 id: 'EN_kwDOJn0nrM5D_l8n'
               },
-              ref: undefined
+              ref: null
             }
           }
         ],

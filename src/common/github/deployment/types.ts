@@ -1,9 +1,7 @@
-import type {Scalars} from '@/gql/graphql.js'
-
 export type PayloadGithubDeployment = {
   cloudflareId: string
   url: string
-  commentId: Scalars['ID']['input'] | undefined
+  commentId: string | undefined
 }
 
 export type PayloadGithubDeploymentV2 = Omit<

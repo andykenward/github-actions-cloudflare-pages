@@ -78,6 +78,9 @@ describe('batch-delete', () => {
       },
       {
         data: {
+          deleteIssueComment: {
+            clientMutationId: null
+          },
           deleteDeployment: {
             clientMutationId: 'DE_kwDOJn0nrM5U35aT'
           }
