@@ -67,6 +67,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 2. Add `INPUT_KEY_*` in [input-keys.ts](input-keys.ts) (and `INPUT_KEYS_REQUIRED` if mandatory).
 3. Handle it in `inputs.ts`.
 4. Stub it in [`__tests__/helpers/inputs.ts`](__tests__/helpers/inputs.ts).
+5. Document it in the Inputs table of [README.md](README.md) (or [delete/README.md](delete/README.md) for the delete action).
 
 **Cloudflare API change**: update types in [src/common/cloudflare/types.ts](src/common/cloudflare/types.ts) → add fixtures to [`__generated__/responses/`](__generated__/responses/).
 
@@ -94,6 +95,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 
 **Docs & containers**
 
+- **Keep user-facing docs in sync**: [README.md](README.md) documents the deploy action ([action.yml](action.yml)); [delete/README.md](delete/README.md) documents the delete action ([delete/action.yml](delete/action.yml)). When you add, change, or remove an input or output — or change user-visible behavior — update the matching Inputs/Outputs table and examples in the corresponding README. The pinned `andykenward/...@<sha> #vX.Y.Z` action refs in both are kept current by [bin/sync-readme-versions.ts](bin/sync-readme-versions.ts); don't hand-edit the SHA or version.
 - **Markdown paths**: wrap `__dunder__` path tokens in backticks — e.g. ``[`__generated__/`](__generated__/)`` — because the formatter reads a bare `__x__` as bold emphasis and can mangle both the link text and its target.
 - **Dockerfiles** ([.devcontainer/Dockerfile](.devcontainer/Dockerfile)): keep logically distinct steps in separate `RUN` blocks. Don't merge blocks when it adds complexity (e.g. extra bootstrap or a second `apt-get update` just to consolidate) — favor clarity over layer minimisation.
 
@@ -126,5 +128,6 @@ Formatting, linting, and type-checking are automated via [prek](https://prek.j17
 
 ## Resources
 
-- [README.md](README.md) — user-facing action docs.
+- [README.md](README.md) — user-facing docs for the deploy action.
+- [delete/README.md](delete/README.md) — user-facing docs for the delete action.
 - [CHANGELOG.md](CHANGELOG.md) — changes and breaking changes.
