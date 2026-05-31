@@ -20993,6 +20993,11 @@ interface IssueFieldCommon {
   description: String
 
   """
+  Identifies the primary key from the database as a BigInt.
+  """
+  fullDatabaseId: BigInt
+
+  """
   The issue field's name.
   """
   name: String!
@@ -21088,6 +21093,11 @@ type IssueFieldDate implements IssueFieldCommon & Node {
   description: String
 
   """
+  Identifies the primary key from the database as a BigInt.
+  """
+  fullDatabaseId: BigInt
+
+  """
   The Node ID of the IssueFieldDate object
   """
   id: ID!
@@ -21141,6 +21151,11 @@ type IssueFieldNumber implements IssueFieldCommon & Node {
   The issue field's description.
   """
   description: String
+
+  """
+  Identifies the primary key from the database as a BigInt.
+  """
+  fullDatabaseId: BigInt
 
   """
   The Node ID of the IssueFieldNumber object
@@ -21253,6 +21268,11 @@ type IssueFieldSingleSelect implements IssueFieldCommon & Node {
   description: String
 
   """
+  Identifies the primary key from the database as a BigInt.
+  """
+  fullDatabaseId: BigInt
+
+  """
   The Node ID of the IssueFieldSingleSelect object
   """
   id: ID!
@@ -21283,9 +21303,19 @@ type IssueFieldSingleSelectOption implements Node {
   color: IssueFieldSingleSelectOptionColor!
 
   """
+  Identifies the primary key from the database.
+  """
+  databaseId: Int
+
+  """
   The option's plain-text description.
   """
   description: String
+
+  """
+  Identifies the primary key from the database as a BigInt.
+  """
+  fullDatabaseId: BigInt
 
   """
   The Node ID of the IssueFieldSingleSelectOption object
@@ -21431,6 +21461,11 @@ type IssueFieldText implements IssueFieldCommon & Node {
   The issue field's description.
   """
   description: String
+
+  """
+  Identifies the primary key from the database as a BigInt.
+  """
+  fullDatabaseId: BigInt
 
   """
   The Node ID of the IssueFieldText object
@@ -48449,6 +48484,11 @@ enum ReportedContentClassifiers {
   A duplicated piece of content
   """
   DUPLICATE
+
+  """
+  A low quality piece of content
+  """
+  LOW_QUALITY
 
   """
   An irrelevant piece of content
