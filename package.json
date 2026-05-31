@@ -22,7 +22,7 @@
     "all": "node bin/sync-versions.ts && pnpm run knip && pnpm run codegen && pnpm run codegen:events && pnpm run tsc:check && pnpm run format && pnpm run lint && pnpm run test && pnpm run build",
     "build": "rm -rf ./dist/* && node ./esbuild.config.js",
     "changeset": "changeset",
-    "codegen": "graphql-codegen-esm --config graphql.config.ts",
+    "codegen": "graphql-codegen --config graphql.config.ts",
     "codegen:events": "tsx bin/codegen/index.ts && pnpm run format",
     "codegen:watch": "pnpm run codegen --watch",
     "deployments:delete": "tsx bin/deployments/index.ts",
@@ -33,7 +33,9 @@
     "lint": "oxlint",
     "lint:fix": "pnpm run lint --fix",
     "release": "pnpm run all && changeset publish",
+    "skills:update": "skills update -p -y",
     "start": "node -r dotenv/config ./dist/index.js",
+    "sync:readme": "tsx bin/sync-readme-versions.ts",
     "test": "vitest run",
     "test:ci": "vitest run --reporter=github-actions",
     "test:watch": "vitest",
@@ -52,10 +54,9 @@
     "@changesets/changelog-github": "0.6.0",
     "@changesets/cli": "2.31.0",
     "@cloudflare/types": "7.0.0",
-    "@graphql-codegen/cli": "6.3.1",
-    "@graphql-codegen/client-preset": "5.3.0",
+    "@graphql-codegen/cli": "7.0.0",
+    "@graphql-codegen/client-preset": "6.0.0",
     "@graphql-typed-document-node/core": "3.2.0",
-    "@octokit/graphql-schema": "15.26.1",
     "@octokit/webhooks-schemas": "7.6.1",
     "@octokit/webhooks-types": "7.6.1",
     "@total-typescript/ts-reset": "0.6.1",
@@ -64,12 +65,13 @@
     "@types/node": "24.12.2",
     "dotenv": "17.3.1",
     "esbuild": "0.28.0",
-    "graphql": "16.13.2",
+    "graphql": "16.14.0",
     "graphql-tag": "2.12.6",
     "knip": "6.7.0",
     "oxfmt": "0.47.0",
     "oxlint": "1.62.0",
     "oxlint-tsgolint": "0.22.1",
+    "skills": "1.5.6",
     "tsx": "4.21.0",
     "typescript": "6.0.3",
     "undici": "7.24.4",
@@ -81,10 +83,10 @@
     "wrangler": "4.72.0"
   },
   "engines": {
-    "node": "^24.7.0",
-    "pnpm": "^10.15.1"
+    "node": "^24.16.0",
+    "pnpm": "^11.1.1"
   },
-  "packageManager": "pnpm@10.15.1",
+  "packageManager": "pnpm@11.1.1",
   "pnpm": {
     "peerDependencyRules": {
       "allowedVersions": {

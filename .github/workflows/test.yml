@@ -17,20 +17,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  setup:
+    uses: ./.github/workflows/setup.yml
   test:
+    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
-      - uses: andykenward/github-actions/setup-pnpm@4975fa85f6e689743962bbb5dbac847aaa843edb #v3.0.1
         with:
-          node-version: 24
-      - name: Cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae #v5.0.5
-        with:
-          path: |
-            ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/.oxlintrc.json', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-pnpm
       - name: Lint
         run: pnpm run lint --format=github
       - name: Typecheck

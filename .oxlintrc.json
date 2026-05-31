@@ -13,13 +13,16 @@
     "node": true
   },
   "ignorePatterns": [
-    ".vscode",
+    "__generated__",
+    ".agents",
+    ".claude",
     ".devcontainer",
+    ".vscode",
     "dist",
-    "node_modules",
     "example",
-    "payload-examples",
-    "__generated__"
+    "schema",
+    "node_modules",
+    "payload-examples"
   ],
   "rules": {
     "@typescript-eslint/await-thenable": "error",

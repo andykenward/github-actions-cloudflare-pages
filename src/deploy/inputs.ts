@@ -10,9 +10,9 @@ import {
   INPUT_KEY_WORKING_DIRECTORY
 } from '@/input-keys'
 
-const OPTIONS: InputOptions = {
+const OPTIONS = {
   required: true
-}
+} as const satisfies InputOptions
 
 interface Inputs {
   /** Cloudflare Account Id */

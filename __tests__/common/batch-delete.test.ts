@@ -6,7 +6,7 @@ import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
 import {MutationDeleteGitHubDeploymentAndComment} from '@/common/github/deployment/delete.js'
 import {MutationCreateGitHubDeploymentStatus} from '@/common/github/deployment/status.js'
 import {DEPLOYMENT} from '@/fixtures/github-deployment.js'
-import {DeploymentState, DeploymentStatusState} from '@/gql/graphql.js'
+import {DeploymentStatusState} from '@/gql/graphql.js'
 import RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete.response.json' with {type: 'json'}
 
 import type {MockApi} from '../helpers/api.js'
@@ -62,13 +62,7 @@ describe('batch-delete', () => {
       {
         data: {
           createDeploymentStatus: {
-            deploymentStatus: {
-              deployment: {
-                state: DeploymentState.Inactive,
-                id: 'DE_kwDOJn0nrM5U35aT',
-                environment: 'preview'
-              }
-            }
+            clientMutationId: null
           }
         }
       }
@@ -84,6 +78,9 @@ describe('batch-delete', () => {
       },
       {
         data: {
+          deleteIssueComment: {
+            clientMutationId: null
+          },
           deleteDeployment: {
             clientMutationId: 'DE_kwDOJn0nrM5U35aT'
           }

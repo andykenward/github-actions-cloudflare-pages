@@ -9,8 +9,15 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
+permissions: {}
+
 jobs:
+  setup:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/setup.yml
   download:
+    needs: setup
     permissions:
       contents: write
       pull-requests: write
@@ -18,15 +25,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
-      - uses: andykenward/github-actions/setup-pnpm@4975fa85f6e689743962bbb5dbac847aaa843edb #v3.0.1
         with:
-          node-version: 24
-      - name: Cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae #v5.0.5
-        with:
-          path: |
-            ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/.oxlintrc.json', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-pnpm
       - name: cli download payloads
         run: pnpm run download
         env:
@@ -44,6 +45,7 @@ jobs:
           body: |
             This is an automated PR to update payloads.
   types:
+    needs: setup
     permissions:
       contents: write
       pull-requests: write
@@ -51,15 +53,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
-      - uses: andykenward/github-actions/setup-pnpm@4975fa85f6e689743962bbb5dbac847aaa843edb #v3.0.1
         with:
-          node-version: 24
-      - name: Cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae #v5.0.5
-        with:
-          path: |
-            ~/.cache/
-          key: ${{ runner.os }}-node-${{ hashFiles('**/pnpm-lock.yaml', '**/.oxlintrc.json', '**/.oxfmtrc.json', '**/tsconfig.json', '**/knip.json', '**/vitest.config.ts', '**/vitest.setup.ts') }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-pnpm
       - name: cli all
         run: pnpm run tsc:types
       - name: Create Pull Request
@@ -74,3 +70,37 @@ jobs:
           title: 'chore: update types'
           body: |
             This is an automated PR to update generated types.
+  schema:
+    needs: setup
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+        with:
+          persist-credentials: false
+      - name: Download GitHub GraphQL schema
+        id: download
+        run: |
+          # Accept header requests IDL/SDL format; response is a JSON envelope {"data":"...SDL..."}, jq extracts the string
+          curl -fsSL \
+            -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v4.idl" \
+            https://api.github.com/graphql \
+            | jq -r '.data' \
+            > schema/github/schema.graphql
+          echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 #v8.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update GitHub GraphQL schema'
+          sign-commits: true
+          branch: 'chore/update-graphql-schema'
+          delete-branch: true
+          title: 'chore: update GitHub GraphQL schema (${{ steps.download.outputs.date }})'
+          body: |
+            This is an automated PR to update the GitHub GraphQL schema.

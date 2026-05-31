@@ -25,5 +25,5 @@ export const paginate = async <T extends keyof PaginatingEndpoints>(
   // @ts-expect-error
   return new (Octokit.withPlugins([paginateRest]))({
     auth: gitHubApiToken
-  }).paginate(endpoint, options) as Promise<PaginateResponse<T>>
+  })['paginate'](endpoint, options) as Promise<PaginateResponse<T>>
 }

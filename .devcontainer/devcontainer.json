@@ -1,35 +1,59 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// For format and config option details, see https://aka.ms/devcontainer.json.
 {
   "name": "Container - Cloudflare Pages Action",
-  "image": "mcr.microsoft.com/devcontainers/base:jammy",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "customizations": {
     "vscode": {
       "extensions": [
-        "eamodio.gitlens",
-        "oxc.oxc-vscode",
-        "github.vscode-github-actions",
-        "yoavbls.pretty-ts-errors",
-        "redhat.vscode-yaml",
-        "GraphQL.vscode-graphql",
-        "GraphQL.vscode-graphql-syntax",
-        "vitest.explorer",
-        "webpro.vscode-knip"
-      ]
+        "eamodio.gitlens@2026.5.230538",
+        "github.vscode-github-actions@0.31.5",
+        "GraphQL.vscode-graphql-syntax@1.3.10",
+        "GraphQL.vscode-graphql@0.13.4",
+        "oxc.oxc-vscode@1.56.0",
+        "vitest.explorer@1.50.4",
+        "webpro.vscode-knip@2.1.5"
+      ],
+      "settings": {
+        "chat.disableAIFeatures": true,
+        "extensions.autoUpdate": false,
+        "extensions.autoCheckUpdates": true,
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/usr/bin/zsh"
+          }
+        }
+      }
     }
   },
-  "postCreateCommand": "sed -i '/^ZSH_THEME/c\\ZSH_THEME=\"bira\"' ~/.zshrc && pnpm i && pre-commit install",
-  "updateContentCommand": "rm -rf .cache && pnpm i && pre-commit install",
+  "postCreateCommand": "sed -i '/^ZSH_THEME/c\\ZSH_THEME=\"bira\"' ~/.zshrc && pnpm i && prek install",
+  "updateContentCommand": "rm -rf .cache && pnpm i && prek install",
   "features": {
-    "ghcr.io/devcontainers-extra/features/act:1": {},
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-    "ghcr.io/devcontainers/features/node:": {
-      "version": "24.7.0",
-      "pnpmVersion": "10.15.1"
-    },
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers-extra/features/pre-commit:2": {}
-  }
-
-  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-  // "remoteUser": "root"
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.0": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0.5": {}
+  },
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
+    "DISABLE_AUTOUPDATER": "1"
+  },
+  // Ensure mount sources exist on the host before the container starts.
+  // Without this, Docker would auto-create an empty *directory* at the .claude.json
+  // path (since the source is missing), which breaks Claude Code.
+  // See ./README.md for host setup requirements.
+  "initializeCommand": "touch ${localEnv:HOME}/.claude.json && mkdir -p ${localEnv:HOME}/.claude ${localEnv:HOME}/.config/gh",
+  "mounts": [
+    // Claude Code credentials — read-only so container processes can't tamper with host auth.
+    "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind,readonly",
+    // Claude Code working state (projects, todos, memory) — must be writable.
+    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind",
+    // GitHub CLI credentials — read-only; re-auth on the host with `gh auth login`.
+    "source=${localEnv:HOME}/.config/gh,target=/home/node/.config/gh,type=bind,readonly",
+    // Named volume for persistent zsh history across container rebuilds.
+    "source=cloudflare-pages-action-zsh-history,target=/commandhistory,type=volume"
+  ],
+  // Connect as the non-root `node` user (the Dockerfile's default USER). Set to
+  // "root" to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+  "remoteUser": "node"
 }

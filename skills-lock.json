@@ -6,6 +6,18 @@
       "sourceType": "github",
       "skillPath": "skills/github-actions-docs/SKILL.md",
       "computedHash": "e9ac24e79715ef3060bd4ae376052f8d863b830604e69cb513b39764bf47ee53"
+    },
+    "graphql-operations": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/graphql-operations/SKILL.md",
+      "computedHash": "d0532171706cbba72112a6f3ffdc49d5d15b22fdd092de7324099e767bf1cbf1"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/javascript-typescript/skills/typescript-advanced-types/SKILL.md",
+      "computedHash": "3a3be8c925f96ac4e1280db28a01677e7ca5197f3792de2bbf35ab3bb324b6dd"
     }
   }
 }

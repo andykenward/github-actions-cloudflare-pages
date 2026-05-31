@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: sync-readme-versions
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  setup:
+    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/setup.yml
+  sync:
+    needs: setup
+    name: Sync action version references
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: ./.github/actions/setup-pnpm
+      - name: Sync action version references
+        run: pnpm run sync:readme
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit and push version reference updates
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 #v8.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'docs: update action version references [skip ci]'
+          sign-commits: true
+          title: 'docs: update action version references'
+          branch: docs/sync-action-versions
+          delete-branch: true
+          add-paths: |
+            README.md
+            delete/README.md
+            .github/workflow-templates/deploy.yml
+            .github/workflow-templates/delete.yml

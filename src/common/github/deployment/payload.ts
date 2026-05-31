@@ -47,7 +47,7 @@ const isPayloadV2 = (
   ]
 
   if (requiredKeys.every(key => key in parsedPayload)) {
-    const cloudflare = parsedPayload.cloudflare
+    const cloudflare = parsedPayload['cloudflare']
     if (!isObject(cloudflare)) return false
 
     const requiredKeys: Array<keyof PayloadGithubDeploymentV2['cloudflare']> = [
