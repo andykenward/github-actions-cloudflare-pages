@@ -15,13 +15,8 @@ concurrency:
 permissions: {}
 
 jobs:
-  setup:
-    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
-    permissions:
-      contents: read
-    uses: ./.github/workflows/setup.yml
   sync:
-    needs: setup
+    if: ${{ github.repository == 'andykenward/github-actions-cloudflare-pages' }}
     name: Sync action version references
     runs-on: ubuntu-latest
     permissions:

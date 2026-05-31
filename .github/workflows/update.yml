@@ -12,12 +12,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  setup:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/setup.yml
   download:
-    needs: setup
     permissions:
       contents: write
       pull-requests: write
@@ -52,7 +47,6 @@ jobs:
           body: |
             This is an automated PR to update payloads.
   types:
-    needs: setup
     permissions:
       contents: write
       pull-requests: write
@@ -85,7 +79,6 @@ jobs:
           body: |
             This is an automated PR to update generated types.
   schema:
-    needs: setup
     permissions:
       contents: write
       pull-requests: write
