@@ -41,6 +41,22 @@ RUN mkdir -p "$PNPM_HOME" \
        | SHELL="$(which bash)" PNPM_VERSION=11.1.1 bash - \
     && chmod -R a+rx "$PNPM_HOME"
 
+# GitHub CLI 2.93.0 — installed from the official cli.github.com apt repository.
+# The keyring fingerprint is verified against GitHub's published key before trusting it.
+# To update: change the version in `apt-get install gh=<version>` and update the comment.
+# Latest releases: https://github.com/cli/cli/releases
+RUN mkdir -p -m 755 /etc/apt/keyrings \
+    && wget -nv -O /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+       https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    && gpg --show-keys /etc/apt/keyrings/githubcli-archive-keyring.gpg 2>/dev/null \
+       | grep -qF "2C6106201985B60E6C7AC87323F3D4EA75716059" \
+    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+       > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends gh=2.93.0 \
+    && rm -rf /var/lib/apt/lists/*
+
 # act v0.2.88 — run GitHub Actions locally, installed via nektosact.com install script
 # -b sets the install directory; version arg pins the release.
 RUN curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh \
