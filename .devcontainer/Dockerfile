@@ -41,6 +41,11 @@ RUN mkdir -p "$PNPM_HOME" \
        | SHELL="$(which bash)" PNPM_VERSION=11.1.1 bash - \
     && chmod -R a+rx "$PNPM_HOME"
 
+# act v0.2.88 — run GitHub Actions locally, installed via nektosact.com install script
+# -b sets the install directory; version arg pins the release.
+RUN curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh \
+    | bash -s -- -b /usr/local/bin v0.2.88
+
 # prek v0.4.3 — pre-commit hook manager, copied from the official distroless image
 COPY --from=ghcr.io/j178/prek:v0.4.3@sha256:953593c93d253d44bad97b36b428c13edd074dc35de003ccbf3ff9a40c0c79b9 /prek /usr/local/bin/prek
 
