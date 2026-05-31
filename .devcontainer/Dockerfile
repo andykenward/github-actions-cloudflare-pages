@@ -8,7 +8,7 @@ FROM node:24.16.0-bookworm-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61
 #   - zsh + zsh-autosuggestions: interactive shell setup, configured via zshrc.
 #   - chsh: make zsh the login shell for the `node` user so VS Code terminals
 #     and any `docker exec` sessions land in zsh by default.
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl wget gnupg ca-certificates apt-transport-https \
     libatomic1 git bash zsh zsh-autosuggestions \
     && rm -rf /var/lib/apt/lists/* \
@@ -26,7 +26,6 @@ RUN mkdir -p /commandhistory \
 # Shell config lives in a sibling file so it can be edited without escaping
 # shell quoting inside a Dockerfile RUN. See .devcontainer/zshrc.
 COPY --chown=node:node zshrc /home/node/.zshrc
-
 
 # pnpm 11.1.1 — standalone install script, pinned version, installed system-wide
 # so the non-root devcontainer user (node) can use it. Does not use Corepack:
