@@ -115,7 +115,7 @@ Formatting, linting, and type-checking are automated via [prek](https://prek.j17
 - **Hook Sync Rule**: when changing formatter/linter behavior or script paths, update together — the `oxc-format-and-lint` local hook in [prek.toml](prek.toml), the PostToolUse hook in [.claude/settings.json](.claude/settings.json), and the usage header in [.claude/scripts/pre-commit-oxc.sh](.claude/scripts/pre-commit-oxc.sh).
 - **Format + lint after edits**: [.claude/scripts/format-and-lint-after-edit.sh](.claude/scripts/format-and-lint-after-edit.sh) runs oxfmt + oxlint on each edited file and feeds lint errors back to the agent.
 - **Type-check after edits**: [.claude/scripts/type-check-after-edit.sh](.claude/scripts/type-check-after-edit.sh) runs `pnpm run tsc:check` asynchronously (the `asyncRewake` PostToolUse hook); type errors wake the agent without blocking the edit.
-- **AGENTS.md review on stop**: [.claude/scripts/stop-review-agents.sh](.claude/scripts/stop-review-agents.sh) (Stop hook) prompts a review of this file for new learnings when the working tree has changes.
+- **Session-end review on stop**: [.claude/scripts/stop-review-agents.sh](.claude/scripts/stop-review-agents.sh) (Stop hook) prompts capturing session learnings in AGENTS.md (shared repo conventions) and auto-memory (user preferences + project context) when the working tree has changes.
 
 ## GitHub Actions Integration
 
