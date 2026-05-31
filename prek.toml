@@ -1,0 +1,27 @@
+# Configuration file for `prek`, a git hook framework written in Rust.
+# See https://prek.j178.dev for more information.
+#:schema https://www.schemastore.org/prek.json
+
+exclude = "__generated__|.changeset|pnpm-lock.yaml|dist|.devcontainer/devcontainer-lock.json|schema|.agents|.claude"
+
+[[repos]]
+repo = "https://github.com/pre-commit/pre-commit-hooks"
+rev = "v6.0.0"
+hooks = [
+  { id = "trailing-whitespace" },
+  { id = "end-of-file-fixer" },
+  { id = "check-yaml" },
+  { id = "check-added-large-files" },
+  { id = "check-merge-conflict" }
+]
+
+[[repos]]
+repo = "https://gitlab.com/bmares/check-json5"
+rev = "v1.0.1"
+hooks = [{ id = "check-json5" }]
+
+[[repos]]
+repo = "local"
+hooks = [
+  { id = "oxc-format-and-lint", name = "oxfmt + oxlint", entry = "bash ./.claude/scripts/pre-commit-oxc.sh", language = "system", pass_filenames = true, files = '\.(js|jsx|cjs|mjs|ts|tsx|cts|mts|json|md|markdown|graphql|gql|yml|yaml)$' }
+]
