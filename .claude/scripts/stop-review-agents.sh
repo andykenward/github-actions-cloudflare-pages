@@ -5,7 +5,7 @@ set -euo pipefail
 # Only triggers when there are uncommitted changes — skips read-only sessions.
 #
 # Used by:
-# - .github/hooks/review-agents-at-stop.json (Stop)
+# - .claude/settings.json (Stop hook)
 
 if ! command -v git >/dev/null 2>&1; then
   exit 0

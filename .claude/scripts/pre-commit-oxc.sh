@@ -2,12 +2,12 @@
 set -euo pipefail
 
 # Shared formatter/linter entrypoint used by:
-# - .pre-commit-config.yaml (local hook: oxc-format-and-lint)
-# - .github/hooks/scripts/format-and-lint-after-edit.sh (PostToolUse wrapper,
-#   wired via .claude/settings.json and .github/hooks/format-and-lint-after-edit.json)
+# - prek.toml (local hook: oxc-format-and-lint)
+# - .claude/scripts/format-and-lint-after-edit.sh (PostToolUse wrapper,
+#   wired via .claude/settings.json)
 # AI agents: keep all wiring points and this usage list in sync when behavior or paths change.
 
-# pre-commit passes staged file paths as positional arguments.
+# prek passes staged file paths as positional arguments.
 # Exit fast when nothing matched this hook's file filter.
 if [[ "$#" -eq 0 ]]; then
   exit 0

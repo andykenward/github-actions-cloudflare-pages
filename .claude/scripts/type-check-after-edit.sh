@@ -13,12 +13,9 @@ set -uo pipefail
 #
 # tsc checks the whole project, so this only runs for edits that can change type
 # results; doc/config-only edits are skipped to avoid pointless background runs.
-# The peer Stop hook (stop-type-check.sh) is the session-end safety net.
 #
 # AI agents: keep wiring points in sync (AGENTS.md "Hook Sync Rule"):
-# - .claude/settings.json (PostToolUse + Stop)
-# - .github/hooks/type-check-after-edit.json
-# - .github/hooks/type-check-at-stop.json
+# - .claude/settings.json (PostToolUse)
 
 if ! command -v pnpm >/dev/null 2>&1; then
   exit 0

@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ./.claide/scripts/type-check-after-edit.sh",
+            "command": "bash ./.claude/scripts/type-check-after-edit.sh",
             "asyncRewake": true,
             "statusMessage": "Type-checking project"
           }

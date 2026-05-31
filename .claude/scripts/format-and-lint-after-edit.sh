@@ -14,8 +14,7 @@ set -uo pipefail
 #
 # AI agents: keep this in sync with the other wiring points (AGENTS.md "Hook Sync Rule"):
 # - .claude/settings.json (PostToolUse)
-# - .github/hooks/format-and-lint-after-edit.json
-# - .github/hooks/scripts/pre-commit-oxc.sh (shared formatter/linter)
+# - .claude/scripts/pre-commit-oxc.sh (shared formatter/linter; also the prek.toml hook)
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

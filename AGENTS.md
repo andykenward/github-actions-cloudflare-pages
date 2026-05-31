@@ -134,9 +134,9 @@ See implementation in [src/common/utils.ts](src/common/utils.ts).
 - **Oxlint**: TypeScript linting with custom rules ([.oxlintrc.json](.oxlintrc.json))
 - **TypeScript**: Strict mode with `verbatimModuleSyntax`, `noEmit`, `checkJs`
 - **No console.log**: Use `@actions/core` methods (`info`, `debug`, `warning`, `error`, `setFailed`)
-- **Hook Sync Rule**: When changing formatter/linter hook behavior or script paths, update these together: [.pre-commit-config.yaml](.pre-commit-config.yaml), [.github/hooks/format-and-lint-after-edit.json](.github/hooks/format-and-lint-after-edit.json), and the usage header in [.github/hooks/scripts/pre-commit-oxc.sh](.github/hooks/scripts/pre-commit-oxc.sh).
-- **Type Check on Session End**: [.github/hooks/type-check-at-stop.json](.github/hooks/type-check-at-stop.json) runs `pnpm run tsc:check` when the agent finishes and blocks the session if type errors are found, forcing resolution before the session ends.
-- **AGENTS.md Review on Session End**: [.github/hooks/review-agents-at-stop.json](.github/hooks/review-agents-at-stop.json) prompts the agent to review AGENTS.md for any learnings worth capturing before the session ends (only fires when working-tree changes are present).
+- **Hook Sync Rule**: When changing formatter/linter hook behavior or script paths, update these together: the `oxc-format-and-lint` local hook in [prek.toml](prek.toml), the PostToolUse hook in [.claude/settings.json](.claude/settings.json), and the usage header in [.claude/scripts/pre-commit-oxc.sh](.claude/scripts/pre-commit-oxc.sh).
+- **Type Check After Edits**: [.claude/scripts/type-check-after-edit.sh](.claude/scripts/type-check-after-edit.sh) runs `pnpm run tsc:check` asynchronously after Write/Edit/MultiEdit (the `asyncRewake` PostToolUse hook in [.claude/settings.json](.claude/settings.json)); type errors wake the agent to fix them without blocking the edit.
+- **AGENTS.md Review on Session End**: [.claude/scripts/stop-review-agents.sh](.claude/scripts/stop-review-agents.sh) (the Stop hook in [.claude/settings.json](.claude/settings.json)) prompts the agent to review AGENTS.md for any learnings worth capturing before the session ends (only fires when working-tree changes are present).
 
 ### File Organization
 
