@@ -51,7 +51,7 @@ jobs:
           github-environment: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
 ```
 
-The `github-environment` expression deploys the `main` branch to `production` and every other branch to `preview`.
+The `github-environment` expression deploys the `main` branch to `production` and every other branch to `preview`. For a line-by-line breakdown of this expression — and how it relates to the Cloudflare `branch` input — see [GitHub Environments](#2-github-environments-required).
 
 ## Setup
 
@@ -73,6 +73,25 @@ Create each environment you reference (for example `production` and `preview`), 
 ```yaml
 github-environment: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
 ```
+
+GitHub Actions has no `condition ? a : b` ternary, so this uses the `&&`/`||` idiom to get the same result. Read it as **"if on `main`, use `production`, otherwise use `preview`"**:
+
+- `github.ref` is the full ref of the branch that triggered the run, e.g. `refs/heads/main` or `refs/heads/my-feature`.
+- `github.ref == 'refs/heads/main'` is `true` only on the `main` branch.
+- `A && B` returns `B` when `A` is true, so on `main` the expression so far is `'production'`; on any other branch it is `false`.
+- `X || 'preview'` returns `X` unless `X` is falsy, so a `false` left side falls through to `'preview'`.
+
+To map more branches to environments, extend the same pattern — for example, send `main` to `production`, `staging` to `staging`, and everything else to `preview`:
+
+```yaml
+github-environment: >-
+  ${{ (github.ref == 'refs/heads/main' && 'production')
+   || (github.ref == 'refs/heads/staging' && 'staging')
+   || 'preview' }}
+```
+
+> [!NOTE]
+> `github-environment` only sets the **GitHub** Environment the deployment is recorded against. Whether Cloudflare treats the upload as a production or preview deployment is decided separately, by the **branch name** — Cloudflare promotes the deployment to production only when the branch matches your Pages project's production branch. By default the branch is detected from the GitHub context; use the [`branch`](#custom-branch-name) input to override it. The two inputs are independent, so make sure your branch logic and `github-environment` logic agree on what counts as "production".
 
 ### 3. Permissions
 
