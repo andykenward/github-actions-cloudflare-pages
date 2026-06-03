@@ -30,7 +30,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 
 **GraphQL type safety**: Inline ``graphql(/* GraphQL */ `...`)`` operations in `src/**` and `bin/**` are typed via [@graphql-codegen/client-preset](graphql.config.ts). The custom client [src/common/github/api/client.ts](src/common/github/api/client.ts) wraps fetch with `TypedDocumentString` for compile-time validation. Preview features come from [schema/github/schema.graphql](schema/github/schema.graphql).
 
-**Cloudflare**: Runs `wrangler pages deploy` via `execAsync()` ([src/common/cloudflare/deployment/create.ts](src/common/cloudflare/deployment/create.ts#L49-L54)). Wrangler is an external (peer) dependency, not bundled. Deployment status polling and deletion use Cloudflare's REST API.
+**Cloudflare**: Runs `wrangler pages deploy` via `execAsync()` ([src/common/cloudflare/deployment/create.ts](src/common/cloudflare/deployment/create.ts#L49-L54)). Wrangler is external to the bundle (esbuild `external`, [esbuild.config.js](esbuild.config.js)) and installed at runtime via `npx wrangler@<version>` — the version comes from the `wrangler-version` input or, failing that, the default in [src/common/inputs.ts](src/common/inputs.ts), which [bin/sync-versions.ts](bin/sync-versions.ts) keeps in lockstep with `devDependencies.wrangler` (the single source of truth; tests read it too). Deployment status polling and deletion use Cloudflare's REST API.
 
 ## Commands
 
@@ -65,8 +65,8 @@ Non-negotiable. Violating these breaks the build or the type system.
 
 1. Add the input to [action.yml](action.yml) or [delete/action.yml](delete/action.yml).
 2. Add `INPUT_KEY_*` in [input-keys.ts](input-keys.ts) (and `INPUT_KEYS_REQUIRED` if mandatory).
-3. Handle it in `inputs.ts`.
-4. Stub it in [`__tests__/helpers/inputs.ts`](__tests__/helpers/inputs.ts).
+3. Handle it in `inputs.ts`. Optional inputs: normalise empty-string to `undefined` (`getInput(KEY, {required: false}) || undefined`) so the `Inputs` field is truly optional.
+4. Tests: `stubRequiredInputEnv()` only stubs `INPUT_KEYS_REQUIRED`, so a **required** input is covered automatically. An **optional** input is not — stub it per-test with `stubInputEnv(INPUT_KEY_X, value)` and assert the `undefined` default case too (see [`__tests__/deploy/inputs.test.ts`](__tests__/deploy/inputs.test.ts)).
 5. Document it in the Inputs table of [README.md](README.md) (or [delete/README.md](delete/README.md) for the delete action).
 
 **Cloudflare API change**: update types in [src/common/cloudflare/types.ts](src/common/cloudflare/types.ts) → add fixtures to [`__generated__/responses/`](__generated__/responses/).
@@ -125,6 +125,7 @@ Formatting, linting, and type-checking are automated via [prek](https://prek.j17
 - `GITHUB_TOKEN` permissions: `actions:read`, `contents:read`, `deployments:write`, `pull-requests:write`.
 - Supported events only: `push`, `pull_request`, `workflow_dispatch`, `workflow_run` (validated in [src/deploy/main.ts](src/deploy/main.ts)).
 - The deployment payload embeds Cloudflare metadata so the delete workflow can find deployments ([src/common/github/deployment/types.ts](src/common/github/deployment/types.ts)).
+- **`workflow_run` + fork PRs**: `github.event.workflow_run.pull_requests` is **empty for pull requests from forks** ([community #25220](https://github.com/orgs/community/discussions/25220)). Never derive `pr-number` or `branch` from `pull_requests[0].number` in docs/examples — it silently resolves to empty for the exact fork case those examples target. Instead save the number in the triggering `pull_request` workflow and read it from an artifact (`upload-artifact` → `download-artifact` with `run-id: ${{ github.event.workflow_run.id }}` + `github-token`). See the "Custom branch name" example in [README.md](README.md).
 
 ## Resources
 
