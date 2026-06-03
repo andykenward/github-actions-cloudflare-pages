@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy to Cloudflare Pages
-        uses: andykenward/github-actions-cloudflare-pages@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
+        uses: andykenward/github-actions-cloudflare-pages@46d86e1caa6b86365a41d335db65a6936a1beb39 #v3.5.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -163,7 +163,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Deploy to Cloudflare Pages
-        uses: andykenward/github-actions-cloudflare-pages@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
+        uses: andykenward/github-actions-cloudflare-pages@46d86e1caa6b86365a41d335db65a6936a1beb39 #v3.5.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -220,7 +220,7 @@ jobs:
         run: echo "number=$(cat pr-number.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Deploy to Cloudflare Pages
-        uses: andykenward/github-actions-cloudflare-pages@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
+        uses: andykenward/github-actions-cloudflare-pages@46d86e1caa6b86365a41d335db65a6936a1beb39 #v3.5.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
