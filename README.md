@@ -88,17 +88,18 @@ permissions:
 
 ## Inputs
 
-| Input                     | Required | Description                                                                                           |
-| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
-| `cloudflare-api-token`    | yes      | Cloudflare API Token                                                                                  |
-| `cloudflare-account-id`   | yes      | Cloudflare Account ID                                                                                 |
-| `cloudflare-project-name` | yes      | Cloudflare Pages project to upload to                                                                 |
-| `directory`               | yes      | Directory of static files to upload                                                                   |
-| `github-token`            | yes      | Github API key, make sure to add the required permissions for this action.                            |
-| `github-environment`      | yes      | GitHub environment to deploy to. You need to manually create this for the github repo                 |
-| `pr-number`               | no       | GitHub pull request number to comment on. If not set, the action auto-detects from the event payload. |
-| `working-directory`       | no       | Directory to run wrangler cli from                                                                    |
-| `wrangler-version`        | no       | Wrangler version to use. Otherwise a default version from the action will be used.                    |
+| Input                     | Required | Description                                                                                                                   |
+| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `cloudflare-api-token`    | yes      | Cloudflare API Token                                                                                                          |
+| `cloudflare-account-id`   | yes      | Cloudflare Account ID                                                                                                         |
+| `cloudflare-project-name` | yes      | Cloudflare Pages project to upload to                                                                                         |
+| `directory`               | yes      | Directory of static files to upload                                                                                           |
+| `github-token`            | yes      | Github API key, make sure to add the required permissions for this action.                                                    |
+| `github-environment`      | yes      | GitHub environment to deploy to. You need to manually create this for the github repo                                         |
+| `pr-number`               | no       | GitHub pull request number to comment on. If not set, the action auto-detects from the event payload.                         |
+| `working-directory`       | no       | Directory to run wrangler cli from                                                                                            |
+| `wrangler-version`        | no       | Wrangler version to use. Otherwise a default version from the action will be used.                                            |
+| `branch`                  | no       | Branch name to use for Cloudflare Pages deployment. If not set, the branch is automatically detected from the GitHub context. |
 
 ## Outputs
 
@@ -155,6 +156,26 @@ jobs:
 ```
 
 The action supports the `workflow_run` event and uses its head commit SHA and branch for the deployment metadata.
+
+### Custom branch name
+
+You can override the automatically detected branch name using the `branch` input. This is useful when using `workflow_run` to deploy pull requests from forks to a preview deployment without overwriting the main/production deployment:
+
+```yaml
+- name: Deploy to Cloudflare Pages
+  uses: andykenward/github-actions-cloudflare-pages@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
+  with:
+    cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+    cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+    directory: dist
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-environment: preview
+    branch: pr-${{ github.event.workflow_run.pull_requests[0].number }}
+    pr-number: ${{ github.event.workflow_run.pull_requests[0].number }}
+```
+
+This creates a Cloudflare Pages preview deployment with a branch name like `pr-123`, ensuring each pull request gets its own preview environment.
 
 ## Pull request comment
 

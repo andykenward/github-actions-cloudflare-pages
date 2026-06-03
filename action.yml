@@ -33,6 +33,9 @@ inputs:
   wrangler-version:
     description: 'Wrangler version to use. Otherwise a default version from the action will be used.'
     required: false
+  branch:
+    description: 'Branch name to use for Cloudflare Pages deployment. If not set, the branch is automatically detected from the GitHub context.'
+    required: false
 
 outputs:
   id:

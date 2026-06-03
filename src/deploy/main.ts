@@ -13,7 +13,8 @@ export async function run() {
     cloudflareAccountId,
     cloudflareProjectName,
     directory,
-    workingDirectory
+    workingDirectory,
+    branch
   } = useInputs()
   const {eventName} = useContextEvent()
 
@@ -35,7 +36,8 @@ export async function run() {
       accountId: cloudflareAccountId,
       projectName: cloudflareProjectName,
       directory,
-      workingDirectory
+      workingDirectory,
+      branch
     })
   const [commentId, environment] = await Promise.all([
     addComment(cloudflareDeployment, wranglerOutput),

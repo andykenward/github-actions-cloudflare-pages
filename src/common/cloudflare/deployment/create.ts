@@ -19,12 +19,14 @@ export const createCloudflareDeployment = async ({
   accountId,
   projectName,
   directory,
-  workingDirectory = ''
+  workingDirectory = '',
+  branch: branchOverride
 }: {
   accountId: string
   projectName: string
   directory: string
   workingDirectory?: string
+  branch?: string
 }): Promise<{
   deployment: PagesDeployment
   wranglerOutput: string
@@ -34,7 +36,9 @@ export const createCloudflareDeployment = async ({
   process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken
   process.env[CLOUDFLARE_ACCOUNT_ID] = accountId
 
-  const {repo, branch, sha: commitHash} = useContext()
+  const {repo, branch: contextBranch, sha: commitHash} = useContext()
+
+  const branch = branchOverride ?? contextBranch
 
   if (branch === undefined) {
     throw new Error(`${ERROR_KEY} branch is undefined`)

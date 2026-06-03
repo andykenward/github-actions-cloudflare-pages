@@ -7,7 +7,8 @@ import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
   INPUT_KEY_CLOUDFLARE_PROJECT_NAME,
   INPUT_KEY_DIRECTORY,
-  INPUT_KEY_WORKING_DIRECTORY
+  INPUT_KEY_WORKING_DIRECTORY,
+  INPUT_KEY_BRANCH
 } from '@/input-keys'
 
 const OPTIONS = {
@@ -23,6 +24,8 @@ interface Inputs {
   directory: string
 
   workingDirectory?: string
+  /** Branch name override for Cloudflare Pages deployment */
+  branch?: string
 }
 
 const getInputs = (): Inputs => {
@@ -32,7 +35,8 @@ const getInputs = (): Inputs => {
     directory: getInput(INPUT_KEY_DIRECTORY, OPTIONS),
     workingDirectory: checkWorkingDirectory(
       getInput(INPUT_KEY_WORKING_DIRECTORY, {required: false})
-    )
+    ),
+    branch: getInput(INPUT_KEY_BRANCH, {required: false}) || undefined
   }
 }
 
