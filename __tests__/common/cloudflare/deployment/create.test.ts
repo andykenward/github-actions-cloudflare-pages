@@ -249,5 +249,64 @@ describe(createCloudflareDeployment, () => {
         ['Wrangler Output:', `success`]
       ])
     })
+
+    test('handles branch override', async () => {
+      expect.assertions(4)
+
+      vi.mocked(execFileAsync).mockResolvedValueOnce({
+        stdout: 'success',
+        stderr: ''
+      })
+
+      mockApi
+        .interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENTS,
+          RESPONSE_DEPLOYMENTS_IDLE,
+          200
+        )
+        .times(2)
+
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS,
+        RESPONSE_DEPLOYMENTS,
+        200
+      )
+
+      await createCloudflareDeployment({
+        accountId: 'mock-cloudflare-account-id',
+        projectName: 'mock-cloudflare-project-name',
+        directory: 'mock-directory',
+        branch: 'pr-123'
+      })
+
+      expect(execFileAsync).toHaveBeenCalledWith(
+        'npx',
+        [
+          `wrangler@${packageJson.devDependencies.wrangler}`,
+          'pages',
+          'deploy',
+          'mock-directory',
+          '--project-name',
+          'mock-cloudflare-project-name',
+          '--branch',
+          'pr-123',
+          '--commit-dirty=true',
+          '--commit-hash',
+          'mock-github-sha'
+        ],
+        {
+          // oxlint-disable-next-line typescript/no-unsafe-assignment
+          env: expect.objectContaining({
+            CLOUDFLARE_ACCOUNT_ID: 'mock-cloudflare-account-id',
+            CLOUDFLARE_API_TOKEN: 'mock-cloudflare-api-token'
+          }),
+          cwd: ''
+        }
+      )
+
+      expect(execFileAsync).toHaveBeenCalledTimes(1)
+      expect(info).toHaveBeenLastCalledWith('success')
+      expect(summary.addTable).toHaveBeenCalledTimes(1)
+    })
   })
 })

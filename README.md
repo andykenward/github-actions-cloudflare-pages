@@ -51,7 +51,7 @@ jobs:
           github-environment: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
 ```
 
-The `github-environment` expression deploys the `main` branch to `production` and every other branch to `preview`.
+The `github-environment` expression deploys the `main` branch to `production` and every other branch to `preview`. For a line-by-line breakdown of this expression — and how it relates to the Cloudflare `branch` input — see [GitHub Environments](#2-github-environments-required).
 
 ## Setup
 
@@ -74,6 +74,25 @@ Create each environment you reference (for example `production` and `preview`), 
 github-environment: ${{ (github.ref == 'refs/heads/main' && 'production') || 'preview' }}
 ```
 
+GitHub Actions has no `condition ? a : b` ternary, so this uses the `&&`/`||` idiom to get the same result. Read it as **"if on `main`, use `production`, otherwise use `preview`"**:
+
+- `github.ref` is the full ref of the branch that triggered the run, e.g. `refs/heads/main` or `refs/heads/my-feature`.
+- `github.ref == 'refs/heads/main'` is `true` only on the `main` branch.
+- `A && B` returns `B` when `A` is true, so on `main` the expression so far is `'production'`; on any other branch it is `false`.
+- `X || 'preview'` returns `X` unless `X` is falsy, so a `false` left side falls through to `'preview'`.
+
+To map more branches to environments, extend the same pattern — for example, send `main` to `production`, `staging` to `staging`, and everything else to `preview`:
+
+```yaml
+github-environment: >-
+  ${{ (github.ref == 'refs/heads/main' && 'production')
+   || (github.ref == 'refs/heads/staging' && 'staging')
+   || 'preview' }}
+```
+
+> [!NOTE]
+> `github-environment` only sets the **GitHub** Environment the deployment is recorded against. Whether Cloudflare treats the upload as a production or preview deployment is decided separately, by the **branch name** — Cloudflare promotes the deployment to production only when the branch matches your Pages project's production branch. By default the branch is detected from the GitHub context; use the [`branch`](#custom-branch-name) input to override it. The two inputs are independent, so make sure your branch logic and `github-environment` logic agree on what counts as "production".
+
 ### 3. Permissions
 
 When using the workflow's built-in [`GITHUB_TOKEN`] for the `github-token` input, grant these [permissions]:
@@ -88,17 +107,18 @@ permissions:
 
 ## Inputs
 
-| Input                     | Required | Description                                                                                           |
-| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
-| `cloudflare-api-token`    | yes      | Cloudflare API Token                                                                                  |
-| `cloudflare-account-id`   | yes      | Cloudflare Account ID                                                                                 |
-| `cloudflare-project-name` | yes      | Cloudflare Pages project to upload to                                                                 |
-| `directory`               | yes      | Directory of static files to upload                                                                   |
-| `github-token`            | yes      | Github API key, make sure to add the required permissions for this action.                            |
-| `github-environment`      | yes      | GitHub environment to deploy to. You need to manually create this for the github repo                 |
-| `pr-number`               | no       | GitHub pull request number to comment on. If not set, the action auto-detects from the event payload. |
-| `working-directory`       | no       | Directory to run wrangler cli from                                                                    |
-| `wrangler-version`        | no       | Wrangler version to use. Otherwise a default version from the action will be used.                    |
+| Input                     | Required | Description                                                                                                                   |
+| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `cloudflare-api-token`    | yes      | Cloudflare API Token                                                                                                          |
+| `cloudflare-account-id`   | yes      | Cloudflare Account ID                                                                                                         |
+| `cloudflare-project-name` | yes      | Cloudflare Pages project to upload to                                                                                         |
+| `directory`               | yes      | Directory of static files to upload                                                                                           |
+| `github-token`            | yes      | Github API key, make sure to add the required permissions for this action.                                                    |
+| `github-environment`      | yes      | GitHub environment to deploy to. You need to manually create this for the github repo                                         |
+| `pr-number`               | no       | GitHub pull request number to comment on. If not set, the action auto-detects from the event payload.                         |
+| `working-directory`       | no       | Directory to run wrangler cli from                                                                                            |
+| `wrangler-version`        | no       | Wrangler version to use. Otherwise a default version from the action will be used.                                            |
+| `branch`                  | no       | Branch name to use for Cloudflare Pages deployment. If not set, the branch is automatically detected from the GitHub context. |
 
 ## Outputs
 
@@ -155,6 +175,64 @@ jobs:
 ```
 
 The action supports the `workflow_run` event and uses its head commit SHA and branch for the deployment metadata.
+
+### Custom branch name
+
+You can override the automatically detected branch name with the `branch` input. This is useful with `workflow_run`: a fork pull request opened from the fork's `main` branch would otherwise deploy to your project's production branch and overwrite the production deployment. Giving each pull request its own branch name (for example `pr-123`) keeps it on a separate Cloudflare Pages preview.
+
+**Do not** build the branch name from `github.event.workflow_run.pull_requests[0].number` — that array is empty for pull requests from forks ([community discussion #25220](https://github.com/orgs/community/discussions/25220)), which is the exact case this is meant to cover. Instead, save the PR number in the triggering `pull_request` workflow and read it back from an artifact in the `workflow_run` workflow.
+
+In the `pull_request` workflow (the one named in `workflows:` of the `workflow_run` trigger), save the PR number alongside your build output:
+
+```yaml
+- name: Save PR number
+  run: echo "${{ github.event.number }}" > pr-number.txt
+
+- name: Upload PR number
+  uses: actions/upload-artifact@v4
+  with:
+    name: pr-number
+    path: pr-number.txt
+```
+
+Then, in the `workflow_run` workflow, download it and pass it to both `branch` and `pr-number`:
+
+```yaml
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      actions: read
+      contents: read
+      deployments: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download PR number
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-number
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read PR number
+        id: pr
+        run: echo "number=$(cat pr-number.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Cloudflare Pages
+        uses: andykenward/github-actions-cloudflare-pages@1f45924c4dd0c6d746a7edfaa4e1dea8958806a6 #v3.4.0
+        with:
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-project-name: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+          directory: dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-environment: preview
+          branch: pr-${{ steps.pr.outputs.number }}
+          pr-number: ${{ steps.pr.outputs.number }}
+```
+
+This creates a Cloudflare Pages preview deployment with a branch name like `pr-123`, so each pull request — including those from forks — gets its own preview environment instead of overwriting production.
 
 ## Pull request comment
 
