@@ -1,5 +1,31 @@
 # github-actions-cloudflare-pages
 
+## 3.5.0
+
+### Minor Changes
+
+- [#776](https://github.com/andykenward/github-actions-cloudflare-pages/pull/776) [`b458526`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/b45852688a5ff934474b1dc7be2327ae66ec6944) Thanks [@anthropic-code-agent](https://github.com/apps/anthropic-code-agent)! - feat: Overwrite branch name for deployments to Cloudflare
+
+### Patch Changes
+
+- [#757](https://github.com/andykenward/github-actions-cloudflare-pages/pull/757) [`44b9e8f`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/44b9e8f2395fa4ad33f75ca7caa00a74483a76b0) Thanks [@andykenward](https://github.com/andykenward)! - fix: build failure now terminate polling
+
+- [#760](https://github.com/andykenward/github-actions-cloudflare-pages/pull/760) [`06c6105`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/06c610523452c8c7b27f978331089bc99f8a4399) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): upgrade @graphql-codegen/client-preset from 5.3.0 to 6.0.0
+
+- [#760](https://github.com/andykenward/github-actions-cloudflare-pages/pull/760) [`06c6105`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/06c610523452c8c7b27f978331089bc99f8a4399) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump graphql from 16.13.2 to 16.14.0
+
+- [#746](https://github.com/andykenward/github-actions-cloudflare-pages/pull/746) [`5de31a3`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/5de31a3317793fffeb2ba429af27d20e88586ccf) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump @actions/core from 3.0.0 to 3.0.1
+
+- [#753](https://github.com/andykenward/github-actions-cloudflare-pages/pull/753) [`4549d45`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/4549d45516bbadbd9147b5f73d755ad058f0002d) Thanks [@andykenward](https://github.com/andykenward)! - Update GitHub API GraphQL schema to latest using GitHub Action. The NPM package [@octokit/graphql-schema](https://github.com/octokit/graphql-schema) is outdated due to https://github.com/octokit/graphql-schema/issues/1030
+
+- [#757](https://github.com/andykenward/github-actions-cloudflare-pages/pull/757) [`44b9e8f`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/44b9e8f2395fa4ad33f75ca7caa00a74483a76b0) Thanks [@andykenward](https://github.com/andykenward)! - refactor: setTimeout NODE_ENV check for tests
+
+- [#760](https://github.com/andykenward/github-actions-cloudflare-pages/pull/760) [`06c6105`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/06c610523452c8c7b27f978331089bc99f8a4399) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): upgrade @graphql-codegen/cli from 6.3.1 to 7.0.0
+
+- [#756](https://github.com/andykenward/github-actions-cloudflare-pages/pull/756) [`e3ed3ad`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/e3ed3ad56c43ff7d89b26b60b985b75243761b6e) Thanks [@andykenward](https://github.com/andykenward)! - refactor: graphql operations
+
+- [#757](https://github.com/andykenward/github-actions-cloudflare-pages/pull/757) [`44b9e8f`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/44b9e8f2395fa4ad33f75ca7caa00a74483a76b0) Thanks [@andykenward](https://github.com/andykenward)! - refactor: switch from exec to execFile. Stops risk of spaces or special characters breaking the command.
+
 ## 3.4.0
 
 ### Minor Changes
