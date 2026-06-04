@@ -103,6 +103,31 @@ export type PullRequestNodeIdByBranchQueryVariables = Exact<{
 
 export type PullRequestNodeIdByBranchQuery = { readonly repository: { readonly pullRequests: { readonly nodes: ReadonlyArray<{ readonly id: string } | null> | null } } | null };
 
+export type PullRequestCommentsQueryVariables = Exact<{
+  prNodeId: string | number;
+  first: number;
+}>;
+
+
+export type PullRequestCommentsQuery = { readonly node:
+    | { readonly comments: { readonly nodes: ReadonlyArray<{ readonly id: string, readonly body: string, readonly author:
+            | { readonly login: string }
+            | { readonly login: string }
+            | { readonly login: string }
+            | { readonly login: string }
+            | { readonly login: string }
+           | null } | null> | null } }
+    | Record<PropertyKey, never>
+   | null };
+
+export type UpdateCommentMutationVariables = Exact<{
+  id: string | number;
+  body: string;
+}>;
+
+
+export type UpdateCommentMutation = { readonly updateIssueComment: { readonly issueComment: { readonly id: string } | null } | null };
+
 export type CreateGitHubDeploymentMutationVariables = Exact<{
   repositoryId: string | number;
   environmentName: string;
@@ -260,6 +285,32 @@ export const PullRequestNodeIdByBranchDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<PullRequestNodeIdByBranchQuery, PullRequestNodeIdByBranchQueryVariables>;
+export const PullRequestCommentsDocument = new TypedDocumentString(`
+    query PullRequestComments($prNodeId: ID!, $first: Int!) {
+  node(id: $prNodeId) {
+    ... on PullRequest {
+      comments(first: $first, orderBy: {field: UPDATED_AT, direction: DESC}) {
+        nodes {
+          id
+          body
+          author {
+            login
+          }
+        }
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<PullRequestCommentsQuery, PullRequestCommentsQueryVariables>;
+export const UpdateCommentDocument = new TypedDocumentString(`
+    mutation UpdateComment($id: ID!, $body: String!) {
+  updateIssueComment(input: {id: $id, body: $body}) {
+    issueComment {
+      id
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<UpdateCommentMutation, UpdateCommentMutationVariables>;
 export const CreateGitHubDeploymentDocument = new TypedDocumentString(`
     mutation CreateGitHubDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!, $description: String) {
   createDeployment(

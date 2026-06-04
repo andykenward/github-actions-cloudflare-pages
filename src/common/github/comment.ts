@@ -49,6 +49,70 @@ export const QueryPullRequestNodeIdByBranch = graphql(/* GraphQL */ `
   }
 `)
 
+export const QueryPullRequestComments = graphql(/* GraphQL */ `
+  query PullRequestComments($prNodeId: ID!, $first: Int!) {
+    node(id: $prNodeId) {
+      ... on PullRequest {
+        comments(first: $first, orderBy: {field: UPDATED_AT, direction: DESC}) {
+          nodes {
+            id
+            body
+            author {
+              login
+            }
+          }
+        }
+      }
+    }
+  }
+`)
+
+export const MutationUpdateComment = graphql(/* GraphQL */ `
+  mutation UpdateComment($id: ID!, $body: String!) {
+    updateIssueComment(input: {id: $id, body: $body}) {
+      issueComment {
+        id
+      }
+    }
+  }
+`)
+
+const COMMENT_MARKER = '<!-- cloudflare-pages-deployment-comment -->'
+
+const findExistingComment = async (
+  prNodeId: string
+): Promise<string | undefined> => {
+  try {
+    const result = await request({
+      query: QueryPullRequestComments,
+      variables: {
+        prNodeId,
+        first: 50
+      }
+    })
+
+    const node = result.data.node
+    if (!node || !('comments' in node)) {
+      return undefined
+    }
+
+    const comments = node.comments.nodes ?? []
+    const botLogin = 'github-actions[bot]'
+
+    // Find the most recent comment from this action that contains our marker
+    const existingComment = comments.find(
+      comment =>
+        comment?.author?.login === botLogin &&
+        comment?.body?.includes(COMMENT_MARKER)
+    )
+
+    return existingComment?.id
+  } catch {
+    // If we can't find existing comments, we'll just create a new one
+    return undefined
+  }
+}
+
 const getNodeIdFromEvent = async () => {
   const {repo} = useContext()
   const {prNumber} = useCommonInputs()
@@ -163,9 +227,36 @@ export const addComment = async (
   if (prNodeId) {
     const {sha} = useContext()
     const {eventName} = useContextEvent()
+    const {commentMode, hideWranglerOutput} = useCommonInputs()
 
-    const rawBody = `## Cloudflare Pages Deployment\n**Event Name:** ${eventName}\n**Environment:** ${deployment.environment}\n**Project:** ${deployment.project_name}\n**Built with commit:** ${sha}\n**Preview URL:** ${deployment.url}\n**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}\n\n### Wrangler Output\n${output}`
+    // Build the comment body
+    let rawBody = `${COMMENT_MARKER}\n## Cloudflare Pages Deployment\n**Event Name:** ${eventName}\n**Environment:** ${deployment.environment}\n**Project:** ${deployment.project_name}\n**Built with commit:** ${sha}\n**Preview URL:** ${deployment.url}\n**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}`
 
+    // Optionally include Wrangler output
+    if (!hideWranglerOutput) {
+      rawBody += `\n\n### Wrangler Output\n${output}`
+    }
+
+    // Check if we should update an existing comment or create a new one
+    if (commentMode === 'update') {
+      const existingCommentId = await findExistingComment(prNodeId)
+
+      if (existingCommentId) {
+        // Update existing comment
+        info('Updating existing PR comment')
+        await request({
+          query: MutationUpdateComment,
+          variables: {
+            id: existingCommentId,
+            body: rawBody
+          }
+        })
+        return existingCommentId
+      }
+    }
+
+    // Create new comment (either commentMode is 'new' or no existing comment found)
+    info('Creating new PR comment')
     const comment = await request({
       query: MutationAddComment,
       variables: {

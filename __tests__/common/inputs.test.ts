@@ -4,7 +4,9 @@ import {
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN,
-  INPUT_KEY_WRANGLER_VERSION
+  INPUT_KEY_WRANGLER_VERSION,
+  INPUT_KEY_COMMENT_MODE,
+  INPUT_KEY_HIDE_WRANGLER_OUTPUT
 } from '@/input-keys'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
@@ -56,7 +58,9 @@ describe('common', () => {
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: 'mock-github-environment',
         prNumber: undefined,
-        wranglerVersion: 'mock-wrangler-version'
+        wranglerVersion: 'mock-wrangler-version',
+        commentMode: 'new',
+        hideWranglerOutput: false
       })
     })
 
@@ -73,7 +77,9 @@ describe('common', () => {
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
         prNumber: undefined,
-        wranglerVersion: packageJson.devDependencies.wrangler
+        wranglerVersion: packageJson.devDependencies.wrangler,
+        commentMode: 'new',
+        hideWranglerOutput: false
       })
     })
 
@@ -88,6 +94,69 @@ describe('common', () => {
       expect(useCommonInputs()).toStrictEqual(
         expect.objectContaining({
           wranglerVersion: packageJson.devDependencies.wrangler
+        })
+      )
+    })
+
+    test('returns update comment mode when set', async () => {
+      expect.assertions(1)
+
+      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
+      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+      stubInputEnv(INPUT_KEY_COMMENT_MODE, 'update')
+
+      const {useCommonInputs} = await setup()
+
+      expect(useCommonInputs()).toStrictEqual(
+        expect.objectContaining({
+          commentMode: 'update'
+        })
+      )
+    })
+
+    test('defaults to new comment mode for invalid values', async () => {
+      expect.assertions(1)
+
+      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
+      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+      stubInputEnv(INPUT_KEY_COMMENT_MODE, 'invalid')
+
+      const {useCommonInputs} = await setup()
+
+      expect(useCommonInputs()).toStrictEqual(
+        expect.objectContaining({
+          commentMode: 'new'
+        })
+      )
+    })
+
+    test('hides wrangler output when set to true', async () => {
+      expect.assertions(1)
+
+      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
+      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+      stubInputEnv(INPUT_KEY_HIDE_WRANGLER_OUTPUT, 'true')
+
+      const {useCommonInputs} = await setup()
+
+      expect(useCommonInputs()).toStrictEqual(
+        expect.objectContaining({
+          hideWranglerOutput: true
+        })
+      )
+    })
+
+    test('shows wrangler output by default', async () => {
+      expect.assertions(1)
+
+      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
+      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+
+      const {useCommonInputs} = await setup()
+
+      expect(useCommonInputs()).toStrictEqual(
+        expect.objectContaining({
+          hideWranglerOutput: false
         })
       )
     })
