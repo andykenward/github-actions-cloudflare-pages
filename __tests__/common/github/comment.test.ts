@@ -217,7 +217,8 @@ describe(addComment, () => {
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
         prNumber: '123',
-        wranglerVersion: 'mock-wrangler-version'
+        wranglerVersion: 'mock-wrangler-version',
+        commentDisableWranglerOutput: false
       })
 
       vi.spyOn(Context, 'useContextEvent').mockReturnValue({
@@ -295,7 +296,8 @@ describe(addComment, () => {
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
         prNumber: 'abc',
-        wranglerVersion: 'mock-wrangler-version'
+        wranglerVersion: 'mock-wrangler-version',
+        commentDisableWranglerOutput: false
       })
 
       await expect(addComment(mockData, 'success')).rejects.toThrow(

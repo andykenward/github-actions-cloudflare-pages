@@ -2,6 +2,7 @@ import {getInput} from '@actions/core'
 
 import {
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
+  INPUT_KEY_COMMENT_DISABLE_WRANGLER_OUTPUT,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_PR_NUMBER,
   INPUT_KEY_GITHUB_TOKEN,
@@ -19,9 +20,18 @@ type Inputs = {
   prNumber?: string
   /** Wrangler version to use. */
   wranglerVersion: string
+  /** Disable Wrangler output in GitHub comment. */
+  commentDisableWranglerOutput: boolean
 }
 
 const getInputs = (): Inputs => {
+  const commentDisableWranglerOutputInput = getInput(
+    INPUT_KEY_COMMENT_DISABLE_WRANGLER_OUTPUT,
+    {required: false}
+  )
+  const commentDisableWranglerOutput =
+    commentDisableWranglerOutputInput.toLowerCase() === 'true'
+
   return {
     cloudflareApiToken: getInput(INPUT_KEY_CLOUDFLARE_API_TOKEN, {
       required: true
@@ -30,7 +40,8 @@ const getInputs = (): Inputs => {
     gitHubEnvironment:
       getInput(INPUT_KEY_GITHUB_ENVIRONMENT, {required: false}) || undefined,
     prNumber: getInput(INPUT_KEY_PR_NUMBER, {required: false}) || undefined,
-    wranglerVersion: getInput(INPUT_KEY_WRANGLER_VERSION) || '4.86.0'
+    wranglerVersion: getInput(INPUT_KEY_WRANGLER_VERSION) || '4.86.0',
+    commentDisableWranglerOutput
   }
 }
 

@@ -107,18 +107,19 @@ permissions:
 
 ## Inputs
 
-| Input                     | Required | Description                                                                                                                   |
-| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `cloudflare-api-token`    | yes      | Cloudflare API Token                                                                                                          |
-| `cloudflare-account-id`   | yes      | Cloudflare Account ID                                                                                                         |
-| `cloudflare-project-name` | yes      | Cloudflare Pages project to upload to                                                                                         |
-| `directory`               | yes      | Directory of static files to upload                                                                                           |
-| `github-token`            | yes      | Github API key, make sure to add the required permissions for this action.                                                    |
-| `github-environment`      | yes      | GitHub environment to deploy to. You need to manually create this for the github repo                                         |
-| `pr-number`               | no       | GitHub pull request number to comment on. If not set, the action auto-detects from the event payload.                         |
-| `working-directory`       | no       | Directory to run wrangler cli from                                                                                            |
-| `wrangler-version`        | no       | Wrangler version to use. Otherwise a default version from the action will be used.                                            |
-| `branch`                  | no       | Branch name to use for Cloudflare Pages deployment. If not set, the branch is automatically detected from the GitHub context. |
+| Input                              | Required | Description                                                                                                                   |
+| ---------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `cloudflare-api-token`             | yes      | Cloudflare API Token                                                                                                          |
+| `cloudflare-account-id`            | yes      | Cloudflare Account ID                                                                                                         |
+| `cloudflare-project-name`          | yes      | Cloudflare Pages project to upload to                                                                                         |
+| `directory`                        | yes      | Directory of static files to upload                                                                                           |
+| `github-token`                     | yes      | Github API key, make sure to add the required permissions for this action.                                                    |
+| `github-environment`               | yes      | GitHub environment to deploy to. You need to manually create this for the github repo                                         |
+| `pr-number`                        | no       | GitHub pull request number to comment on. If not set, the action auto-detects from the event payload.                         |
+| `working-directory`                | no       | Directory to run wrangler cli from                                                                                            |
+| `wrangler-version`                 | no       | Wrangler version to use. Otherwise a default version from the action will be used.                                            |
+| `branch`                           | no       | Branch name to use for Cloudflare Pages deployment. If not set, the branch is automatically detected from the GitHub context. |
+| `comment-disable-wrangler-output`  | no       | Disable the Wrangler CLI output in the GitHub comment. Set to `true` to hide Wrangler output from PR comments.               |
 
 ## Outputs
 

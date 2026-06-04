@@ -2,6 +2,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
+  INPUT_KEY_COMMENT_DISABLE_WRANGLER_OUTPUT,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN,
   INPUT_KEY_WRANGLER_VERSION
@@ -56,7 +57,8 @@ describe('common', () => {
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: 'mock-github-environment',
         prNumber: undefined,
-        wranglerVersion: 'mock-wrangler-version'
+        wranglerVersion: 'mock-wrangler-version',
+        commentDisableWranglerOutput: false
       })
     })
 
@@ -73,7 +75,8 @@ describe('common', () => {
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
         prNumber: undefined,
-        wranglerVersion: packageJson.devDependencies.wrangler
+        wranglerVersion: packageJson.devDependencies.wrangler,
+        commentDisableWranglerOutput: false
       })
     })
 
@@ -88,6 +91,38 @@ describe('common', () => {
       expect(useCommonInputs()).toStrictEqual(
         expect.objectContaining({
           wranglerVersion: packageJson.devDependencies.wrangler
+        })
+      )
+    })
+
+    test('returns true when comment-disable-wrangler-output is set', async () => {
+      expect.assertions(1)
+
+      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
+      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+      stubInputEnv(INPUT_KEY_COMMENT_DISABLE_WRANGLER_OUTPUT, 'true')
+
+      const {useCommonInputs} = await setup()
+
+      expect(useCommonInputs()).toStrictEqual(
+        expect.objectContaining({
+          commentDisableWranglerOutput: true
+        })
+      )
+    })
+
+    test('returns false when comment-disable-wrangler-output is not set', async () => {
+      expect.assertions(1)
+
+      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
+      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+      stubInputEnv(INPUT_KEY_COMMENT_DISABLE_WRANGLER_OUTPUT, 'false')
+
+      const {useCommonInputs} = await setup()
+
+      expect(useCommonInputs()).toStrictEqual(
+        expect.objectContaining({
+          commentDisableWranglerOutput: false
         })
       )
     })

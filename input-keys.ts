@@ -9,6 +9,8 @@ export const INPUT_KEY_WORKING_DIRECTORY = 'working-directory'
 export const INPUT_KEYS_KEEP_LATEST = 'keep-latest'
 export const INPUT_KEY_WRANGLER_VERSION = 'wrangler-version'
 export const INPUT_KEY_BRANCH = 'branch'
+export const INPUT_KEY_COMMENT_DISABLE_WRANGLER_OUTPUT =
+  'comment-disable-wrangler-output'
 
 export const INPUT_KEYS_REQUIRED = [
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
