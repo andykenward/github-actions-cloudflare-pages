@@ -1,3 +1,4 @@
+import Cloudflare from 'cloudflare'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
@@ -129,10 +130,8 @@ describe(statusCloudflareDeployment, () => {
       404
     )
 
-    await expect(
-      statusCloudflareDeployment(API_ENDPOINT)
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.]`
+    await expect(statusCloudflareDeployment(API_ENDPOINT)).rejects.toBeInstanceOf(
+      Cloudflare.APIError
     )
   })
 })

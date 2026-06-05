@@ -1,4 +1,4 @@
-import type {Deployment} from '@cloudflare/types'
+import type {Deployment} from 'cloudflare/resources/pages/deployments'
 
 export interface FetchError {
   code: number
@@ -6,12 +6,9 @@ export interface FetchError {
   error_chain?: FetchError[]
 }
 
-interface FetchNoResult {
+export interface FetchResult<ResponseType = unknown> {
   success: boolean
   errors: FetchError[]
-}
-
-export interface FetchResult<ResponseType = unknown> extends FetchNoResult {
   result?: ResponseType | null
   messages?: string[]
   result_info?: unknown
@@ -19,12 +16,5 @@ export interface FetchResult<ResponseType = unknown> extends FetchNoResult {
 
 /**
  * The type for a Cloudflare Pages Deployment.
- *
  */
-export type PagesDeployment = Omit<Deployment, 'aliases'> & {
-  /**
-   * The aliases property type is incorrect from '@cloudflare/types'.
-   * It could be null.
-   */
-  aliases: string[] | null
-}
+export type PagesDeployment = Deployment

@@ -1,4 +1,5 @@
 import {info, setOutput, summary} from '@actions/core'
+import Cloudflare from 'cloudflare'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
@@ -118,9 +119,7 @@ describe(createCloudflareDeployment, () => {
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory'
         })
-      ).rejects.toThrowErrorMatchingInlineSnapshot(
-        `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.]`
-      )
+      ).rejects.toBeInstanceOf(Cloudflare.APIError)
       expect(execFileAsync).toHaveBeenCalledTimes(1)
       expect(info).toHaveBeenLastCalledWith('success')
       expect(setOutput).not.toHaveBeenCalled()
