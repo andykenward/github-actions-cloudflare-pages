@@ -26,7 +26,7 @@
     "codegen:events": "node bin/codegen/github-workflow-events.ts && pnpm run format",
     "codegen:watch": "pnpm run codegen --watch",
     "deployments:delete": "node bin/deployments/index.ts",
-    "download": "tsx bin/download/index.ts",
+    "download": "node bin/download/index.ts",
     "format": "oxfmt --write .",
     "format:check": "pnpm run format --check",
     "knip": "knip --cache --cache-location '.cache/knip'",
