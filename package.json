@@ -23,7 +23,7 @@
     "build": "rm -rf ./dist/* && node ./esbuild.config.js",
     "changeset": "changeset",
     "codegen": "graphql-codegen --config graphql.config.ts",
-    "codegen:events": "tsx bin/codegen/index.ts && pnpm run format",
+    "codegen:events": "node bin/codegen/github-workflow-events.ts && pnpm run format",
     "codegen:watch": "pnpm run codegen --watch",
     "deployments:delete": "tsx bin/deployments/index.ts",
     "download": "tsx bin/download/index.ts",
