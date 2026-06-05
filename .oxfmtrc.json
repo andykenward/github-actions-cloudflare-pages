@@ -14,7 +14,7 @@
     "__generated__/responses/",
     ".agents",
     ".cache",
-    ".claude",
+    ".claude/skills",
     ".changeset/*.md",
     "skills-lock.json"
   ],
