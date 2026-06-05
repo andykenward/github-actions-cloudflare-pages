@@ -3,8 +3,8 @@ import {useContext} from '@/common/github/context.js'
 import type {CloudflareApiEndpoint} from '../api/endpoints.js'
 import type {PagesDeployment} from '../types.js'
 
-import {getCloudflareApiEndpoint} from '../api/endpoints.js'
-import {fetchResult} from '../api/fetch-result.js'
+import {cloudflareClient} from '../api/client.js'
+import {unwrap} from '../api/fetch-result.js'
 
 export const getCloudflareDeploymentAlias = (
   deployment: PagesDeployment
@@ -21,11 +21,14 @@ export const getCloudflareLatestDeployment = async ({
 }: CloudflareApiEndpoint): Promise<PagesDeployment> => {
   const {sha: commitHash} = useContext()
 
-  const deployments = await fetchResult<Array<PagesDeployment>>(
-    getCloudflareApiEndpoint({path: 'deployments', accountId, projectName})
+  const deployments = unwrap(
+    await cloudflareClient.GET(
+      '/accounts/{account_id}/pages/projects/{project_name}/deployments',
+      {params: {path: {account_id: accountId, project_name: projectName}}}
+    )
   )
 
-  const deployment = deployments?.find(
+  const deployment = deployments.find(
     deployment =>
       deployment.deployment_trigger.metadata.commit_hash === commitHash
   )

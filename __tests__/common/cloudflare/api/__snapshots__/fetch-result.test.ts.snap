@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`api > fetchResult > handles 200 response OK 1`] = `
+exports[`api > unwrap > handles 200 response OK 1`] = `
 {
   "build_config": {
     "build_command": "npm run build",
