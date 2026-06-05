@@ -36,8 +36,7 @@ export const statusCloudflareDeployment = async (
           break
         }
         case 'active':
-        case 'success':
-        case 'skipped': {
+        case 'success': {
           if (latest_stage.name === 'deploy') {
             deploymentStatus = latest_stage.status
             break

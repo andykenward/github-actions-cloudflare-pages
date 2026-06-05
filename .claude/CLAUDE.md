@@ -34,18 +34,19 @@ Non-negotiable. Violating these breaks the build or the type system.
 
 ## Commands
 
-| Command                        | Purpose                                                                                                       |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `pnpm run all`                 | Full validation: sync-versions → knip → codegen → codegen:events → tsc → format → lint → test → build         |
-| `pnpm run build`               | ESBuild bundle to `dist/deploy` & `dist/delete`                                                               |
-| `pnpm run codegen`             | Regenerate GraphQL types in [`__generated__/gql/`](__generated__/gql/) from inline `graphql()` calls          |
-| `pnpm run codegen:events`      | Generate GitHub event types via [bin/codegen/index.ts](bin/codegen/index.ts) from `@octokit/webhooks-schemas` |
-| `pnpm run codegen:watch`       | Auto-regenerate types on GraphQL changes                                                                      |
-| `pnpm run tsc:check`           | Type-check (`tsc --noEmit --checkJs`)                                                                         |
-| `pnpm run test` / `test:watch` | Vitest run / interactive                                                                                      |
-| `pnpm run start`               | Run the built action locally (needs local env vars)                                                           |
-| `pnpm run act:d`               | Test the delete action locally with `act`                                                                     |
-| `pnpm changeset`               | Record a changeset for notable/breaking changes                                                               |
+| Command                        | Purpose                                                                                                                                         |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run all`                 | Full validation: sync-versions → knip → codegen → codegen:events → codegen:cloudflare → tsc → format → lint → test → build                      |
+| `pnpm run build`               | ESBuild bundle to `dist/deploy` & `dist/delete`                                                                                                 |
+| `pnpm run codegen`             | Regenerate GraphQL types in [`__generated__/gql/`](__generated__/gql/) from inline `graphql()` calls                                            |
+| `pnpm run codegen:cloudflare`  | Generate Cloudflare Pages types via [bin/codegen/cloudflare-pages.ts](bin/codegen/cloudflare-pages.ts)                                          |
+| `pnpm run codegen:events`      | Generate GitHub event types via [bin/codegen/github-workflow-events.ts](bin/codegen/github-workflow-events.ts) from `@octokit/webhooks-schemas` |
+| `pnpm run codegen:watch`       | Auto-regenerate types on GraphQL changes                                                                                                        |
+| `pnpm run tsc:check`           | Type-check (`tsc --noEmit --checkJs`)                                                                                                           |
+| `pnpm run test` / `test:watch` | Vitest run / interactive                                                                                                                        |
+| `pnpm run start`               | Run the built action locally (needs local env vars)                                                                                             |
+| `pnpm run act:d`               | Test the delete action locally with `act`                                                                                                       |
+| `pnpm changeset`               | Record a changeset for notable/breaking changes                                                                                                 |
 
 ## Task Playbooks
 
@@ -69,7 +70,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 4. Tests: `stubRequiredInputEnv()` only stubs `INPUT_KEYS_REQUIRED`, so a **required** input is covered automatically. An **optional** input is not — stub it per-test with `stubInputEnv(INPUT_KEY_X, value)` and assert the `undefined` default case too (see [`__tests__/deploy/inputs.test.ts`](__tests__/deploy/inputs.test.ts)).
 5. Document it in the Inputs table of [README.md](README.md) (or [delete/README.md](delete/README.md) for the delete action).
 
-**Cloudflare API change**: update types in [src/common/cloudflare/types.ts](src/common/cloudflare/types.ts) → add fixtures to [`__generated__/responses/`](__generated__/responses/).
+**Cloudflare API change**: Pages request/response types are generated from Cloudflare's canonical OpenAPI schema — edit the operation whitelist in [bin/codegen/cloudflare-pages.ts](bin/codegen/cloudflare-pages.ts) → `pnpm run codegen:cloudflare` → consume via `components['schemas'][...]` re-exported from [src/common/cloudflare/types.ts](src/common/cloudflare/types.ts) (e.g. `PagesDeployment`). Never hand-edit [`__generated__/types/cloudflare/`](__generated__/types/cloudflare/). Add fixtures to [`__generated__/responses/`](__generated__/responses/).
 
 **Breaking change**: `pnpm changeset` to record it for [CHANGELOG.md](CHANGELOG.md).
 
