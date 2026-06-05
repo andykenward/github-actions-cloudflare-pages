@@ -25,7 +25,7 @@
     "codegen": "graphql-codegen --config graphql.config.ts",
     "codegen:events": "node bin/codegen/github-workflow-events.ts && pnpm run format",
     "codegen:watch": "pnpm run codegen --watch",
-    "deployments:delete": "tsx bin/deployments/index.ts",
+    "deployments:delete": "node bin/deployments/index.ts",
     "download": "tsx bin/download/index.ts",
     "format": "oxfmt --write .",
     "format:check": "pnpm run format --check",
