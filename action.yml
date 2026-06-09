@@ -36,6 +36,9 @@ inputs:
   branch:
     description: 'Branch name to use for Cloudflare Pages deployment. If not set, the branch is automatically detected from the GitHub context.'
     required: false
+  comment-disable-wrangler-output:
+    description: 'Disable the Wrangler CLI output in the GitHub comment. If set to true, the Wrangler output will not be included in the PR comment.'
+    required: false
 
 outputs:
   id:

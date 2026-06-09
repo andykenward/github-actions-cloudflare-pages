@@ -5,6 +5,10 @@ export const getInput = vi.fn<typeof core.getInput>((name: string, options) =>
   core.getInput(name, options)
 )
 
+export const getBooleanInput = vi.fn<typeof core.getBooleanInput>(
+  (name: string, options) => core.getBooleanInput(name, options)
+)
+
 export const setOutput = vi.fn()
 
 export const error = vi.fn()

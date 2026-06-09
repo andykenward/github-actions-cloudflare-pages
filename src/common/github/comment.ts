@@ -163,8 +163,13 @@ export const addComment = async (
   if (prNodeId) {
     const {sha} = useContext()
     const {eventName} = useContextEvent()
+    const {commentDisableWranglerOutput} = useCommonInputs()
 
-    const rawBody = `## Cloudflare Pages Deployment\n**Event Name:** ${eventName}\n**Environment:** ${deployment.environment}\n**Project:** ${deployment.project_name}\n**Built with commit:** ${sha}\n**Preview URL:** ${deployment.url}\n**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}\n\n### Wrangler Output\n${output}`
+    let rawBody = `## Cloudflare Pages Deployment\n**Event Name:** ${eventName}\n**Environment:** ${deployment.environment}\n**Project:** ${deployment.project_name}\n**Built with commit:** ${sha}\n**Preview URL:** ${deployment.url}\n**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}`
+
+    if (!commentDisableWranglerOutput) {
+      rawBody += `\n\n### Wrangler Output\n${output}`
+    }
 
     const comment = await request({
       query: MutationAddComment,
