@@ -1,7 +1,7 @@
 import {error, info, warning} from '@actions/core'
 
-import {getCloudflareApiEndpoint} from '../api/endpoints.js'
-import {fetchSuccess} from '../api/fetch-result.js'
+import {cloudflareClient} from '../api/client.js'
+import {unwrapSuccess} from '../api/fetch-result.js'
 import {ParseError} from '../api/parse-error.js'
 
 export const deleteCloudflareDeployment = async ({
@@ -14,16 +14,22 @@ export const deleteCloudflareDeployment = async ({
   accountId: string
   projectName: string
 }): Promise<boolean> => {
-  const url = getCloudflareApiEndpoint({
-    path: `deployments/${id}?force=true`,
-    accountId,
-    projectName
-  })
-
   try {
-    const success = await fetchSuccess(url, {
-      method: 'DELETE'
-    })
+    const success = unwrapSuccess(
+      await cloudflareClient.DELETE(
+        '/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}',
+        {
+          params: {
+            path: {
+              account_id: accountId,
+              project_name: projectName,
+              deployment_id: id
+            },
+            query: {force: true}
+          }
+        }
+      )
+    )
 
     if (success === true) {
       info(`Cloudflare Deployment Deleted: ${id}`)

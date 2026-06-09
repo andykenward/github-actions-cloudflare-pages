@@ -14,7 +14,7 @@ set -uo pipefail
 # tsc checks the whole project, so this only runs for edits that can change type
 # results; doc/config-only edits are skipped to avoid pointless background runs.
 #
-# AI agents: keep wiring points in sync (AGENTS.md "Hook Sync Rule"):
+# AI agents: keep wiring points in sync (.claude/CLAUDE.md "Hook Sync Rule"):
 # - .claude/settings.json (PostToolUse)
 
 if ! command -v pnpm >/dev/null 2>&1; then

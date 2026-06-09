@@ -12,7 +12,7 @@ set -uo pipefail
 # Tool crashes (killed by a signal, exit >= 128) are swallowed so a transient
 # tooling bug never repeatedly blocks the agent.
 #
-# AI agents: keep this in sync with the other wiring points (AGENTS.md "Hook Sync Rule"):
+# AI agents: keep this in sync with the other wiring points (.claude/CLAUDE.md "Hook Sync Rule"):
 # - .claude/settings.json (PostToolUse)
 # - .claude/scripts/pre-commit-oxc.sh (shared formatter/linter; also the prek.toml hook)
 
