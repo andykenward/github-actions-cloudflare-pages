@@ -7,6 +7,8 @@ import type {MockApi} from '@/tests/helpers/api.js'
 import {
   addComment,
   MutationAddComment,
+  MutationUpdateComment,
+  QueryPullRequestComments,
   QueryPullRequestNodeId,
   QueryPullRequestNodeIdByBranch
 } from '@/common/github/comment.js'
@@ -40,7 +42,7 @@ describe(addComment, () => {
           query: MutationAddComment,
           variables: {
             subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-            body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+            body: '<!-- cloudflare-pages-deployment-comment -->\n## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
           }
         },
         {
@@ -133,7 +135,7 @@ describe(addComment, () => {
           query: MutationAddComment,
           variables: {
             subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-            body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_run\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** 3484a3fb816e0859fd6e1cea078d76385ff50625\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+            body: '<!-- cloudflare-pages-deployment-comment -->\n## Cloudflare Pages Deployment\n**Event Name:** workflow_run\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** 3484a3fb816e0859fd6e1cea078d76385ff50625\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
           }
         },
         {
@@ -217,7 +219,9 @@ describe(addComment, () => {
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
         prNumber: '123',
-        wranglerVersion: 'mock-wrangler-version'
+        wranglerVersion: 'mock-wrangler-version',
+        commentMode: 'new',
+        hideWranglerOutput: false
       })
 
       vi.spyOn(Context, 'useContextEvent').mockReturnValue({
@@ -266,7 +270,7 @@ describe(addComment, () => {
           query: MutationAddComment,
           variables: {
             subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-            body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+            body: '<!-- cloudflare-pages-deployment-comment -->\n## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
           }
         },
         {
@@ -295,7 +299,9 @@ describe(addComment, () => {
         gitHubApiToken: 'mock-github-token',
         gitHubEnvironment: undefined,
         prNumber: 'abc',
-        wranglerVersion: 'mock-wrangler-version'
+        wranglerVersion: 'mock-wrangler-version',
+        commentMode: 'new',
+        hideWranglerOutput: false
       })
 
       await expect(addComment(mockData, 'success')).rejects.toThrow(
@@ -354,7 +360,7 @@ describe(addComment, () => {
           query: MutationAddComment,
           variables: {
             subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-            body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+            body: '<!-- cloudflare-pages-deployment-comment -->\n## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
           }
         },
         {
@@ -447,5 +453,174 @@ describe(addComment, () => {
         await expect(addComment(mockData, 'success')).resolves.toBeUndefined()
       }
     )
+  })
+
+  describe('comment-mode: update', () => {
+    test('should update existing comment when comment-mode is update', async () => {
+      expect.assertions(1)
+
+      vi.spyOn(CommonInputs, 'useCommonInputs').mockReturnValue({
+        cloudflareApiToken: 'mock-cloudflare-api-token',
+        gitHubApiToken: 'mock-github-token',
+        gitHubEnvironment: undefined,
+        prNumber: undefined,
+        wranglerVersion: 'mock-wrangler-version',
+        commentMode: 'update',
+        hideWranglerOutput: false
+      })
+
+      // Mock finding existing comment
+      mockApi.interceptGithub(
+        {
+          query: QueryPullRequestComments,
+          variables: {
+            prNodeId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+            first: 50
+          }
+        },
+        {
+          data: {
+            node: {
+              comments: {
+                nodes: [
+                  {
+                    id: 'existing-comment-id',
+                    body: '<!-- cloudflare-pages-deployment-comment -->\n## Old deployment',
+                    author: {
+                      login: 'github-actions[bot]'
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      )
+
+      // Mock updating the comment
+      mockApi.interceptGithub(
+        {
+          query: MutationUpdateComment,
+          variables: {
+            id: 'existing-comment-id',
+            body: '<!-- cloudflare-pages-deployment-comment -->\n## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+          }
+        },
+        {
+          data: {
+            updateIssueComment: {
+              issueComment: {
+                id: 'existing-comment-id'
+              }
+            }
+          }
+        }
+      )
+
+      const comment = await addComment(mockData, 'success')
+
+      expect(comment).toBe('existing-comment-id')
+    })
+
+    test('should create new comment when no existing comment found in update mode', async () => {
+      expect.assertions(1)
+
+      vi.spyOn(CommonInputs, 'useCommonInputs').mockReturnValue({
+        cloudflareApiToken: 'mock-cloudflare-api-token',
+        gitHubApiToken: 'mock-github-token',
+        gitHubEnvironment: undefined,
+        prNumber: undefined,
+        wranglerVersion: 'mock-wrangler-version',
+        commentMode: 'update',
+        hideWranglerOutput: false
+      })
+
+      // Mock finding no existing comments
+      mockApi.interceptGithub(
+        {
+          query: QueryPullRequestComments,
+          variables: {
+            prNodeId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+            first: 50
+          }
+        },
+        {
+          data: {
+            node: {
+              comments: {
+                nodes: []
+              }
+            }
+          }
+        }
+      )
+
+      // Mock creating new comment
+      mockApi.interceptGithub(
+        {
+          query: MutationAddComment,
+          variables: {
+            subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+            body: '<!-- cloudflare-pages-deployment-comment -->\n## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+          }
+        },
+        {
+          data: {
+            addComment: {
+              commentEdge: {
+                node: {
+                  id: 'new-comment-id'
+                }
+              }
+            }
+          }
+        }
+      )
+
+      const comment = await addComment(mockData, 'success')
+
+      expect(comment).toBe('new-comment-id')
+    })
+  })
+
+  describe('hide-wrangler-output', () => {
+    test('should hide wrangler output when hideWranglerOutput is true', async () => {
+      expect.assertions(1)
+
+      vi.spyOn(CommonInputs, 'useCommonInputs').mockReturnValue({
+        cloudflareApiToken: 'mock-cloudflare-api-token',
+        gitHubApiToken: 'mock-github-token',
+        gitHubEnvironment: undefined,
+        prNumber: undefined,
+        wranglerVersion: 'mock-wrangler-version',
+        commentMode: 'new',
+        hideWranglerOutput: true
+      })
+
+      mockApi.interceptGithub(
+        {
+          query: MutationAddComment,
+          variables: {
+            subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+            body: '<!-- cloudflare-pages-deployment-comment -->\n## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
+          }
+        },
+        {
+          data: {
+            addComment: {
+              commentEdge: {
+                node: {
+                  id: '1'
+                }
+              }
+            }
+          }
+        }
+      )
+
+      const comment = await addComment(mockData, 'success')
+
+      expect(comment).toBe('1')
+    })
   })
 })

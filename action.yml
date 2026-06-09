@@ -36,6 +36,14 @@ inputs:
   branch:
     description: 'Branch name to use for Cloudflare Pages deployment. If not set, the branch is automatically detected from the GitHub context.'
     required: false
+  comment-mode:
+    description: 'Comment mode for PR comments. "new" creates a new comment for each deployment (default). "update" updates the same comment for all deployments on the PR.'
+    required: false
+    default: 'new'
+  hide-wrangler-output:
+    description: 'Hide Wrangler CLI output from PR comments. Set to "true" to hide the output.'
+    required: false
+    default: 'false'
 
 outputs:
   id:
