@@ -1,6 +1,6 @@
 # Base image pinned by digest for reproducibility. Bumping the node version
 # means updating both the tag and the digest (see `docker pull` output).
-FROM node:24.16.0-bookworm-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+FROM node:24.16.0-bookworm-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203
 
 # System packages. Individual versions are not pinned — the digest-pinned base
 # image plus Docker's layer cache provide reproducibility in practice.
