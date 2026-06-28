@@ -38,7 +38,7 @@ COPY --chown=node:node zshrc /home/node/.zshrc
 # places its own globally-installed tools (`pnpm add -g`).
 ENV PNPM_HOME="/usr/local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
-RUN npm install -g pnpm@11.1.1
+RUN npm install -g pnpm@11.9.0
 
 # GitHub CLI 2.93.0 — installed from the official cli.github.com apt repository.
 # The keyring fingerprint is verified against GitHub's published key before trusting it.
