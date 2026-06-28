@@ -22,6 +22,15 @@ import openapiTS, {astToString} from 'openapi-typescript'
  */
 
 const REF = process.env['CLOUDFLARE_API_SCHEMAS_REF'] ?? 'main'
+// Validate before interpolating into the URL: although the host is hardcoded,
+// an unvalidated REF could smuggle path-traversal segments to reach a different
+// repo/path (CodeQL SSRF). Restrict to characters valid in a git ref/path and
+// reject `..` — note a plain charset regex still permits `../`, which git refs
+// forbid anyway.
+assert.ok(
+  /^[a-zA-Z0-9._\-/]+$/u.test(REF) && !REF.includes('..'),
+  `CLOUDFLARE_API_SCHEMAS_REF must be a valid git ref (got: ${JSON.stringify(REF)})`
+)
 const SCHEMA_URL = `https://raw.githubusercontent.com/cloudflare/api-schemas/${REF}/openapi.json`
 
 /**
