@@ -1,12 +1,11 @@
 {
   "recommendations": [
-    "github.vscode-github-actions",
     "eamodio.gitlens",
+    "github.vscode-github-actions",
+    "GraphQL.vscode-graphql-syntax",
+    "GraphQL.vscode-graphql",
     "oxc.oxc-vscode",
-    "yoavbls.pretty-ts-errors",
-    "redhat.vscode-yaml",
-    "graphql.vscode-graphql-syntax",
-    "graphql.vscode-graphql",
+    "vitest.explorer",
     "webpro.vscode-knip"
   ]
 }

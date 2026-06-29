@@ -1,4 +1,4 @@
-import type {Deployment} from '@cloudflare/types'
+import type {components} from '@/types/cloudflare/pages.js'
 
 export interface FetchError {
   code: number
@@ -18,13 +18,7 @@ export interface FetchResult<ResponseType = unknown> extends FetchNoResult {
 }
 
 /**
- * The type for a Cloudflare Pages Deployment.
- *
+ * The type for a Cloudflare Pages Deployment, generated from Cloudflare's
+ * canonical OpenAPI schema by `pnpm run codegen:cloudflare`.
  */
-export type PagesDeployment = Omit<Deployment, 'aliases'> & {
-  /**
-   * The aliases property type is incorrect from '@cloudflare/types'.
-   * It could be null.
-   */
-  aliases: string[] | null
-}
+export type PagesDeployment = components['schemas']['pages_deployment']

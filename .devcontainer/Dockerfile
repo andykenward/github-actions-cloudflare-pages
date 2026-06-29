@@ -1,6 +1,6 @@
 # Base image pinned by digest for reproducibility. Bumping the node version
 # means updating both the tag and the digest (see `docker pull` output).
-FROM node:24.17.0-bookworm-slim@sha256:964191e9c047c5ababb0ba8a6e613cc70714a1de1fbca57e717c516f689c8053
+FROM node:24.18.0-bookworm-slim@sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
 
 # System packages. Individual versions are not pinned — the digest-pinned base
 # image plus Docker's layer cache provide reproducibility in practice.
@@ -38,7 +38,7 @@ COPY --chown=node:node zshrc /home/node/.zshrc
 # places its own globally-installed tools (`pnpm add -g`).
 ENV PNPM_HOME="/usr/local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
-RUN npm install -g pnpm@11.1.1
+RUN npm install -g pnpm@11.9.0
 
 # GitHub CLI 2.93.0 — installed from the official cli.github.com apt repository.
 # The keyring fingerprint is verified against GitHub's published key before trusting it.
