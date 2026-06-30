@@ -40,20 +40,23 @@ ENV PNPM_HOME="/usr/local/share/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN npm install -g pnpm@11.9.0
 
-# GitHub CLI 2.93.0 — installed from the official cli.github.com apt repository.
-# The keyring fingerprint is verified against GitHub's published key before trusting it.
+# GitHub CLI 2.95.0 — installed from the official cli.github.com apt repository.
+# The keyring is downloaded to a temp file and verified against GitHub's published
+# PGP key fingerprints before being written to the system keyring path.
+# GitHub publishes two active fingerprints; either one is accepted.
 # To update: change the version in `apt-get install gh=<version>` and update the comment.
 # Latest releases: https://github.com/cli/cli/releases
 RUN mkdir -p -m 755 /etc/apt/keyrings \
-    && wget -nv -O /etc/apt/keyrings/githubcli-archive-keyring.gpg \
-       https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-    && gpg --show-keys /etc/apt/keyrings/githubcli-archive-keyring.gpg 2>/dev/null \
-       | grep -qF "2C6106201985B60E6C7AC87323F3D4EA75716059" \
+    && out=$(mktemp) \
+    && wget -nv -O "$out" https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    && gpg --show-keys "$out" 2>/dev/null \
+       | grep -qE "2C6106201985B60E6C7AC87323F3D4EA75716059|7F38BBB59D064DBCB3D84D725612B36462313325" \
+    && cat "$out" > /etc/apt/keyrings/githubcli-archive-keyring.gpg \
     && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
        > /etc/apt/sources.list.d/github-cli.list \
     && apt-get update \
-    && apt-get install -y --no-install-recommends gh=2.93.0 \
+    && apt-get install -y --no-install-recommends gh=2.95.0 \
     && rm -rf /var/lib/apt/lists/*
 
 # act v0.2.88 — run GitHub Actions locally, installed via the nektos/act install
