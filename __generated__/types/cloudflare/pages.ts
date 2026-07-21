@@ -278,6 +278,19 @@ export interface components {
        * @example f64788e9
        */
       readonly short_id: string
+      /**
+       * @description Why the deployment was skipped.
+       * @example commit_message
+       * @enum {string|null}
+       */
+      readonly skip_reason?:
+        | 'commit_message'
+        | 'preview_deployments_disabled'
+        | 'production_deployments_disabled'
+        | 'path_config'
+        | 'branch_config'
+        | 'pages_to_workers_conversion'
+        | null
       source: components['schemas']['pages_source']
       /**
        * @description List of past stages.
