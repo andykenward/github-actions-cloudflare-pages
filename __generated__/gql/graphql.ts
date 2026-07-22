@@ -231,7 +231,7 @@ export const LatestReleaseDocument = new TypedDocumentString(`
     `) as unknown as TypedDocumentString<LatestReleaseQuery, LatestReleaseQueryVariables>;
 export const AddCommentDocument = new TypedDocumentString(`
     mutation AddComment($subjectId: ID!, $body: String!) {
-  addComment(input: {subjectId: $subjectId, body: $body}) {
+  addComment(input: { subjectId: $subjectId, body: $body }) {
     commentEdge {
       node {
         id
@@ -263,7 +263,15 @@ export const PullRequestNodeIdByBranchDocument = new TypedDocumentString(`
 export const CreateGitHubDeploymentDocument = new TypedDocumentString(`
     mutation CreateGitHubDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!, $description: String) {
   createDeployment(
-    input: {autoMerge: false, description: $description, environment: $environmentName, refId: $refId, repositoryId: $repositoryId, requiredContexts: [], payload: $payload}
+    input: {
+      autoMerge: false
+      description: $description
+      environment: $environmentName
+      refId: $refId
+      repositoryId: $repositoryId
+      requiredContexts: []
+      payload: $payload
+    }
   ) {
     deployment {
       ...DeploymentFragment
@@ -277,17 +285,17 @@ export const CreateGitHubDeploymentDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<CreateGitHubDeploymentMutation, CreateGitHubDeploymentMutationVariables>;
 export const DeleteGitHubDeploymentDocument = new TypedDocumentString(`
     mutation DeleteGitHubDeployment($deploymentId: ID!) {
-  deleteDeployment(input: {id: $deploymentId}) {
+  deleteDeployment(input: { id: $deploymentId }) {
     clientMutationId
   }
 }
     `) as unknown as TypedDocumentString<DeleteGitHubDeploymentMutation, DeleteGitHubDeploymentMutationVariables>;
 export const DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(`
     mutation DeleteGitHubDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
-  deleteDeployment(input: {id: $deploymentId}) {
+  deleteDeployment(input: { id: $deploymentId }) {
     clientMutationId
   }
-  deleteIssueComment(input: {id: $commentId}) {
+  deleteIssueComment(input: { id: $commentId }) {
     clientMutationId
   }
 }
@@ -295,7 +303,14 @@ export const DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(
 export const CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
     mutation CreateGitHubDeploymentStatus($deploymentId: ID!, $environment: String, $environmentUrl: String!, $logUrl: String!, $state: DeploymentStatusState!) {
   createDeploymentStatus(
-    input: {autoInactive: false, deploymentId: $deploymentId, environment: $environment, environmentUrl: $environmentUrl, logUrl: $logUrl, state: $state}
+    input: {
+      autoInactive: false
+      deploymentId: $deploymentId
+      environment: $environment
+      environmentUrl: $environmentUrl
+      logUrl: $logUrl
+      state: $state
+    }
   ) {
     clientMutationId
   }
@@ -303,7 +318,7 @@ export const CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
     `) as unknown as TypedDocumentString<CreateGitHubDeploymentStatusMutation, CreateGitHubDeploymentStatusMutationVariables>;
 export const CreateEnvironmentDocument = new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
-  createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+  createEnvironment(input: { repositoryId: $repositoryId, name: $name }) {
     environment {
       ...EnvironmentFragment
     }
