@@ -93,7 +93,7 @@ ${"  ".repeat(level)}- ${renderError(chainedError,level+1)}`).join(`
 }
     `),AddCommentDocument=new TypedDocumentString(`
     mutation AddComment($subjectId: ID!, $body: String!) {
-  addComment(input: {subjectId: $subjectId, body: $body}) {
+  addComment(input: { subjectId: $subjectId, body: $body }) {
     commentEdge {
       node {
         id
@@ -122,7 +122,15 @@ ${"  ".repeat(level)}- ${renderError(chainedError,level+1)}`).join(`
     `),CreateGitHubDeploymentDocument=new TypedDocumentString(`
     mutation CreateGitHubDeployment($repositoryId: ID!, $environmentName: String!, $refId: ID!, $payload: String!, $description: String) {
   createDeployment(
-    input: {autoMerge: false, description: $description, environment: $environmentName, refId: $refId, repositoryId: $repositoryId, requiredContexts: [], payload: $payload}
+    input: {
+      autoMerge: false
+      description: $description
+      environment: $environmentName
+      refId: $refId
+      repositoryId: $repositoryId
+      requiredContexts: []
+      payload: $payload
+    }
   ) {
     deployment {
       ...DeploymentFragment
@@ -135,30 +143,37 @@ ${"  ".repeat(level)}- ${renderError(chainedError,level+1)}`).join(`
   state
 }`),DeleteGitHubDeploymentDocument=new TypedDocumentString(`
     mutation DeleteGitHubDeployment($deploymentId: ID!) {
-  deleteDeployment(input: {id: $deploymentId}) {
+  deleteDeployment(input: { id: $deploymentId }) {
     clientMutationId
   }
 }
     `),DeleteGitHubDeploymentAndCommentDocument=new TypedDocumentString(`
     mutation DeleteGitHubDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
-  deleteDeployment(input: {id: $deploymentId}) {
+  deleteDeployment(input: { id: $deploymentId }) {
     clientMutationId
   }
-  deleteIssueComment(input: {id: $commentId}) {
+  deleteIssueComment(input: { id: $commentId }) {
     clientMutationId
   }
 }
     `),CreateGitHubDeploymentStatusDocument=new TypedDocumentString(`
     mutation CreateGitHubDeploymentStatus($deploymentId: ID!, $environment: String, $environmentUrl: String!, $logUrl: String!, $state: DeploymentStatusState!) {
   createDeploymentStatus(
-    input: {autoInactive: false, deploymentId: $deploymentId, environment: $environment, environmentUrl: $environmentUrl, logUrl: $logUrl, state: $state}
+    input: {
+      autoInactive: false
+      deploymentId: $deploymentId
+      environment: $environment
+      environmentUrl: $environmentUrl
+      logUrl: $logUrl
+      state: $state
+    }
   ) {
     clientMutationId
   }
 }
     `),CreateEnvironmentDocument=new TypedDocumentString(`
     mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
-  createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
+  createEnvironment(input: { repositoryId: $repositoryId, name: $name }) {
     environment {
       ...EnvironmentFragment
     }
