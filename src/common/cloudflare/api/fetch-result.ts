@@ -1,4 +1,4 @@
-import type {FetchError, FetchResult} from '../types.js'
+import type {FetchError} from '../types.js'
 
 import {throwFetchError} from './fetch-error.js'
 
@@ -27,14 +27,11 @@ export const unwrap = <Result>({
 }: ClientResponse<Result>): Result => {
   // Non-2xx: the envelope arrives on `error`.
   if (error) {
-    return throwFetchError(response.url, error as FetchResult<unknown>)
+    return throwFetchError(response.url, error)
   }
   // 2xx but the API still reports failure.
   if (!data?.success) {
-    return throwFetchError(
-      response.url,
-      (data ?? {success: false, errors: []}) as FetchResult<unknown>
-    )
+    return throwFetchError(response.url, data ?? {success: false, errors: []})
   }
   if (data.result === null || data.result === undefined) {
     throw new Error(`Cloudflare API: response missing 'result'`)
@@ -54,7 +51,7 @@ export const unwrapSuccess = ({
 }: ClientResponse<unknown>): boolean => {
   const envelope = data ?? error
   if (envelope && !envelope.success && envelope.errors.length > 0) {
-    throwFetchError(response.url, envelope as FetchResult<unknown>)
+    throwFetchError(response.url, envelope)
   }
   return envelope?.success ?? false
 }
