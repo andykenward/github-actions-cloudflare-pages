@@ -72,7 +72,7 @@
     "openapi-typescript": "7.13.0",
     "oxfmt": "0.59.0",
     "oxlint": "1.74.0",
-    "oxlint-tsgolint": "0.24.0",
+    "oxlint-tsgolint": "0.25.0",
     "skills": "1.5.7",
     "tsx": "4.23.1",
     "typescript": "6.0.3",
