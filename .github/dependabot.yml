@@ -29,6 +29,16 @@ updates:
       semver-major-days: 14
       semver-minor-days: 7
       semver-patch-days: 3
+    ignore:
+      # `undici` is only used in tests, where `setGlobalDispatcher()` patches the
+      # dispatcher that Node's *built-in* `fetch` reads. That handshake is a
+      # versioned global symbol (`Symbol.for('undici.globalDispatcher.N')`), so
+      # the devDependency must stay on the same major as Node's bundled copy
+      # (`process.versions.undici`) or `MockAgent` silently stops intercepting
+      # and tests hit the real network. Node 24 bundles undici 7.x; only raise
+      # this once Node's bundled major moves.
+      - dependency-name: undici
+        update-types: ['version-update:semver-major']
     groups:
       graphql:
         patterns:
