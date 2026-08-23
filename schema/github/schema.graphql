@@ -14014,6 +14014,51 @@ type Enterprise implements Node {
   id: ID!
 
   """
+  Innersource security vulnerabilities scoped to this enterprise.
+  """
+  innersourceVulnerabilities(
+    """
+    Returns the elements in the list that come after the specified cursor.
+    """
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """
+    An ecosystem to filter vulnerabilities by.
+    """
+    ecosystem: SecurityAdvisoryEcosystem
+
+    """
+    Returns the first _n_ elements from the list.
+    """
+    first: Int
+
+    """
+    Returns the last _n_ elements from the list.
+    """
+    last: Int
+
+    """
+    Ordering options for the returned vulnerabilities.
+    """
+    orderBy: SecurityVulnerabilityOrder = {field: UPDATED_AT, direction: DESC}
+
+    """
+    A package name to filter vulnerabilities by.
+    """
+    package: String
+
+    """
+    A list of severities to filter vulnerabilities by.
+    """
+    severities: [SecurityAdvisorySeverity!]
+  ): SecurityVulnerabilityConnection!
+
+  """
   The location of the enterprise.
   """
   location: String
@@ -19891,6 +19936,11 @@ type Issue implements Assignable & Closable & Comment & Deletable & Labelable & 
     before: String
 
     """
+    Exclude manually linked PRs
+    """
+    excludeUserLinked: Boolean = false
+
+    """
     Returns the first _n_ elements from the list.
     """
     first: Int
@@ -22018,6 +22068,51 @@ type IssueFieldTimelineOption {
 }
 
 """
+Updates an issue field using its user-facing name.
+"""
+input IssueFieldUpdateInput {
+  """
+  The name of the issue field.
+  """
+  fieldName: String!
+
+  """
+  The operation to perform.
+  """
+  operation: IssueFieldUpdateOperation!
+
+  """
+  The value or comma-separated option names for the operation.
+  """
+  value: String
+}
+
+"""
+The operation to perform on an issue field value.
+"""
+enum IssueFieldUpdateOperation {
+  """
+  Sets a scalar field or adds options to a multi-select field.
+  """
+  ADD
+
+  """
+  Clears the field value.
+  """
+  CLEAR
+
+  """
+  Removes options from a multi-select field.
+  """
+  REMOVE
+
+  """
+  Replaces the field value.
+  """
+  SET
+}
+
+"""
 Issue field values
 """
 union IssueFieldValue = IssueFieldDateValue | IssueFieldMultiSelectValue | IssueFieldNumberValue | IssueFieldSingleSelectValue | IssueFieldTextValue
@@ -22070,6 +22165,56 @@ type IssueFieldValueEdge {
   The item at the end of the edge.
   """
   node: IssueFieldValue
+}
+
+"""
+A filter for matching an issue field value. Exactly one value argument should be provided.
+"""
+input IssueFieldValueFilter {
+  """
+  Matches a date issue field value (YYYY-MM-DD).
+  """
+  dateValue: String
+
+  """
+  The ID of the issue field to filter by. Exactly one of `fieldId` or `fieldName` must be provided.
+  """
+  fieldId: ID
+
+  """
+  The name of the issue field to filter by. Exactly one of `fieldId` or `fieldName` must be provided.
+  """
+  fieldName: String
+
+  """
+  Matches issues containing all of the multi-select issue field option IDs.
+  """
+  multiSelectOptionIds: [ID!]
+
+  """
+  Matches issues containing all of the multi-select issue field option names.
+  """
+  multiSelectOptionValues: [String!]
+
+  """
+  Matches a numeric issue field value.
+  """
+  numberValue: Float
+
+  """
+  Matches a single-select issue field option by ID.
+  """
+  singleSelectOptionId: ID
+
+  """
+  Matches a single-select issue field option by name.
+  """
+  singleSelectOptionValue: String
+
+  """
+  Matches a text issue field value.
+  """
+  textValue: String
 }
 
 """
@@ -22146,6 +22291,11 @@ input IssueFilters {
   List issues created by given name.
   """
   createdBy: String
+
+  """
+  List issues where each supplied issue field value filter matches.
+  """
+  issueFieldValues: [IssueFieldValueFilter!]
 
   """
   List issues where the list of label names exist on the issue.
@@ -28051,7 +28201,7 @@ type Mutation {
   ): RemoveEnterpriseIdentityProviderPayload
 
   """
-  Completely removes a user from the enterprise
+  Completely removes a user from the enterprise asynchronously.
   """
   removeEnterpriseMember(
     """
@@ -33116,6 +33266,51 @@ type Organization implements Actor & MemberStatusable & Node & PackageOwner & Pr
   id: ID!
 
   """
+  Innersource security vulnerabilities scoped to this organization.
+  """
+  innersourceVulnerabilities(
+    """
+    Returns the elements in the list that come after the specified cursor.
+    """
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """
+    An ecosystem to filter vulnerabilities by.
+    """
+    ecosystem: SecurityAdvisoryEcosystem
+
+    """
+    Returns the first _n_ elements from the list.
+    """
+    first: Int
+
+    """
+    Returns the last _n_ elements from the list.
+    """
+    last: Int
+
+    """
+    Ordering options for the returned vulnerabilities.
+    """
+    orderBy: SecurityVulnerabilityOrder = {field: UPDATED_AT, direction: DESC}
+
+    """
+    A package name to filter vulnerabilities by.
+    """
+    package: String
+
+    """
+    A list of severities to filter vulnerabilities by.
+    """
+    severities: [SecurityAdvisorySeverity!]
+  ): SecurityVulnerabilityConnection!
+
+  """
   The interaction ability settings for this organization.
   """
   interactionAbility: RepositoryInteractionAbility
@@ -33511,6 +33706,31 @@ type Organization implements Actor & MemberStatusable & Node & PackageOwner & Pr
     """
     types: [PinnableItemType!]
   ): PinnableItemConnection!
+
+  """
+  An ordered list of issue fields pinned to issues when no type is selected.
+  """
+  pinnedIssueFields(
+    """
+    Returns the elements in the list that come after the specified cursor.
+    """
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """
+    Returns the first _n_ elements from the list.
+    """
+    first: Int
+
+    """
+    Returns the last _n_ elements from the list.
+    """
+    last: Int
+  ): IssueFieldsConnection
 
   """
   A list of repositories and gists this profile owner has pinned to their profile
@@ -38435,6 +38655,16 @@ type ProjectV2Field implements Node & ProjectV2FieldCommon {
   id: ID!
 
   """
+  Returns true if this field is associated with an organization issue field
+  """
+  isIssueField: Boolean!
+
+  """
+  The organization issue field associated with this project field, if any
+  """
+  issueField: IssueFields
+
+  """
   The project field's name.
   """
   name: String!
@@ -38473,6 +38703,11 @@ interface ProjectV2FieldCommon {
   The Node ID of the ProjectV2FieldCommon object
   """
   id: ID!
+
+  """
+  Returns true if this field is associated with an organization issue field
+  """
+  isIssueField: Boolean!
 
   """
   The project field's name.
@@ -39685,6 +39920,11 @@ type ProjectV2IterationField implements Node & ProjectV2FieldCommon {
   id: ID!
 
   """
+  Returns true if this field is associated with an organization issue field
+  """
+  isIssueField: Boolean!
+
+  """
   The project field's name.
   """
   name: String!
@@ -39798,6 +40038,16 @@ type ProjectV2MultiSelectField implements Node & ProjectV2FieldCommon {
   The Node ID of the ProjectV2MultiSelectField object
   """
   id: ID!
+
+  """
+  Returns true if this field is associated with an organization issue field
+  """
+  isIssueField: Boolean!
+
+  """
+  The organization issue field associated with this project field, if any
+  """
+  issueField: IssueFields
 
   """
   Options for the multi select field
@@ -40084,6 +40334,16 @@ type ProjectV2SingleSelectField implements Node & ProjectV2FieldCommon {
   The Node ID of the ProjectV2SingleSelectField object
   """
   id: ID!
+
+  """
+  Returns true if this field is associated with an organization issue field
+  """
+  isIssueField: Boolean!
+
+  """
+  The organization issue field associated with this project field, if any
+  """
+  issueField: IssueFields
 
   """
   The project field's name.
@@ -41105,11 +41365,6 @@ enum ProofOfPresenceRequirement {
   Members must complete a fresh re-authentication against the enterprise identity provider.
   """
   REAUTH
-
-  """
-  Members must satisfy a phishing-resistant security key re-authentication (Microsoft Entra only).
-  """
-  SECURITY_KEY
 }
 
 """
@@ -41422,6 +41677,11 @@ type PullRequest implements Assignable & Closable & Comment & Labelable & Lockab
     Returns the elements in the list that come before the specified cursor.
     """
     before: String
+
+    """
+    Exclude manually linked Issues
+    """
+    excludeUserLinked: Boolean = false
 
     """
     Returns the first _n_ elements from the list.
@@ -65287,6 +65547,11 @@ input UpdateIssueInput {
   The ID of the Issue to modify.
   """
   id: ID!
+
+  """
+  Issue field updates resolved by field and option names.
+  """
+  issueFieldUpdates: [IssueFieldUpdateInput!]
 
   """
   The Issue Type to set on this issue, with optional rationale. Mutually exclusive with `issueTypeId`.
