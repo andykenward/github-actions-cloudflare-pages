@@ -515,7 +515,7 @@ export interface components {
       build_image_major_version: number
       /**
        * @description Compatibility date used for Pages Functions.
-       * @example 2025-01-01
+       * @example 2025-01-01T00:00:00Z
        */
       compatibility_date: string
       /**
