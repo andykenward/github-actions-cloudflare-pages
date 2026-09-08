@@ -3,8 +3,6 @@ set -euo pipefail
 
 # Shared formatter/linter entrypoint used by:
 # - prek.toml (local hook: oxc-format-and-lint)
-# - .claude/scripts/format-and-lint-after-edit.sh (PostToolUse wrapper,
-#   wired via .claude/settings.json)
 # AI agents: keep all wiring points and this usage list in sync when behavior or paths change.
 
 # prek passes staged file paths as positional arguments.

@@ -1,73 +1,46 @@
-import type {
-  Schema,
-  WebhookEventName,
-  BranchProtectionConfigurationEvent,
-  BranchProtectionRuleEvent,
-  CheckRunEvent,
-  CheckSuiteEvent,
-  CodeScanningAlertEvent,
-  CommitCommentEvent,
-  CreateEvent,
-  CustomPropertyEvent,
-  CustomPropertyValuesEvent,
-  DeleteEvent,
-  DependabotAlertEvent,
-  DeployKeyEvent,
-  DeploymentEvent,
-  DeploymentProtectionRuleEvent,
-  DeploymentReviewEvent,
-  DeploymentStatusEvent,
-  DiscussionEvent,
-  DiscussionCommentEvent,
-  ForkEvent,
-  GithubAppAuthorizationEvent,
-  GollumEvent,
-  InstallationEvent,
-  InstallationRepositoriesEvent,
-  InstallationTargetEvent,
-  IssueCommentEvent,
-  IssuesEvent,
-  LabelEvent,
-  MarketplacePurchaseEvent,
-  MemberEvent,
-  MembershipEvent,
-  MergeGroupEvent,
-  MetaEvent,
-  MilestoneEvent,
-  OrgBlockEvent,
-  OrganizationEvent,
-  PackageEvent,
-  PageBuildEvent,
-  PingEvent,
-  ProjectEvent,
-  ProjectCardEvent,
-  ProjectColumnEvent,
-  ProjectsV2ItemEvent,
-  PublicEvent,
-  PullRequestEvent,
-  PullRequestReviewEvent,
-  PullRequestReviewCommentEvent,
-  PullRequestReviewThreadEvent,
-  PushEvent,
-  RegistryPackageEvent,
-  ReleaseEvent,
-  RepositoryEvent,
-  RepositoryDispatchEvent,
-  RepositoryImportEvent,
-  RepositoryVulnerabilityAlertEvent,
-  SecretScanningAlertEvent,
-  SecretScanningAlertLocationEvent,
-  SecurityAdvisoryEvent,
-  SponsorshipEvent,
-  StarEvent,
-  StatusEvent,
-  TeamEvent,
-  TeamAddEvent,
-  WatchEvent,
-  WorkflowDispatchEvent,
-  WorkflowJobEvent,
-  WorkflowRunEvent
-} from '@octokit/webhooks-types'
+import type {operations} from '@octokit/openapi-webhooks-types'
+
+type SnakeCase<S extends string> = S extends `${infer Head}-${infer Tail}`
+  ? `${Head}_${SnakeCase<Tail>}`
+  : S
+
+type OperationId = keyof operations & string
+
+/**
+ * A webhook operation id is `<event>/<action>`, or just `<event>` for events
+ * that have no action.
+ */
+type OperationEventName<O extends string> = O extends `${infer Event}/${string}`
+  ? Event
+  : O
+
+/** Every event name GitHub can set as `GITHUB_EVENT_NAME`. */
+export type WebhookEventName = SnakeCase<OperationEventName<OperationId>>
+
+/** The union of JSON bodies GitHub delivers for one event name. */
+type WebhookPayload<E extends WebhookEventName> = {
+  [O in OperationId]: SnakeCase<OperationEventName<O>> extends E
+    ? operations[O]['requestBody']['content']['application/json']
+    : never
+}[OperationId]
+
+export interface WorkflowEventBase {
+  eventName: WebhookEventName
+  payload: WebhookPayload<WebhookEventName>
+}
+
+/**
+ * Discriminated union of every workflow event, pairing each `GITHUB_EVENT_NAME`
+ * with the payloads GitHub delivers under it.
+ */
+export type WorkflowEvent = {
+  [E in WebhookEventName]: {eventName: E; payload: WebhookPayload<E>}
+}[WebhookEventName]
+/**
+ * Every event name GitHub can set as `GITHUB_EVENT_NAME`, as a runtime
+ * value. This is the one thing that cannot be derived from
+ * `@octokit/openapi-webhooks-types`, which is types only.
+ */
 export const EVENT_NAMES = [
   'branch_protection_configuration',
   'branch_protection_rule',
@@ -94,6 +67,7 @@ export const EVENT_NAMES = [
   'installation_repositories',
   'installation_target',
   'issue_comment',
+  'issue_dependencies',
   'issues',
   'label',
   'marketplace_purchase',
@@ -106,303 +80,42 @@ export const EVENT_NAMES = [
   'organization',
   'package',
   'page_build',
+  'personal_access_token_request',
   'ping',
-  'project',
   'project_card',
+  'project',
   'project_column',
+  'projects_v2',
   'projects_v2_item',
+  'projects_v2_status_update',
   'public',
   'pull_request',
-  'pull_request_review',
   'pull_request_review_comment',
+  'pull_request_review',
   'pull_request_review_thread',
   'push',
   'registry_package',
   'release',
+  'repository_advisory',
   'repository',
   'repository_dispatch',
   'repository_import',
+  'repository_ruleset',
   'repository_vulnerability_alert',
   'secret_scanning_alert',
   'secret_scanning_alert_location',
+  'secret_scanning_scan',
   'security_advisory',
+  'security_and_analysis',
   'sponsorship',
   'star',
   'status',
-  'team',
+  'sub_issues',
   'team_add',
+  'team',
   'watch',
   'workflow_dispatch',
   'workflow_job',
   'workflow_run'
 ] satisfies Array<WebhookEventName>
 export type EventName = (typeof EVENT_NAMES)[number]
-export interface WorkflowEventBase {
-  eventName: WebhookEventName
-  payload: Schema
-}
-export type WorkflowEvent =
-  | {
-      eventName: 'branch_protection_configuration'
-      payload: BranchProtectionConfigurationEvent
-    }
-  | {
-      eventName: 'branch_protection_rule'
-      payload: BranchProtectionRuleEvent
-    }
-  | {
-      eventName: 'check_run'
-      payload: CheckRunEvent
-    }
-  | {
-      eventName: 'check_suite'
-      payload: CheckSuiteEvent
-    }
-  | {
-      eventName: 'code_scanning_alert'
-      payload: CodeScanningAlertEvent
-    }
-  | {
-      eventName: 'commit_comment'
-      payload: CommitCommentEvent
-    }
-  | {
-      eventName: 'create'
-      payload: CreateEvent
-    }
-  | {
-      eventName: 'custom_property'
-      payload: CustomPropertyEvent
-    }
-  | {
-      eventName: 'custom_property_values'
-      payload: CustomPropertyValuesEvent
-    }
-  | {
-      eventName: 'delete'
-      payload: DeleteEvent
-    }
-  | {
-      eventName: 'dependabot_alert'
-      payload: DependabotAlertEvent
-    }
-  | {
-      eventName: 'deploy_key'
-      payload: DeployKeyEvent
-    }
-  | {
-      eventName: 'deployment'
-      payload: DeploymentEvent
-    }
-  | {
-      eventName: 'deployment_protection_rule'
-      payload: DeploymentProtectionRuleEvent
-    }
-  | {
-      eventName: 'deployment_review'
-      payload: DeploymentReviewEvent
-    }
-  | {
-      eventName: 'deployment_status'
-      payload: DeploymentStatusEvent
-    }
-  | {
-      eventName: 'discussion'
-      payload: DiscussionEvent
-    }
-  | {
-      eventName: 'discussion_comment'
-      payload: DiscussionCommentEvent
-    }
-  | {
-      eventName: 'fork'
-      payload: ForkEvent
-    }
-  | {
-      eventName: 'github_app_authorization'
-      payload: GithubAppAuthorizationEvent
-    }
-  | {
-      eventName: 'gollum'
-      payload: GollumEvent
-    }
-  | {
-      eventName: 'installation'
-      payload: InstallationEvent
-    }
-  | {
-      eventName: 'installation_repositories'
-      payload: InstallationRepositoriesEvent
-    }
-  | {
-      eventName: 'installation_target'
-      payload: InstallationTargetEvent
-    }
-  | {
-      eventName: 'issue_comment'
-      payload: IssueCommentEvent
-    }
-  | {
-      eventName: 'issues'
-      payload: IssuesEvent
-    }
-  | {
-      eventName: 'label'
-      payload: LabelEvent
-    }
-  | {
-      eventName: 'marketplace_purchase'
-      payload: MarketplacePurchaseEvent
-    }
-  | {
-      eventName: 'member'
-      payload: MemberEvent
-    }
-  | {
-      eventName: 'membership'
-      payload: MembershipEvent
-    }
-  | {
-      eventName: 'merge_group'
-      payload: MergeGroupEvent
-    }
-  | {
-      eventName: 'meta'
-      payload: MetaEvent
-    }
-  | {
-      eventName: 'milestone'
-      payload: MilestoneEvent
-    }
-  | {
-      eventName: 'org_block'
-      payload: OrgBlockEvent
-    }
-  | {
-      eventName: 'organization'
-      payload: OrganizationEvent
-    }
-  | {
-      eventName: 'package'
-      payload: PackageEvent
-    }
-  | {
-      eventName: 'page_build'
-      payload: PageBuildEvent
-    }
-  | {
-      eventName: 'ping'
-      payload: PingEvent
-    }
-  | {
-      eventName: 'project'
-      payload: ProjectEvent
-    }
-  | {
-      eventName: 'project_card'
-      payload: ProjectCardEvent
-    }
-  | {
-      eventName: 'project_column'
-      payload: ProjectColumnEvent
-    }
-  | {
-      eventName: 'projects_v2_item'
-      payload: ProjectsV2ItemEvent
-    }
-  | {
-      eventName: 'public'
-      payload: PublicEvent
-    }
-  | {
-      eventName: 'pull_request'
-      payload: PullRequestEvent
-    }
-  | {
-      eventName: 'pull_request_review'
-      payload: PullRequestReviewEvent
-    }
-  | {
-      eventName: 'pull_request_review_comment'
-      payload: PullRequestReviewCommentEvent
-    }
-  | {
-      eventName: 'pull_request_review_thread'
-      payload: PullRequestReviewThreadEvent
-    }
-  | {
-      eventName: 'push'
-      payload: PushEvent
-    }
-  | {
-      eventName: 'registry_package'
-      payload: RegistryPackageEvent
-    }
-  | {
-      eventName: 'release'
-      payload: ReleaseEvent
-    }
-  | {
-      eventName: 'repository'
-      payload: RepositoryEvent
-    }
-  | {
-      eventName: 'repository_dispatch'
-      payload: RepositoryDispatchEvent
-    }
-  | {
-      eventName: 'repository_import'
-      payload: RepositoryImportEvent
-    }
-  | {
-      eventName: 'repository_vulnerability_alert'
-      payload: RepositoryVulnerabilityAlertEvent
-    }
-  | {
-      eventName: 'secret_scanning_alert'
-      payload: SecretScanningAlertEvent
-    }
-  | {
-      eventName: 'secret_scanning_alert_location'
-      payload: SecretScanningAlertLocationEvent
-    }
-  | {
-      eventName: 'security_advisory'
-      payload: SecurityAdvisoryEvent
-    }
-  | {
-      eventName: 'sponsorship'
-      payload: SponsorshipEvent
-    }
-  | {
-      eventName: 'star'
-      payload: StarEvent
-    }
-  | {
-      eventName: 'status'
-      payload: StatusEvent
-    }
-  | {
-      eventName: 'team'
-      payload: TeamEvent
-    }
-  | {
-      eventName: 'team_add'
-      payload: TeamAddEvent
-    }
-  | {
-      eventName: 'watch'
-      payload: WatchEvent
-    }
-  | {
-      eventName: 'workflow_dispatch'
-      payload: WorkflowDispatchEvent
-    }
-  | {
-      eventName: 'workflow_job'
-      payload: WorkflowJobEvent
-    }
-  | {
-      eventName: 'workflow_run'
-      payload: WorkflowRunEvent
-    }

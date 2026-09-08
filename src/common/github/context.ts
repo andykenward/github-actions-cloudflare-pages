@@ -82,7 +82,7 @@ const getGitHubContext = (): Context => {
    */
   const branch =
     event.eventName === 'workflow_run'
-      ? event.payload.workflow_run.head_branch
+      ? (event.payload.workflow_run.head_branch ?? undefined)
       : process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME
 
   const sha =
@@ -100,13 +100,16 @@ const getGitHubContext = (): Context => {
      * @see https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_run
      */
     if (event.eventName === 'workflow_run') {
-      return event.payload.workflow_run.head_branch
+      return (
+        event.payload.workflow_run.head_branch ??
+        raise('context: no head_branch in workflow_run event')
+      )
     }
 
     let ref = process.env.GITHUB_HEAD_REF
     if (!ref) {
       if ('ref' in event.payload) {
-        ref = event.payload.ref // refs/heads/feature-branch-1
+        ref = event.payload.ref ?? undefined // refs/heads/feature-branch-1
       } else if (event.eventName === 'pull_request') {
         ref = event.payload.pull_request.head.ref // andykenward/issue18
       }

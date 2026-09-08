@@ -15,7 +15,8 @@
   "npm.packageManager": "pnpm",
   "js/ts.preferences.importModuleSpecifierEnding": "js",
   "js/ts.preferences.importModuleSpecifier": "shortest",
-  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.tsdk.path": "./node_modules/typescript",
   "editor.quickSuggestions": {
     "other": false,
     "comments": false,
