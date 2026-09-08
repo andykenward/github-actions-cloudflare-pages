@@ -4,6 +4,19 @@ import {cloudflareClient} from '../api/client.js'
 import {unwrapSuccess} from '../api/fetch-result.js'
 import {ParseError} from '../api/parse-error.js'
 
+/**
+ * Cloudflare's "deployment does not exist" code. Treated as success: the
+ * deployment may have been deleted manually already.
+ *
+ * ```json
+ * {
+ *   "code": 8000009,
+ *   "message": "The deployment ID you have specified does not exist. Update the deployment ID and try again. "
+ * }
+ * ```
+ */
+const DEPLOYMENT_NOT_FOUND_CODE = 8_000_009
+
 export const deleteCloudflareDeployment = async ({
   id,
   accountId,
@@ -37,19 +50,22 @@ export const deleteCloudflareDeployment = async ({
     }
     throw new Error('Cloudflare Delete Deployment: fail')
   } catch (successError) {
-    if (successError instanceof ParseError && successError.code === 8_000_009) {
-      /**
-       * The cloudflare deployment might have been deleted manually. So return true.
-       * Error response example
-       * {
-       *   "code": 8000009,
-       *   "message": "The deployment ID you have specified does not exist. Update the deployment ID and try again. "
-       * }
-       */
+    if (
+      successError instanceof ParseError &&
+      successError.code === DEPLOYMENT_NOT_FOUND_CODE
+    ) {
       warning(`Cloudflare Deployment might have been deleted already: ${id}`)
       return true
     }
-    error(`Cloudflare Error deleting deployment: ${id}`)
+    // Include the reason: previously only the id was logged, so a failed
+    // delete gave no indication of why.
+    error(
+      `Cloudflare Error deleting deployment: ${id} - ${
+        successError instanceof Error
+          ? successError.message
+          : String(successError)
+      }`
+    )
     return false
   }
 }
