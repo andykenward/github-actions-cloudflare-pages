@@ -118,6 +118,9 @@ importers:
       '@octokit/plugin-paginate-rest':
         specifier: 15.0.0
         version: 15.0.0(@octokit/core@7.0.8)
+      effect:
+        specifier: 4.0.0-rc.112
+        version: 4.0.0-rc.112
       openapi-fetch:
         specifier: 0.17.0
         version: 0.17.0
@@ -1175,6 +1178,36 @@ packages:
   '@manypkg/tools@2.1.2':
     resolution: {integrity: sha512-6QEf6yqFbETdwGITKq57aYoPfX/3K8XFNwsAlx0C1M7o8cb79sv1M3w+tWuWvIcSbNqrLF7OD7YpZMVVz335hQ==}
     engines: {node: '>=20.0.0'}
+
+  '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
+    resolution: {integrity: sha512-LCkGo6JDfaBhgST7UpPWgNgLINpcpabaHfyz5OBx75nUYxBsaEPxjnyNjWpeb/xBup/682QnBfRBy2/LvPutZQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@msgpackr-extract/msgpackr-extract-darwin-x64@3.0.4':
+    resolution: {integrity: sha512-zExlW9zUJKZH/tOtVMttwjKa4Xm/3KcNjnE3dPN92uCktwavMxpgCA3MoJK/DOnTWsQgo224OaST27/mPNAf+w==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm64@3.0.4':
+    resolution: {integrity: sha512-dgX0P/9wGPJeHFBG+ZmhgE6bmtMt7NP5CRBGyyktpopdk/mW4POnrpQsSLtKI1dwpc+pPLuXHDh6vvskyQE/sw==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm@3.0.4':
+    resolution: {integrity: sha512-Tg3yX65f5GbtXLkrYEHE5oibZG9epyYWas7FogTTEJeDEF9JlXJzKgXaNhT3UXlTOeA+AfZpYZYZ0uPj7Cfquw==}
+    cpu: [arm]
+    os: [linux]
+
+  '@msgpackr-extract/msgpackr-extract-linux-x64@3.0.4':
+    resolution: {integrity: sha512-8TNXMEjJc3QEy7R/x1INhgiU+XakDAFUzBhaz7+Rbrs8NH5UQeHQxxmzsSBJGyV6I1jW79undiQm8tOI+D+8FQ==}
+    cpu: [x64]
+    os: [linux]
+
+  '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4':
+    resolution: {integrity: sha512-CmCXPQrkbwExx3j946/PtHWHbYJiCRBRDl4BlkRQcJB/YOwQxJRTpoo7aTsortjgoJ1x7opzTSxn7C+ASSLVjQ==}
+    cpu: [x64]
+    os: [win32]
 
   '@napi-rs/wasm-runtime@1.2.3':
     resolution: {integrity: sha512-UMduMbqO5s5zF2NkNacMT/yK5Y5QiKvWr2+50bzIIxFDwVJ2h49b+oyjaCGPhJxd2/gC2x39EHv/gHVuu36x2Q==}
@@ -2302,6 +2335,9 @@ packages:
     resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
 
+  effect@4.0.0-rc.112:
+    resolution: {integrity: sha512-wXxwuh1Ywnv4cPRM3Wfa0vDwuOHnZ1TsTgHJkG9XgzND6inhBH9n1vBxhg3iIXOia/OrpmvVmd3lrD4vq6bF3A==}
+
   electron-to-chromium@1.5.422:
     resolution: {integrity: sha512-UvA/32XqrLDdZSn7Jllo1AYNcWji/G0d5M0GTViE7KoGBiMunw3a34Sb2KO4ZZyrSEhqsxFoVhWWJshdyfKqJA==}
 
@@ -2343,6 +2379,10 @@ packages:
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
     engines: {node: '>=12.0.0'}
+
+  fast-check@4.9.0:
+    resolution: {integrity: sha512-7ms6T7SybUev/PQITciI0yLM2pOSFy5zpG8Ty7tQofcVaQUvrMXp6CBwqF6fThLCLOrfBtuHAtwq6Yu4XPCllg==}
+    engines: {node: '>=12.17.0'}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -2761,6 +2801,13 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
+  msgpackr-extract@3.0.4:
+    resolution: {integrity: sha512-4kmO/MdyUIkLIvTPr8VHLil4AtoKIoniWPIEk5+CDy0xnWC84azhSFmuJ7PxZdsYtiP5kEeQsORAVIeMgxT+Hw==}
+    hasBin: true
+
+  msgpackr@2.1.0:
+    resolution: {integrity: sha512-p/pBCVO63CsvvpkomUnNNag6+n38rULuDA6HHe70o2gtC8ODI52foF/4ko2qQcp6OiErJXTmrZeXmsGGHsIQNQ==}
+
   mute-stream@3.0.0:
     resolution: {integrity: sha512-dkEJPVvun4FryqBmZ5KhDo0K9iDXAwn08tMLDinNdRBNPcYEDiWYysLcc6k3mjTMlbP9KyylvRpd4wFtwrT9rw==}
     engines: {node: ^20.17.0 || >=22.9.0}
@@ -2778,6 +2825,10 @@ packages:
   node-fetch@3.3.2:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
+  node-gyp-build-optional-packages@5.2.2:
+    resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
+    hasBin: true
 
   node-releases@2.0.54:
     resolution: {integrity: sha512-YHs7BmmcsdAI5Ozuf8JZo6PT0mv2GIWC9vMfvUC3dp65M8hn7Ux8CPL+2oBI7juNuj9d0ndhTcznq2ODBps9cQ==}
@@ -2903,6 +2954,9 @@ packages:
   postcss@8.5.28:
     resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
     engines: {node: ^10 || ^12 || >=14}
+
+  pure-rand@8.4.2:
+    resolution: {integrity: sha512-vvuOGgcuPJAirlHvuQw1TrOiw7ptaIXXmIbNuiNOY6lNGJJH49PQ1Kj4nd783nPdQhQdicgOjVI2yI/9BD6/Ng==}
 
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -4421,6 +4475,24 @@ snapshots:
       tinyglobby: 0.2.17
       yaml: 2.9.0
 
+  '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-darwin-x64@3.0.4':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm64@3.0.4':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-linux-arm@3.0.4':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-linux-x64@3.0.4':
+    optional: true
+
+  '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.4':
+    optional: true
+
   '@napi-rs/wasm-runtime@1.2.3(@emnapi/core@1.11.0)(@emnapi/runtime@1.11.0)':
     dependencies:
       '@emnapi/core': 1.11.0
@@ -5207,6 +5279,11 @@ snapshots:
 
   dotenv@17.4.2: {}
 
+  effect@4.0.0-rc.112:
+    dependencies:
+      fast-check: 4.9.0
+      msgpackr: 2.1.0
+
   electron-to-chromium@1.5.422: {}
 
   emoji-regex@10.6.0: {}
@@ -5261,6 +5338,10 @@ snapshots:
   eventemitter3@5.0.4: {}
 
   expect-type@1.4.0: {}
+
+  fast-check@4.9.0:
+    dependencies:
+      pure-rand: 8.4.2
 
   fast-deep-equal@3.1.3: {}
 
@@ -5632,6 +5713,22 @@ snapshots:
 
   ms@2.1.3: {}
 
+  msgpackr-extract@3.0.4:
+    dependencies:
+      node-gyp-build-optional-packages: 5.2.2
+    optionalDependencies:
+      '@msgpackr-extract/msgpackr-extract-darwin-arm64': 3.0.4
+      '@msgpackr-extract/msgpackr-extract-darwin-x64': 3.0.4
+      '@msgpackr-extract/msgpackr-extract-linux-arm': 3.0.4
+      '@msgpackr-extract/msgpackr-extract-linux-arm64': 3.0.4
+      '@msgpackr-extract/msgpackr-extract-linux-x64': 3.0.4
+      '@msgpackr-extract/msgpackr-extract-win32-x64': 3.0.4
+    optional: true
+
+  msgpackr@2.1.0:
+    optionalDependencies:
+      msgpackr-extract: 3.0.4
+
   mute-stream@3.0.0: {}
 
   nanoid@3.3.18: {}
@@ -5643,6 +5740,11 @@ snapshots:
       data-uri-to-buffer: 4.0.1
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
+
+  node-gyp-build-optional-packages@5.2.2:
+    dependencies:
+      detect-libc: 2.1.2
+    optional: true
 
   node-releases@2.0.54: {}
 
@@ -5829,6 +5931,8 @@ snapshots:
       nanoid: 3.3.18
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  pure-rand@8.4.2: {}
 
   queue-microtask@1.2.3: {}
 

@@ -131,6 +131,16 @@ Formatting and linting are automated via [prek](https://prek.j178.dev) (`prek.to
 - The deployment payload embeds Cloudflare metadata so the delete workflow can find deployments ([src/common/github/deployment/types.ts](src/common/github/deployment/types.ts)).
 - **`workflow_run` + fork PRs**: `github.event.workflow_run.pull_requests` is **empty for pull requests from forks** ([community #25220](https://github.com/orgs/community/discussions/25220)). Never derive `pr-number` or `branch` from `pull_requests[0].number` in docs/examples — it silently resolves to empty for the exact fork case those examples target. Instead save the number in the triggering `pull_request` workflow and read it from an artifact (`upload-artifact` → `download-artifact` with `run-id: ${{ github.event.workflow_run.id }}` + `github-token`). See the "Custom branch name" example in [README.md](README.md).
 
+## Learning more about Effect
+
+This repository uses the Effect Typescript library.
+
+Before writing any Effect code, first read `node_modules/effect/AGENTS.md`
+**completely**, and follow the links in the file when required.
+
+If you need to learn more about particular Effect apis and concepts that the
+guide doesn't cover, search through the source code in `node_modules/effect/src`.
+
 ## Resources
 
 - [README.md](README.md) — user-facing docs for the deploy action.
