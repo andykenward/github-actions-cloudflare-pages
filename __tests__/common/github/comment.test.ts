@@ -1,3 +1,4 @@
+import * as Redacted from 'effect/Redacted'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
@@ -213,8 +214,8 @@ describe(addComment, () => {
       expect.assertions(1)
 
       vi.spyOn(CommonInputs, 'useCommonInputs').mockReturnValueOnce({
-        cloudflareApiToken: 'mock-cloudflare-api-token',
-        gitHubApiToken: 'mock-github-token',
+        cloudflareApiToken: Redacted.make('mock-cloudflare-api-token'),
+        gitHubApiToken: Redacted.make('mock-github-token'),
         gitHubEnvironment: undefined,
         prNumber: '123',
         wranglerVersion: 'mock-wrangler-version'
@@ -291,8 +292,8 @@ describe(addComment, () => {
       expect.assertions(1)
 
       vi.spyOn(CommonInputs, 'useCommonInputs').mockReturnValueOnce({
-        cloudflareApiToken: 'mock-cloudflare-api-token',
-        gitHubApiToken: 'mock-github-token',
+        cloudflareApiToken: Redacted.make('mock-cloudflare-api-token'),
+        gitHubApiToken: Redacted.make('mock-github-token'),
         gitHubEnvironment: undefined,
         prNumber: 'abc',
         wranglerVersion: 'mock-wrangler-version'

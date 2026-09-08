@@ -2,7 +2,7 @@ import createClient from 'openapi-fetch'
 
 import type {paths} from '@/types/cloudflare/pages.js'
 
-import {useCommonInputs} from '@/common/inputs.js'
+import {secret, useCommonInputs} from '@/common/inputs.js'
 
 /**
  * Base URL for Cloudflare's REST API. The generated `paths` are relative to the
@@ -25,7 +25,7 @@ export const cloudflareClient = createClient<paths>({baseUrl: BASE_URL})
 cloudflareClient.use({
   onRequest({request}) {
     const {cloudflareApiToken} = useCommonInputs()
-    request.headers.set('Authorization', `Bearer ${cloudflareApiToken}`)
+    request.headers.set('Authorization', `Bearer ${secret(cloudflareApiToken)}`)
     request.headers.set('Content-Type', 'application/json;charset=UTF-8')
     return request
   }

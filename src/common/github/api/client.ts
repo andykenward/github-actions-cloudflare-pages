@@ -2,7 +2,7 @@ import type {GraphQLError} from 'graphql'
 
 import type {TypedDocumentString} from '@/gql/graphql.js'
 
-import {useCommonInputs} from '@/common/inputs.js'
+import {secret, useCommonInputs} from '@/common/inputs.js'
 
 import {useContext} from '../context.js'
 
@@ -54,7 +54,7 @@ export const request = async <
   const response = await fetch(graphqlEndpoint, {
     method: 'POST',
     headers: {
-      authorization: `bearer ${gitHubApiToken}`,
+      authorization: `bearer ${secret(gitHubApiToken)}`,
       'Content-Type': 'application/json',
       Accept: 'application/vnd.github.flash-preview+json'
     },

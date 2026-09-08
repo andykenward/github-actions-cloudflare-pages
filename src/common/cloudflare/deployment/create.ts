@@ -3,7 +3,7 @@ import {strict} from 'node:assert'
 import {info, setOutput, summary} from '@actions/core'
 
 import {useContext} from '@/common/github/context.js'
-import {useCommonInputs} from '@/common/inputs.js'
+import {secret, useCommonInputs} from '@/common/inputs.js'
 import {execFileAsync} from '@/common/utils.js'
 
 import type {PagesDeployment} from '../types.js'
@@ -47,7 +47,7 @@ export const createCloudflareDeployment = async ({
    */
   const wranglerEnv = {
     ...process.env,
-    [CLOUDFLARE_API_TOKEN]: cloudflareApiToken,
+    [CLOUDFLARE_API_TOKEN]: secret(cloudflareApiToken),
     [CLOUDFLARE_ACCOUNT_ID]: accountId
   }
 
