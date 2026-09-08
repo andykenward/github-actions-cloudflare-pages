@@ -50,6 +50,28 @@ describe('environment', () => {
   })
 
   describe(createEnvironment, () => {
+    test('throws a clear error on a non-2xx response', async () => {
+      expect.assertions(1)
+
+      // GitHub returns JSON for a 401, so this previously parsed cleanly,
+      // carried no `errors` field, and silently produced `data: undefined`.
+      mockApi.interceptGithub(
+        {
+          query: MutationCreateEnvironment,
+          variables: {
+            repositoryId: `MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=`,
+            name: TEST_ENV_VARS().GITHUB_HEAD_REF as string
+          }
+        },
+        {data: {}} as never,
+        401
+      )
+
+      await expect(createEnvironment()).rejects.toThrow(
+        'GitHub API request failed: 401'
+      )
+    })
+
     test('success', async () => {
       expect.assertions(3)
 

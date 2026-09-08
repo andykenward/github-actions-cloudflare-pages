@@ -51,7 +51,7 @@ export const request = async <
   const {gitHubApiToken} = useCommonInputs()
   const {graphqlEndpoint} = useContext()
 
-  return fetch(graphqlEndpoint, {
+  const response = await fetch(graphqlEndpoint, {
     method: 'POST',
     headers: {
       authorization: `bearer ${gitHubApiToken}`,
@@ -60,11 +60,28 @@ export const request = async <
     },
     body: JSON.stringify({query: query.toString(), variables})
   })
-    .then(res => res.json() as Promise<GraphqlResponse<TData>>)
-    .then(res => {
-      if (res.errors && errorThrows) {
-        throw new Error(JSON.stringify(res.errors))
-      }
-      return res
-    })
+
+  /**
+   * GraphQL reports query-level problems as a 200 with an `errors` array, so a
+   * non-2xx here is a transport, auth or rate-limit failure. It was previously
+   * unchecked: GitHub returns JSON for a 401, which parsed cleanly, carried no
+   * `errors` field, and silently yielded `data: undefined`.
+   */
+  if (!response.ok) {
+    throw new Error(
+      `GitHub API request failed: ${response.status} ${response.statusText}`
+    )
+  }
+
+  const body = (await response.json().catch(() => {
+    throw new Error(
+      `GitHub API returned a non-JSON response (${response.status})`
+    )
+  })) as GraphqlResponse<TData>
+
+  if (body.errors && errorThrows) {
+    throw new Error(JSON.stringify(body.errors))
+  }
+
+  return body
 }
