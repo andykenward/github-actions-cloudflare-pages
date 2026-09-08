@@ -48,14 +48,27 @@ class DeploymentPollTimeoutError extends Schema.TaggedError<DeploymentPollTimeou
   {message: Schema.String}
 ) {}
 
+/**
+ * Wraps a transport or envelope failure (e.g. `ParseError`). The original is
+ * kept in `cause` and rethrown at the promise boundary so callers keep seeing
+ * the error they always did.
+ */
+// oxlint-disable-next-line unicorn/throw-new-error
+class DeploymentRequestError extends Schema.TaggedError<DeploymentRequestError>()(
+  'DeploymentRequestError',
+  {cause: Schema.Defect()}
+) {}
+
 const pollOnce = (
   apiEndpoint: CloudflareApiEndpoint
-): Effect.Effect<StatusResult, unknown> =>
+): Effect.Effect<
+  StatusResult,
+  DeploymentPendingError | DeploymentRequestError
+> =>
   Effect.gen(function* () {
     const deployment = yield* Effect.tryPromise({
       try: () => findCloudflareLatestDeployment(apiEndpoint),
-      // Surface transport/envelope errors (e.g. ParseError) unchanged.
-      catch: (cause: unknown) => cause
+      catch: (cause: unknown) => new DeploymentRequestError({cause})
     })
 
     if (deployment === undefined) {
@@ -88,21 +101,17 @@ const pollOnce = (
     }
   })
 
-const isPending = (error: unknown): boolean =>
-  error instanceof DeploymentPendingError
+const isPending = (error: {readonly _tag: string}): boolean =>
+  error._tag === 'DeploymentPendingError'
 
 /**
  * The poll ran out of time, by either route: the retry schedule exhausted
  * (propagating the last `DeploymentPendingError`) or the overall
- * `Effect.timeout` fired. Transport failures such as `ParseError` deliberately
- * fall through so they surface unchanged.
+ * `Effect.timeout` fired. `DeploymentRequestError` deliberately falls through
+ * so transport failures surface unchanged.
  */
-const isPollExhausted = (error: unknown): boolean =>
-  isPending(error) ||
-  (typeof error === 'object' &&
-    error !== null &&
-    '_tag' in error &&
-    error._tag === 'TimeoutError')
+const isPollExhausted = (error: {readonly _tag: string}): boolean =>
+  isPending(error) || error._tag === 'TimeoutError'
 
 export type StatusOptions = {
   pollInterval?: Duration.Input
@@ -144,7 +153,9 @@ export const statusCloudflareDeployment = async (
     return exit.value
   }
 
-  // Rethrow the original error so callers keep seeing e.g. `ParseError`
-  // rather than an Effect wrapper.
-  throw Cause.squash(exit.cause)
+  const error = Cause.squash(exit.cause)
+
+  // Unwrap transport failures so callers keep seeing e.g. `ParseError` rather
+  // than an Effect wrapper.
+  throw error instanceof DeploymentRequestError ? error.cause : error
 }
