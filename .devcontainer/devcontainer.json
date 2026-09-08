@@ -3,5 +3,14 @@
   "image": "ghcr.io/andykenward/devcontainer-images/node:3.1.0",
   "features": {
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.0": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "TypeScriptTeam.native-preview",
+        "GraphQL.vscode-graphql",
+        "GraphQL.vscode-graphql-syntax"
+      ]
+    }
   }
 }
