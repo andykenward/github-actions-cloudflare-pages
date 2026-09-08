@@ -1,6 +1,6 @@
-import type {WebhookEventName} from '@octokit/webhooks-types'
-
 import {vi} from 'vitest'
+
+import type {WebhookEventName} from '@/types/github/workflow-events.js'
 
 const getPayload = (eventName: WebhookEventName): string => {
   switch (eventName) {
