@@ -40,8 +40,16 @@ export const createCloudflareDeployment = async ({
 }> => {
   const {cloudflareApiToken, wranglerVersion} = useCommonInputs()
 
-  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken
-  process.env[CLOUDFLARE_ACCOUNT_ID] = accountId
+  /**
+   * Scoped to the wrangler child process rather than assigned onto the global
+   * `process.env`, which left the Cloudflare API token in plaintext in this
+   * process for everything downstream to read.
+   */
+  const wranglerEnv = {
+    ...process.env,
+    [CLOUDFLARE_API_TOKEN]: cloudflareApiToken,
+    [CLOUDFLARE_ACCOUNT_ID]: accountId
+  }
 
   const {repo, branch: contextBranch, sha: commitHash} = useContext()
 
@@ -73,7 +81,7 @@ export const createCloudflareDeployment = async ({
         commitHash
       ],
       {
-        env: process.env,
+        env: wranglerEnv,
         cwd: workingDirectory
       }
     )

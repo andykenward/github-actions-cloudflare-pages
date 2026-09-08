@@ -87,12 +87,10 @@ describe(createCloudflareDeployment, () => {
 
       expect(execFileAsync).toHaveBeenCalledTimes(1)
       expect(info).not.toHaveBeenCalled()
-      expect(process.env[CLOUDFLARE_API_TOKEN]).toBe(
-        'mock-cloudflare-api-token'
-      )
-      expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toBe(
-        'mock-cloudflare-account-id'
-      )
+      // The credentials go to the wrangler child process only; this process's
+      // environment must stay clean.
+      expect(process.env[CLOUDFLARE_API_TOKEN]).toBeUndefined()
+      expect(process.env[CLOUDFLARE_ACCOUNT_ID]).toBeUndefined()
 
       expect(setOutput).not.toHaveBeenCalled()
       expect(summary.addTable).not.toHaveBeenCalled()
