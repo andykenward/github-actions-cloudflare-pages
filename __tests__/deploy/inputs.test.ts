@@ -34,9 +34,14 @@ describe('deploy', () => {
 
       const {useInputs} = await setup()
 
-      expect(() => useInputs()).toThrow(
-        'Input required and not supplied: cloudflare-account-id'
-      )
+      expect(() => useInputs()).toThrowErrorMatchingInlineSnapshot(`
+        ConfigError {
+          "_tag": "ConfigError",
+          "cause": [SchemaError: Expected string
+          at ["cloudflare-account-id"]],
+          "name": "ConfigError",
+        }
+      `)
     })
 
     test('returns branch when provided', async () => {

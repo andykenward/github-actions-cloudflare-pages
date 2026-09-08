@@ -7,6 +7,7 @@ import {useCommonInputs} from '@/common/inputs.js'
 import {execFileAsync} from '@/common/utils.js'
 
 import type {PagesDeployment} from '../types.js'
+import type {StatusOptions} from './status.js'
 
 import {getCloudflareDeploymentAlias} from './get.js'
 import {statusCloudflareDeployment} from './status.js'
@@ -20,13 +21,19 @@ export const createCloudflareDeployment = async ({
   projectName,
   directory,
   workingDirectory = '',
-  branch: branchOverride
+  branch: branchOverride,
+  statusOptions
 }: {
   accountId: string
   projectName: string
   directory: string
   workingDirectory?: string
   branch?: string
+  /**
+   * Poll tuning, forwarded to `statusCloudflareDeployment`. Tests use it to
+   * poll without delay.
+   */
+  statusOptions?: StatusOptions
 }): Promise<{
   deployment: PagesDeployment
   wranglerOutput: string
@@ -77,10 +84,10 @@ export const createCloudflareDeployment = async ({
     /**
      * Get the latest deployment by commitHash and poll until required status.
      */
-    const {deployment, status} = await statusCloudflareDeployment({
-      accountId,
-      projectName
-    })
+    const {deployment, status} = await statusCloudflareDeployment(
+      {accountId, projectName},
+      statusOptions
+    )
 
     setOutput('id', deployment.id)
     setOutput('url', deployment.url)

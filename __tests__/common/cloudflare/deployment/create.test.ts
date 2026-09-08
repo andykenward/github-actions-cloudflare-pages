@@ -155,7 +155,8 @@ describe(createCloudflareDeployment, () => {
         accountId: 'mock-cloudflare-account-id',
         projectName: 'mock-cloudflare-project-name',
         directory: 'mock-directory',
-        workingDirectory: 'mock-working-directory'
+        workingDirectory: 'mock-working-directory',
+        statusOptions: {pollInterval: 0}
       })
       // vi.advanceTimersByTime(2000)
 
@@ -276,7 +277,8 @@ describe(createCloudflareDeployment, () => {
         accountId: 'mock-cloudflare-account-id',
         projectName: 'mock-cloudflare-project-name',
         directory: 'mock-directory',
-        branch: 'pr-123'
+        branch: 'pr-123',
+        statusOptions: {pollInterval: 0}
       })
 
       expect(execFileAsync).toHaveBeenCalledWith(

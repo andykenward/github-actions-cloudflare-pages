@@ -4,7 +4,6 @@ import type {PagesDeployment} from '@/common/cloudflare/types.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
 import {statusCloudflareDeployment} from '@/common/cloudflare/deployment/status.js'
-import {sleep} from '@/common/utils.js'
 import RESPONSE_DEPLOYMENTS_IDLE from '@/responses/api.cloudflare.com/pages/deployments/deployments.idle.response.json' with {type: 'json'}
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {
@@ -14,8 +13,10 @@ import {
   setMockApi
 } from '@/tests/helpers/api.js'
 
-vi.mock(import('@/common/utils.js'))
 vi.mock(import('@actions/core'))
+
+/** Poll with no delay; the interceptors assert the call count instead. */
+const POLL_OPTIONS = {pollInterval: 0} as const
 
 const API_ENDPOINT = {
   accountId: MOCK_ACCOUNT_ID,
@@ -57,31 +58,70 @@ describe(statusCloudflareDeployment, () => {
   })
 
   test('returns success when deploy stage succeeds', async () => {
-    expect.assertions(3)
+    expect.assertions(2)
 
     mockApi.interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, RESPONSE_DEPLOYMENTS)
 
-    const {deployment, status} = await statusCloudflareDeployment(API_ENDPOINT)
+    const {deployment, status} = await statusCloudflareDeployment(
+      API_ENDPOINT,
+      POLL_OPTIONS
+    )
 
     expect(status).toBe('success')
     expect(deployment.id).toMatchInlineSnapshot(
       `"206e215c-33b3-4ce4-adf4-7fc6c9b65483"`
     )
-    expect(vi.mocked(sleep)).not.toHaveBeenCalled()
   })
 
   test('polls until deploy stage succeeds', async () => {
-    expect.assertions(2)
+    expect.assertions(1)
 
     mockApi
       .interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, RESPONSE_DEPLOYMENTS_IDLE)
       .times(2)
     mockApi.interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, RESPONSE_DEPLOYMENTS)
 
-    const {status} = await statusCloudflareDeployment(API_ENDPOINT)
+    const {status} = await statusCloudflareDeployment(
+      API_ENDPOINT,
+      POLL_OPTIONS
+    )
 
     expect(status).toBe('success')
-    expect(vi.mocked(sleep)).toHaveBeenCalledTimes(2)
+  })
+
+  test('polls when the deployment is not registered yet', async () => {
+    expect.assertions(1)
+
+    // Immediately after wrangler returns, Cloudflare has usually not yet
+    // registered the deployment. This previously threw on the first poll and
+    // failed the whole action.
+    mockApi.interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, {
+      ...RESPONSE_DEPLOYMENTS,
+      result: []
+    })
+    mockApi.interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, RESPONSE_DEPLOYMENTS)
+
+    const {status} = await statusCloudflareDeployment(
+      API_ENDPOINT,
+      POLL_OPTIONS
+    )
+
+    expect(status).toBe('success')
+  })
+
+  test('times out instead of polling forever', async () => {
+    expect.assertions(1)
+
+    mockApi
+      .interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, RESPONSE_DEPLOYMENTS_IDLE)
+      .persist()
+
+    await expect(
+      statusCloudflareDeployment(API_ENDPOINT, {
+        pollInterval: 5,
+        pollTimeout: 50
+      })
+    ).rejects.toThrow(/timed out/)
   })
 
   test.for([
@@ -91,22 +131,24 @@ describe(statusCloudflareDeployment, () => {
   ] satisfies {stage: LatestStage['name']; status: LatestStage['status']}[])(
     'returns $status immediately without polling ($stage stage)',
     async ({stage, status}) => {
-      expect.assertions(2)
+      expect.assertions(1)
 
       mockApi.interceptCloudflare(
         MOCK_API_PATH_DEPLOYMENTS,
         withLatestStage(stage, status)
       )
 
-      const result = await statusCloudflareDeployment(API_ENDPOINT)
+      const result = await statusCloudflareDeployment(
+        API_ENDPOINT,
+        POLL_OPTIONS
+      )
 
       expect(result.status).toBe(status)
-      expect(vi.mocked(sleep)).not.toHaveBeenCalled()
     }
   )
 
   test('polls while a non-deploy stage is active', async () => {
-    expect.assertions(2)
+    expect.assertions(1)
 
     mockApi.interceptCloudflare(
       MOCK_API_PATH_DEPLOYMENTS,
@@ -114,10 +156,12 @@ describe(statusCloudflareDeployment, () => {
     )
     mockApi.interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, RESPONSE_DEPLOYMENTS)
 
-    const {status} = await statusCloudflareDeployment(API_ENDPOINT)
+    const {status} = await statusCloudflareDeployment(
+      API_ENDPOINT,
+      POLL_OPTIONS
+    )
 
     expect(status).toBe('success')
-    expect(vi.mocked(sleep)).toHaveBeenCalledTimes(1)
   })
 
   test('throws when the api returns an error', async () => {
@@ -130,7 +174,7 @@ describe(statusCloudflareDeployment, () => {
     )
 
     await expect(
-      statusCloudflareDeployment(API_ENDPOINT)
+      statusCloudflareDeployment(API_ENDPOINT, POLL_OPTIONS)
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.]`
     )

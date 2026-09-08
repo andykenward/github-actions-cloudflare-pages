@@ -1,4 +1,5 @@
 import {setOutput} from '@actions/core'
+import * as Effect from 'effect/Effect'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
@@ -28,7 +29,7 @@ describe('deploy', () => {
       await mockApi.mockAgent.close()
     })
 
-    describe(run, () => {
+    describe('run effect', () => {
       describe('handles resolve', () => {
         beforeEach(() => {
           vi.mocked(execFileAsync).mockResolvedValue({
@@ -46,7 +47,7 @@ describe('deploy', () => {
         test('success', async () => {
           expect.assertions(2)
 
-          const main = await run()
+          const main = await Effect.runPromise(run)
 
           expect(main).toBeUndefined()
 

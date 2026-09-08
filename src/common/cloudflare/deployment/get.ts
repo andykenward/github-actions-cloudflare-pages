@@ -13,12 +13,16 @@ export const getCloudflareDeploymentAlias = (
 }
 
 /**
- * Get the latest deployment by commitHash.
+ * Find the latest deployment by commitHash.
+ *
+ * Returns `undefined` rather than throwing when nothing matches: immediately
+ * after wrangler returns, Cloudflare has usually not registered the deployment
+ * yet, and that race is an expected, retryable state rather than a failure.
  */
-export const getCloudflareLatestDeployment = async ({
+export const findCloudflareLatestDeployment = async ({
   accountId,
   projectName
-}: CloudflareApiEndpoint): Promise<PagesDeployment> => {
+}: CloudflareApiEndpoint): Promise<PagesDeployment | undefined> => {
   const {sha: commitHash} = useContext()
 
   const deployments = unwrap(
@@ -28,16 +32,8 @@ export const getCloudflareLatestDeployment = async ({
     )
   )
 
-  const deployment = deployments.find(
+  return deployments.find(
     deployment =>
       deployment.deployment_trigger.metadata.commit_hash === commitHash
   )
-
-  if (deployment === undefined) {
-    throw new Error(
-      `Cloudflare: could not find deployment with commitHash: ${commitHash}`
-    )
-  }
-
-  return deployment
 }
