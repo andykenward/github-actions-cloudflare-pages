@@ -68,6 +68,33 @@ describe(getPayload, () => {
     `)
   })
 
+  test('decodes a v2 payload supplied as a JSON string', () => {
+    expect.assertions(1)
+
+    // Previously the string was parsed only to sniff its shape, then the
+    // original string was returned typed as an object, so callers
+    // destructured `undefined`s out of it.
+    const result = getPayload(JSON.stringify(PAYLOAD_V2))
+
+    expect(result).toStrictEqual(PAYLOAD_V2)
+  })
+
+  test('decodes a v1 payload supplied as a JSON string', () => {
+    expect.assertions(1)
+
+    const result = getPayload(JSON.stringify(PAYLOAD_V1))
+
+    expect(result).toStrictEqual({
+      cloudflare: {
+        accountId: 'mock-cloudflare-account-id',
+        id: 'cf-id',
+        projectName: 'mock-cloudflare-project-name'
+      },
+      commentId: 'comment-id-123',
+      url: 'https://example.com'
+    })
+  })
+
   describe('errors', () => {
     const BAD_PAYLOADS: Array<[Payload]> = [
       [
@@ -116,15 +143,19 @@ describe(getPayload, () => {
       ]
     ]
 
-    test.each(BAD_PAYLOADS)('throws an error for invalid payloads', () => {
+    test.each(BAD_PAYLOADS)('throws an error for invalid payloads', payload => {
       expect.assertions(1)
-
-      const payload = {
-        invalidData: 'invalid'
-      }
 
       expect(() => {
         getPayload(payload)
+      }).toThrow('Payload is not valid')
+    })
+
+    test('throws for a malformed JSON string instead of crashing', () => {
+      expect.assertions(1)
+
+      expect(() => {
+        getPayload('{not valid json')
       }).toThrow('Payload is not valid')
     })
 
