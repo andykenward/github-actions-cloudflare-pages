@@ -73,7 +73,7 @@
     "oxfmt": "0.61.0",
     "oxlint": "1.76.0",
     "oxlint-tsgolint": "7.0.2001",
-    "skills": "1.5.7",
+    "skills": "1.5.23",
     "tsx": "4.23.1",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "undici": "7.29.0",
