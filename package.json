@@ -49,7 +49,7 @@
   "dependencies": {
     "@actions/core": "3.0.1",
     "@octokit-next/core": "3.0.0",
-    "@octokit/plugin-paginate-rest": "14.0.0",
+    "@octokit/plugin-paginate-rest": "15.0.0",
     "openapi-fetch": "0.17.0"
   },
   "devDependencies": {

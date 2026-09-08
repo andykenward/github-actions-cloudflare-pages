@@ -13,3 +13,6 @@ is-plain-object/dist/is-plain-object.mjs:
    * Copyright (c) 2014-2017, Jon Schlinkert.
    * Released under the MIT License.
    */
+
+@octokit/plugin-paginate-rest/dist-bundle/index.js:
+  /* v8 ignore next -- @preserve */
