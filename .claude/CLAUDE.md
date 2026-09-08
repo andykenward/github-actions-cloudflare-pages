@@ -40,7 +40,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 | `pnpm run build`               | ESBuild bundle to `dist/deploy` & `dist/delete`                                                                                                 |
 | `pnpm run codegen`             | Regenerate GraphQL types in [`__generated__/gql/`](__generated__/gql/) from inline `graphql()` calls                                            |
 | `pnpm run codegen:cloudflare`  | Generate Cloudflare Pages types via [bin/codegen/cloudflare-pages.ts](bin/codegen/cloudflare-pages.ts)                                          |
-| `pnpm run codegen:events`      | Generate GitHub event types via [bin/codegen/github-workflow-events.ts](bin/codegen/github-workflow-events.ts) from `@octokit/webhooks-schemas` |
+| `pnpm run codegen:events`      | Generate GitHub event types via [bin/codegen/github-workflow-events.ts](bin/codegen/github-workflow-events.ts) from `@octokit/openapi-webhooks` |
 | `pnpm run codegen:watch`       | Auto-regenerate types on GraphQL changes                                                                                                        |
 | `pnpm run tsc:check`           | Type-check (`tsc --noEmit --checkJs`)                                                                                                           |
 | `pnpm run test` / `test:watch` | Vitest run / interactive                                                                                                                        |

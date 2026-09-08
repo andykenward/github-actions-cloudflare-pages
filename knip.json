@@ -8,5 +8,5 @@
     "src/**/fragments.ts"
   ],
   "ignoreBinaries": ["act"],
-  "ignoreDependencies": ["graphql-tag", "wrangler"]
+  "ignoreDependencies": ["@octokit/openapi-webhooks", "graphql-tag", "wrangler"]
 }

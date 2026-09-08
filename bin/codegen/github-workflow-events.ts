@@ -1,122 +1,127 @@
-import type {JSONSchema7} from 'json-schema'
-
 import {strict as assert} from 'node:assert'
 import {existsSync} from 'node:fs'
-import {mkdir, writeFile} from 'node:fs/promises'
+import {mkdir, readFile, writeFile} from 'node:fs/promises'
+import {fileURLToPath} from 'node:url'
 
-import octokitWebhooksSchema from '@octokit/webhooks-schemas/schema.json' with {type: 'json'}
-
-const capitalize = (str: string) => {
-  assert.ok(str.length > 0 && str[0], 'unable to capitalize string')
-
-  return `${str[0].toUpperCase()}${str.slice(1)}`
+/**
+ * Only the slice of the OpenAPI document this script reads. The spec is parsed
+ * at runtime rather than imported as JSON so `tsc` never has to type the ~5MB
+ * document.
+ */
+interface WebhooksOpenApi {
+  webhooks: Record<string, {post: {operationId: string}}>
 }
 
-const guessAtInterfaceName = (schema: JSONSchema7): string => {
-  const str = schema.title || schema.$id
+const SPECIFIER = '@octokit/openapi-webhooks/generated/api.github.com.json'
 
-  assert.ok(str, 'unable to guess interface name')
+const readWebhooks = async (): Promise<WebhooksOpenApi['webhooks']> => {
+  const spec = JSON.parse(
+    await readFile(fileURLToPath(import.meta.resolve(SPECIFIER)), 'utf8')
+  ) as WebhooksOpenApi
 
-  return str
-    .split(/[$_ -]/u)
-    .map(element => capitalize(element))
-    .join('')
+  assert.ok(spec.webhooks, `no webhooks found in ${SPECIFIER}`)
+
+  return spec.webhooks
 }
 
-const getEventName = (ref: string): string => {
-  assert.ok(
-    ref.startsWith('#/definitions/'),
-    `${ref} does not point to definitions`
-  )
+/**
+ * A webhook operation id is `<event>/<action>`, or just `<event>` for events
+ * that have no action. The `<event>` segment is the kebab-case form of the
+ * `GITHUB_EVENT_NAME` a workflow receives, e.g. `workflow-run/completed` is
+ * delivered to a workflow as `workflow_run`.
+ */
+const getEventName = (operationId: string): string => {
+  const [event] = operationId.split('/')
 
-  assert.ok(
-    ref.endsWith('event'),
-    `${ref} does not point to an event definition`
-  )
+  assert.ok(event, `unable to find an event name from ${operationId}`)
 
-  const [, eventName] = /^#\/definitions\/(.+)[$_]event$/u.exec(ref) ?? []
-
-  assert.ok(eventName, `unable to find an event name from ${ref}`)
-
-  return eventName
+  return event.replaceAll('-', '_')
 }
 
-const buildEventNames = (): string => {
-  const properties = octokitWebhooksSchema.oneOf.map(({$ref}) => {
-    if (!$ref) return
-    const eventName = getEventName($ref)
+/**
+ * Every distinct `GITHUB_EVENT_NAME` in the OpenAPI document, in the order the
+ * webhooks appear.
+ */
+const buildEventNames = (webhooks: WebhooksOpenApi['webhooks']): string => {
+  const eventNames = new Set<string>()
 
-    return `"${eventName}",`
-  })
+  for (const [key, {post}] of Object.entries(webhooks)) {
+    assert.ok(post.operationId, `${key} has no operationId`)
+
+    eventNames.add(getEventName(post.operationId))
+  }
+
+  assert.ok(eventNames.size > 0, 'no event names found')
 
   return [
+    '/**',
+    ' * Every event name GitHub can set as `GITHUB_EVENT_NAME`, as a runtime',
+    ' * value. This is the one thing that cannot be derived from',
+    ' * `@octokit/openapi-webhooks-types`, which is types only.',
+    ' */',
     'export const EVENT_NAMES = [',
-    ...properties,
+    ...[...eventNames].map(eventName => `"${eventName}",`),
     '] satisfies Array<WebhookEventName>',
     'export type EventName = (typeof EVENT_NAMES)[number]'
   ].join('\n')
 }
 
-const buildWorkflowBase = (): string => {
-  return [
-    `export interface WorkflowEventBase {`,
-    `eventName: WebhookEventName`,
-    `payload: Schema`,
-    `}`
-  ].join(`\n`)
-}
+/**
+ * The type half of the module. Nothing here depends on the OpenAPI document —
+ * it is derived from `@octokit/openapi-webhooks-types` — but it is emitted
+ * alongside `EVENT_NAMES` so the whole module has one home.
+ */
+const TYPES = `import type {operations} from "@octokit/openapi-webhooks-types"
 
-const buildWorkflowEvent = (): string => {
-  const properties = octokitWebhooksSchema.oneOf.map(({$ref}) => {
-    if (!$ref) return
-    const eventName = getEventName($ref)
-    const interfaceName = guessAtInterfaceName({$id: `${eventName}_event`})
+type SnakeCase<S extends string> = S extends \`\${infer Head}-\${infer Tail}\`
+? \`\${Head}_\${SnakeCase<Tail>}\`
+: S
 
-    return [
-      `|`,
-      `{`,
-      `eventName: "${eventName}"`,
-      `payload: ${interfaceName}`,
-      `}`
-    ].join('\n')
-  })
+type OperationId = keyof operations & string
 
-  return [`export type WorkflowEvent = `, ...properties].join('')
-}
+/**
+ * A webhook operation id is \`<event>/<action>\`, or just \`<event>\` for events
+ * that have no action.
+ */
+type OperationEventName<O extends string> = O extends \`\${infer Event}/\${string}\`
+? Event
+: O
 
-const buildImports = (): string => {
-  const properties = octokitWebhooksSchema.oneOf.map(({$ref}) => {
-    if (!$ref) return
-    const eventName = getEventName($ref)
-    const interfaceName = guessAtInterfaceName({$id: `${eventName}_event`})
+/** Every event name GitHub can set as \`GITHUB_EVENT_NAME\`. */
+export type WebhookEventName = SnakeCase<OperationEventName<OperationId>>
 
-    return [`${interfaceName}`, `,`].join('\n')
-  })
+/** The union of JSON bodies GitHub delivers for one event name. */
+type WebhookPayload<E extends WebhookEventName> = {
+[O in OperationId]: SnakeCase<OperationEventName<O>> extends E
+? operations[O]["requestBody"]["content"]["application/json"]
+: never
+}[OperationId]
 
-  return [
-    `import type {`,
-    `Schema,`,
-    `WebhookEventName,`,
-    ...properties,
-    `}`,
-    `from "@octokit/webhooks-types"`
-  ].join('')
+export interface WorkflowEventBase {
+eventName: WebhookEventName
+payload: WebhookPayload<WebhookEventName>
 }
 
 /**
- * Script to code generate GitHub webhook event types from [`@octokit/webhooks-schemas`](https://github.com/octokit/webhooks)
- * Matching the [`WebhookEventName`](https://github.com/octokit/webhooks/blob/a5c455c39903cfc033d4c7a0ee0dc6476aa60a2d/payload-types/schema.d.ts#L8324)
- * to a [`Schema`](https://github.com/octokit/webhooks/blob/a5c455c39903cfc033d4c7a0ee0dc6476aa60a2d/payload-types/schema.d.ts#L8-L70)
+ * Discriminated union of every workflow event, pairing each \`GITHUB_EVENT_NAME\`
+ * with the payloads GitHub delivers under it.
+ */
+export type WorkflowEvent = {
+[E in WebhookEventName]: {eventName: E; payload: WebhookPayload<E>}
+}[WebhookEventName]`
+
+/**
+ * Script to code generate GitHub webhook event types from
+ * [`@octokit/openapi-webhooks`](https://github.com/octokit/openapi-webhooks),
+ * the replacement for the deprecated `@octokit/webhooks-schemas`.
  *
- * Forked from [`octokit/webhooks/bin/octokit-types.ts`](https://github.com/octokit/webhooks/blob/4147e7edafb8bcf8e6dd2dee4d3591d4ac52b338/bin/octokit-types.ts)
+ * The payload types come straight from
+ * [`@octokit/openapi-webhooks-types`](https://github.com/octokit/openapi-webhooks/tree/main/packages/openapi-webhooks-types);
+ * only `EVENT_NAMES` has to be generated, because that package is types only
+ * and the event names are needed at runtime.
  */
 const run = async () => {
-  const ts = [
-    buildImports(),
-    buildEventNames(),
-    buildWorkflowBase(),
-    buildWorkflowEvent()
-  ].join('\n')
+  const ts = [TYPES, buildEventNames(await readWebhooks())].join('\n')
 
   const DIR = '__generated__/types/github'
   if (!existsSync(DIR)) {

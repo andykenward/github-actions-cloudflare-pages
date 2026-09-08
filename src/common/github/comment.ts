@@ -104,6 +104,7 @@ const getNodeIdFromEvent = async () => {
       const pullRequestsMatchingHead =
         payload.workflow_run.pull_requests.filter(pullRequest => {
           return (
+            pullRequest !== null &&
             pullRequest.head.ref === payload.workflow_run.head_branch &&
             pullRequest.head.sha === payload.workflow_run.head_sha
           )
