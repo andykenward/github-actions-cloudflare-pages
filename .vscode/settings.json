@@ -16,7 +16,7 @@
   "js/ts.preferences.importModuleSpecifierEnding": "js",
   "js/ts.preferences.importModuleSpecifier": "shortest",
   "js/ts.experimental.useTsgo": true,
-  "js/ts.tsdk.path": "./node_modules/typescript",
+  "js/ts.tsdk.path": "./node_modules/@typescript/native/bin",
   "editor.quickSuggestions": {
     "other": false,
     "comments": false,
@@ -25,5 +25,7 @@
   "editor.suggest.showKeywords": false,
   "oxc.enable.oxfmt": true,
   "oxc.enable.oxlint": true,
-  "terminal.integrated.defaultProfile.linux": "zsh"
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "js/ts.tsdk.additionalLocations": ["./node_modules/@typescript/native/bin"],
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true
 }

@@ -1,6 +1,10 @@
 {
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "unicorn", "import"],
+  "$schema": "./node_modules/@effect/tsgo/oxlint-schema.json",
+  "extends": [
+    "./node_modules/@effect/tsgo/oxlint-presets/correctness.json",
+    "./node_modules/@effect/tsgo/oxlint-presets/antipattern.json"
+  ],
+  "plugins": ["typescript", "unicorn", "import", "effecttsgo"],
   "categories": {
     "correctness": "off"
   },

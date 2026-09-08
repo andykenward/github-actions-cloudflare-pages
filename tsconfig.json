@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/@effect/tsgo/schema.json",
   "extends": "@tsconfig/node24/tsconfig.json",
   "compilerOptions": {
     "tsBuildInfoFile": ".cache/.tsbuildinfo",
@@ -27,7 +28,13 @@
       "@/responses/*": ["./__generated__/responses/*"],
       "@/tests/*": ["./__tests__/*"],
       "@/types/*": ["./__generated__/types/*"]
-    }
+    },
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "diagnostics": false
+      }
+    ]
   },
   "exclude": ["dist", "example", "node_modules"]
 }
