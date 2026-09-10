@@ -8,10 +8,13 @@ import type {GitHubGraphQLError} from '@/common/github/api/client.js'
 
 import {batchDelete} from '@/common/batch-delete.js'
 import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
-import {MutationDeactivateAndDeleteGitHubDeploymentAndComment} from '@/common/github/deployment/delete.js'
 import {PayloadV1Inputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
 import {DEPLOYMENT} from '@/fixtures/github-deployment.js'
+import {
+  DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
+  DeploymentStatusState
+} from '@/gql/graphql.js'
 import RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete.response.json' with {type: 'json'}
 
 import type {MockApi} from '../helpers/api.js'
@@ -57,19 +60,25 @@ describe('batchDelete', () => {
       'DELETE'
     )
 
+    // Same key order as `batchDelete` sends: the body must match exactly.
     mockApi.interceptGithub(
       {
-        query: MutationDeactivateAndDeleteGitHubDeploymentAndComment,
+        query: DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
         variables: {
-          deploymentId: 'DE_kwDOJn0nrM5U35aT',
-          environment: 'preview',
-          environmentUrl: ENVIRONMENT_URL,
-          logUrl: getCloudflareLogEndpoint({
-            id: MOCK_DEPLOYMENT_ID,
-            projectName: MOCK_PROJECT_NAME,
-            accountId: MOCK_ACCOUNT_ID
-          }),
-          commentId: 'IC_kwDOJn0nrM55B77z'
+          status: {
+            deploymentId: 'DE_kwDOJn0nrM5U35aT',
+            environment: 'preview',
+            environmentUrl: ENVIRONMENT_URL,
+            logUrl: getCloudflareLogEndpoint({
+              id: MOCK_DEPLOYMENT_ID,
+              projectName: MOCK_PROJECT_NAME,
+              accountId: MOCK_ACCOUNT_ID
+            }),
+            state: DeploymentStatusState.Inactive,
+            autoInactive: false
+          },
+          deployment: {id: 'DE_kwDOJn0nrM5U35aT'},
+          comment: {id: 'IC_kwDOJn0nrM55B77z'}
         }
       },
       {

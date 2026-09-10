@@ -1,0 +1,23 @@
+# The files in one `octokit/webhooks` payload-examples folder, with their text.
+query ListPayloadExampleFiles($owner: String!, $repo: String!, $path: String!) {
+  repository(owner: $owner, name: $repo) {
+    object(expression: $path) {
+      __typename
+      ... on Tree {
+        entries {
+          name
+          type
+          language {
+            name
+          }
+          object {
+            __typename
+            ... on Blob {
+              text
+            }
+          }
+        }
+      }
+    }
+  }
+}

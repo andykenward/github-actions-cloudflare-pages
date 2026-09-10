@@ -6,48 +6,14 @@ import type {PagesDeployment} from '@/common/cloudflare/types.js'
 
 import {getCloudflareDeploymentAlias} from '@/common/cloudflare/deployment/get.js'
 import {CommonInputs} from '@/common/inputs.js'
-import {graphql} from '@/gql/gql.js'
+import {
+  AddPullRequestCommentDocument,
+  GetOpenPullRequestByBranchDocument,
+  GetPullRequestIdDocument
+} from '@/gql/graphql.js'
 
 import {GitHubApi} from './api/client.js'
 import {GitHubContext} from './context.js'
-
-export const MutationAddComment = graphql(/* GraphQL */ `
-  mutation AddComment($subjectId: ID!, $body: String!) {
-    addComment(input: {subjectId: $subjectId, body: $body}) {
-      commentEdge {
-        node {
-          id
-        }
-      }
-    }
-  }
-`)
-
-export const QueryPullRequestNodeId = graphql(/* GraphQL */ `
-  query PullRequestNodeId($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      pullRequest(number: $number) {
-        id
-      }
-    }
-  }
-`)
-
-export const QueryPullRequestNodeIdByBranch = graphql(/* GraphQL */ `
-  query PullRequestNodeIdByBranch(
-    $owner: String!
-    $repo: String!
-    $headRefName: String!
-  ) {
-    repository(owner: $owner, name: $repo) {
-      pullRequests(first: 1, states: [OPEN], headRefName: $headRefName) {
-        nodes {
-          id
-        }
-      }
-    }
-  }
-`)
 
 // oxlint-disable-next-line unicorn/throw-new-error
 class CommentError extends Schema.TaggedError<CommentError>()('CommentError', {
@@ -63,7 +29,7 @@ const pullRequestNodeId = Effect.fn('pullRequestNodeId')(function* (
   const github = yield* GitHubApi
 
   const pullRequest = yield* github.request({
-    query: QueryPullRequestNodeId,
+    query: GetPullRequestIdDocument,
     variables: {
       owner: repo.owner,
       repo: repo.repo,
@@ -110,7 +76,7 @@ export const pullRequestToComment = Effect.gen(function* () {
       }
 
       const pullRequest = yield* github.request({
-        query: QueryPullRequestNodeIdByBranch,
+        query: GetOpenPullRequestByBranchDocument,
         variables: {
           owner: repo.owner,
           repo: repo.repo,
@@ -199,10 +165,9 @@ export const addComment = Effect.fn('addComment')(function* (
   const rawBody = `## Cloudflare Pages Deployment\n**Event Name:** ${event.eventName}\n**Environment:** ${deployment.environment}\n**Project:** ${deployment.project_name}\n**Built with commit:** ${sha}\n**Preview URL:** ${deployment.url}\n**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}\n\n### Wrangler Output\n${output}`
 
   const comment = yield* github.request({
-    query: MutationAddComment,
+    query: AddPullRequestCommentDocument,
     variables: {
-      subjectId: pullRequestId,
-      body: rawBody
+      input: {subjectId: pullRequestId, body: rawBody}
     }
   })
   return comment.data.addComment?.commentEdge?.node?.id

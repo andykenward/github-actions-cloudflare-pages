@@ -8,16 +8,15 @@ import type {WorkflowEventExtract} from '@/common/github/workflow-event/types.js
 import type {MockApi} from '@/tests/helpers/api.js'
 
 import {GitHubApi} from '@/common/github/api/client.js'
-import {
-  addComment,
-  MutationAddComment,
-  pullRequestToComment,
-  QueryPullRequestNodeId,
-  QueryPullRequestNodeIdByBranch
-} from '@/common/github/comment.js'
+import {addComment, pullRequestToComment} from '@/common/github/comment.js'
 import {GitHubContext} from '@/common/github/context.js'
 import {CommonInputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
+import {
+  AddPullRequestCommentDocument,
+  GetOpenPullRequestByBranchDocument,
+  GetPullRequestIdDocument
+} from '@/gql/graphql.js'
 import {INPUT_KEY_PR_NUMBER} from '@/input-keys'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {setMockApi} from '@/tests/helpers/api.js'
@@ -86,10 +85,12 @@ describe('addComment', () => {
 
         mockApi.interceptGithub(
           {
-            query: MutationAddComment,
+            query: AddPullRequestCommentDocument,
             variables: {
-              subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-              body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+              input: {
+                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+                body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+              }
             }
           },
           {
@@ -117,7 +118,7 @@ describe('addComment', () => {
 
         mockApi.interceptGithub(
           {
-            query: QueryPullRequestNodeId,
+            query: GetPullRequestIdDocument,
             variables: {
               owner: 'andykenward',
               repo: 'github-actions-cloudflare-pages',
@@ -137,10 +138,12 @@ describe('addComment', () => {
 
         mockApi.interceptGithub(
           {
-            query: MutationAddComment,
+            query: AddPullRequestCommentDocument,
             variables: {
-              subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-              body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_run\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** 3484a3fb816e0859fd6e1cea078d76385ff50625\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+              input: {
+                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_run\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** 3484a3fb816e0859fd6e1cea078d76385ff50625\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+              }
             }
           },
           {
@@ -272,7 +275,7 @@ describe('addComment', () => {
 
         mockApi.interceptGithub(
           {
-            query: QueryPullRequestNodeId,
+            query: GetPullRequestIdDocument,
             variables: {
               owner: 'andykenward',
               repo: 'github-actions-cloudflare-pages',
@@ -292,10 +295,12 @@ describe('addComment', () => {
 
         mockApi.interceptGithub(
           {
-            query: MutationAddComment,
+            query: AddPullRequestCommentDocument,
             variables: {
-              subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-              body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+              input: {
+                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+              }
             }
           },
           {
@@ -355,7 +360,7 @@ describe('addComment', () => {
 
         mockApi.interceptGithub(
           {
-            query: QueryPullRequestNodeIdByBranch,
+            query: GetOpenPullRequestByBranchDocument,
             variables: {
               owner: 'andykenward',
               repo: 'github-actions-cloudflare-pages',
@@ -375,10 +380,12 @@ describe('addComment', () => {
 
         mockApi.interceptGithub(
           {
-            query: MutationAddComment,
+            query: AddPullRequestCommentDocument,
             variables: {
-              subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-              body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+              input: {
+                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\nsuccess'
+              }
             }
           },
           {
@@ -406,7 +413,7 @@ describe('addComment', () => {
 
           mockApi.interceptGithub(
             {
-              query: QueryPullRequestNodeIdByBranch,
+              query: GetOpenPullRequestByBranchDocument,
               variables: {
                 owner: 'andykenward',
                 repo: 'github-actions-cloudflare-pages',

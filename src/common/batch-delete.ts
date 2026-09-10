@@ -1,6 +1,12 @@
 import {info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 
+import {
+  DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
+  DeactivateAndDeleteGitHubDeploymentDocument,
+  DeploymentStatusState
+} from '@/gql/graphql.js'
+
 import type {CloudflareApi} from './cloudflare/api/client.js'
 import type {GitHubDeployment} from './github/deployment/get.js'
 import type {PayloadV1Inputs} from './inputs.js'
@@ -9,10 +15,6 @@ import {getCloudflareLogEndpoint} from './cloudflare/api/endpoints.js'
 import {deleteCloudflareDeployment} from './cloudflare/deployment/delete.js'
 import {errorMessage} from './errors.js'
 import {GitHubApi} from './github/api/client.js'
-import {
-  MutationDeactivateAndDeleteGitHubDeployment,
-  MutationDeactivateAndDeleteGitHubDeploymentAndComment
-} from './github/deployment/delete.js'
 import {getPayload} from './github/deployment/payload.js'
 
 /** Log prefix for the delete action. */
@@ -71,20 +73,25 @@ export const batchDelete: (
     const github = yield* GitHubApi
 
     const variables = {
-      deploymentId: deployment.node_id,
-      environment: deployment.environment,
-      environmentUrl: url,
-      logUrl: getCloudflareLogEndpoint(cloudflare)
+      status: {
+        deploymentId: deployment.node_id,
+        environment: deployment.environment,
+        environmentUrl: url,
+        logUrl: getCloudflareLogEndpoint(cloudflare),
+        state: DeploymentStatusState.Inactive,
+        autoInactive: false
+      },
+      deployment: {id: deployment.node_id}
     }
 
     const {errors} = commentId
       ? yield* github.request({
-          query: MutationDeactivateAndDeleteGitHubDeploymentAndComment,
-          variables: {...variables, commentId},
+          query: DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
+          variables: {...variables, comment: {id: commentId}},
           options: {errorThrows: false}
         })
       : yield* github.request({
-          query: MutationDeactivateAndDeleteGitHubDeployment,
+          query: DeactivateAndDeleteGitHubDeploymentDocument,
           variables,
           options: {errorThrows: false}
         })

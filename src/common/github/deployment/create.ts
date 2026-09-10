@@ -4,51 +4,23 @@ import * as Schema from 'effect/Schema'
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
 
 import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
-import {graphql} from '@/gql/gql.js'
-import {DeploymentStatusState} from '@/gql/graphql.js'
+import {
+  CreateGitHubDeploymentDocument,
+  CreateGitHubDeploymentStatusDocument,
+  DeploymentStatusState
+} from '@/gql/graphql.js'
 
 import type {Environment} from '../environment.js'
 import type {PayloadGithubDeploymentV2} from './types.js'
 
 import {GitHubApi} from '../api/client.js'
 import {GitHubContext} from '../context.js'
-import {MutationCreateGitHubDeploymentStatus} from './status.js'
 
 // oxlint-disable-next-line unicorn/throw-new-error
 class GitHubDeploymentError extends Schema.TaggedError<GitHubDeploymentError>()(
   'GitHubDeploymentError',
   {message: Schema.String}
 ) {}
-
-/**
- * @see {@link ../../../../schema/github/schema.graphql}
- * @see {@link https://docs.github.com/en/graphql/reference/mutations#createdeployment | createDeployment}
- */
-const MutationCreateGitHubDeployment = graphql(/* GraphQL */ `
-  mutation CreateGitHubDeployment(
-    $repositoryId: ID!
-    $environmentName: String!
-    $refId: ID!
-    $payload: String!
-    $description: String
-  ) {
-    createDeployment(
-      input: {
-        autoMerge: false
-        description: $description
-        environment: $environmentName
-        refId: $refId
-        repositoryId: $repositoryId
-        requiredContexts: []
-        payload: $payload
-      }
-    ) {
-      deployment {
-        ...DeploymentFragment
-      }
-    }
-  }
-`)
 
 export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
   function* ({
@@ -72,16 +44,21 @@ export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
     }
 
     /**
-     * Create GitHub Deployment
+     * Create GitHub Deployment. `autoMerge` and `requiredContexts` are off:
+     * the deployment records what Cloudflare already deployed.
      */
     const deployment = yield* github.request({
-      query: MutationCreateGitHubDeployment,
+      query: CreateGitHubDeploymentDocument,
       variables: {
-        repositoryId: repo.node_id,
-        environmentName: name,
-        refId: refId,
-        payload: JSON.stringify(payload),
-        description: `Cloudflare Pages Deployment: ${id}`
+        input: {
+          repositoryId: repo.node_id,
+          refId,
+          environment: name,
+          description: `Cloudflare Pages Deployment: ${id}`,
+          payload: JSON.stringify(payload),
+          autoMerge: false,
+          requiredContexts: []
+        }
       }
     })
     const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id
@@ -96,13 +73,16 @@ export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
      * Update GitHub Deployment Status
      */
     yield* github.request({
-      query: MutationCreateGitHubDeploymentStatus,
+      query: CreateGitHubDeploymentStatusDocument,
       variables: {
-        environment: name,
-        deploymentId: gitHubDeploymentId,
-        environmentUrl: url,
-        logUrl: getCloudflareLogEndpoint({id, accountId, projectName}),
-        state: DeploymentStatusState.Success
+        input: {
+          deploymentId: gitHubDeploymentId,
+          environment: name,
+          environmentUrl: url,
+          logUrl: getCloudflareLogEndpoint({id, accountId, projectName}),
+          state: DeploymentStatusState.Success,
+          autoInactive: false
+        }
       }
     })
   }

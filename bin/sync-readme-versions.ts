@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url'
 
 import type {TypedDocumentString} from '@/gql/graphql.js'
 
-import {graphql} from '@/gql/gql.js'
+import {GetLatestReleaseDocument} from '@/gql/graphql.js'
 
 import packageJson from '../package.json' with {type: 'json'}
 
@@ -37,19 +37,6 @@ export function replaceVersionReferences(
     )
 }
 
-export const QueryLatestRelease = graphql(/* GraphQL */ `
-  query LatestRelease($owner: String!, $repo: String!) {
-    repository(owner: $owner, name: $repo) {
-      latestRelease {
-        tagName
-        tagCommit {
-          oid
-        }
-      }
-    }
-  }
-`)
-
 const request = async <TResult, TVariables>(
   query: TypedDocumentString<TResult, TVariables>,
   variables: TVariables
@@ -72,7 +59,7 @@ export async function getLatestRelease(): Promise<{
   sha: string
   version: string
 }> {
-  const data = await request(QueryLatestRelease, {
+  const data = await request(GetLatestReleaseDocument, {
     owner: 'andykenward',
     repo: 'github-actions-cloudflare-pages'
   })

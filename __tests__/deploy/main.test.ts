@@ -4,14 +4,14 @@ import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
-import type {GetEnvironmentQuery} from '@/gql/graphql.js'
+import type {GetEnvironmentAndRefQuery} from '@/gql/graphql.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
 import {GitHubApi} from '@/common/github/api/client.js'
 import {addComment} from '@/common/github/comment.js'
-import {QueryGetEnvironment} from '@/common/github/environment.js'
 import {execFileAsync} from '@/common/utils.js'
 import {DeployLayer, run} from '@/deploy/main.js'
+import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/api.js'
 
@@ -23,7 +23,7 @@ vi.mock(import('@/common/github/comment.js'))
 const REF_ID = 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk='
 
 /** `checkEnvironment`'s answer when the environment has not been created. */
-const ENVIRONMENT_MISSING: {data: GetEnvironmentQuery} = {
+const ENVIRONMENT_MISSING: {data: GetEnvironmentAndRefQuery} = {
   data: {repository: {environment: null, ref: {id: REF_ID}}}
 }
 
@@ -58,11 +58,11 @@ describe('deploy', () => {
           )
           mockApi.interceptGithub(
             {
-              query: QueryGetEnvironment,
+              query: GetEnvironmentAndRefDocument,
               variables: {
                 owner: 'andykenward',
                 repo: 'github-actions-cloudflare-pages',
-                environment_name: 'mock-github-environment',
+                environmentName: 'mock-github-environment',
                 qualifiedName: 'mock-github-head-ref'
               }
             },

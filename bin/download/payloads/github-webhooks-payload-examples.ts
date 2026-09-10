@@ -1,11 +1,21 @@
 import 'dotenv/config'
-import {existsSync} from 'node:fs'
+import {existsSync, readFileSync} from 'node:fs'
 import {mkdir, writeFile} from 'node:fs/promises'
 
 import type {
-  FilesQuery,
-  FilesQueryVariables
+  ListPayloadExampleFilesQuery,
+  ListPayloadExampleFilesQueryVariables
 } from '../../../__generated__/gql/graphql.js'
+
+/**
+ * Read at runtime: this script runs with plain `node`, which cannot import the
+ * generated `…Document` constants (see "`node` vs `tsx`" in CLAUDE.md). The
+ * types above are type-only imports, which node strips.
+ */
+const LIST_PAYLOAD_EXAMPLE_FILES = readFileSync(
+  new URL('github-webhooks-payload-examples.graphql', import.meta.url),
+  'utf8'
+)
 
 const OWNER = 'octokit'
 const REPO = 'webhooks'
@@ -40,37 +50,14 @@ const getWebhookExamples = async (folder: string) => {
   /**
    * Get all files in a directory and their blob contents
    */
-  const response = await request<FilesQuery, FilesQueryVariables>(
-    /* GraphQL */ `
-      query Files($owner: String!, $repo: String!, $path: String!) {
-        repository(owner: $owner, name: $repo) {
-          object(expression: $path) {
-            __typename
-            ... on Tree {
-              entries {
-                name
-                type
-                language {
-                  name
-                }
-                object {
-                  __typename
-                  ... on Blob {
-                    text
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    `,
-    {
-      owner: OWNER,
-      repo: REPO,
-      path: PATH_READ
-    }
-  )
+  const response = await request<
+    ListPayloadExampleFilesQuery,
+    ListPayloadExampleFilesQueryVariables
+  >(LIST_PAYLOAD_EXAMPLE_FILES, {
+    owner: OWNER,
+    repo: REPO,
+    path: PATH_READ
+  })
 
   if (response.repository?.object?.__typename === 'Tree') {
     const data = response.repository?.object?.entries

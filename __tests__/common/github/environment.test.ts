@@ -4,14 +4,12 @@ import * as Effect from 'effect/Effect'
 import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
 import type {GitHubGraphQLError} from '@/common/github/api/client.js'
-import type {GetEnvironmentQuery} from '@/gql/graphql.js'
+import type {GetEnvironmentAndRefQuery} from '@/gql/graphql.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
-import {
-  checkEnvironment,
-  QueryGetEnvironment
-} from '@/common/github/environment.js'
+import {checkEnvironment} from '@/common/github/environment.js'
 import {CommonLayer} from '@/common/layer.js'
+import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
 import {getMockApi} from '@/tests/helpers/api.js'
 
 vi.mock(import('@actions/core'))
@@ -20,17 +18,17 @@ describe('environment', () => {
   let mockApi: MockApi
 
   const mockQueryGetEnvironment = (
-    data: GetEnvironmentQuery,
+    data: GetEnvironmentAndRefQuery,
     errors?: GitHubGraphQLError[],
     statusCode?: number
   ): void => {
     mockApi.interceptGithub(
       {
-        query: QueryGetEnvironment,
+        query: GetEnvironmentAndRefDocument,
         variables: {
           owner: 'andykenward',
           repo: 'github-actions-cloudflare-pages',
-          environment_name: 'mock-github-environment',
+          environmentName: 'mock-github-environment',
           qualifiedName: 'mock-github-head-ref'
         }
       },
@@ -58,7 +56,7 @@ describe('environment', () => {
       Effect.gen(function* () {
         expect.assertions(1)
 
-        mockQueryGetEnvironment({} as GetEnvironmentQuery, undefined, 401)
+        mockQueryGetEnvironment({} as GetEnvironmentAndRefQuery, undefined, 401)
 
         const failure = yield* Effect.flip(checkEnvironment)
 

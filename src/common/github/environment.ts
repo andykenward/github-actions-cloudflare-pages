@@ -2,7 +2,7 @@ import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
 import {CommonInputs} from '@/common/inputs.js'
-import {graphql} from '@/gql/gql.js'
+import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
 
 import {GitHubApi} from './api/client.js'
 import {GitHubContext} from './context.js'
@@ -14,24 +14,6 @@ class EnvironmentError extends Schema.TaggedError<EnvironmentError>()(
   'EnvironmentError',
   {message: Schema.String}
 ) {}
-
-export const QueryGetEnvironment = graphql(/* GraphQL */ `
-  query GetEnvironment(
-    $owner: String!
-    $repo: String!
-    $environment_name: String!
-    $qualifiedName: String!
-  ) {
-    repository(owner: $owner, name: $repo) {
-      environment(name: $environment_name) {
-        ...EnvironmentFragment
-      }
-      ref(qualifiedName: $qualifiedName) {
-        id
-      }
-    }
-  }
-`)
 
 /**
  * CheckEnvironment will check if the environment exists and if it does not it
@@ -52,11 +34,11 @@ export const checkEnvironment = Effect.gen(function* () {
   const github = yield* GitHubApi
 
   const environment = yield* github.request({
-    query: QueryGetEnvironment,
+    query: GetEnvironmentAndRefDocument,
     variables: {
       owner: repo.owner,
       repo: repo.repo,
-      environment_name: gitHubEnvironment,
+      environmentName: gitHubEnvironment,
       qualifiedName: ref
     },
     options: {

@@ -1,12 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignore": [
-    "__generated__/**",
-    "dist/**",
-    "example/**",
-    "src/**/fragments.ts",
-    "repos/**"
-  ],
+  "ignore": ["__generated__/**", "dist/**", "example/**", "repos/**"],
   "ignoreBinaries": ["act"],
   "ignoreDependencies": [
     "@effect/language-service",

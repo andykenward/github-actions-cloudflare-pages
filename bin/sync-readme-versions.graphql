@@ -1,0 +1,11 @@
+# The latest release's tag and the commit it points at.
+query GetLatestRelease($owner: String!, $repo: String!) {
+  repository(owner: $owner, name: $repo) {
+    latestRelease {
+      tagName
+      tagCommit {
+        oid
+      }
+    }
+  }
+}
