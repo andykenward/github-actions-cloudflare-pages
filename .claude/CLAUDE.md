@@ -7,12 +7,12 @@ Dual-mode GitHub Action for Cloudflare Pages. **deploy** creates deployments via
 Non-negotiable. Violating these breaks the build or the type system.
 
 1. **GitHub API → GraphQL only, never REST.** Use `GitHubApi.request` ([src/common/github/api/client.ts](src/common/github/api/client.ts)). The single legacy exception is listing deployments — `GitHubRestApi.paginate` ([paginate.ts](src/common/github/api/paginate.ts), Octokit REST) in [deployment/get.ts](src/common/github/deployment/get.ts), provided only by `DeleteLayer` so Octokit stays out of the deploy bundle — don't add more.
-2. **After editing any GraphQL operation → `pnpm run codegen`** before type-checking or building — generated types do not exist until you do.
+2. **GraphQL operations live in `.graphql` files → `pnpm run codegen` after editing one**, before type-checking or building — the generated `…Document` constants and types do not exist until you do. Workflow and conventions: [.claude/rules/graphql.md](.claude/rules/graphql.md).
 3. **Imports → `@/` path aliases.** Keep [tsconfig.json](tsconfig.json) `paths` in sync with [vitest.config.ts](vitest.config.ts) `resolve.alias`, or `vi.mock()` silently fails. Imports carry a `.js` extension (`@/common/utils.js`, `./main.js`) except `@/input-keys`; JSON uses `with {type: 'json'}`.
 4. **Never hand-edit generated dirs** — [`__generated__/gql/`](__generated__/gql/) (codegen), [`__generated__/types/`](__generated__/types/) (`codegen:events` / `codegen:cloudflare`), [`__generated__/payloads/`](__generated__/payloads/) (`pnpm run download`). Exception: [`__generated__/responses/`](__generated__/responses/) holds **hand-maintained** API response fixtures — add to it freely.
 5. **No `console.log`** — use `@actions/core` (`info`, `debug`, `warning`, `error`, `setFailed`).
 6. **Touch an exported function → update its tests.** Tests for `bin/` scripts live in `__tests__/scripts/` (NOT `__tests__/bin/`, which vitest excludes).
-7. **Change a GraphQL selection set → update every test mock** for that operation (`grep` the operation name across `__tests__/`; multiple files may mock it).
+7. **Change a GraphQL operation → update every test mock** for it (`grep` its `…Document` name across `__tests__/`; multiple files may mock it).
 8. **Run scripts with the right runner** — `node` normally, `tsx` for anything that transitively imports `__generated__/gql/`; see [Build & Tooling](#build--tooling).
 9. **`dist/` is committed and is what runs.** [action.yml](action.yml) executes `dist/deploy/index.js`; CI ([check-dist.yml](.github/workflows/check-dist.yml)) rebuilds and fails on any diff. After changing anything bundled, `pnpm run build` and commit `dist/` with it.
 
@@ -44,7 +44,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 
 - **Payload versions** ([payload.ts](src/common/github/deployment/payload.ts)): V2 embeds the Cloudflare account/project; legacy V1 (`cloudflareId`) falls back to the `cloudflare-account-id`/`cloudflare-project-name` inputs. Keep V1 decoding — old deployments still exist in users' repos.
 
-**GraphQL type safety**: inline ``graphql(/* GraphQL */ `...`)`` operations in `src/**` and `bin/**` are typed via [@graphql-codegen/client-preset](graphql.config.ts). The `GitHubApi` service ([src/common/github/api/client.ts](src/common/github/api/client.ts)) wraps fetch with `TypedDocumentString` for compile-time validation. Preview features come from [schema/github/schema.graphql](schema/github/schema.graphql).
+**GraphQL type safety**: operations in `src/**/*.graphql` and `bin/**/*.graphql` are typed by [@graphql-codegen/client-preset](graphql.config.ts), which emits one `TypedDocumentString` `…Document` constant per operation, plus its result and variables types, into [`__generated__/gql/graphql.ts`](__generated__/gql/graphql.ts). The `GitHubApi` service ([src/common/github/api/client.ts](src/common/github/api/client.ts)) takes those documents, so variables and results are checked at compile time. Preview features come from [schema/github/schema.graphql](schema/github/schema.graphql).
 
 **GitHub client**: `GitHubApi.request` fails with `GitHubApiError` on a non-2xx response and, by default, on a GraphQL `errors` array — pass `options: {errorThrows: false}` to inspect `errors` yourself (as `batchDelete` and `checkEnvironment` do).
 
@@ -56,7 +56,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm run all`                 | Full validation: sync-versions → knip → codegen → codegen:events → codegen:cloudflare → tsc → format → lint → test → build             |
 | `pnpm run build`               | ESBuild bundle to `dist/deploy` & `dist/delete`                                                                                        |
-| `pnpm run codegen`             | Regenerate GraphQL types in [`__generated__/gql/`](__generated__/gql/) from inline `graphql()` calls                                   |
+| `pnpm run codegen`             | Regenerate GraphQL types in [`__generated__/gql/`](__generated__/gql/) from the `.graphql` operations                                  |
 | `pnpm run codegen:cloudflare`  | Cloudflare Pages types via [bin/codegen/cloudflare-pages.ts](bin/codegen/cloudflare-pages.ts)                                          |
 | `pnpm run codegen:events`      | GitHub event types via [bin/codegen/github-workflow-events.ts](bin/codegen/github-workflow-events.ts) from `@octokit/openapi-webhooks` |
 | `pnpm run codegen:watch`       | Auto-regenerate types on GraphQL changes                                                                                               |
@@ -73,9 +73,9 @@ Non-negotiable. Violating these breaks the build or the type system.
 
 ## Task Playbooks
 
-**Add a GitHub API operation**: write the ``graphql(/* GraphQL */ `...`)`` operation (pattern: [comment.ts](src/common/github/comment.ts); [bin/download/](bin/download/) predates codegen and uses a raw string — don't copy it) → `pnpm run codegen` → import types from [`__generated__/gql/graphql.ts`](__generated__/gql/graphql.ts) and call it with `const github = yield* GitHubApi` → `yield* github.request({query, variables})`. A scalar generated as `any` needs a mapping in [graphql.config.ts](graphql.config.ts) plus a re-run.
+**Add a GitHub API operation**: write it in the `.graphql` file beside the module that uses it (e.g. [environment.graphql](src/common/github/environment.graphql)) → `pnpm run codegen` → import its `…Document` from [`__generated__/gql/graphql.ts`](__generated__/gql/graphql.ts) (`@/gql/graphql.js`) and call it with `const github = yield* GitHubApi` → `yield* github.request({query: XDocument, variables})`. Conventions: [.claude/rules/graphql.md](.claude/rules/graphql.md). A scalar generated as `any` needs a mapping in [graphql.config.ts](graphql.config.ts) plus a re-run.
 
-**Change a GraphQL selection set**: edit → `pnpm run codegen` → update **every** test mock for that operation (`grep` the operation name across `__tests__/`).
+**Change a GraphQL operation**: edit the `.graphql` file → `pnpm run codegen` → update **every** test mock for it (`grep` its `…Document` name across `__tests__/`).
 
 **Add an action input**
 
@@ -95,10 +95,11 @@ Non-negotiable. Violating these breaks the build or the type system.
 
 **GraphQL operations**
 
-- Always use the ``graphql(/* GraphQL */ `...`)`` template tag (required for codegen detection).
-- Prefix mutations `MutationCreateGitHubDeployment`; prefix fragments `EnvironmentFragment`.
-- **Fragment placement**: fragment definitions live in `**/fragments.ts` — knip ignores those ([knip.json](knip.json)) so codegen-only exports don't trip dead-code detection. Moving a fragment into an implementation file triggers an unused-export violation. Subdomain fragments go in a peer `fragments.ts` (e.g. [github/deployment/fragments.ts](src/common/github/deployment/fragments.ts)); cross-directory ones in [github/fragments.ts](src/common/github/fragments.ts).
-- **Fragment resolution**: codegen resolves `...FragmentName` spreads by scanning all project files (no TS import needed) and inlines them into each operation's `TypedDocumentString`.
+Full workflow in [.claude/rules/graphql.md](.claude/rules/graphql.md), which loads when a `.graphql` file is read.
+
+- Operations live in `.graphql` files beside the module that uses them. Codegen scans only `*.graphql` ([graphql.config.ts](graphql.config.ts)), so a `graphql()` template in a `.ts` file is not picked up. Code imports the generated `…Document` by name, so formatting a `.graphql` file can't break types.
+- Name operations for what they do (`GetEnvironmentAndRef`, `CreateGitHubDeployment`) with no `Query`/`Mutation` prefix — codegen appends `Document`/`Query`/`Mutation`. Mutations take one `$input: XInput!` per field.
+- **Fragments** only for a selection shared by two or more operations, in a `fragments.graphql`. Codegen resolves `...FragmentName` spreads across all documents and inlines them into each `…Document`.
 
 **Error handling**: Effect code fails with its module's `Schema.TaggedError` — `return yield* new EnvironmentError({message})` (see [Effect patterns](#effect-patterns-in-this-repo)). `raise()` ([src/common/utils.ts](src/common/utils.ts)) remains for plain synchronous code that an `Effect.try` wraps (e.g. [context.ts](src/common/github/context.ts)). **Only the entry points call `setFailed`** (via `reportFailure`) — helpers fail; calling `setFailed` before failing produces a duplicate error annotation. Log another tool's output (e.g. wrangler stdout) with `logVerbatim()`, not `info()` — `info` writes raw, so a `::` line in it would run as a workflow command. Log with a module-level `PREFIX`/`ERROR_KEY` string (e.g. `delete -`, `GitHub Environment:`) so annotations are attributable.
 
@@ -132,7 +133,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 - **Bin script pattern**: a `bin/` script that is both importable (tests) and executable wraps side effects in `if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href)` and exports pure functions. Reference: [bin/sync-readme-versions.ts](bin/sync-readme-versions.ts).
 - **ESBuild** ([esbuild.config.js](esbuild.config.js)): banner adds a `createRequire` shim ([L47-L63](esbuild.config.js#L47-L63)); `wrangler` external; the `sideEffectFree` plugin marks `undici`/`tunnel` side-effect-free so the unused OIDC proxy path pulled in by `@actions/core` → `@actions/http-client` is tree-shaken (~570 KB, 70% of each bundle; CommonJS deps without a `sideEffects` field are otherwise kept whole — check `metafile` output before blaming the bundler); minification is syntax + whitespace only (`keepNames`, identifiers preserved); sourcemaps on.
 - **Formatting** (oxfmt, [.oxfmtrc.json](.oxfmtrc.json)): no semicolons, single quotes, no bracket spacing, no trailing commas, `arrowParens: avoid`, sorted imports (type imports → `node:` → external → internal → relative). Let the formatter do it rather than hand-matching.
-- **Sequencing**: `pnpm run codegen` after GraphQL changes before building — and after `pnpm run format` when it reflows a ``graphql(`…`)`` template: the generated `graphql()` overloads match the document text exactly, so a re-indented literal fails with TS2769 "No overload matches this call"; update [input-keys.ts](input-keys.ts) after changing input keys in [action.yml](action.yml).
+- **Sequencing**: `pnpm run codegen` after editing a `.graphql` file, before building; update [input-keys.ts](input-keys.ts) after changing input keys in [action.yml](action.yml).
 - **Debugging**: `pnpm run start` runs the built deploy action with a `.env` modelled on [.env.example](.env.example) (inputs as `INPUT_*` vars); set `ACTIONS_STEP_DEBUG=true` for `debug()` output; add `debugger` statements and run vitest under the Node inspector.
 - **Code quality**: knip ([knip.json](knip.json)), oxlint ([.oxlintrc.json](.oxlintrc.json)), TypeScript strict (`verbatimModuleSyntax`, `noEmit`, `checkJs`).
 - **Line anchors**: some links here use line numbers (`wrangler.ts#L123-L159`, `esbuild.config.js#L47-L63`) — update them when editing that code.
