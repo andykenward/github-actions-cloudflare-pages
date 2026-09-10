@@ -11,6 +11,8 @@ import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 import packageJson from '../../package.json' with {type: 'json'}
 
+vi.mock(import('@actions/core'))
+
 const setup = async () => {
   return await import('@/common/inputs.js')
 }
@@ -36,6 +38,22 @@ describe('common', () => {
       stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
 
       expect(() => useCommonInputs()).not.toThrow()
+    })
+
+    test('masks both tokens in the log', async () => {
+      expect.assertions(2)
+
+      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
+      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+
+      const {useCommonInputs} = await setup()
+      // Same module instance as the one `inputs.js` imported after the reset.
+      const {setSecret} = await import('@actions/core')
+
+      useCommonInputs()
+
+      expect(setSecret).toHaveBeenCalledWith('mock-cloudflare-api-token')
+      expect(setSecret).toHaveBeenCalledWith('mock-github-token')
     })
 
     test('returns correct values', async () => {

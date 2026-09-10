@@ -1,3 +1,4 @@
+import {setSecret} from '@actions/core'
 import * as Config from 'effect/Config'
 import * as Effect from 'effect/Effect'
 import * as Redacted from 'effect/Redacted'
@@ -45,9 +46,22 @@ type UseCommonInputs = Effect.Success<typeof inputsConfig>
 
 let _inputs: UseCommonInputs
 
-/** Memoises success only — see the note in `src/deploy/inputs.ts`. */
-export const useCommonInputs = (): UseCommonInputs =>
-  _inputs ?? (_inputs = Effect.runSync(inputsConfig.parse(actionInputProvider)))
+/**
+ * Memoises success only — see the note in `src/deploy/inputs.ts`.
+ *
+ * Registers both tokens with the runner's log masking on first read. Values
+ * from `secrets.*` are masked automatically, but a token passed from a step
+ * output or a plain env var is not.
+ */
+export const useCommonInputs = (): UseCommonInputs => {
+  if (_inputs) {
+    return _inputs
+  }
+  const inputs = Effect.runSync(inputsConfig.parse(actionInputProvider))
+  setSecret(secret(inputs.cloudflareApiToken))
+  setSecret(secret(inputs.gitHubApiToken))
+  return (_inputs = inputs)
+}
 
 /** Reads a redacted token for use in an outgoing request or child process. */
 export const secret = (value: Redacted.Redacted<string>): string =>

@@ -13,6 +13,7 @@ export const notice = vi.fn()
 export const debug = vi.fn()
 export const isDebug = vi.fn().mockReturnValue(false)
 export const setFailed = vi.fn()
+export const setSecret = vi.fn()
 export const info = vi.fn()
 export const warning = vi.fn()
 
