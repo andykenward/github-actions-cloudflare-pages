@@ -1,4 +1,5 @@
 import * as ConfigProvider from 'effect/ConfigProvider'
+import * as Predicate from 'effect/Predicate'
 
 /**
  * Resolves `Config` paths against the `INPUT_*` environment variables that the
@@ -27,7 +28,7 @@ export const actionInputProvider: ConfigProvider.ConfigProvider =
   ConfigProvider.fromEnvRecord(process.env).pipe(
     ConfigProvider.mapInput((path: ReadonlyArray<string | number>) =>
       path.map(segment =>
-        typeof segment === 'number'
+        Predicate.isNumber(segment)
           ? segment
           : segment.replaceAll(' ', '_').toUpperCase()
       )

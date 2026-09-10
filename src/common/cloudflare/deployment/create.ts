@@ -1,6 +1,7 @@
 import {strict} from 'node:assert'
 
 import {setOutput, summary} from '@actions/core'
+import * as Predicate from 'effect/Predicate'
 
 import {useContext} from '@/common/github/context.js'
 import {secret, useCommonInputs} from '@/common/inputs.js'
@@ -145,10 +146,8 @@ export const createCloudflareDeployment = async ({
       throw error
     }
     if (
-      error &&
-      typeof error === 'object' &&
-      'stderr' in error &&
-      typeof error.stderr === 'string'
+      Predicate.hasProperty(error, 'stderr') &&
+      Predicate.isString(error.stderr)
     ) {
       throw new Error(error.stderr, {cause: error})
     }

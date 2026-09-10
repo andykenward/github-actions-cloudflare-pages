@@ -1,5 +1,6 @@
 import {getInput} from '@actions/core'
 import * as Option from 'effect/Option'
+import * as Predicate from 'effect/Predicate'
 import * as Result from 'effect/Result'
 import * as Schema from 'effect/Schema'
 
@@ -54,7 +55,7 @@ const decodeJson = Schema.decodeUnknownResult(
  * crashing because a caller happened to wrap it in a blanket try/catch.
  */
 const normalise = (payload: Payload): unknown =>
-  typeof payload === 'string'
+  Predicate.isString(payload)
     ? Option.getOrUndefined(Result.getSuccess(decodeJson(payload)))
     : payload
 

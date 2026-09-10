@@ -3,6 +3,7 @@ import * as Cause from 'effect/Cause'
 import * as Duration from 'effect/Duration'
 import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
+import * as Predicate from 'effect/Predicate'
 import * as Schedule from 'effect/Schedule'
 import * as Schema from 'effect/Schema'
 
@@ -59,59 +60,55 @@ class DeploymentRequestError extends Schema.TaggedError<DeploymentRequestError>(
   {cause: Schema.Defect()}
 ) {}
 
-const pollOnce = (
+const pollOnce = Effect.fn('pollOnce')(function* (
   apiEndpoint: CloudflareApiEndpoint
-): Effect.Effect<
+): Effect.fn.Return<
   StatusResult,
   DeploymentPendingError | DeploymentRequestError
-> =>
-  Effect.gen(function* () {
-    const deployment = yield* Effect.tryPromise({
-      try: () => findCloudflareLatestDeployment(apiEndpoint),
-      catch: (cause: unknown) => new DeploymentRequestError({cause})
-    })
-
-    if (deployment === undefined) {
-      return yield* new DeploymentPendingError({reason: 'not-registered'})
-    }
-
-    const {latest_stage} = deployment
-
-    debug(JSON.stringify(latest_stage))
-
-    switch (latest_stage.status) {
-      case 'failure':
-      case 'canceled': {
-        return {deployment, status: latest_stage.status}
-      }
-      case 'active':
-      case 'success': {
-        if (latest_stage.name === 'deploy') {
-          return {deployment, status: latest_stage.status}
-        }
-        return yield* new DeploymentPendingError({
-          reason: `stage '${latest_stage.name}' is ${latest_stage.status}`
-        })
-      }
-      default: {
-        return yield* new DeploymentPendingError({
-          reason: `stage '${latest_stage.name}' is ${latest_stage.status}`
-        })
-      }
-    }
+> {
+  const deployment = yield* Effect.tryPromise({
+    try: () => findCloudflareLatestDeployment(apiEndpoint),
+    catch: (cause: unknown) => new DeploymentRequestError({cause})
   })
 
-const isPending = (error: {readonly _tag: string}): boolean =>
-  error._tag === 'DeploymentPendingError'
+  if (deployment === undefined) {
+    return yield* new DeploymentPendingError({reason: 'not-registered'})
+  }
+
+  const {latest_stage} = deployment
+
+  debug(JSON.stringify(latest_stage))
+
+  switch (latest_stage.status) {
+    case 'failure':
+    case 'canceled': {
+      return {deployment, status: latest_stage.status}
+    }
+    case 'active':
+    case 'success': {
+      if (latest_stage.name === 'deploy') {
+        return {deployment, status: latest_stage.status}
+      }
+      return yield* new DeploymentPendingError({
+        reason: `stage '${latest_stage.name}' is ${latest_stage.status}`
+      })
+    }
+    default: {
+      return yield* new DeploymentPendingError({
+        reason: `stage '${latest_stage.name}' is ${latest_stage.status}`
+      })
+    }
+  }
+})
 
 /**
- * The poll ran out of time, by either route: the retry schedule exhausted
- * (propagating the last `DeploymentPendingError`) or the overall
- * `Effect.timeout` fired. `DeploymentRequestError` deliberately falls through
- * so transport failures surface unchanged.
+ * Deliberately a plain boolean predicate rather than `Predicate.isTagged`
+ * itself: as a refinement, `Effect.retry`'s result type would claim a pending
+ * error cannot escape, but the last failure still propagates when the schedule
+ * itself is exhausted.
  */
-const isPollExhausted = (error: {readonly _tag: string}): boolean =>
-  isPending(error) || error._tag === 'TimeoutError'
+const isPending = (error: unknown): boolean =>
+  Predicate.isTagged(error, 'DeploymentPendingError')
 
 export type StatusOptions = {
   pollInterval?: Duration.Input
@@ -127,9 +124,6 @@ export const statusCloudflareDeployment = async (
 
   const program = pollOnce(apiEndpoint).pipe(
     Effect.retry({
-      // `while` must stay a plain boolean predicate: with a refinement the
-      // result type would claim a pending error cannot escape, but the last
-      // failure still propagates when the schedule itself is exhausted.
       while: isPending,
       schedule: Schedule.spaced(pollInterval).pipe(
         Schedule.upTo({duration: pollTimeout})
@@ -138,8 +132,12 @@ export const statusCloudflareDeployment = async (
     // `Schedule.upTo` is only observed on the following schedule step, so a
     // hung request could outlive it. This is the actual ceiling.
     Effect.timeout(pollTimeout),
-    Effect.catchIf(
-      isPollExhausted,
+    // The poll ran out of time, by either route: the retry schedule exhausted
+    // (propagating the last `DeploymentPendingError`) or the overall
+    // `Effect.timeout` fired. `DeploymentRequestError` deliberately falls
+    // through so transport failures surface unchanged.
+    Effect.catchTag(
+      ['DeploymentPendingError', 'TimeoutError'],
       () =>
         new DeploymentPollTimeoutError({
           message: `${ERROR_KEY} timed out after ${Duration.format(Duration.fromInputUnsafe(pollTimeout))} waiting for the deploy stage to complete.`
