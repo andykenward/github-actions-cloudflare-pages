@@ -106,7 +106,9 @@ describe('createCloudflareDeployment', () => {
               CLOUDFLARE_ACCOUNT_ID: 'mock-cloudflare-account-id',
               CLOUDFLARE_API_TOKEN: 'mock-cloudflare-api-token'
             }),
-            cwd: ''
+            cwd: '',
+            // oxlint-disable-next-line typescript/no-unsafe-assignment
+            signal: expect.any(AbortSignal)
           }
         )
 
@@ -210,7 +212,9 @@ describe('createCloudflareDeployment', () => {
               CLOUDFLARE_ACCOUNT_ID: 'mock-cloudflare-account-id',
               CLOUDFLARE_API_TOKEN: 'mock-cloudflare-api-token'
             }),
-            cwd: 'mock-working-directory'
+            cwd: 'mock-working-directory',
+            // oxlint-disable-next-line typescript/no-unsafe-assignment
+            signal: expect.any(AbortSignal)
           }
         )
 
@@ -337,7 +341,9 @@ describe('createCloudflareDeployment', () => {
               CLOUDFLARE_ACCOUNT_ID: 'mock-cloudflare-account-id',
               CLOUDFLARE_API_TOKEN: 'mock-cloudflare-api-token'
             }),
-            cwd: ''
+            cwd: '',
+            // oxlint-disable-next-line typescript/no-unsafe-assignment
+            signal: expect.any(AbortSignal)
           }
         )
 

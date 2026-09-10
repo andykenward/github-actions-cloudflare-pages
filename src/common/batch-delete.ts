@@ -1,8 +1,6 @@
 import {info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 
-import {DeploymentStatusState} from '@/gql/graphql.js'
-
 import type {CloudflareApi} from './cloudflare/api/client.js'
 import type {GitHubDeployment} from './github/deployment/get.js'
 import type {PayloadV1Inputs} from './inputs.js'
@@ -12,11 +10,10 @@ import {deleteCloudflareDeployment} from './cloudflare/deployment/delete.js'
 import {errorMessage} from './errors.js'
 import {GitHubApi} from './github/api/client.js'
 import {
-  MutationDeleteGitHubDeployment,
-  MutationDeleteGitHubDeploymentAndComment
+  MutationDeactivateAndDeleteGitHubDeployment,
+  MutationDeactivateAndDeleteGitHubDeploymentAndComment
 } from './github/deployment/delete.js'
 import {getPayload} from './github/deployment/payload.js'
-import {MutationCreateGitHubDeploymentStatus} from './github/deployment/status.js'
 
 /** Log prefix for the delete action. */
 export const PREFIX = `delete -`
@@ -66,30 +63,35 @@ export const batchDelete: (
         error: 'Deleting Cloudflare deployment failed'
       })
     }
+
     /**
-     * On success of Cloudflare deployment delete GitHub deployment & comment.
+     * On success of Cloudflare deployment, mark the GitHub deployment inactive
+     * and delete it (with its comment) — one request.
      */
     const github = yield* GitHubApi
 
-    const updateStatusGitHubDeployment = yield* github.request({
-      query: MutationCreateGitHubDeploymentStatus,
-      variables: {
-        environment: deployment.environment,
-        deploymentId: deployment.node_id,
-        environmentUrl: url,
-        logUrl: getCloudflareLogEndpoint(cloudflare),
-        state: DeploymentStatusState.Inactive
-      },
-      options: {
-        errorThrows: false
-      }
-    })
+    const variables = {
+      deploymentId: deployment.node_id,
+      environment: deployment.environment,
+      environmentUrl: url,
+      logUrl: getCloudflareLogEndpoint(cloudflare)
+    }
 
-    if (updateStatusGitHubDeployment.errors) {
+    const {errors} = commentId
+      ? yield* github.request({
+          query: MutationDeactivateAndDeleteGitHubDeploymentAndComment,
+          variables: {...variables, commentId},
+          options: {errorThrows: false}
+        })
+      : yield* github.request({
+          query: MutationDeactivateAndDeleteGitHubDeployment,
+          variables,
+          options: {errorThrows: false}
+        })
+
+    if (errors?.some(error => error.path?.[0] === 'createDeploymentStatus')) {
       warning(
-        `${PREFIX} Error updating GitHub deployment status: ${JSON.stringify(
-          updateStatusGitHubDeployment.errors
-        )}`
+        `${PREFIX} Error updating GitHub deployment status: ${JSON.stringify(errors)}`
       )
       return row({
         success: false,
@@ -97,32 +99,9 @@ export const batchDelete: (
       })
     }
 
-    const deletedGitHubDeployment = commentId
-      ? yield* github.request({
-          query: MutationDeleteGitHubDeploymentAndComment,
-          variables: {
-            deploymentId: deployment.node_id,
-            commentId: commentId
-          },
-          options: {
-            errorThrows: false
-          }
-        })
-      : yield* github.request({
-          query: MutationDeleteGitHubDeployment,
-          variables: {
-            deploymentId: deployment.node_id
-          },
-          options: {
-            errorThrows: false
-          }
-        })
-
-    if (deletedGitHubDeployment.errors) {
+    if (errors) {
       warning(
-        `${PREFIX} Error deleting GitHub deployment: ${JSON.stringify(
-          deletedGitHubDeployment.errors
-        )}`
+        `${PREFIX} Error deleting GitHub deployment: ${JSON.stringify(errors)}`
       )
     }
     info(`${PREFIX} GitHub Deployment Deleted: ${deployment.node_id}`)

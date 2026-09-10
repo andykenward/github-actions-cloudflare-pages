@@ -11,6 +11,7 @@ import {GitHubApi} from '@/common/github/api/client.js'
 import {
   addComment,
   MutationAddComment,
+  pullRequestToComment,
   QueryPullRequestNodeId,
   QueryPullRequestNodeIdByBranch
 } from '@/common/github/comment.js'
@@ -26,6 +27,14 @@ import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 vi.mock(import('@actions/core'))
 
 type Context = GitHubContext['Service']
+
+/** Resolves the pull request, then comments on it — as the deploy does. */
+const comment = (deployment: PagesDeployment, output: string) =>
+  pullRequestToComment.pipe(
+    Effect.flatMap(pullRequestId =>
+      addComment(pullRequestId, deployment, output)
+    )
+  )
 
 /**
  * The services `addComment` needs, with the GitHub context replaced — for
@@ -96,7 +105,7 @@ describe('addComment', () => {
           }
         )
 
-        expect(yield* addComment(mockData, 'success')).toBe('1')
+        expect(yield* comment(mockData, 'success')).toBe('1')
       }).pipe(Effect.provide(CommonLayer))
     )
   })
@@ -147,7 +156,7 @@ describe('addComment', () => {
           }
         )
 
-        expect(yield* addComment(mockData, 'success')).toBe('1')
+        expect(yield* comment(mockData, 'success')).toBe('1')
       }).pipe(
         Effect.provide(
           withContext({
@@ -186,7 +195,7 @@ describe('addComment', () => {
       Effect.gen(function* () {
         expect.assertions(1)
 
-        const error = yield* Effect.flip(addComment(mockData, 'success'))
+        const error = yield* Effect.flip(comment(mockData, 'success'))
 
         expect(error.message).toBe(
           'No pull request found in workflow_run event matching head branch and sha'
@@ -215,7 +224,7 @@ describe('addComment', () => {
         Effect.gen(function* () {
           expect.assertions(1)
 
-          const error = yield* Effect.flip(addComment(mockData, 'success'))
+          const error = yield* Effect.flip(comment(mockData, 'success'))
 
           expect(error.message).toBe(
             'Multiple pull requests found in workflow_run event matching head branch and sha'
@@ -302,7 +311,7 @@ describe('addComment', () => {
           }
         )
 
-        expect(yield* addComment(mockData, 'success')).toBe('1')
+        expect(yield* comment(mockData, 'success')).toBe('1')
       }).pipe(
         Effect.provide(
           withContext({
@@ -323,7 +332,7 @@ describe('addComment', () => {
       return Effect.gen(function* () {
         expect.assertions(1)
 
-        const error = yield* Effect.flip(addComment(mockData, 'success'))
+        const error = yield* Effect.flip(comment(mockData, 'success'))
 
         expect(error.message).toBe('Invalid pr-number input: abc')
       }).pipe(Effect.provide(CommonLayer))
@@ -385,7 +394,7 @@ describe('addComment', () => {
           }
         )
 
-        expect(yield* addComment(mockData, 'success')).toBe('1')
+        expect(yield* comment(mockData, 'success')).toBe('1')
       }).pipe(Effect.provide(WORKFLOW_DISPATCH))
     )
 
@@ -415,7 +424,7 @@ describe('addComment', () => {
             }
           )
 
-          const error = yield* Effect.flip(addComment(mockData, 'success'))
+          const error = yield* Effect.flip(comment(mockData, 'success'))
 
           expect(error.message).toBe(
             'No pull request node id found for workflow_dispatch event'
@@ -439,7 +448,7 @@ describe('addComment', () => {
           expect.assertions(2)
           expect(EVENT_NAMES).toContain(eventName)
 
-          expect(yield* addComment(mockData, 'success')).toBeUndefined()
+          expect(yield* comment(mockData, 'success')).toBeUndefined()
         }).pipe(
           Effect.provide(
             withContext({

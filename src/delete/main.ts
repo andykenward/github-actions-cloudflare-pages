@@ -17,9 +17,9 @@ import {DeleteInputs} from './inputs.js'
 
 /**
  * Bounds the fan-out across Cloudflare and GitHub. Previously every deployment
- * was deleted at once via `Promise.all`, which on a busy repo issues one
+ * was deleted at once via `Promise.all`, which on a busy repo issued one
  * Cloudflare DELETE plus two or three GitHub GraphQL calls per deployment
- * simultaneously.
+ * simultaneously (now one of each).
  */
 const DELETE_CONCURRENCY = 5
 

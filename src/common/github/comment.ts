@@ -78,8 +78,11 @@ const pullRequestNodeId = Effect.fn('pullRequestNodeId')(function* (
   return nodeId
 })
 
-/** The pull request to comment on, or `undefined` when there is none. */
-const nodeIdFromEvent = Effect.gen(function* () {
+/**
+ * The pull request to comment on, or `undefined` when there is none. It does
+ * not depend on the deployment, so the deploy resolves it while wrangler runs.
+ */
+export const pullRequestToComment = Effect.gen(function* () {
   const {repo, branch, event} = yield* GitHubContext
   const {prNumber} = yield* CommonInputs
   const github = yield* GitHubApi
@@ -179,13 +182,13 @@ const nodeIdFromEvent = Effect.gen(function* () {
   }
 })
 
+/** Posts the deployment comment on `pullRequestId`, when there is one. */
 export const addComment = Effect.fn('addComment')(function* (
+  pullRequestId: string | undefined,
   deployment: PagesDeployment,
   output: string
 ) {
-  const prNodeId = yield* nodeIdFromEvent
-
-  if (!prNodeId) {
+  if (!pullRequestId) {
     info('addComment - No Pull Request could be found to post comment.')
     return
   }
@@ -198,7 +201,7 @@ export const addComment = Effect.fn('addComment')(function* (
   const comment = yield* github.request({
     query: MutationAddComment,
     variables: {
-      subjectId: prNodeId,
+      subjectId: pullRequestId,
       body: rawBody
     }
   })

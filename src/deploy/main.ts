@@ -3,7 +3,7 @@ import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 
 import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.js'
-import {addComment} from '@/common/github/comment.js'
+import {addComment, pullRequestToComment} from '@/common/github/comment.js'
 import {GitHubContext} from '@/common/github/context.js'
 import {createGitHubDeployment} from '@/common/github/deployment/create.js'
 import {checkEnvironment} from '@/common/github/environment.js'
@@ -53,18 +53,35 @@ export const run = Effect.gen(function* () {
     })
   }
 
-  const {deployment: cloudflareDeployment, wranglerOutput} =
-    yield* createCloudflareDeployment({
-      accountId: cloudflareAccountId,
-      projectName: cloudflareProjectName,
-      directory,
-      workingDirectory,
-      branch
-    })
-
-  const [commentId, environment] = yield* Effect.all(
-    [addComment(cloudflareDeployment, wranglerOutput), checkEnvironment],
+  /**
+   * The environment check and the pull request lookup don't need the
+   * deployment, so they run while wrangler does. Either failing interrupts the
+   * deploy, which kills wrangler — previously a missing environment failed the
+   * step only after a full upload, leaving an orphaned Cloudflare deployment.
+   */
+  const [
+    {deployment: cloudflareDeployment, wranglerOutput},
+    environment,
+    pullRequestId
+  ] = yield* Effect.all(
+    [
+      createCloudflareDeployment({
+        accountId: cloudflareAccountId,
+        projectName: cloudflareProjectName,
+        directory,
+        workingDirectory,
+        branch
+      }),
+      checkEnvironment,
+      pullRequestToComment
+    ],
     {concurrency: 'unbounded'}
+  )
+
+  const commentId = yield* addComment(
+    pullRequestId,
+    cloudflareDeployment,
+    wranglerOutput
   )
 
   yield* createGitHubDeployment({

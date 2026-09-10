@@ -114,20 +114,26 @@ export type CreateGitHubDeploymentMutationVariables = Exact<{
 
 export type CreateGitHubDeploymentMutation = { readonly createDeployment: { readonly deployment: { readonly id: string, readonly environment: string | null, readonly state: DeploymentState | null } | null } | null };
 
-export type DeleteGitHubDeploymentMutationVariables = Exact<{
+export type DeactivateAndDeleteGitHubDeploymentMutationVariables = Exact<{
   deploymentId: string | number;
+  environment?: string | null | undefined;
+  environmentUrl: string;
+  logUrl: string;
 }>;
 
 
-export type DeleteGitHubDeploymentMutation = { readonly deleteDeployment: { readonly clientMutationId: string | null } | null };
+export type DeactivateAndDeleteGitHubDeploymentMutation = { readonly createDeploymentStatus: { readonly clientMutationId: string | null } | null, readonly deleteDeployment: { readonly clientMutationId: string | null } | null };
 
-export type DeleteGitHubDeploymentAndCommentMutationVariables = Exact<{
+export type DeactivateAndDeleteGitHubDeploymentAndCommentMutationVariables = Exact<{
   deploymentId: string | number;
+  environment?: string | null | undefined;
+  environmentUrl: string;
+  logUrl: string;
   commentId: string | number;
 }>;
 
 
-export type DeleteGitHubDeploymentAndCommentMutation = { readonly deleteDeployment: { readonly clientMutationId: string | null } | null, readonly deleteIssueComment: { readonly clientMutationId: string | null } | null };
+export type DeactivateAndDeleteGitHubDeploymentAndCommentMutation = { readonly createDeploymentStatus: { readonly clientMutationId: string | null } | null, readonly deleteDeployment: { readonly clientMutationId: string | null } | null, readonly deleteIssueComment: { readonly clientMutationId: string | null } | null };
 
 export type DeploymentFragmentFragment = { readonly id: string, readonly environment: string | null, readonly state: DeploymentState | null };
 
@@ -275,15 +281,39 @@ export const CreateGitHubDeploymentDocument = new TypedDocumentString(`
   environment
   state
 }`) as unknown as TypedDocumentString<CreateGitHubDeploymentMutation, CreateGitHubDeploymentMutationVariables>;
-export const DeleteGitHubDeploymentDocument = new TypedDocumentString(`
-    mutation DeleteGitHubDeployment($deploymentId: ID!) {
+export const DeactivateAndDeleteGitHubDeploymentDocument = new TypedDocumentString(`
+    mutation DeactivateAndDeleteGitHubDeployment($deploymentId: ID!, $environment: String, $environmentUrl: String!, $logUrl: String!) {
+  createDeploymentStatus(
+    input: {
+      autoInactive: false
+      deploymentId: $deploymentId
+      environment: $environment
+      environmentUrl: $environmentUrl
+      logUrl: $logUrl
+      state: INACTIVE
+    }
+  ) {
+    clientMutationId
+  }
   deleteDeployment(input: { id: $deploymentId }) {
     clientMutationId
   }
 }
-    `) as unknown as TypedDocumentString<DeleteGitHubDeploymentMutation, DeleteGitHubDeploymentMutationVariables>;
-export const DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(`
-    mutation DeleteGitHubDeploymentAndComment($deploymentId: ID!, $commentId: ID!) {
+    `) as unknown as TypedDocumentString<DeactivateAndDeleteGitHubDeploymentMutation, DeactivateAndDeleteGitHubDeploymentMutationVariables>;
+export const DeactivateAndDeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(`
+    mutation DeactivateAndDeleteGitHubDeploymentAndComment($deploymentId: ID!, $environment: String, $environmentUrl: String!, $logUrl: String!, $commentId: ID!) {
+  createDeploymentStatus(
+    input: {
+      autoInactive: false
+      deploymentId: $deploymentId
+      environment: $environment
+      environmentUrl: $environmentUrl
+      logUrl: $logUrl
+      state: INACTIVE
+    }
+  ) {
+    clientMutationId
+  }
   deleteDeployment(input: { id: $deploymentId }) {
     clientMutationId
   }
@@ -291,7 +321,7 @@ export const DeleteGitHubDeploymentAndCommentDocument = new TypedDocumentString(
     clientMutationId
   }
 }
-    `) as unknown as TypedDocumentString<DeleteGitHubDeploymentAndCommentMutation, DeleteGitHubDeploymentAndCommentMutationVariables>;
+    `) as unknown as TypedDocumentString<DeactivateAndDeleteGitHubDeploymentAndCommentMutation, DeactivateAndDeleteGitHubDeploymentAndCommentMutationVariables>;
 export const CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
     mutation CreateGitHubDeploymentStatus($deploymentId: ID!, $environment: String, $environmentUrl: String!, $logUrl: String!, $state: DeploymentStatusState!) {
   createDeploymentStatus(

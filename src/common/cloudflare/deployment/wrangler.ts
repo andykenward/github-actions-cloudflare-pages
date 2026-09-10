@@ -121,7 +121,7 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
    * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
    */
   const {stdout} = yield* Effect.tryPromise({
-    try: () =>
+    try: signal =>
       execFileAsync(
         'npx',
         [
@@ -150,7 +150,9 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
             [CLOUDFLARE_ACCOUNT_ID]: accountId,
             [WRANGLER_OUTPUT_FILE_PATH]: outputFile
           },
-          cwd: workingDirectory
+          cwd: workingDirectory,
+          /** Interrupting the deploy (e.g. a failed check) kills wrangler. */
+          signal
         }
       ),
     catch: WranglerError.from
