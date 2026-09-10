@@ -3,6 +3,30 @@
 import * as esbuild from 'esbuild'
 
 /**
+ * `@actions/core` imports `@actions/http-client` for `getIDToken` (OIDC), which
+ * imports undici's `ProxyAgent`. undici is CommonJS with no `sideEffects` field,
+ * so esbuild keeps all ~570 KB of it even though it is never called. Marking it
+ * side-effect-free lets tree-shaking drop it; if anything does reference it,
+ * esbuild still bundles it.
+ * @type {esbuild.Plugin}
+ */
+const sideEffectFree = {
+  name: 'side-effect-free',
+  setup(build) {
+    build.onResolve({filter: /^(undici|tunnel)$/}, async args => {
+      // Skip our own resolve call below.
+      if (args.pluginData) return
+      const result = await build.resolve(args.path, {
+        kind: args.kind,
+        resolveDir: args.resolveDir,
+        pluginData: true
+      })
+      return {...result, sideEffects: false}
+    })
+  }
+}
+
+/**
  * @type esbuild.SameShape<esbuild.BuildOptions, esbuild.BuildOptions>
  */
 const config = {
@@ -19,6 +43,7 @@ const config = {
   minifyWhitespace: true,
   external: ['wrangler'],
   treeShaking: true,
+  plugins: [sideEffectFree],
   banner: {
     /**
      * Adding banner js import fixes the error of
