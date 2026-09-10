@@ -28,9 +28,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # `javascript` covers TypeScript; the names keep the `/language:<x>`
-        # categories the default setup used, so existing alerts carry over.
-        language: [actions, javascript]
+        # Each `category` matches the one the default setup uploaded under,
+        # so existing alerts carry over instead of being duplicated.
+        include:
+          - language: actions
+            category: /language:actions
+          - language: javascript-typescript
+            category: /language:javascript
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
@@ -47,4 +51,4 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 #v4.37.9
         with:
-          category: /language:${{ matrix.language }}
+          category: ${{ matrix.category }}
