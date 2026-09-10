@@ -100,7 +100,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 - **Fragment placement**: fragment definitions live in `**/fragments.ts` — knip ignores those ([knip.json](knip.json)) so codegen-only exports don't trip dead-code detection. Moving a fragment into an implementation file triggers an unused-export violation. Subdomain fragments go in a peer `fragments.ts` (e.g. [github/deployment/fragments.ts](src/common/github/deployment/fragments.ts)); cross-directory ones in [github/fragments.ts](src/common/github/fragments.ts).
 - **Fragment resolution**: codegen resolves `...FragmentName` spreads by scanning all project files (no TS import needed) and inlines them into each operation's `TypedDocumentString`.
 
-**Error handling**: `raise()` for inline errors with type narrowing — `const {name} = (await checkEnvironment()) ?? raise('Environment required')`; `raiseFail()` also calls `setFailed`. See [src/common/utils.ts](src/common/utils.ts). Log with a module-level `PREFIX`/`ERROR_KEY` string (e.g. `delete -`, `GitHub Environment:`) so annotations are attributable.
+**Error handling**: `raise()` for inline errors with type narrowing — `const {name} = (await checkEnvironment()) ?? raise('Environment required')`. See [src/common/utils.ts](src/common/utils.ts). **Only the entry points call `setFailed`** (via `reportFailure`) — helpers throw; calling `setFailed` before throwing produces a duplicate error annotation. Log with a module-level `PREFIX`/`ERROR_KEY` string (e.g. `delete -`, `GitHub Environment:`) so annotations are attributable.
 
 **Testing**
 

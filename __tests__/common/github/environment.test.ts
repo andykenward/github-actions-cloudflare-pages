@@ -260,13 +260,18 @@ describe('environment', () => {
       ]
     ]
 
-    test.each(RESPONSES)(`setFailed is called`, async (response, expected) => {
-      expect.assertions(2)
+    test.each(RESPONSES)(
+      `throws without calling setFailed`,
+      async (response, expected) => {
+        expect.assertions(2)
 
-      mockQueryGetEnvironment(...response)
+        mockQueryGetEnvironment(...response)
 
-      await expect(checkEnvironment()).rejects.toThrow(expected)
-      expect(setFailed).toHaveBeenCalledWith(expected)
-    })
+        await expect(checkEnvironment()).rejects.toThrow(expected)
+        // The entry point's `reportFailure` fails the step once; calling it
+        // here too produced a duplicate error annotation.
+        expect(setFailed).not.toHaveBeenCalled()
+      }
+    )
   })
 })

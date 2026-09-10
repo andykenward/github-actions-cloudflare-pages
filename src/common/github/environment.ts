@@ -1,7 +1,7 @@
 import {error, notice} from '@actions/core'
 
 import {useCommonInputs} from '@/common/inputs.js'
-import {raiseFail} from '@/common/utils.js'
+import {raise} from '@/common/utils.js'
 import {graphql} from '@/gql/gql.js'
 
 import {request} from './api/client.js'
@@ -79,7 +79,7 @@ export const checkEnvironment = async () => {
   const {repo, ref} = useContext()
 
   if (!gitHubEnvironment) {
-    return raiseFail(
+    return raise(
       `${PREFIX} missing input gitHubEnvironment ${gitHubEnvironment}`
     )
   }
@@ -98,15 +98,15 @@ export const checkEnvironment = async () => {
   })
 
   if (environment.errors) {
-    return raiseFail(`${PREFIX} Errors - ${JSON.stringify(environment.errors)}`)
+    return raise(`${PREFIX} Errors - ${JSON.stringify(environment.errors)}`)
   }
 
   if (!environment.data.repository?.environment) {
-    return raiseFail(`${PREFIX} Not created for ${gitHubEnvironment}`)
+    return raise(`${PREFIX} Not created for ${gitHubEnvironment}`)
   }
 
   if (!environment.data.repository?.ref?.id) {
-    return raiseFail(`${PREFIX} No ref id ${gitHubEnvironment}`)
+    return raise(`${PREFIX} No ref id ${gitHubEnvironment}`)
   }
 
   return {
