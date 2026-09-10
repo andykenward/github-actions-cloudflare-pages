@@ -1,20 +1,18 @@
 import {setOutput, summary} from '@actions/core'
 import * as Effect from 'effect/Effect'
-import * as Predicate from 'effect/Predicate'
 import * as Schema from 'effect/Schema'
 
 import {errorMessage} from '@/common/errors.js'
 import {GitHubContext} from '@/common/github/context.js'
-import {CommonInputs, secret} from '@/common/inputs.js'
-import {execFileAsync, logVerbatim} from '@/common/utils.js'
+import {CommonInputs} from '@/common/inputs.js'
+import {logVerbatim} from '@/common/utils.js'
 
 import type {StatusOptions} from './status.js'
 
 import {getCloudflareDeploymentAlias} from './get.js'
 import {statusCloudflareDeployment} from './status.js'
+import {wranglerPagesDeploy} from './wrangler.js'
 
-export const CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN'
-export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
 const ERROR_KEY = `Create Deployment:`
 
 // oxlint-disable-next-line unicorn/throw-new-error
@@ -27,27 +25,6 @@ class CreateDeploymentError extends Schema.TaggedError<CreateDeploymentError>()(
 ) {
   static readonly from = (cause: unknown): CreateDeploymentError =>
     new CreateDeploymentError({message: errorMessage(cause), cause})
-
-  /**
-   * A rejected `execFile` is an `Error` whose message already includes
-   * wrangler's stderr. Anything else is reported by its `stderr`, if it has
-   * one.
-   */
-  static readonly fromWrangler = (cause: unknown): CreateDeploymentError => {
-    if (cause instanceof Error) {
-      return CreateDeploymentError.from(cause)
-    }
-    if (
-      Predicate.hasProperty(cause, 'stderr') &&
-      Predicate.isString(cause.stderr)
-    ) {
-      return new CreateDeploymentError({message: cause.stderr, cause})
-    }
-    return new CreateDeploymentError({
-      message: `${ERROR_KEY} unknown error`,
-      cause
-    })
-  }
 }
 
 export const createCloudflareDeployment = Effect.fn(
@@ -83,53 +60,25 @@ export const createCloudflareDeployment = Effect.fn(
     })
   }
 
-  /**
-   * Scoped to the wrangler child process rather than assigned onto the global
-   * `process.env`, which left the Cloudflare API token in plaintext in this
-   * process for everything downstream to read.
-   */
-  const wranglerEnv = {
-    ...process.env,
-    [CLOUDFLARE_API_TOKEN]: secret(cloudflareApiToken),
-    [CLOUDFLARE_ACCOUNT_ID]: accountId
-  }
-
-  /**
-   * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
-   */
-  const {stdout} = yield* Effect.tryPromise({
-    try: () =>
-      execFileAsync(
-        'npx',
-        [
-          `wrangler@${wranglerVersion}`,
-          'pages',
-          'deploy',
-          directory,
-          '--project-name',
-          projectName,
-          '--branch',
-          branch,
-          '--commit-dirty=true',
-          '--commit-hash',
-          commitHash
-        ],
-        {
-          env: wranglerEnv,
-          cwd: workingDirectory
-        }
-      ),
-    catch: CreateDeploymentError.fromWrangler
+  const {stdout, deploymentId} = yield* wranglerPagesDeploy({
+    wranglerVersion,
+    apiToken: cloudflareApiToken,
+    accountId,
+    projectName,
+    directory,
+    branch,
+    commitHash,
+    workingDirectory
   })
   /**
    * Log out wrangler output.
    */
   logVerbatim(stdout)
   /**
-   * Get the latest deployment by commitHash and poll until required status.
+   * Poll the deployment wrangler created until it reaches a terminal stage.
    */
   const {deployment, status} = yield* statusCloudflareDeployment(
-    {accountId, projectName},
+    {accountId, projectName, deploymentId},
     statusOptions
   )
 

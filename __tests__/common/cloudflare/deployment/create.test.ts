@@ -1,22 +1,33 @@
+import {existsSync} from 'node:fs'
+import {appendFile} from 'node:fs/promises'
+import path from 'node:path'
+
 import {info, setOutput, summary} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
+import type {PagesDeployment} from '@/common/cloudflare/types.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
+import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.js'
 import {
   CLOUDFLARE_ACCOUNT_ID,
   CLOUDFLARE_API_TOKEN,
-  createCloudflareDeployment
-} from '@/common/cloudflare/deployment/create.js'
+  WRANGLER_OUTPUT_FILE_PATH
+} from '@/common/cloudflare/deployment/wrangler.js'
 import {CommonLayer} from '@/common/layer.js'
 import {execFileAsync} from '@/common/utils.js'
 import {INPUT_KEY_WORKING_DIRECTORY} from '@/input-keys'
 import RESPONSE_NOT_FOUND_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments-not-found.response.json' with {type: 'json'}
 import RESPONSE_DEPLOYMENTS_IDLE from '@/responses/api.cloudflare.com/pages/deployments/deployments.idle.response.json' with {type: 'json'}
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
-import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/api.js'
+import {
+  MOCK_API_PATH_DEPLOYMENT,
+  MOCK_API_PATH_DEPLOYMENTS,
+  MOCK_DEPLOYMENT_ID,
+  setMockApi
+} from '@/tests/helpers/api.js'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 import packageJson from '../../../../package.json' with {type: 'json'}
@@ -70,7 +81,7 @@ describe('createCloudflareDeployment', () => {
         )
 
         expect(error).toMatchObject({
-          _tag: 'CreateDeploymentError',
+          _tag: 'WranglerError',
           message: 'Oh no!'
         })
 
@@ -336,4 +347,118 @@ describe('createCloudflareDeployment', () => {
       }).pipe(Effect.provide(CommonLayer))
     )
   })
+})
+
+type LatestStage = PagesDeployment['latest_stage']
+
+/** A single-deployment GET response whose `deploy` stage has `status`. */
+const deploymentResponse = (status: LatestStage['status']) => ({
+  ...RESPONSE_DEPLOYMENTS,
+  result: {
+    ...RESPONSE_DEPLOYMENTS.result[0],
+    latest_stage: {name: 'deploy', status, started_on: null, ended_on: null}
+  }
+})
+
+type ExecFileOptions = {env: NodeJS.ProcessEnv}
+
+/**
+ * An `execFileAsync` that behaves like wrangler: appends a
+ * `pages-deploy-detailed` entry to `WRANGLER_OUTPUT_FILE_PATH`, then succeeds.
+ * `onOutputFile` receives the file's path.
+ */
+const wranglerReporting =
+  (deploymentId: string, onOutputFile: (file: string) => void) =>
+  async (
+    _file: string,
+    _args: ReadonlyArray<string>,
+    {env}: ExecFileOptions
+  ) => {
+    const outputFile = env[WRANGLER_OUTPUT_FILE_PATH] ?? ''
+    onOutputFile(outputFile)
+    await appendFile(
+      outputFile,
+      `${JSON.stringify({type: 'pages-deploy-detailed', version: 1, deployment_id: deploymentId})}\n`
+    )
+    return {stdout: 'success', stderr: ''}
+  }
+
+describe('createCloudflareDeployment with the deployment id wrangler reports', () => {
+  let mockApi: MockApi
+
+  beforeEach(() => {
+    mockApi = setMockApi()
+  })
+
+  afterEach(async () => {
+    mockApi.mockAgent.assertNoPendingInterceptors()
+    await mockApi.mockAgent.close()
+    vi.mocked(execFileAsync).mockReset()
+  })
+
+  it.live(
+    'polls that deployment, not the list, and removes the output file',
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(3)
+
+        let outputFile = ''
+        vi.mocked(execFileAsync).mockImplementationOnce(
+          wranglerReporting(MOCK_DEPLOYMENT_ID, file => {
+            outputFile = file
+          }) as never
+        )
+
+        // No list interceptor: a list request would fail, as net connect is off.
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENT,
+          deploymentResponse('idle')
+        )
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENT,
+          deploymentResponse('success')
+        )
+
+        const {deployment} = yield* createCloudflareDeployment({
+          accountId: 'mock-cloudflare-account-id',
+          projectName: 'mock-cloudflare-project-name',
+          directory: 'mock-directory',
+          statusOptions: {pollInterval: 0}
+        })
+
+        expect(deployment.id).toBe(RESPONSE_DEPLOYMENTS.result[0]?.id)
+        expect(outputFile).toMatch(/wrangler-output-/)
+        expect(existsSync(path.dirname(outputFile))).toBe(false)
+      }).pipe(Effect.provide(CommonLayer))
+  )
+
+  it.live('removes the output file when wrangler fails', () =>
+    Effect.gen(function* () {
+      expect.assertions(2)
+
+      let outputFile = ''
+      vi.mocked(execFileAsync).mockImplementationOnce(((
+        _file: string,
+        _args: ReadonlyArray<string>,
+        {env}: ExecFileOptions
+      ) => {
+        outputFile = env[WRANGLER_OUTPUT_FILE_PATH] ?? ''
+        return Promise.reject(new Error('Command failed'))
+      }) as never)
+
+      const error = yield* Effect.flip(
+        createCloudflareDeployment({
+          accountId: 'mock-cloudflare-account-id',
+          projectName: 'mock-cloudflare-project-name',
+          directory: 'mock-directory'
+        })
+      )
+
+      expect(error).toMatchObject({
+        _tag: 'WranglerError',
+        message: 'Command failed'
+      })
+      expect(existsSync(path.dirname(outputFile))).toBe(false)
+    }).pipe(Effect.provide(CommonLayer))
+  )
 })

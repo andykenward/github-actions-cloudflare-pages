@@ -11,7 +11,9 @@ import RESPONSE_DEPLOYMENTS_IDLE from '@/responses/api.cloudflare.com/pages/depl
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {
   MOCK_ACCOUNT_ID,
+  MOCK_API_PATH_DEPLOYMENT,
   MOCK_API_PATH_DEPLOYMENTS,
+  MOCK_DEPLOYMENT_ID,
   MOCK_PROJECT_NAME,
   setMockApi
 } from '@/tests/helpers/api.js'
@@ -225,6 +227,54 @@ describe('statusCloudflareDeployment', () => {
         _tag: 'CloudflareApiError',
         message: `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.`
       })
+    }).pipe(Effect.provide(CommonLayer))
+  )
+})
+
+/** A single-deployment GET response whose `deploy` stage has `status`. */
+const deploymentResponse = (status: LatestStage['status']) => ({
+  ...RESPONSE_DEPLOYMENTS,
+  result: {
+    ...RESPONSE_DEPLOYMENTS.result[0],
+    latest_stage: {name: 'deploy', status, started_on: null, ended_on: null}
+  }
+})
+
+describe('statusCloudflareDeployment with a deployment id', () => {
+  let mockApi: MockApi
+
+  beforeEach(() => {
+    mockApi = setMockApi()
+  })
+
+  afterEach(async () => {
+    mockApi.mockAgent.assertNoPendingInterceptors()
+    await mockApi.mockAgent.close()
+  })
+
+  it.live('polls that deployment until its deploy stage succeeds', () =>
+    Effect.gen(function* () {
+      expect.assertions(2)
+
+      // No list interceptor: a list request would fail, as net connect is off.
+      mockApi
+        .interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENT,
+          deploymentResponse('idle')
+        )
+        .times(2)
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENT,
+        deploymentResponse('success')
+      )
+
+      const {deployment, status} = yield* statusCloudflareDeployment(
+        {...API_ENDPOINT, deploymentId: MOCK_DEPLOYMENT_ID},
+        POLL_OPTIONS
+      )
+
+      expect(status).toBe('success')
+      expect(deployment.id).toBe(RESPONSE_DEPLOYMENTS.result[0]?.id)
     }).pipe(Effect.provide(CommonLayer))
   )
 })

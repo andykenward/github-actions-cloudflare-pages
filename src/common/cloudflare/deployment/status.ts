@@ -11,7 +11,7 @@ import type {CloudflareApi, CloudflareApiError} from '../api/client.js'
 import type {CloudflareApiEndpoint} from '../api/endpoints.js'
 import type {PagesDeployment} from '../types.js'
 
-import {findCloudflareLatestDeployment} from './get.js'
+import {findCloudflareLatestDeployment, getCloudflareDeployment} from './get.js'
 
 const ERROR_KEY = `Status Of Deployment:`
 
@@ -50,14 +50,28 @@ class DeploymentPollTimeoutError extends Schema.TaggedError<DeploymentPollTimeou
   {message: Schema.String}
 ) {}
 
+export type DeploymentTarget = CloudflareApiEndpoint & {
+  /**
+   * The id wrangler reported. Without one, the deployment is found by commit
+   * hash.
+   */
+  deploymentId?: string | undefined
+}
+
 const pollOnce = Effect.fn('pollOnce')(function* (
-  apiEndpoint: CloudflareApiEndpoint
+  target: DeploymentTarget
 ): Effect.fn.Return<
   StatusResult,
   DeploymentPendingError | CloudflareApiError,
   CloudflareApi | GitHubContext
 > {
-  const deployment = yield* findCloudflareLatestDeployment(apiEndpoint)
+  const deployment =
+    target.deploymentId === undefined
+      ? yield* findCloudflareLatestDeployment(target)
+      : yield* getCloudflareDeployment({
+          ...target,
+          deploymentId: target.deploymentId
+        })
 
   if (deployment === undefined) {
     return yield* new DeploymentPendingError({reason: 'not-registered'})
@@ -104,17 +118,17 @@ export type StatusOptions = {
 }
 
 /**
- * Polls the deployments list until the deployment for the context commit
- * reaches a terminal stage. `CloudflareApiError` (transport or envelope
- * failures) is not retried.
+ * Polls the deployment until it reaches a terminal stage — by id when wrangler
+ * reported one, otherwise the newest deployment for the context commit.
+ * `CloudflareApiError` (transport or envelope failures) is not retried.
  */
 export const statusCloudflareDeployment = Effect.fn(
   'statusCloudflareDeployment'
-)((apiEndpoint: CloudflareApiEndpoint, options?: StatusOptions) => {
+)((target: DeploymentTarget, options?: StatusOptions) => {
   const pollInterval = options?.pollInterval ?? DEFAULT_POLL_INTERVAL
   const pollTimeout = options?.pollTimeout ?? DEFAULT_POLL_TIMEOUT
 
-  return pollOnce(apiEndpoint).pipe(
+  return pollOnce(target).pipe(
     Effect.retry({
       while: isPending,
       schedule: Schedule.spaced(pollInterval).pipe(

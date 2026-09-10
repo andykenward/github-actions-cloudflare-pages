@@ -63,4 +63,5 @@ export const MOCK_DEPLOYMENT_ID = 'mock-deployment-id'
 
 export const MOCK_API_PATH_PROJECT = `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`
 export const MOCK_API_PATH_DEPLOYMENTS = `${MOCK_API_PATH_PROJECT}/deployments`
+export const MOCK_API_PATH_DEPLOYMENT = `${MOCK_API_PATH_DEPLOYMENTS}/${MOCK_DEPLOYMENT_ID}`
 export const MOCK_API_PATH_DEPLOYMENTS_DELETE = `${MOCK_API_PATH_PROJECT}/deployments/${MOCK_DEPLOYMENT_ID}?force=true`
