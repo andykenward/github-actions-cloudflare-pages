@@ -6,6 +6,7 @@ import type {getGitHubDeployments} from './github/deployment/get.js'
 
 import {getCloudflareLogEndpoint} from './cloudflare/api/endpoints.js'
 import {deleteCloudflareDeployment} from './cloudflare/deployment/delete.js'
+import {errorMessage} from './errors.js'
 import {request} from './github/api/client.js'
 import {
   MutationDeleteGitHubDeployment,
@@ -120,8 +121,12 @@ export const batchDelete = async (
       commentId
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'unknown error'
-    info(`${PREFIX} Deployment payload is not valid : ${message}`)
+    // Any failure lands here — an invalid payload, but also network and API
+    // errors — so name the deployment rather than blaming the payload.
+    const message = errorMessage(error)
+    warning(
+      `${PREFIX} Error deleting deployment ${deployment.node_id}: ${message}`
+    )
 
     return {
       success: false,

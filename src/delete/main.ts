@@ -112,4 +112,17 @@ export const run: Effect.Effect<void, DeleteError> = Effect.gen(function* () {
       catch: DeleteError.from
     })
   }
+
+  /**
+   * `batchDelete` reports per-deployment failures as rows rather than
+   * throwing, so the rest still get deleted. Fail the step once the summary is
+   * written — previously it exited 0 even when every deletion failed.
+   */
+  const failed = values.filter(value => !value.success).length
+  if (failed > 0) {
+    return yield* new DeleteError({
+      message: `${PREFIX} ${failed} of ${values.length} deployments failed to delete; see the job summary for details`,
+      cause: undefined
+    })
+  }
 })

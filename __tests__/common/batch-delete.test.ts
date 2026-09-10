@@ -102,4 +102,21 @@ describe('batch-delete', () => {
       `delete - GitHub Deployment Deleted: DE_kwDOJn0nrM5U35aT`
     )
   })
+
+  test('returns a failed row and warns with the deployment id', async () => {
+    expect.assertions(2)
+
+    await expect(
+      batchDelete({...DEPLOYMENT, payload: 'not json'})
+    ).resolves.toStrictEqual({
+      success: false,
+      error: 'Payload is not valid',
+      environment: 'preview',
+      deploymentId: 'DE_kwDOJn0nrM5U35aT'
+    })
+
+    expect(core.warning).toHaveBeenCalledWith(
+      `delete - Error deleting deployment DE_kwDOJn0nrM5U35aT: Payload is not valid`
+    )
+  })
 })

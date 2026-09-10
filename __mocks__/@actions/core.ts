@@ -21,4 +21,5 @@ summary.addTable = vi.fn().mockReturnValue(summary)
 summary.addHeading = vi.fn().mockReturnValue(summary)
 summary.addBreak = vi.fn().mockReturnValue(summary)
 summary.addRaw = vi.fn().mockReturnValue(summary)
-summary.write = vi.fn()
+// Resolve like the real `write()`: `Effect.tryPromise` needs a promise back.
+summary.write = vi.fn().mockResolvedValue(summary)
