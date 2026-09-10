@@ -41,27 +41,47 @@ const run = async () => {
         response.json() as unknown as FetchResult<Array<PagesDeployment>>
     )
 
+    if (!result.success) {
+      throw new Error(
+        `Listing deployments failed: ${JSON.stringify(result.errors)}`
+      )
+    }
+
     const previewDeployments = result.result?.filter(
-      item => item.environment !== 'preview'
+      item => item.environment === 'preview'
     )
 
-    if (previewDeployments?.length === 0) {
+    if (!previewDeployments?.length) {
       deleting = false
       // oxlint-disable-next-line no-console
       console.log('---> No more deployments to delete')
       break
     }
 
-    for (const item of previewDeployments ?? []) {
+    let deletedCount = 0
+
+    for (const item of previewDeployments) {
       const result = await fetch(`${URL}/${item.id}?force=true`, {
         method: 'DELETE',
         headers: getHeaders()
       }).then(response => response.json() as unknown as FetchResult<null>)
 
+      if (result.success) {
+        deletedCount++
+        // oxlint-disable-next-line no-console
+        console.log(`---> Deleted deployment: ${item.id}`)
+      } else {
+        // oxlint-disable-next-line no-console, unicorn/no-null
+        console.dir(result, {depth: null})
+      }
+    }
+
+    // Each pass re-lists the first page, so a pass that deletes nothing would
+    // otherwise re-fetch the same undeletable deployments forever.
+    if (deletedCount === 0) {
+      deleting = false
       // oxlint-disable-next-line no-console
-      console.log(`---> Deleted deployment: ${item.id}`)
-      // oxlint-disable-next-line no-console, unicorn/no-null
-      console.dir(result, {depth: null})
+      console.log('---> No deployments could be deleted, stopping')
     }
   }
 }
