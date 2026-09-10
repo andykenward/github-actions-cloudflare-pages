@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`useContext > returns context for \`pull_request\` 2`] = `
+exports[`GitHubContext > returns context for \`pull_request\` 2`] = `
 {
   "action": "opened",
   "installation": {
@@ -522,7 +522,7 @@ exports[`useContext > returns context for \`pull_request\` 2`] = `
 }
 `;
 
-exports[`useContext > returns context for \`workflow_dispatch\` 1`] = `
+exports[`GitHubContext > returns context for \`workflow_dispatch\` 1`] = `
 {
   "inputs": {
     "name": "Mona the Octocat",

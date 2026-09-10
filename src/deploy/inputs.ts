@@ -1,8 +1,10 @@
 import * as Config from 'effect/Config'
+import * as Context from 'effect/Context'
 import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 
-import {actionInputProvider} from '@/common/config/provider.js'
+import {readInputs} from '@/common/config/provider.js'
 import {checkWorkingDirectory} from '@/common/utils.js'
 import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
@@ -17,7 +19,7 @@ import {
  * empty-string inputs are both treated as missing by the provider, so
  * `Config.withDefault` covers the optional cases.
  */
-const inputsConfig = Config.all({
+const deployConfig = Config.all({
   /** Cloudflare Account Id */
   cloudflareAccountId: Config.schema(
     Schema.Trim,
@@ -48,17 +50,13 @@ const inputsConfig = Config.all({
   )
 })
 
-type UseInputs = Effect.Success<typeof inputsConfig>
-
-let _inputs: UseInputs
-
-/**
- * Memoises success only. `Effect.cached` is deliberately not used: it caches the
- * `Exit`, so a first failure would be replayed forever, and the tests rely on a
- * failed read becoming a successful one once more env is stubbed.
- *
- * Stays synchronous because callers such as the `openapi-fetch` request
- * middleware cannot await.
- */
-export const useInputs = (): UseInputs =>
-  _inputs ?? (_inputs = Effect.runSync(inputsConfig.parse(actionInputProvider)))
+/** Inputs only the deploy action uses. See `CommonInputs` on memoisation. */
+export class DeployInputs extends Context.Service<
+  DeployInputs,
+  Effect.Success<typeof deployConfig>
+>()('github-actions-cloudflare-pages/deploy/inputs/DeployInputs') {
+  static readonly layer = Layer.effect(
+    DeployInputs,
+    readInputs(deployConfig).pipe(Effect.map(inputs => DeployInputs.of(inputs)))
+  )
+}

@@ -1,12 +1,16 @@
 import {debug, info, summary} from '@actions/core'
 import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 
 import {batchDelete} from '@/common/batch-delete.js'
 import {errorMessage} from '@/common/errors.js'
+import {GitHubRestApi} from '@/common/github/api/paginate.js'
 import {getGitHubDeployments} from '@/common/github/deployment/get.js'
+import {CommonInputs, PayloadV1Inputs} from '@/common/inputs.js'
+import {CommonLayer} from '@/common/layer.js'
 
-import {useInputs} from './inputs.js'
+import {DeleteInputs} from './inputs.js'
 
 const PREFIX = `delete -`
 
@@ -33,17 +37,23 @@ class DeleteError extends Schema.TaggedError<DeleteError>()('DeleteError', {
     })
 }
 
-/** See the note on `run` in `src/deploy/main.ts`. */
-export const run: Effect.Effect<void, DeleteError> = Effect.gen(function* () {
-  let deployments = yield* Effect.tryPromise({
-    try: () => getGitHubDeployments(),
-    catch: DeleteError.from
-  })
+/**
+ * Every service `run` needs, built from the action inputs and runner env.
+ * `CommonInputs.layer` is also inside `CommonLayer`, but it is built once: a
+ * layer is memoised by reference across a single `Effect.provide`.
+ */
+export const DeleteLayer = Layer.mergeAll(
+  CommonLayer,
+  DeleteInputs.layer,
+  PayloadV1Inputs.layer,
+  GitHubRestApi.layer.pipe(Layer.provide(CommonInputs.layer))
+)
 
-  const {keepLatest} = yield* Effect.try({
-    try: () => useInputs(),
-    catch: DeleteError.from
-  })
+/** See the note on `run` in `src/deploy/main.ts`. */
+export const run = Effect.gen(function* () {
+  let deployments = yield* getGitHubDeployments
+
+  const {keepLatest} = yield* DeleteInputs
 
   if (deployments.length > 0 && keepLatest) {
     info(`${PREFIX} Keeping latest ${keepLatest} deployments`)
@@ -70,11 +80,7 @@ export const run: Effect.Effect<void, DeleteError> = Effect.gen(function* () {
   // oxlint-disable-next-line unicorn/no-array-for-each
   const values = yield* Effect.forEach(
     deployments,
-    deployment =>
-      Effect.tryPromise({
-        try: () => batchDelete(deployment),
-        catch: DeleteError.from
-      }),
+    deployment => batchDelete(deployment),
     {concurrency: DELETE_CONCURRENCY}
   )
 
@@ -115,7 +121,7 @@ export const run: Effect.Effect<void, DeleteError> = Effect.gen(function* () {
 
   /**
    * `batchDelete` reports per-deployment failures as rows rather than
-   * throwing, so the rest still get deleted. Fail the step once the summary is
+   * failing, so the rest still get deleted. Fail the step once the summary is
    * written — previously it exited 0 even when every deletion failed.
    */
   const failed = values.filter(value => !value.success).length

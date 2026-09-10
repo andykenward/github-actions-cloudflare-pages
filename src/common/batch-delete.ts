@@ -1,13 +1,16 @@
 import {info, warning} from '@actions/core'
+import * as Effect from 'effect/Effect'
 
 import {DeploymentStatusState} from '@/gql/graphql.js'
 
-import type {getGitHubDeployments} from './github/deployment/get.js'
+import type {CloudflareApi} from './cloudflare/api/client.js'
+import type {GitHubDeployment} from './github/deployment/get.js'
+import type {PayloadV1Inputs} from './inputs.js'
 
 import {getCloudflareLogEndpoint} from './cloudflare/api/endpoints.js'
 import {deleteCloudflareDeployment} from './cloudflare/deployment/delete.js'
 import {errorMessage} from './errors.js'
-import {request} from './github/api/client.js'
+import {GitHubApi} from './github/api/client.js'
 import {
   MutationDeleteGitHubDeployment,
   MutationDeleteGitHubDeploymentAndComment
@@ -26,19 +29,25 @@ type BatchDeleteItem = {
   error?: string
 }
 
-export const batchDelete = async (
-  deployment: Awaited<ReturnType<typeof getGitHubDeployments>>[number]
-): Promise<BatchDeleteItem> => {
-  const payload = deployment.payload
-
-  try {
-    const {commentId, url, cloudflare} = getPayload(payload)
+/**
+ * Deletes one deployment from Cloudflare and GitHub. Never fails: a failure
+ * comes back as a `success: false` row, so the rest still get deleted.
+ */
+export const batchDelete: (
+  deployment: GitHubDeployment
+) => Effect.Effect<
+  BatchDeleteItem,
+  never,
+  CloudflareApi | GitHubApi | PayloadV1Inputs
+> = Effect.fn('batchDelete')(
+  function* (deployment: GitHubDeployment) {
+    const {commentId, url, cloudflare} = yield* getPayload(deployment.payload)
 
     /**
      * Delete Cloudflare deployment
      */
     const deletedCloudflareDeployment =
-      await deleteCloudflareDeployment(cloudflare)
+      yield* deleteCloudflareDeployment(cloudflare)
 
     if (!deletedCloudflareDeployment)
       return {
@@ -52,8 +61,9 @@ export const batchDelete = async (
     /**
      * On success of Cloudflare deployment delete GitHub deployment & comment.
      */
+    const github = yield* GitHubApi
 
-    const updateStatusGitHubDeployment = await request({
+    const updateStatusGitHubDeployment = yield* github.request({
       query: MutationCreateGitHubDeploymentStatus,
       variables: {
         environment: deployment.environment,
@@ -84,7 +94,7 @@ export const batchDelete = async (
     }
 
     const deletedGitHubDeployment = commentId
-      ? await request({
+      ? yield* github.request({
           query: MutationDeleteGitHubDeploymentAndComment,
           variables: {
             deploymentId: deployment.node_id,
@@ -94,7 +104,7 @@ export const batchDelete = async (
             errorThrows: false
           }
         })
-      : await request({
+      : yield* github.request({
           query: MutationDeleteGitHubDeployment,
           variables: {
             deploymentId: deployment.node_id
@@ -120,19 +130,21 @@ export const batchDelete = async (
       deploymentId: deployment.node_id,
       commentId
     }
-  } catch (error) {
-    // Any failure lands here — an invalid payload, but also network and API
-    // errors — so name the deployment rather than blaming the payload.
-    const message = errorMessage(error)
-    warning(
-      `${PREFIX} Error deleting deployment ${deployment.node_id}: ${message}`
-    )
+  },
+  (effect, deployment) =>
+    Effect.catch(effect, failure => {
+      // Any failure lands here — an invalid payload, but also network and API
+      // errors — so name the deployment rather than blaming the payload.
+      const message = errorMessage(failure)
+      warning(
+        `${PREFIX} Error deleting deployment ${deployment.node_id}: ${message}`
+      )
 
-    return {
-      success: false,
-      error: message,
-      environment: deployment.environment,
-      deploymentId: deployment.node_id
-    }
-  }
-}
+      return Effect.succeed({
+        success: false,
+        error: message,
+        environment: deployment.environment,
+        deploymentId: deployment.node_id
+      })
+    })
+)

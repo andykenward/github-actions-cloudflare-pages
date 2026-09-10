@@ -1,14 +1,15 @@
 import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 
 import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.js'
-import {errorMessage} from '@/common/errors.js'
 import {addComment} from '@/common/github/comment.js'
-import {useContextEvent} from '@/common/github/context.js'
+import {GitHubContext} from '@/common/github/context.js'
 import {createGitHubDeployment} from '@/common/github/deployment/create.js'
 import {checkEnvironment} from '@/common/github/environment.js'
+import {CommonLayer} from '@/common/layer.js'
 
-import {useInputs} from './inputs.js'
+import {DeployInputs} from './inputs.js'
 
 /** Only these events carry the context the deploy needs. */
 const SUPPORTED_EVENT_NAMES = new Set([
@@ -24,79 +25,52 @@ const SUPPORTED_EVENT_NAMES = new Set([
  */
 // oxlint-disable-next-line unicorn/throw-new-error
 class DeployError extends Schema.TaggedError<DeployError>()('DeployError', {
-  message: Schema.String,
-  cause: Schema.Defect()
-}) {
-  static readonly from = (cause: unknown): DeployError =>
-    new DeployError({
-      message: errorMessage(cause),
-      cause
-    })
-}
+  message: Schema.String
+}) {}
+
+/** Every service `run` needs, built from the action inputs and runner env. */
+export const DeployLayer = Layer.mergeAll(CommonLayer, DeployInputs.layer)
 
 /**
  * Exported as an Effect value rather than a function: Effect is already lazy,
  * so a zero-argument wrapper is pure indirection (`effecttsgo/lazy-effect`).
+ * Requires the services in `DeployLayer`; tests can provide their own.
  */
-export const run: Effect.Effect<void, DeployError> = Effect.gen(function* () {
+export const run = Effect.gen(function* () {
   const {
     cloudflareAccountId,
     cloudflareProjectName,
     directory,
     workingDirectory,
     branch
-  } = yield* Effect.try({
-    try: () => useInputs(),
-    catch: DeployError.from
-  })
+  } = yield* DeployInputs
 
-  const {eventName} = yield* Effect.try({
-    try: () => useContextEvent(),
-    catch: DeployError.from
-  })
+  const {event} = yield* GitHubContext
 
-  if (!SUPPORTED_EVENT_NAMES.has(eventName)) {
+  if (!SUPPORTED_EVENT_NAMES.has(event.eventName)) {
     return yield* new DeployError({
-      message: `GitHub Action event name '${eventName}' not supported.`,
-      cause: undefined
+      message: `GitHub Action event name '${event.eventName}' not supported.`
     })
   }
 
   const {deployment: cloudflareDeployment, wranglerOutput} =
-    yield* Effect.tryPromise({
-      try: () =>
-        createCloudflareDeployment({
-          accountId: cloudflareAccountId,
-          projectName: cloudflareProjectName,
-          directory,
-          workingDirectory,
-          branch
-        }),
-      catch: DeployError.from
+    yield* createCloudflareDeployment({
+      accountId: cloudflareAccountId,
+      projectName: cloudflareProjectName,
+      directory,
+      workingDirectory,
+      branch
     })
 
   const [commentId, environment] = yield* Effect.all(
-    [
-      Effect.tryPromise({
-        try: () => addComment(cloudflareDeployment, wranglerOutput),
-        catch: DeployError.from
-      }),
-      Effect.tryPromise({
-        try: () => checkEnvironment(),
-        catch: DeployError.from
-      })
-    ],
+    [addComment(cloudflareDeployment, wranglerOutput), checkEnvironment],
     {concurrency: 'unbounded'}
   )
 
-  yield* Effect.tryPromise({
-    try: () =>
-      createGitHubDeployment({
-        cloudflareDeployment,
-        commentId,
-        cloudflareAccountId,
-        environment
-      }),
-    catch: DeployError.from
+  yield* createGitHubDeployment({
+    cloudflareDeployment,
+    commentId,
+    cloudflareAccountId,
+    environment
   })
 })

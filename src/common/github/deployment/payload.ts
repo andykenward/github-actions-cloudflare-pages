@@ -1,20 +1,20 @@
-import {getInput} from '@actions/core'
+import * as Effect from 'effect/Effect'
 import * as Option from 'effect/Option'
 import * as Predicate from 'effect/Predicate'
 import * as Result from 'effect/Result'
 import * as Schema from 'effect/Schema'
 
-import {
-  INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
-  INPUT_KEY_CLOUDFLARE_PROJECT_NAME
-} from '@/input-keys'
+import {PayloadV1Inputs} from '@/common/inputs.js'
 
-import type {getGitHubDeployments} from './get.js'
+import type {GitHubDeployment} from './get.js'
 import type {PayloadGithubDeploymentV2} from './types.js'
 
-export type Payload = Awaited<
-  ReturnType<typeof getGitHubDeployments>
->[0]['payload']
+export type Payload = GitHubDeployment['payload']
+
+// oxlint-disable-next-line unicorn/throw-new-error
+class PayloadError extends Schema.TaggedError<PayloadError>()('PayloadError', {
+  message: Schema.String
+}) {}
 
 const CommentId = Schema.optional(Schema.String)
 
@@ -62,7 +62,7 @@ const normalise = (payload: Payload): unknown =>
 const decodeV2 = Schema.decodeUnknownResult(PayloadV2)
 const decodeV1 = Schema.decodeUnknownResult(PayloadV1)
 
-export const getPayload = (payload: Payload): PayloadGithubDeploymentV2 => {
+export const getPayload = Effect.fn('getPayload')(function* (payload: Payload) {
   const decoded = normalise(payload)
 
   const v2 = Option.getOrUndefined(Result.getSuccess(decodeV2(decoded)))
@@ -71,7 +71,7 @@ export const getPayload = (payload: Payload): PayloadGithubDeploymentV2 => {
       url: v2.url,
       commentId: v2.commentId,
       cloudflare: v2.cloudflare
-    }
+    } satisfies PayloadGithubDeploymentV2
   }
 
   const v1 = Option.getOrUndefined(Result.getSuccess(decodeV1(decoded)))
@@ -79,12 +79,8 @@ export const getPayload = (payload: Payload): PayloadGithubDeploymentV2 => {
     /**
      * To support old payloads we need to get the Cloudflare Account Id and Cloudflare Project Name.
      */
-    const accountId = getInput(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID, {
-      required: true
-    })
-    const projectName = getInput(INPUT_KEY_CLOUDFLARE_PROJECT_NAME, {
-      required: true
-    })
+    const {cloudflare} = yield* PayloadV1Inputs
+    const {accountId, projectName} = yield* cloudflare
 
     return {
       url: v1.url,
@@ -94,8 +90,8 @@ export const getPayload = (payload: Payload): PayloadGithubDeploymentV2 => {
         accountId,
         projectName
       }
-    }
+    } satisfies PayloadGithubDeploymentV2
   }
 
-  throw new Error('Payload is not valid')
-}
+  return yield* new PayloadError({message: 'Payload is not valid'})
+})

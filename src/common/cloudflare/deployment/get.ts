@@ -1,9 +1,11 @@
-import {useContext} from '@/common/github/context.js'
+import * as Effect from 'effect/Effect'
+
+import {GitHubContext} from '@/common/github/context.js'
 
 import type {CloudflareApiEndpoint} from '../api/endpoints.js'
 import type {PagesDeployment} from '../types.js'
 
-import {cloudflareClient} from '../api/client.js'
+import {CloudflareApi, CloudflareApiError} from '../api/client.js'
 import {unwrap} from '../api/fetch-result.js'
 
 export const getCloudflareDeploymentAlias = (
@@ -15,25 +17,30 @@ export const getCloudflareDeploymentAlias = (
 /**
  * Find the latest deployment by commitHash.
  *
- * Returns `undefined` rather than throwing when nothing matches: immediately
- * after wrangler returns, Cloudflare has usually not registered the deployment
- * yet, and that race is an expected, retryable state rather than a failure.
+ * Succeeds with `undefined` rather than failing when nothing matches:
+ * immediately after wrangler returns, Cloudflare has usually not registered
+ * the deployment yet, and that race is an expected, retryable state rather
+ * than a failure.
  */
-export const findCloudflareLatestDeployment = async ({
-  accountId,
-  projectName
-}: CloudflareApiEndpoint): Promise<PagesDeployment | undefined> => {
-  const {sha: commitHash} = useContext()
+export const findCloudflareLatestDeployment = Effect.fn(
+  'findCloudflareLatestDeployment'
+)(function* ({accountId, projectName}: CloudflareApiEndpoint) {
+  const {sha: commitHash} = yield* GitHubContext
+  const cloudflare = yield* CloudflareApi
 
-  const deployments = unwrap(
-    await cloudflareClient.GET(
-      '/accounts/{account_id}/pages/projects/{project_name}/deployments',
-      {params: {path: {account_id: accountId, project_name: projectName}}}
-    )
-  )
+  const deployments = yield* Effect.tryPromise({
+    try: async () =>
+      unwrap(
+        await cloudflare.GET(
+          '/accounts/{account_id}/pages/projects/{project_name}/deployments',
+          {params: {path: {account_id: accountId, project_name: projectName}}}
+        )
+      ),
+    catch: CloudflareApiError.from
+  })
 
   return deployments.find(
     deployment =>
       deployment.deployment_trigger.metadata.commit_hash === commitHash
   )
-}
+})

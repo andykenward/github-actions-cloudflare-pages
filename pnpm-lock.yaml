@@ -134,6 +134,9 @@ importers:
       '@effect/tsgo':
         specifier: 0.39.0
         version: 0.39.0
+      '@effect/vitest':
+        specifier: 4.0.0-rc.112
+        version: 4.0.0-rc.112(effect@4.0.0-rc.112)(vitest@4.1.10(@types/node@24.12.2)(vite@8.1.5(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)))
       '@graphql-codegen/cli':
         specifier: 7.2.0
         version: 7.2.0(@types/node@24.12.2)(@typescript/typescript6@6.0.2)(graphql@17.0.2)(supports-color@10.2.2)
@@ -471,6 +474,12 @@ packages:
   '@effect/tsgo@0.39.0':
     resolution: {integrity: sha512-vP4gdaVnAQy6NaMDKFaPeaPU63HaoVsdbP7axEcHxwJJMwE2llocXEplIwsYM6EvBVMtwtiBCvl9K2aFVNlZPA==}
     hasBin: true
+
+  '@effect/vitest@4.0.0-rc.112':
+    resolution: {integrity: sha512-mEKh/FI64mt8JK1/v9mpOrJYdnp+UFZdRUBMEdZMiKz7klg6NPqVgg/oeAGH6wOOQc2iAPcfc2H9BbAv1KyzMQ==}
+    peerDependencies:
+      effect: ^4.0.0-rc.112
+      vitest: '>=4.1.0 <5.0.0'
 
   '@emnapi/core@1.11.0':
     resolution: {integrity: sha512-l9Oo58x0HOP5znGzVhYW9U3e5wVuA4LAZU2AGezTmkhO1CgQRFDhDg4nneHsu/t3WniXg9QrG2nIXL/ZS8ln8Q==}
@@ -3761,6 +3770,11 @@ snapshots:
       '@effect/tsgo-linux-x64': 0.39.0
       '@effect/tsgo-win32-arm64': 0.39.0
       '@effect/tsgo-win32-x64': 0.39.0
+
+  '@effect/vitest@4.0.0-rc.112(effect@4.0.0-rc.112)(vitest@4.1.10(@types/node@24.12.2)(vite@8.1.5(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0)))':
+    dependencies:
+      effect: 4.0.0-rc.112
+      vitest: 4.1.10(@types/node@24.12.2)(vite@8.1.5(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
 
   '@emnapi/core@1.11.0':
     dependencies:

@@ -1,11 +1,12 @@
 import {setOutput} from '@actions/core'
+import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
 
 import {execFileAsync} from '@/common/utils.js'
-import {run} from '@/deploy/main.js'
+import {DeployLayer, run} from '@/deploy/main.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/api.js'
 
@@ -36,7 +37,6 @@ describe('deploy', () => {
             stdout: 'success',
             stderr: ''
           })
-          // mockApi.interceptCloudflare(MOCK_API_PATH, RESPONSE_PROJECT, 200)
           mockApi.interceptCloudflare(
             MOCK_API_PATH_DEPLOYMENTS,
             RESPONSE_DEPLOYMENTS,
@@ -44,18 +44,19 @@ describe('deploy', () => {
           )
         })
 
-        test('success', async () => {
-          expect.assertions(2)
+        /** `it.live`: status polling sleeps on the real clock. */
+        it.live('success', () =>
+          Effect.gen(function* () {
+            expect.assertions(2)
 
-          const main = await Effect.runPromise(run)
+            expect(yield* run).toBeUndefined()
 
-          expect(main).toBeUndefined()
+            expect(setOutput).toHaveBeenCalledTimes(5)
 
-          expect(setOutput).toHaveBeenCalledTimes(5)
-
-          // TODO @andykenward add checks for setOutput
-          mockApi.mockAgent.assertNoPendingInterceptors()
-        })
+            // TODO @andykenward add checks for setOutput
+            mockApi.mockAgent.assertNoPendingInterceptors()
+          }).pipe(Effect.provide(DeployLayer))
+        )
       })
     })
   })

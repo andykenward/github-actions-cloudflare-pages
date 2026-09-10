@@ -1,8 +1,16 @@
+import {setSecret} from '@actions/core'
+import {it} from '@effect/vitest'
+import * as Effect from 'effect/Effect'
+import * as Exit from 'effect/Exit'
 import * as Redacted from 'effect/Redacted'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, vi} from 'vitest'
 
+import {errorMessage} from '@/common/errors.js'
+import {CommonInputs, PayloadV1Inputs} from '@/common/inputs.js'
 import {
+  INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
+  INPUT_KEY_CLOUDFLARE_PROJECT_NAME,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN,
   INPUT_KEY_WRANGLER_VERSION
@@ -13,50 +21,54 @@ import packageJson from '../../package.json' with {type: 'json'}
 
 vi.mock(import('@actions/core'))
 
-const setup = async () => {
-  return await import('@/common/inputs.js')
-}
+/** Builds the layer when run, so env stubbed beforehand is picked up. */
+const commonInputs = Effect.gen(function* () {
+  return yield* CommonInputs
+}).pipe(Effect.provide(CommonInputs.layer))
 
-describe('common', () => {
-  describe('inputs', () => {
-    beforeEach(() => {
-      vi.resetModules()
-      vi.unstubAllEnvs()
-    })
+describe(CommonInputs, () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs()
+  })
 
-    test('should error when missing inputs', async () => {
+  it.effect('should fail when missing inputs', () =>
+    Effect.gen(function* () {
       expect.assertions(3)
 
-      const {useCommonInputs} = await setup()
-
-      expect(() => useCommonInputs()).toThrow(/cloudflare-api-token/)
+      expect(errorMessage(yield* Effect.flip(commonInputs))).toMatch(
+        /cloudflare-api-token/
+      )
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
 
-      expect(() => useCommonInputs()).toThrow(/github-token/)
+      expect(errorMessage(yield* Effect.flip(commonInputs))).toMatch(
+        /github-token/
+      )
 
       stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
 
-      expect(() => useCommonInputs()).not.toThrow()
+      // Each run builds the layer afresh, so the earlier failures are not
+      // replayed.
+      expect(Exit.isSuccess(yield* Effect.exit(commonInputs))).toBe(true)
     })
+  )
 
-    test('masks both tokens in the log', async () => {
+  it.effect('masks both tokens in the log', () =>
+    Effect.gen(function* () {
       expect.assertions(2)
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
       stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
 
-      const {useCommonInputs} = await setup()
-      // Same module instance as the one `inputs.js` imported after the reset.
-      const {setSecret} = await import('@actions/core')
-
-      useCommonInputs()
+      yield* commonInputs
 
       expect(setSecret).toHaveBeenCalledWith('mock-cloudflare-api-token')
       expect(setSecret).toHaveBeenCalledWith('mock-github-token')
     })
+  )
 
-    test('returns correct values', async () => {
+  it.effect('returns correct values', () =>
+    Effect.gen(function* () {
       expect.assertions(3)
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
@@ -64,9 +76,7 @@ describe('common', () => {
       stubInputEnv(INPUT_KEY_GITHUB_ENVIRONMENT)
       stubInputEnv(INPUT_KEY_WRANGLER_VERSION)
 
-      const {useCommonInputs} = await setup()
-
-      const inputs = useCommonInputs()
+      const inputs = yield* commonInputs
 
       // Unwrap explicitly: a `Redacted` holds its value in a WeakMap, so
       // comparing two Redacted instances passes regardless of the secret.
@@ -82,37 +92,74 @@ describe('common', () => {
         })
       )
     })
+  )
 
-    test(`returns undefined for optional ${INPUT_KEY_GITHUB_ENVIRONMENT}`, async () => {
+  it.effect(
+    `returns undefined for optional ${INPUT_KEY_GITHUB_ENVIRONMENT}`,
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
+        stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+
+        expect(yield* commonInputs).toStrictEqual(
+          expect.objectContaining({
+            gitHubEnvironment: undefined,
+            prNumber: undefined,
+            wranglerVersion: packageJson.devDependencies.wrangler
+          })
+        )
+      })
+  )
+
+  it.effect('returns default wranger version', () =>
+    Effect.gen(function* () {
       expect.assertions(1)
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
       stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
 
-      const {useCommonInputs} = await setup()
-
-      expect(useCommonInputs()).toStrictEqual(
+      expect(yield* commonInputs).toStrictEqual(
         expect.objectContaining({
-          gitHubEnvironment: undefined,
-          prNumber: undefined,
           wranglerVersion: packageJson.devDependencies.wrangler
         })
       )
     })
+  )
+})
 
-    test('returns default wranger version', async () => {
+describe(PayloadV1Inputs, () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it.effect('builds without the inputs and reads them only when used', () =>
+    Effect.gen(function* () {
       expect.assertions(1)
 
-      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
-      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+      const {cloudflare} = yield* PayloadV1Inputs
 
-      const {useCommonInputs} = await setup()
-
-      expect(useCommonInputs()).toStrictEqual(
-        expect.objectContaining({
-          wranglerVersion: packageJson.devDependencies.wrangler
-        })
+      expect(errorMessage(yield* Effect.flip(cloudflare))).toBe(
+        'Input required and not supplied: cloudflare-account-id'
       )
-    })
+    }).pipe(Effect.provide(PayloadV1Inputs.layer))
+  )
+
+  it.effect('parses the inputs once per run', () => {
+    stubInputEnv(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID)
+    stubInputEnv(INPUT_KEY_CLOUDFLARE_PROJECT_NAME)
+
+    return Effect.gen(function* () {
+      expect.assertions(2)
+
+      const {cloudflare} = yield* PayloadV1Inputs
+      const first = yield* cloudflare
+
+      stubInputEnv(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID, 'changed')
+
+      expect(first.accountId).toBe('mock-cloudflare-account-id')
+      expect(yield* cloudflare).toBe(first)
+    }).pipe(Effect.provide(PayloadV1Inputs.layer))
   })
 })

@@ -1,12 +1,13 @@
 import {debug} from '@actions/core'
-import * as Cause from 'effect/Cause'
 import * as Duration from 'effect/Duration'
 import * as Effect from 'effect/Effect'
-import * as Exit from 'effect/Exit'
 import * as Predicate from 'effect/Predicate'
 import * as Schedule from 'effect/Schedule'
 import * as Schema from 'effect/Schema'
 
+import type {GitHubContext} from '@/common/github/context.js'
+
+import type {CloudflareApi, CloudflareApiError} from '../api/client.js'
 import type {CloudflareApiEndpoint} from '../api/endpoints.js'
 import type {PagesDeployment} from '../types.js'
 
@@ -49,27 +50,14 @@ class DeploymentPollTimeoutError extends Schema.TaggedError<DeploymentPollTimeou
   {message: Schema.String}
 ) {}
 
-/**
- * Wraps a transport or envelope failure (e.g. `ParseError`). The original is
- * kept in `cause` and rethrown at the promise boundary so callers keep seeing
- * the error they always did.
- */
-// oxlint-disable-next-line unicorn/throw-new-error
-class DeploymentRequestError extends Schema.TaggedError<DeploymentRequestError>()(
-  'DeploymentRequestError',
-  {cause: Schema.Defect()}
-) {}
-
 const pollOnce = Effect.fn('pollOnce')(function* (
   apiEndpoint: CloudflareApiEndpoint
 ): Effect.fn.Return<
   StatusResult,
-  DeploymentPendingError | DeploymentRequestError
+  DeploymentPendingError | CloudflareApiError,
+  CloudflareApi | GitHubContext
 > {
-  const deployment = yield* Effect.tryPromise({
-    try: () => findCloudflareLatestDeployment(apiEndpoint),
-    catch: (cause: unknown) => new DeploymentRequestError({cause})
-  })
+  const deployment = yield* findCloudflareLatestDeployment(apiEndpoint)
 
   if (deployment === undefined) {
     return yield* new DeploymentPendingError({reason: 'not-registered'})
@@ -115,14 +103,18 @@ export type StatusOptions = {
   pollTimeout?: Duration.Input
 }
 
-export const statusCloudflareDeployment = async (
-  apiEndpoint: CloudflareApiEndpoint,
-  options?: StatusOptions
-): Promise<StatusResult> => {
+/**
+ * Polls the deployments list until the deployment for the context commit
+ * reaches a terminal stage. `CloudflareApiError` (transport or envelope
+ * failures) is not retried.
+ */
+export const statusCloudflareDeployment = Effect.fn(
+  'statusCloudflareDeployment'
+)((apiEndpoint: CloudflareApiEndpoint, options?: StatusOptions) => {
   const pollInterval = options?.pollInterval ?? DEFAULT_POLL_INTERVAL
   const pollTimeout = options?.pollTimeout ?? DEFAULT_POLL_TIMEOUT
 
-  const program = pollOnce(apiEndpoint).pipe(
+  return pollOnce(apiEndpoint).pipe(
     Effect.retry({
       while: isPending,
       schedule: Schedule.spaced(pollInterval).pipe(
@@ -134,8 +126,8 @@ export const statusCloudflareDeployment = async (
     Effect.timeout(pollTimeout),
     // The poll ran out of time, by either route: the retry schedule exhausted
     // (propagating the last `DeploymentPendingError`) or the overall
-    // `Effect.timeout` fired. `DeploymentRequestError` deliberately falls
-    // through so transport failures surface unchanged.
+    // `Effect.timeout` fired. `CloudflareApiError` deliberately falls through
+    // so transport failures surface unchanged.
     Effect.catchTag(
       ['DeploymentPendingError', 'TimeoutError'],
       () =>
@@ -144,16 +136,4 @@ export const statusCloudflareDeployment = async (
         })
     )
   )
-
-  const exit = await Effect.runPromiseExit(program)
-
-  if (Exit.isSuccess(exit)) {
-    return exit.value
-  }
-
-  const error = Cause.squash(exit.cause)
-
-  // Unwrap transport failures so callers keep seeing e.g. `ParseError` rather
-  // than an Effect wrapper.
-  throw error instanceof DeploymentRequestError ? error.cause : error
-}
+})

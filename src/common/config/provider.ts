@@ -1,4 +1,7 @@
+import type * as Config from 'effect/Config'
+
 import * as ConfigProvider from 'effect/ConfigProvider'
+import * as Effect from 'effect/Effect'
 import * as Predicate from 'effect/Predicate'
 
 /**
@@ -35,3 +38,15 @@ export const actionInputProvider: ConfigProvider.ConfigProvider =
     ),
     ConfigProvider.nested('INPUT')
   )
+
+/**
+ * Parses `config` against the action inputs each time the effect runs.
+ *
+ * `config.parse(provider)` reads the environment when it is *called* and
+ * returns an already-resolved Effect, so calling it at module scope — e.g. as
+ * a layer's effect — would capture the env at import time.
+ */
+export const readInputs = <A>(
+  config: Config.Config<A>
+): Effect.Effect<A, Config.ConfigError> =>
+  Effect.suspend(() => config.parse(actionInputProvider))
