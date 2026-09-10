@@ -26,3 +26,8 @@ jobs:
 
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@6fc4b006235f201fdab3722e17240ab420d580e5 #v0.6.1
+        with:
+          # Audit only this repo's own workflows and actions — the default `.`
+          # also collects the vendored repos/ subtrees (e.g. repos/effect/.github/).
+          # zizmor has no path-exclusion setting, so list the inputs instead.
+          inputs: .github action.yml delete/action.yml

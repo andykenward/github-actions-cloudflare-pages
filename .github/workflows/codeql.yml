@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '27 5 * * 1'
+
+# Deny all permissions by default; grant only what's needed per job
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write # upload SARIF to GitHub code scanning
+      contents: read # only needed for private or internal repos
+      actions: read # only needed for private or internal repos
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each `category` matches the one the default setup uploaded under,
+        # so existing alerts carry over instead of being duplicated.
+        include:
+          - language: actions
+            category: /language:actions
+          - language: javascript-typescript
+            category: /language:javascript
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 #v4.37.9
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 #v4.37.9
+        with:
+          category: ${{ matrix.category }}
