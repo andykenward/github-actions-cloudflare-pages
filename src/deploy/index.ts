@@ -1,7 +1,8 @@
-import {setFailed} from '@actions/core'
 import * as Cause from 'effect/Cause'
 import * as Effect from 'effect/Effect'
 import * as Exit from 'effect/Exit'
+
+import {reportFailure} from '@/common/errors.js'
 
 import {run} from './main.js'
 
@@ -15,5 +16,5 @@ import {run} from './main.js'
 const exit = await Effect.runPromiseExit(run)
 
 if (Exit.isFailure(exit) && !Cause.hasInterruptsOnly(exit.cause)) {
-  setFailed(Cause.pretty(exit.cause))
+  reportFailure(exit.cause)
 }

@@ -262,7 +262,7 @@ The GitHub Deployment payload this action creates includes the Cloudflare metada
 
 GitHub provides two debug log levels — see [Action Debugging]. Enable them by [setting a repository secret]:
 
-- **Step debug logs**: set `ACTIONS_STEP_DEBUG` to `true`. Debug events then appear in the [downloaded logs] and [web logs].
+- **Step debug logs**: set `ACTIONS_STEP_DEBUG` to `true`. Debug events then appear in the [downloaded logs] and [web logs]. When a step fails, its annotation carries a one-line message; the full error (stack trace and nested causes) is only logged at this level.
 - **Runner diagnostic logs**: set `ACTIONS_RUNNER_DEBUG` to `true`. Extra diagnostic files then appear in the `runner-diagnostic-logs` folder of the [log archive][downloaded logs].
 
 ## Development

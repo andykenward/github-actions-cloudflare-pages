@@ -3,6 +3,7 @@ import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
 import {batchDelete} from '@/common/batch-delete.js'
+import {errorMessage} from '@/common/errors.js'
 import {getGitHubDeployments} from '@/common/github/deployment/get.js'
 
 import {useInputs} from './inputs.js'
@@ -27,9 +28,7 @@ class DeleteError extends Schema.TaggedError<DeleteError>()('DeleteError', {
 }) {
   static readonly from = (cause: unknown): DeleteError =>
     new DeleteError({
-      message: `${PREFIX} Error deleting deployments: ${
-        cause instanceof Error ? cause.message : JSON.stringify(cause)
-      }`,
+      message: `${PREFIX} Error deleting deployments: ${errorMessage(cause)}`,
       cause
     })
 }

@@ -2,6 +2,7 @@ import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
 import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.js'
+import {errorMessage} from '@/common/errors.js'
 import {addComment} from '@/common/github/comment.js'
 import {useContextEvent} from '@/common/github/context.js'
 import {createGitHubDeployment} from '@/common/github/deployment/create.js'
@@ -28,7 +29,7 @@ class DeployError extends Schema.TaggedError<DeployError>()('DeployError', {
 }) {
   static readonly from = (cause: unknown): DeployError =>
     new DeployError({
-      message: cause instanceof Error ? cause.message : String(cause),
+      message: errorMessage(cause),
       cause
     })
 }
