@@ -1,4 +1,4 @@
-import {exec, execFile} from 'node:child_process'
+import {execFile} from 'node:child_process'
 import {randomUUID} from 'node:crypto'
 import {existsSync} from 'node:fs'
 import path from 'node:path'
@@ -23,10 +23,7 @@ export const raise = (message: string): never => {
   throw new Error(message)
 }
 
-export const execAsync = promisify(exec)
 export const execFileAsync = promisify(execFile)
-export const sleep = (ms: number): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms))
 
 export const checkWorkingDirectory = (directory = '.'): string => {
   const p = path.normalize(directory)

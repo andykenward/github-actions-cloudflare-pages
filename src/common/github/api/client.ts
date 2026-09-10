@@ -63,7 +63,8 @@ const fetchGraphql = async <TData, TVariables extends Variables>(
   token: string,
   {query, variables, options}: RequestParams<TData, TVariables>
 ): Promise<GraphqlResponse<TData>> => {
-  const {errorThrows} = options || {errorThrows: true}
+  // `options || {errorThrows: true}` let `options: {}` silently disable it.
+  const errorThrows = options?.errorThrows ?? true
 
   const response = await fetch(endpoint, {
     method: 'POST',

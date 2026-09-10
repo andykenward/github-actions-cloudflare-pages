@@ -1,4 +1,3 @@
-import {error, notice} from '@actions/core'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
@@ -15,53 +14,6 @@ class EnvironmentError extends Schema.TaggedError<EnvironmentError>()(
   'EnvironmentError',
   {message: Schema.String}
 ) {}
-
-/**
- * MutationCreateEnvironment will either return the environment if it exists or create it.
- * GITHUB_TOKEN Action permissions don't allow for creating environments.
- * @see {@link https://docs.github.com/en/actions/security-guides/automatic-token-authentication#granting-additional-permissions | Granting additional permissions}
- * @see {@link https://docs.github.com/en/graphql/reference/mutations#createenvironment | `createEnvironment`}
- */
-export const MutationCreateEnvironment = graphql(/* GraphQL */ `
-  mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
-    createEnvironment(input: {repositoryId: $repositoryId, name: $name}) {
-      environment {
-        ...EnvironmentFragment
-      }
-    }
-  }
-`)
-
-export const createEnvironment = Effect.gen(function* () {
-  const {branch, repo} = yield* GitHubContext
-
-  if (!branch) {
-    return yield* new EnvironmentError({message: 'branch is required'})
-  }
-
-  const github = yield* GitHubApi
-
-  const environment = yield* github.request({
-    query: MutationCreateEnvironment,
-    variables: {
-      repositoryId: repo.node_id,
-      name: branch
-    },
-    options: {
-      errorThrows: false
-    }
-  })
-
-  if (environment.errors) {
-    error(`${PREFIX} Errors - ${JSON.stringify(environment.errors)}`)
-  }
-
-  if (!environment.data.createEnvironment?.environment) {
-    notice(`${PREFIX} Not created`)
-  }
-
-  return environment.data.createEnvironment?.environment
-})
 
 export const QueryGetEnvironment = graphql(/* GraphQL */ `
   query GetEnvironment(
@@ -83,7 +35,9 @@ export const QueryGetEnvironment = graphql(/* GraphQL */ `
 
 /**
  * CheckEnvironment will check if the environment exists and if it does not it
- * will error to the users to create the environment themselves.
+ * will error to the users to create the environment themselves — the
+ * `GITHUB_TOKEN` is not permitted to create environments.
+ * @see {@link https://docs.github.com/en/actions/security-guides/automatic-token-authentication#granting-additional-permissions | Granting additional permissions}
  */
 export const checkEnvironment = Effect.gen(function* () {
   const {gitHubEnvironment} = yield* CommonInputs

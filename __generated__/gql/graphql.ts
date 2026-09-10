@@ -142,14 +142,6 @@ export type CreateGitHubDeploymentStatusMutationVariables = Exact<{
 
 export type CreateGitHubDeploymentStatusMutation = { readonly createDeploymentStatus: { readonly clientMutationId: string | null } | null };
 
-export type CreateEnvironmentMutationVariables = Exact<{
-  repositoryId: string | number;
-  name: string;
-}>;
-
-
-export type CreateEnvironmentMutation = { readonly createEnvironment: { readonly environment: { readonly name: string, readonly id: string } | null } | null };
-
 export type GetEnvironmentQueryVariables = Exact<{
   owner: string;
   repo: string;
@@ -316,18 +308,6 @@ export const CreateGitHubDeploymentStatusDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateGitHubDeploymentStatusMutation, CreateGitHubDeploymentStatusMutationVariables>;
-export const CreateEnvironmentDocument = new TypedDocumentString(`
-    mutation CreateEnvironment($repositoryId: ID!, $name: String!) {
-  createEnvironment(input: { repositoryId: $repositoryId, name: $name }) {
-    environment {
-      ...EnvironmentFragment
-    }
-  }
-}
-    fragment EnvironmentFragment on Environment {
-  name
-  id
-}`) as unknown as TypedDocumentString<CreateEnvironmentMutation, CreateEnvironmentMutationVariables>;
 export const GetEnvironmentDocument = new TypedDocumentString(`
     query GetEnvironment($owner: String!, $repo: String!, $environment_name: String!, $qualifiedName: String!) {
   repository(owner: $owner, name: $repo) {

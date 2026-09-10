@@ -19,7 +19,7 @@ const getPayload = (eventName: WebhookEventName): string => {
   }
 }
 
-export const TEST_ENV_VARS = (
+const TEST_ENV_VARS = (
   eventName: WebhookEventName = 'pull_request'
 ): NodeJS.ProcessEnv => ({
   GITHUB_HEAD_REF: 'mock-github-head-ref',

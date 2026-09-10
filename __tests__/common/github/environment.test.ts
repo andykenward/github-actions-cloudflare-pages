@@ -9,13 +9,10 @@ import type {MockApi} from '@/tests/helpers/api.js'
 
 import {
   checkEnvironment,
-  createEnvironment,
-  MutationCreateEnvironment,
   QueryGetEnvironment
 } from '@/common/github/environment.js'
 import {CommonLayer} from '@/common/layer.js'
 import {getMockApi} from '@/tests/helpers/api.js'
-import {TEST_ENV_VARS} from '@/tests/helpers/env.js'
 
 vi.mock(import('@actions/core'))
 
@@ -24,7 +21,8 @@ describe('environment', () => {
 
   const mockQueryGetEnvironment = (
     data: GetEnvironmentQuery,
-    errors?: GitHubGraphQLError[]
+    errors?: GitHubGraphQLError[],
+    statusCode?: number
   ): void => {
     mockApi.interceptGithub(
       {
@@ -39,7 +37,8 @@ describe('environment', () => {
       {
         data,
         errors
-      }
+      },
+      statusCode
     )
   }
 
@@ -54,127 +53,19 @@ describe('environment', () => {
 
   // An Effect value, not a function, so the title is a string.
   // oxlint-disable-next-line vitest/prefer-describe-function-title
-  describe('createEnvironment', () => {
+  describe('checkEnvironment', () => {
     it.effect('fails with a clear error on a non-2xx response', () =>
       Effect.gen(function* () {
         expect.assertions(1)
 
-        // GitHub returns JSON for a 401, so this previously parsed cleanly,
-        // carried no `errors` field, and silently produced `data: undefined`.
-        mockApi.interceptGithub(
-          {
-            query: MutationCreateEnvironment,
-            variables: {
-              repositoryId: `MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=`,
-              name: TEST_ENV_VARS().GITHUB_HEAD_REF as string
-            }
-          },
-          {data: {}} as never,
-          401
-        )
+        mockQueryGetEnvironment({} as GetEnvironmentQuery, undefined, 401)
 
-        const failure = yield* Effect.flip(createEnvironment)
+        const failure = yield* Effect.flip(checkEnvironment)
 
         expect(failure.message).toContain('GitHub API request failed: 401')
       }).pipe(Effect.provide(CommonLayer))
     )
 
-    it.effect('success', () =>
-      Effect.gen(function* () {
-        expect.assertions(3)
-
-        mockApi.interceptGithub(
-          {
-            query: MutationCreateEnvironment,
-            variables: {
-              repositoryId: `MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=`,
-              name: TEST_ENV_VARS().GITHUB_HEAD_REF as string
-            }
-          },
-          {
-            data: {
-              createEnvironment: {
-                environment: {
-                  name: 'unlike-dev (Preview)',
-                  id: 'EN_kwDOJn0nrM5D_l8n'
-                }
-              }
-            }
-          }
-        )
-
-        const environment = yield* createEnvironment
-
-        expect(error).not.toHaveBeenCalled()
-        expect(notice).not.toHaveBeenCalled()
-        expect(environment).toMatchInlineSnapshot(`
-          {
-            "id": "EN_kwDOJn0nrM5D_l8n",
-            "name": "unlike-dev (Preview)",
-          }
-        `)
-      }).pipe(Effect.provide(CommonLayer))
-    )
-
-    it.effect('logs errors & missing environment', () =>
-      Effect.gen(function* () {
-        expect.assertions(3)
-
-        mockApi.interceptGithub(
-          {
-            query: MutationCreateEnvironment,
-            variables: {
-              repositoryId: `MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=`,
-              name: TEST_ENV_VARS().GITHUB_HEAD_REF as string
-            }
-          },
-          {
-            data: {
-              createEnvironment: {
-                environment: null
-              }
-            },
-            errors: [
-              {
-                type: 'NOT_FOUND',
-                path: ['createEnvironment'],
-                locations: [
-                  {
-                    line: 22,
-                    column: 5
-                  }
-                ],
-                message: 'some error message'
-              }
-            ]
-          }
-        )
-
-        const environment = yield* createEnvironment
-
-        expect(error).toHaveBeenCalledWith(
-          `GitHub Environment: Errors - ${JSON.stringify([
-            {
-              type: 'NOT_FOUND',
-              path: ['createEnvironment'],
-              locations: [
-                {
-                  line: 22,
-                  column: 5
-                }
-              ],
-              message: 'some error message'
-            }
-          ])}`
-        )
-        expect(notice).toHaveBeenCalledWith('GitHub Environment: Not created')
-        expect(environment).toBeNull()
-      }).pipe(Effect.provide(CommonLayer))
-    )
-  })
-
-  // oxlint-disable-next-line vitest/prefer-describe-function-title
-  describe('checkEnvironment', () => {
     it.effect('success', () =>
       Effect.gen(function* () {
         expect.assertions(4)
