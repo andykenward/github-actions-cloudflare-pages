@@ -120,7 +120,7 @@ describe(createCloudflareDeployment, () => {
         `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.]`
       )
       expect(execFileAsync).toHaveBeenCalledTimes(1)
-      expect(info).toHaveBeenLastCalledWith('success')
+      expect(info).toHaveBeenCalledWith('success')
       expect(setOutput).not.toHaveBeenCalled()
       expect(summary.addTable).not.toHaveBeenCalled()
     })
@@ -188,7 +188,7 @@ describe(createCloudflareDeployment, () => {
       expect(deployment.id).toMatchInlineSnapshot(
         '"206e215c-33b3-4ce4-adf4-7fc6c9b65483"'
       )
-      expect(info).toHaveBeenLastCalledWith('success')
+      expect(info).toHaveBeenCalledWith('success')
 
       expect(setOutput).toHaveBeenCalledTimes(5)
       expect(setOutput).toHaveBeenNthCalledWith(
@@ -305,7 +305,7 @@ describe(createCloudflareDeployment, () => {
       )
 
       expect(execFileAsync).toHaveBeenCalledTimes(1)
-      expect(info).toHaveBeenLastCalledWith('success')
+      expect(info).toHaveBeenCalledWith('success')
       expect(summary.addTable).toHaveBeenCalledTimes(1)
     })
   })

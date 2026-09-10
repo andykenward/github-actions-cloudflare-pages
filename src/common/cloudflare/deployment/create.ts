@@ -1,10 +1,10 @@
 import {strict} from 'node:assert'
 
-import {info, setOutput, summary} from '@actions/core'
+import {setOutput, summary} from '@actions/core'
 
 import {useContext} from '@/common/github/context.js'
 import {secret, useCommonInputs} from '@/common/inputs.js'
-import {execFileAsync} from '@/common/utils.js'
+import {execFileAsync, logVerbatim} from '@/common/utils.js'
 
 import type {PagesDeployment} from '../types.js'
 import type {StatusOptions} from './status.js'
@@ -88,7 +88,7 @@ export const createCloudflareDeployment = async ({
     /**
      * Log out wrangler output.
      */
-    info(stdout)
+    logVerbatim(stdout)
     /**
      * Get the latest deployment by commitHash and poll until required status.
      */
