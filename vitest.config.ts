@@ -17,7 +17,8 @@ export default defineConfig({
       '**/{bin,dist,example,payload-example}/**',
       '**/*.config.*',
       '**/{vitest}.setup.*',
-      '__tests__/helpers/**'
+      '__tests__/helpers/**',
+      'repos/**'
     ],
     clearMocks: true,
     restoreMocks: false

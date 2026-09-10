@@ -5,7 +5,8 @@
     "__generated__/**",
     "dist/**",
     "example/**",
-    "src/**/fragments.ts"
+    "src/**/fragments.ts",
+    "repos/**"
   ],
   "ignoreBinaries": ["act"],
   "ignoreDependencies": [

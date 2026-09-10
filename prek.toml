@@ -4,7 +4,7 @@
 
 # Anchored: an unanchored `.changeset` or `dist` also matches
 # .github/workflows/changeset.yml and check-dist.yml.
-exclude = '^(__generated__|\.changeset|dist|example/dist|schema|\.agents|\.claude)/|^pnpm-lock\.yaml$|^\.devcontainer/devcontainer-lock\.json$'
+exclude = '^(__generated__|\.changeset|dist|example/dist|repos|schema|\.agents|\.claude)/|^pnpm-lock\.yaml$|^\.devcontainer/devcontainer-lock\.json$'
 
 # prek's native Rust ports of the pre-commit-hooks hooks: no clone and no
 # Python environment, so the hooks run on a Node-only machine.

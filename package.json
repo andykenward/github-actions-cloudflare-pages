@@ -31,7 +31,7 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "knip": "knip --cache --cache-location '.cache/knip'",
-    "lint": "oxlint",
+    "lint": "oxlint --disable-nested-config",
     "lint:fix": "pnpm run lint --fix",
     "prepare": "effect-tsgo patch --typescript --oxlint",
     "release": "pnpm run all && changeset publish",
