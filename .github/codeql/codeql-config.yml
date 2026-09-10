@@ -1,0 +1,9 @@
+name: CodeQL config
+
+# Vendored subtrees (e.g. repos/effect) are read-only upstream reference code,
+# not ours to fix. Default setup can't exclude paths, hence advanced setup.
+paths-ignore:
+  - repos
+
+# Match the previous default setup's `remote_and_local` threat model.
+threat-models: local
