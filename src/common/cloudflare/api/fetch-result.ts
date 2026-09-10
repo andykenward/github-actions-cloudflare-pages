@@ -7,7 +7,7 @@ import {throwFetchError} from './fetch-error.js'
  * populated on 2xx, `error` on non-2xx; both carry the `{success, errors}`
  * envelope. `result` only exists on the success body.
  */
-interface ClientResponse<Result> {
+export interface ClientResponse<Result> {
   data?: {success: boolean; errors: FetchError[]; result?: Result | null}
   error?: {success: boolean; errors: FetchError[]}
   response: Response
@@ -17,8 +17,8 @@ interface ClientResponse<Result> {
  * Unwrap a Cloudflare response, returning the typed `result` or throwing.
  *
  * Replaces the previous string-URL `fetchResult<T>()` — the request itself is
- * now made by the typed [`cloudflareClient`](./client.ts); this only applies the
- * Cloudflare-specific envelope semantics openapi-fetch has no concept of.
+ * now made by [`CloudflareApi`](./client.ts), which calls this; it only applies
+ * the Cloudflare-specific envelope semantics openapi-fetch has no concept of.
  */
 export const unwrap = <Result>({
   data,

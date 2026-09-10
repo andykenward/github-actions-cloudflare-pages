@@ -25,10 +25,11 @@ vi.mock(import('@actions/core'))
 
 const TestLayer = CloudflareApi.layer.pipe(Layer.provide(CommonInputs.layer))
 
+/** `CloudflareApi.result`, which unwraps with `unwrap`. */
 const getProject = Effect.gen(function* () {
   const cloudflare = yield* CloudflareApi
-  return yield* Effect.promise(() =>
-    cloudflare.GET('/accounts/{account_id}/pages/projects/{project_name}', {
+  return yield* cloudflare.result(client =>
+    client.GET('/accounts/{account_id}/pages/projects/{project_name}', {
       params: {
         path: {account_id: MOCK_ACCOUNT_ID, project_name: MOCK_PROJECT_NAME}
       }
@@ -36,10 +37,11 @@ const getProject = Effect.gen(function* () {
   )
 })
 
+/** `CloudflareApi.success`, which unwraps with `unwrapSuccess`. */
 const deleteDeployment = Effect.gen(function* () {
   const cloudflare = yield* CloudflareApi
-  return yield* Effect.promise(() =>
-    cloudflare.DELETE(
+  return yield* cloudflare.success(client =>
+    client.DELETE(
       '/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}',
       {
         params: {
@@ -78,7 +80,7 @@ describe('api', () => {
           200
         )
 
-        expect(unwrap(yield* getProject)).toMatchSnapshot()
+        expect(yield* getProject).toMatchSnapshot()
         expect(error).not.toHaveBeenCalled()
       }).pipe(Effect.provide(TestLayer))
     )
@@ -93,9 +95,9 @@ describe('api', () => {
           404
         )
 
-        const response = yield* getProject
+        const failure = yield* Effect.flip(getProject)
 
-        expect(() => unwrap(response)).toThrowErrorMatchingInlineSnapshot(
+        expect(failure.cause).toMatchInlineSnapshot(
           `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name) failed.]`
         )
         expect(error).toHaveBeenCalledWith(
@@ -114,16 +116,16 @@ describe('api', () => {
           401
         )
 
-        const response = yield* getProject
+        const failure = yield* Effect.flip(getProject)
 
-        expect(() => unwrap(response)).toThrowErrorMatchingInlineSnapshot(
+        expect(failure.cause).toMatchInlineSnapshot(
           `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name) failed.]`
         )
       }).pipe(Effect.provide(TestLayer))
     )
 
     it.effect.each([{result: null}, {result: undefined}])(
-      `handles response result of $result with thrown error`,
+      `handles response result of $result with a failure`,
       ({result}) =>
         Effect.gen(function* () {
           expect.assertions(1)
@@ -134,9 +136,9 @@ describe('api', () => {
             200
           )
 
-          const response = yield* getProject
+          const failure = yield* Effect.flip(getProject)
 
-          expect(() => unwrap(response)).toThrow(
+          expect(failure.message).toBe(
             `Cloudflare API: response missing 'result'`
           )
         }).pipe(Effect.provide(TestLayer))
@@ -155,12 +157,12 @@ describe('api', () => {
           'DELETE'
         )
 
-        expect(unwrapSuccess(yield* deleteDeployment)).toBe(true)
+        expect(yield* deleteDeployment).toBe(true)
         expect(error).not.toHaveBeenCalled()
       }).pipe(Effect.provide(TestLayer))
     )
 
-    it.effect('throws when the API returns errors', () =>
+    it.effect('fails when the API returns errors', () =>
       Effect.gen(function* () {
         expect.assertions(1)
 
@@ -171,11 +173,9 @@ describe('api', () => {
           'DELETE'
         )
 
-        const response = yield* deleteDeployment
+        const failure = yield* Effect.flip(deleteDeployment)
 
-        expect(() => unwrapSuccess(response)).toThrow(
-          `A request to the Cloudflare API`
-        )
+        expect(failure.message).toContain(`A request to the Cloudflare API`)
       }).pipe(Effect.provide(TestLayer))
     )
   })

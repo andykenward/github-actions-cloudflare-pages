@@ -5,8 +5,7 @@ import {GitHubContext} from '@/common/github/context.js'
 import type {CloudflareApiEndpoint} from '../api/endpoints.js'
 import type {PagesDeployment} from '../types.js'
 
-import {CloudflareApi, CloudflareApiError} from '../api/client.js'
-import {unwrap} from '../api/fetch-result.js'
+import {CloudflareApi} from '../api/client.js'
 
 export const getCloudflareDeploymentAlias = (
   deployment: PagesDeployment
@@ -28,16 +27,12 @@ export const findCloudflareLatestDeployment = Effect.fn(
   const {sha: commitHash} = yield* GitHubContext
   const cloudflare = yield* CloudflareApi
 
-  const deployments = yield* Effect.tryPromise({
-    try: async () =>
-      unwrap(
-        await cloudflare.GET(
-          '/accounts/{account_id}/pages/projects/{project_name}/deployments',
-          {params: {path: {account_id: accountId, project_name: projectName}}}
-        )
-      ),
-    catch: CloudflareApiError.from
-  })
+  const deployments = yield* cloudflare.result(client =>
+    client.GET(
+      '/accounts/{account_id}/pages/projects/{project_name}/deployments',
+      {params: {path: {account_id: accountId, project_name: projectName}}}
+    )
+  )
 
   return deployments.find(
     deployment =>

@@ -2,7 +2,6 @@ import {error, info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 
 import {CloudflareApi, CloudflareApiError} from '../api/client.js'
-import {unwrapSuccess} from '../api/fetch-result.js'
 import {ParseError} from '../api/parse-error.js'
 
 /**
@@ -34,25 +33,21 @@ export const deleteCloudflareDeployment = Effect.fn(
   }) {
     const cloudflare = yield* CloudflareApi
 
-    const success = yield* Effect.tryPromise({
-      try: async () =>
-        unwrapSuccess(
-          await cloudflare.DELETE(
-            '/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}',
-            {
-              params: {
-                path: {
-                  account_id: accountId,
-                  project_name: projectName,
-                  deployment_id: id
-                },
-                query: {force: true}
-              }
-            }
-          )
-        ),
-      catch: CloudflareApiError.from
-    })
+    const success = yield* cloudflare.success(client =>
+      client.DELETE(
+        '/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}',
+        {
+          params: {
+            path: {
+              account_id: accountId,
+              project_name: projectName,
+              deployment_id: id
+            },
+            query: {force: true}
+          }
+        }
+      )
+    )
 
     if (!success) {
       return yield* new CloudflareApiError({
