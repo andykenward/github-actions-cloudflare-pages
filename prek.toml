@@ -2,7 +2,9 @@
 # See https://prek.j178.dev for more information.
 #:schema https://www.schemastore.org/prek.json
 
-exclude = "__generated__|.changeset|pnpm-lock.yaml|dist|.devcontainer/devcontainer-lock.json|schema|.agents|.claude"
+# Anchored: an unanchored `.changeset` or `dist` also matches
+# .github/workflows/changeset.yml and check-dist.yml.
+exclude = '^(__generated__|\.changeset|dist|example/dist|schema|\.agents|\.claude)/|^pnpm-lock\.yaml$|^\.devcontainer/devcontainer-lock\.json$'
 
 [[repos]]
 repo = "https://github.com/pre-commit/pre-commit-hooks"
