@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+# Comments whether a PR has changesets and what merging it releases.
+# Replaces changeset-bot, which reads only the first 30 changed files and so
+# misses the changesets on large PRs; pr-status diffs with git instead.
+# https://changesets.dev/guide/automating#non-blocking
+name: changeset
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-status:
+    # The Version Packages PR never has changesets.
+    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      comment-body: ${{ steps.pr-status.outputs.comment-body }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          persist-credentials: false
+      - name: Generate PR status
+        id: pr-status
+        uses: changesets/action/pr-status@8488615a623b1b9c987934bb89eae8af6a946ac1 #v2.1.1
+
+  pr-comment:
+    needs: pr-status
+    # Fork and Dependabot PRs get a read-only token on `pull_request`.
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write # create/update the status comment
+    steps:
+      - name: Comment on PR
+        uses: changesets/action/pr-comment@8488615a623b1b9c987934bb89eae8af6a946ac1 #v2.1.1
+        with:
+          body: ${{ needs.pr-status.outputs.comment-body }}
