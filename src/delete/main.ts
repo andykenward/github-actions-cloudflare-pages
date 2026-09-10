@@ -1,18 +1,19 @@
-import {debug, info, summary} from '@actions/core'
+import {debug, info} from '@actions/core'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 
-import {batchDelete} from '@/common/batch-delete.js'
+import type {Summary} from '@/common/summary.js'
+
+import {batchDelete, PREFIX} from '@/common/batch-delete.js'
 import {errorMessage} from '@/common/errors.js'
 import {GitHubRestApi} from '@/common/github/api/paginate.js'
 import {getGitHubDeployments} from '@/common/github/deployment/get.js'
 import {CommonInputs, PayloadV1Inputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
+import {writeSummary} from '@/common/summary.js'
 
 import {DeleteInputs} from './inputs.js'
-
-const PREFIX = `delete -`
 
 /**
  * Bounds the fan-out across Cloudflare and GitHub. Previously every deployment
@@ -36,6 +37,13 @@ class DeleteError extends Schema.TaggedError<DeleteError>()('DeleteError', {
       cause
     })
 }
+
+/** Writes the job summary under the action's heading. */
+const writeDeleteSummary = (build: (summary: Summary) => Summary) =>
+  writeSummary(
+    summary => build(summary.addHeading(HEADING).addBreak()),
+    DeleteError.from
+  )
 
 /**
  * Every service `run` needs, built from the action inputs and runner env.
@@ -63,15 +71,9 @@ export const run = Effect.gen(function* () {
   if (deployments.length === 0) {
     info(`${PREFIX} No deployments to delete`)
 
-    yield* Effect.tryPromise({
-      try: () =>
-        summary
-          .addHeading(HEADING)
-          .addBreak()
-          .addTable([['No deployments to delete']])
-          .write(),
-      catch: DeleteError.from
-    })
+    yield* writeDeleteSummary(summary =>
+      summary.addTable([['No deployments to delete']])
+    )
     return
   }
 
@@ -86,38 +88,31 @@ export const run = Effect.gen(function* () {
 
   debug(`${PREFIX} Deleted deployments: ${JSON.stringify(values)}`)
 
-  if (values.length > 0) {
-    yield* Effect.tryPromise({
-      try: () =>
-        summary
-          .addHeading(HEADING)
-          .addBreak()
-          .addHeading('Deleted Deployments')
-          .addBreak()
-          .addTable([
-            [
-              {data: 'GitHub Deployment Id', header: true},
-              {data: 'Success', header: true},
-              {data: 'Environment', header: true},
-              {data: 'Environment Url', header: true},
-              {data: 'Comment Id', header: true},
-              {data: 'Error', header: true}
-            ],
-            ...values.map(value => [
-              value.deploymentId,
-              value.success ? '✅' : '❌',
-              value.environment,
-              value.environmentUrl
-                ? `<a href='${value.environmentUrl}'><code>${value.environmentUrl}</code></a>`
-                : '',
-              value.commentId || '',
-              value.error || ''
-            ])
-          ])
-          .write(),
-      catch: DeleteError.from
-    })
-  }
+  yield* writeDeleteSummary(summary =>
+    summary
+      .addHeading('Deleted Deployments')
+      .addBreak()
+      .addTable([
+        [
+          {data: 'GitHub Deployment Id', header: true},
+          {data: 'Success', header: true},
+          {data: 'Environment', header: true},
+          {data: 'Environment Url', header: true},
+          {data: 'Comment Id', header: true},
+          {data: 'Error', header: true}
+        ],
+        ...values.map(value => [
+          value.deploymentId,
+          value.success ? '✅' : '❌',
+          value.environment,
+          value.environmentUrl
+            ? `<a href='${value.environmentUrl}'><code>${value.environmentUrl}</code></a>`
+            : '',
+          value.commentId || '',
+          value.error || ''
+        ])
+      ])
+  )
 
   /**
    * `batchDelete` reports per-deployment failures as rows rather than

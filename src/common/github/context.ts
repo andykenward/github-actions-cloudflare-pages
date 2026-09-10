@@ -50,24 +50,18 @@ const getGitHubContext = (): GitHubContextShape => {
   const event = getWorkflowEvent()
 
   const repo = ((): Repo => {
-    const [
-      owner = raise(
-        "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-      ),
-      repo = raise(
+    const [owner, repo] = process.env.GITHUB_REPOSITORY?.split('/') ?? []
+
+    if (!owner || !repo) {
+      return raise(
         "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
       )
-    ] = process.env.GITHUB_REPOSITORY
-      ? process.env.GITHUB_REPOSITORY.split('/')
-      : raise(
-          "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-        )
+    }
 
     const node_id =
-      'repository' in event.payload
-        ? event.payload.repository?.node_id ||
-          raise('context.repo: no repo node_id in payload')
-        : raise('context.repo: no repo node_id in payload')
+      ('repository' in event.payload
+        ? event.payload.repository?.node_id
+        : undefined) || raise('context.repo: no repo node_id in payload')
 
     return {owner, repo, node_id}
   })()

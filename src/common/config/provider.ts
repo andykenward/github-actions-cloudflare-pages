@@ -1,8 +1,8 @@
-import type * as Config from 'effect/Config'
-
+import * as Config from 'effect/Config'
 import * as ConfigProvider from 'effect/ConfigProvider'
 import * as Effect from 'effect/Effect'
 import * as Predicate from 'effect/Predicate'
+import * as Schema from 'effect/Schema'
 
 /**
  * Resolves `Config` paths against the `INPUT_*` environment variables that the
@@ -50,3 +50,19 @@ export const readInputs = <A>(
   config: Config.Config<A>
 ): Effect.Effect<A, Config.ConfigError> =>
   Effect.suspend(() => config.parse(actionInputProvider))
+
+/**
+ * A required string input. `Schema.Trim` reproduces `getInput`'s default
+ * whitespace trimming; absent and empty inputs both fail as missing.
+ */
+export const input = (key: string): Config.Config<string> =>
+  Config.schema(Schema.Trim, key)
+
+/**
+ * An optional string input: `undefined` when absent or empty. `undefined` is
+ * the meaningful absent value — callers treat it as "not supplied" — and
+ * `unicorn/no-null` rules out the alternative.
+ */
+export const optionalInput = (key: string): Config.Config<string | undefined> =>
+  // oxlint-disable-next-line unicorn/no-useless-undefined
+  input(key).pipe(Config.withDefault(undefined))

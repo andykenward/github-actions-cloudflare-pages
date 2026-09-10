@@ -1,6 +1,7 @@
+import type * as Effect from 'effect/Effect'
+
 import * as Config from 'effect/Config'
 import * as Context from 'effect/Context'
-import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 
 import {readInputs} from '@/common/config/provider.js'
@@ -21,8 +22,5 @@ export class DeleteInputs extends Context.Service<
   DeleteInputs,
   Effect.Success<typeof deleteConfig>
 >()('github-actions-cloudflare-pages/delete/inputs/DeleteInputs') {
-  static readonly layer = Layer.effect(
-    DeleteInputs,
-    readInputs(deleteConfig).pipe(Effect.map(inputs => DeleteInputs.of(inputs)))
-  )
+  static readonly layer = Layer.effect(DeleteInputs, readInputs(deleteConfig))
 }

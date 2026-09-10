@@ -3,20 +3,14 @@ import {EOL} from 'node:os'
 
 import {debug, isDebug} from '@actions/core'
 import * as Option from 'effect/Option'
-import * as Result from 'effect/Result'
 import * as Schema from 'effect/Schema'
 
+import {parseJson} from '@/common/json.js'
 import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 
 import type {WorkflowEventExtract, WorkflowEventPayload} from './types.js'
 
-const EventNameSchema = Schema.Literals(EVENT_NAMES)
-
-const decodeEventName = Schema.decodeUnknownResult(EventNameSchema)
-
-const decodeJson = Schema.decodeUnknownResult(
-  Schema.fromJsonString(Schema.Unknown)
-)
+const decodeEventName = Schema.decodeUnknownOption(Schema.Literals(EVENT_NAMES))
 
 /**
  * Loads the file from the runner that contains the full event webhook payload.
@@ -36,8 +30,7 @@ const getPayload = (): unknown => {
     return
   }
 
-  const contents = readFileSync(path, {encoding: 'utf8'})
-  const parsed = Option.getOrUndefined(Result.getSuccess(decodeJson(contents)))
+  const parsed = parseJson(readFileSync(path, {encoding: 'utf8'}))
 
   if (parsed === undefined) {
     throw new Error(`GITHUB_EVENT_PATH ${path} is not valid JSON`)
@@ -48,7 +41,7 @@ const getPayload = (): unknown => {
 
 export const getWorkflowEvent = () => {
   const eventName = Option.getOrUndefined(
-    Result.getSuccess(decodeEventName(process.env.GITHUB_EVENT_NAME))
+    decodeEventName(process.env.GITHUB_EVENT_NAME)
   )
 
   if (eventName === undefined) {

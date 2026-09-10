@@ -18,7 +18,8 @@ import {
 import {getPayload} from './github/deployment/payload.js'
 import {MutationCreateGitHubDeploymentStatus} from './github/deployment/status.js'
 
-const PREFIX = `delete -`
+/** Log prefix for the delete action. */
+export const PREFIX = `delete -`
 
 type BatchDeleteItem = {
   deploymentId: string
@@ -43,21 +44,28 @@ export const batchDelete: (
   function* (deployment: GitHubDeployment) {
     const {commentId, url, cloudflare} = yield* getPayload(deployment.payload)
 
+    const row = (
+      outcome: {success: true} | {success: false; error: string}
+    ): BatchDeleteItem => ({
+      deploymentId: deployment.node_id,
+      environment: deployment.environment,
+      environmentUrl: url,
+      commentId,
+      ...outcome
+    })
+
     /**
      * Delete Cloudflare deployment
      */
     const deletedCloudflareDeployment =
       yield* deleteCloudflareDeployment(cloudflare)
 
-    if (!deletedCloudflareDeployment)
-      return {
+    if (!deletedCloudflareDeployment) {
+      return row({
         success: false,
-        error: 'Deleting Cloudflare deployment failed',
-        environment: deployment.environment,
-        environmentUrl: url,
-        deploymentId: deployment.node_id,
-        commentId
-      }
+        error: 'Deleting Cloudflare deployment failed'
+      })
+    }
     /**
      * On success of Cloudflare deployment delete GitHub deployment & comment.
      */
@@ -83,14 +91,10 @@ export const batchDelete: (
           updateStatusGitHubDeployment.errors
         )}`
       )
-      return {
+      return row({
         success: false,
-        error: 'Updating GitHub deployment status failed',
-        environment: deployment.environment,
-        environmentUrl: url,
-        deploymentId: deployment.node_id,
-        commentId
-      }
+        error: 'Updating GitHub deployment status failed'
+      })
     }
 
     const deletedGitHubDeployment = commentId
@@ -123,13 +127,7 @@ export const batchDelete: (
     }
     info(`${PREFIX} GitHub Deployment Deleted: ${deployment.node_id}`)
 
-    return {
-      success: true,
-      environment: deployment.environment,
-      environmentUrl: url,
-      deploymentId: deployment.node_id,
-      commentId
-    }
+    return row({success: true})
   },
   (effect, deployment) =>
     Effect.catch(effect, failure => {

@@ -1,10 +1,11 @@
-import {setOutput, summary} from '@actions/core'
+import {setOutput} from '@actions/core'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
 import {errorMessage} from '@/common/errors.js'
 import {GitHubContext} from '@/common/github/context.js'
 import {CommonInputs} from '@/common/inputs.js'
+import {writeSummary} from '@/common/summary.js'
 import {logVerbatim} from '@/common/utils.js'
 
 import type {StatusOptions} from './status.js'
@@ -90,8 +91,8 @@ export const createCloudflareDeployment = Effect.fn(
   setOutput('alias', alias)
   setOutput('wrangler', stdout)
 
-  yield* Effect.tryPromise({
-    try: () =>
+  yield* writeSummary(
+    summary =>
       summary
         .addHeading('Cloudflare Pages Deployment')
         .addBreak()
@@ -123,10 +124,9 @@ export const createCloudflareDeployment = Effect.fn(
           ['Preview URL:', `<a href='${deployment.url}'>${deployment.url}</a>`],
           ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`],
           ['Wrangler Output:', `${stdout}`]
-        ])
-        .write(),
-    catch: CreateDeploymentError.from
-  })
+        ]),
+    CreateDeploymentError.from
+  )
 
   return {deployment, wranglerOutput: stdout}
 })

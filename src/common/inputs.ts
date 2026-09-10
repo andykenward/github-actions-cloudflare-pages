@@ -4,9 +4,8 @@ import * as Context from 'effect/Context'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Redacted from 'effect/Redacted'
-import * as Schema from 'effect/Schema'
 
-import {readInputs} from '@/common/config/provider.js'
+import {input, optionalInput, readInputs} from '@/common/config/provider.js'
 import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
@@ -23,25 +22,23 @@ import {
  */
 const DEFAULT_WRANGLER_VERSION = '4.113.0'
 
+/** Required by the deploy action; the delete action needs them for V1 payloads. */
+export const cloudflareAccountIdInput = input(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID)
+export const cloudflareProjectNameInput = input(
+  INPUT_KEY_CLOUDFLARE_PROJECT_NAME
+)
+
 const commonConfig = Config.all({
   /** Cloudflare API token */
   cloudflareApiToken: Config.redacted(INPUT_KEY_CLOUDFLARE_API_TOKEN),
   /** GitHub API Token */
   gitHubApiToken: Config.redacted(INPUT_KEY_GITHUB_TOKEN),
   /** GitHub Environment to use for deployment */
-  gitHubEnvironment: Config.schema(
-    Schema.Trim,
-    INPUT_KEY_GITHUB_ENVIRONMENT
-    // oxlint-disable-next-line unicorn/no-useless-undefined
-  ).pipe(Config.withDefault(undefined)),
+  gitHubEnvironment: optionalInput(INPUT_KEY_GITHUB_ENVIRONMENT),
   /** Pull request number to use for comment creation. */
-  prNumber: Config.schema(
-    Schema.Trim,
-    INPUT_KEY_PR_NUMBER
-    // oxlint-disable-next-line unicorn/no-useless-undefined
-  ).pipe(Config.withDefault(undefined)),
+  prNumber: optionalInput(INPUT_KEY_PR_NUMBER),
   /** Wrangler version to use. */
-  wranglerVersion: Config.schema(Schema.Trim, INPUT_KEY_WRANGLER_VERSION).pipe(
+  wranglerVersion: input(INPUT_KEY_WRANGLER_VERSION).pipe(
     Config.withDefault(DEFAULT_WRANGLER_VERSION)
   )
 })
@@ -74,8 +71,8 @@ export class CommonInputs extends Context.Service<
 }
 
 const payloadV1Config = Config.all({
-  accountId: Config.schema(Schema.Trim, INPUT_KEY_CLOUDFLARE_ACCOUNT_ID),
-  projectName: Config.schema(Schema.Trim, INPUT_KEY_CLOUDFLARE_PROJECT_NAME)
+  accountId: cloudflareAccountIdInput,
+  projectName: cloudflareProjectNameInput
 })
 
 /**

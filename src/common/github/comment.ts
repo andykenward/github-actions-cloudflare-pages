@@ -54,6 +54,30 @@ class CommentError extends Schema.TaggedError<CommentError>()('CommentError', {
   message: Schema.String
 }) {}
 
+/** The node id of pull request `number`, failing with `notFound` if none. */
+const pullRequestNodeId = Effect.fn('pullRequestNodeId')(function* (
+  number: number,
+  notFound: string
+) {
+  const {repo} = yield* GitHubContext
+  const github = yield* GitHubApi
+
+  const pullRequest = yield* github.request({
+    query: QueryPullRequestNodeId,
+    variables: {
+      owner: repo.owner,
+      repo: repo.repo,
+      number
+    }
+  })
+
+  const nodeId = pullRequest.data.repository?.pullRequest?.id
+  if (!nodeId) {
+    return yield* new CommentError({message: notFound})
+  }
+  return nodeId
+})
+
 /** The pull request to comment on, or `undefined` when there is none. */
 const nodeIdFromEvent = Effect.gen(function* () {
   const {repo, branch, event} = yield* GitHubContext
@@ -68,22 +92,10 @@ const nodeIdFromEvent = Effect.gen(function* () {
       })
     }
 
-    const pullRequest = yield* github.request({
-      query: QueryPullRequestNodeId,
-      variables: {
-        owner: repo.owner,
-        repo: repo.repo,
-        number: parsedPrNumber
-      }
-    })
-
-    const nodeId = pullRequest.data.repository?.pullRequest?.id
-    if (!nodeId) {
-      return yield* new CommentError({
-        message: `No pull request node id found for pr-number input: ${prNumber}`
-      })
-    }
-    return nodeId
+    return yield* pullRequestNodeId(
+      parsedPrNumber,
+      `No pull request node id found for pr-number input: ${prNumber}`
+    )
   }
 
   const {eventName, payload} = event
@@ -143,22 +155,10 @@ const nodeIdFromEvent = Effect.gen(function* () {
         })
       }
 
-      const pullRequest = yield* github.request({
-        query: QueryPullRequestNodeId,
-        variables: {
-          owner: repo.owner,
-          repo: repo.repo,
-          number: pullRequestNumber
-        }
-      })
-
-      const nodeId = pullRequest.data.repository?.pullRequest?.id
-      if (!nodeId) {
-        return yield* new CommentError({
-          message: 'No pull request node id found for workflow_run event'
-        })
-      }
-      return nodeId
+      return yield* pullRequestNodeId(
+        pullRequestNumber,
+        'No pull request node id found for workflow_run event'
+      )
     }
     case 'pull_request': {
       if (payload.action === 'closed') {
