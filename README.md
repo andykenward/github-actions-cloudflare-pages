@@ -265,6 +265,26 @@ GitHub provides two debug log levels — see [Action Debugging]. Enable them by 
 - **Step debug logs**: set `ACTIONS_STEP_DEBUG` to `true`. Debug events then appear in the [downloaded logs] and [web logs].
 - **Runner diagnostic logs**: set `ACTIONS_RUNNER_DEBUG` to `true`. Extra diagnostic files then appear in the `runner-diagnostic-logs` folder of the [log archive][downloaded logs].
 
+## Development
+
+### Vendored Effect source
+
+The [Effect] source is vendored as a [git subtree] at `repos/effect/`, so the source, tests and docs of the exact library this action builds on are available offline — for reading, grepping and as reference material for AI agents. It is read-only: nothing in `src/` imports from `repos/`, and application code keeps importing the published `effect` package. Every tool in the repo is configured to ignore `repos/` — TypeScript, Vitest, oxfmt, oxlint, knip, prek, git diffs and the VS Code editor — so vendoring it does not slow down or pollute the build.
+
+Keep it in step with the `effect` version in [package.json](package.json). After bumping the dependency, pull the subtree again from the repository root with a clean working tree:
+
+```sh
+git subtree pull \
+  --prefix=repos/effect \
+  https://github.com/Effect-TS/effect.git \
+  main \
+  --squash
+```
+
+`--squash` collapses the upstream history into a single merge commit, so this repository doesn't absorb every Effect commit. To check the two are aligned, compare the `version` in `repos/effect/packages/effect/package.json` with `dependencies.effect` in [package.json](package.json) — the subtree tracks `main`, so it can run ahead of the released version you depend on.
+
+If the directory is ever missing (a fresh clone gets it, since the subtree is committed), re-create it with the same arguments and `git subtree add`.
+
 ## Upgrading
 
 Upgrading from an older version? Check [CHANGELOG.md](./CHANGELOG.md) for breaking changes.
@@ -275,6 +295,8 @@ Upgrading from an older version? Check [CHANGELOG.md](./CHANGELOG.md) for breaki
 - [TypeScript ESM Node](https://www.typescriptlang.org/docs/handbook/esm-node.html)
 
 [Cloudflare Pages]: https://pages.cloudflare.com/
+[Effect]: https://effect.website/
+[git subtree]: https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging#_subtree_merge
 [Wrangler]: https://developers.cloudflare.com/workers/wrangler/
 [pull request]: https://docs.github.com/en/pull-requests
 [GitHub Environments]: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
