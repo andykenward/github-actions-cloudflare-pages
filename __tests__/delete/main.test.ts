@@ -58,7 +58,7 @@ describe('delete', () => {
       )
       // Both deletions are still attempted, and the summary still written.
       expect(batchDelete).toHaveBeenCalledTimes(2)
-      expect(summary.write).toHaveBeenCalledOnce()
+      expect(summary.write).toHaveBeenCalledTimes(1)
     })
   })
 })
