@@ -4,6 +4,7 @@ import * as Schema from 'effect/Schema'
 
 import {errorMessage} from '@/common/errors.js'
 import {GitHubContext} from '@/common/github/context.js'
+import {code, escapeHtml, githubUrl, link} from '@/common/html.js'
 import {CommonInputs} from '@/common/inputs.js'
 import {writeSummary} from '@/common/summary.js'
 import {logVerbatim} from '@/common/utils.js'
@@ -91,6 +92,8 @@ export const createCloudflareDeployment = Effect.fn(
   setOutput('alias', alias)
   setOutput('wrangler', stdout)
 
+  const {metadata} = deployment.deployment_trigger
+
   yield* writeSummary(
     summary =>
       summary
@@ -107,23 +110,29 @@ export const createCloudflareDeployment = Effect.fn(
               header: true
             }
           ],
-          ['Environment:', deployment.environment],
+          ['Environment:', escapeHtml(deployment.environment)],
           [
             'Branch:',
-            `<a href='https://github.com/${repo.owner}/${repo.repo}/tree/${deployment.deployment_trigger.metadata.branch}'><code>${deployment.deployment_trigger.metadata.branch}</code></a>`
+            link(
+              githubUrl(repo.owner, repo.repo, 'tree', metadata.branch),
+              code(metadata.branch)
+            )
           ],
           [
             'Commit Hash:',
-            `<a href='https://github.com/${repo.owner}/${repo.repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}'><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
+            link(
+              githubUrl(repo.owner, repo.repo, 'commit', metadata.commit_hash),
+              code(metadata.commit_hash)
+            )
           ],
+          ['Commit Message:', escapeHtml(metadata.commit_message)],
           [
-            'Commit Message:',
-            deployment.deployment_trigger.metadata.commit_message
+            'Status:',
+            `<strong>${escapeHtml(status.toUpperCase() || 'UNKNOWN')}</strong>`
           ],
-          ['Status:', `<strong>${status.toUpperCase() || `UNKNOWN`}</strong>`],
-          ['Preview URL:', `<a href='${deployment.url}'>${deployment.url}</a>`],
-          ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`],
-          ['Wrangler Output:', `${stdout}`]
+          ['Preview URL:', link(deployment.url, escapeHtml(deployment.url))],
+          ['Branch Preview URL:', link(alias, escapeHtml(alias))],
+          ['Wrangler Output:', escapeHtml(stdout)]
         ]),
     CreateDeploymentError.from
   )

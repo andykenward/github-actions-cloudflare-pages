@@ -92,5 +92,61 @@ describe('delete', () => {
         Effect.provide(DeleteLayer)
       )
     )
+
+    it.effect('escapes the values it writes to the summary table', () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        vi.mocked(batchDelete).mockReturnValue(
+          Effect.succeed({
+            deploymentId: 'id',
+            environment: '<b>env</b>',
+            environmentUrl: `https://example.com/'><script>`,
+            commentId: '<i>',
+            success: false,
+            error: '<img src=x onerror=alert(1)>'
+          })
+        )
+
+        yield* Effect.flip(run)
+
+        expect(vi.mocked(summary.addTable).mock.calls[0]?.[0][1]).toStrictEqual(
+          [
+            'id',
+            '❌',
+            '&lt;b&gt;env&lt;/b&gt;',
+            `<a href='https://example.com/&#39;&gt;&lt;script&gt;'><code>https://example.com/&#39;&gt;&lt;script&gt;</code></a>`,
+            '&lt;i&gt;',
+            '&lt;img src=x onerror=alert(1)&gt;'
+          ]
+        )
+      }).pipe(
+        Effect.provide(listing([DEPLOYMENT])),
+        Effect.provide(DeleteLayer)
+      )
+    )
+
+    it.effect('does not link a non-http environment url', () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        vi.mocked(batchDelete).mockReturnValue(
+          Effect.succeed({
+            ...ROW,
+            environmentUrl: 'javascript:alert(1)',
+            success: true
+          })
+        )
+
+        yield* run
+
+        expect(vi.mocked(summary.addTable).mock.calls[0]?.[0][1]?.[3]).toBe(
+          '<code>javascript:alert(1)</code>'
+        )
+      }).pipe(
+        Effect.provide(listing([DEPLOYMENT])),
+        Effect.provide(DeleteLayer)
+      )
+    )
   })
 })

@@ -352,6 +352,104 @@ describe('createCloudflareDeployment', () => {
         expect(summary.addTable).toHaveBeenCalledTimes(1)
       }).pipe(Effect.provide(CommonLayer))
     )
+
+    it.live('escapes pull request controlled values in the summary', () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        vi.mocked(execFileAsync).mockResolvedValueOnce({
+          stdout: '<b>wrangler</b>',
+          stderr: ''
+        })
+
+        const [first, ...rest] = RESPONSE_DEPLOYMENTS.result
+
+        mockApi
+          .interceptCloudflare(
+            MOCK_API_PATH_DEPLOYMENTS,
+            RESPONSE_DEPLOYMENTS_IDLE,
+            200
+          )
+          .times(2)
+
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENTS,
+          {
+            ...RESPONSE_DEPLOYMENTS,
+            result: [
+              {
+                ...first,
+                deployment_trigger: {
+                  ...first?.deployment_trigger,
+                  metadata: {
+                    ...first?.deployment_trigger.metadata,
+                    branch: `x'><script>alert(1)</script>`,
+                    commit_message: '<img src=x onerror=alert(1)>'
+                  }
+                }
+              },
+              ...rest
+            ]
+          },
+          200
+        )
+
+        yield* createCloudflareDeployment({
+          accountId: 'mock-cloudflare-account-id',
+          projectName: 'mock-cloudflare-project-name',
+          directory: 'mock-directory',
+          statusOptions: {pollInterval: 0}
+        })
+
+        expect(vi.mocked(summary.addTable).mock.calls[0]?.[0])
+          .toMatchInlineSnapshot(`
+            [
+              [
+                {
+                  "data": "Name",
+                  "header": true,
+                },
+                {
+                  "data": "Result",
+                  "header": true,
+                },
+              ],
+              [
+                "Environment:",
+                "production",
+              ],
+              [
+                "Branch:",
+                "<a href='https://github.com/andykenward/github-actions-cloudflare-pages/tree/x&#39;%3E%3Cscript%3Ealert(1)%3C/script%3E'><code>x&#39;&gt;&lt;script&gt;alert(1)&lt;/script&gt;</code></a>",
+              ],
+              [
+                "Commit Hash:",
+                "<a href='https://github.com/andykenward/github-actions-cloudflare-pages/commit/mock-github-sha'><code>mock-github-sha</code></a>",
+              ],
+              [
+                "Commit Message:",
+                "&lt;img src=x onerror=alert(1)&gt;",
+              ],
+              [
+                "Status:",
+                "<strong>SUCCESS</strong>",
+              ],
+              [
+                "Preview URL:",
+                "<a href='https://206e215c.cloudflare-pages-action-a5z.pages.dev'>https://206e215c.cloudflare-pages-action-a5z.pages.dev</a>",
+              ],
+              [
+                "Branch Preview URL:",
+                "<a href='https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'>https://unknown-branch.cloudflare-pages-action-a5z.pages.dev</a>",
+              ],
+              [
+                "Wrangler Output:",
+                "&lt;b&gt;wrangler&lt;/b&gt;",
+              ],
+            ]
+          `)
+      }).pipe(Effect.provide(CommonLayer))
+    )
   })
 })
 

@@ -9,6 +9,7 @@ import {batchDelete, PREFIX} from '@/common/batch-delete.js'
 import {errorMessage} from '@/common/errors.js'
 import {GitHubRestApi} from '@/common/github/api/paginate.js'
 import {getGitHubDeployments} from '@/common/github/deployment/get.js'
+import {code, escapeHtml, link} from '@/common/html.js'
 import {CommonInputs, PayloadV1Inputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
 import {writeSummary} from '@/common/summary.js'
@@ -102,14 +103,14 @@ export const run = Effect.gen(function* () {
           {data: 'Error', header: true}
         ],
         ...values.map(value => [
-          value.deploymentId,
+          escapeHtml(value.deploymentId),
           value.success ? '✅' : '❌',
-          value.environment,
+          escapeHtml(value.environment),
           value.environmentUrl
-            ? `<a href='${value.environmentUrl}'><code>${value.environmentUrl}</code></a>`
+            ? link(value.environmentUrl, code(value.environmentUrl))
             : '',
-          value.commentId || '',
-          value.error || ''
+          escapeHtml(value.commentId || ''),
+          escapeHtml(value.error || '')
         ])
       ])
   )
