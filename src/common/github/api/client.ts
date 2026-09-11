@@ -17,9 +17,10 @@ import {GitHubContext} from '../context.js'
  */
 export type GitHubGraphQLError = Partial<GraphQLError> & {
   /**
-   * NOT_FOUND
+   * e.g. NOT_FOUND. Absent on a static validation error, whose `path` starts
+   * with the operation (`mutation Name`) rather than a field.
    */
-  type: string
+  type?: string
 }
 
 export type GraphqlResponse<T = unknown> = {

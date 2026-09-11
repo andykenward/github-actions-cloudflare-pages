@@ -5,6 +5,8 @@ import {CommonInputs} from '@/common/inputs.js'
 import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
 import {INPUT_KEY_GITHUB_ENVIRONMENT} from '@/input-keys'
 
+import type {GitHubGraphQLError} from './api/client.js'
+
 import {GitHubApi} from './api/client.js'
 import {GitHubContext} from './context.js'
 
@@ -15,6 +17,10 @@ class EnvironmentError extends Schema.TaggedError<EnvironmentError>()(
   'EnvironmentError',
   {message: Schema.String}
 ) {}
+
+const isEnvironmentNotFound = (error: GitHubGraphQLError): boolean =>
+  error.type === 'NOT_FOUND' &&
+  error.path?.join('.') === 'repository.environment'
 
 /**
  * CheckEnvironment will check if the environment exists and if it does not it
@@ -47,7 +53,9 @@ export const checkEnvironment = Effect.gen(function* () {
     }
   })
 
-  if (environment.errors) {
+  // GitHub reports an environment that doesn't exist as a NOT_FOUND error at
+  // its path, alongside `environment: null` — which the next check reports.
+  if (environment.errors?.some(error => !isEnvironmentNotFound(error))) {
     return yield* new EnvironmentError({
       message: `${PREFIX} Errors - ${JSON.stringify(environment.errors)}`
     })

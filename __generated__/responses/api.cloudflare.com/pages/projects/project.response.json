@@ -1,123 +1,194 @@
 {
-  "errors": [],
-  "messages": [],
   "result": {
+    "id": "48ddb51b-4568-4f38-94de-10614c2fa270",
+    "name": "cloudflare-pages-action",
+    "subdomain": "cloudflare-pages-action-a5z.pages.dev",
+    "domains": [
+      "cloudflare-pages-action-a5z.pages.dev"
+    ],
     "build_config": {
-      "build_command": "npm run build",
-      "destination_dir": "build",
-      "root_dir": "/",
-      "web_analytics_tag": "cee1c73f6e4743d0b5e6bb1a0bcaabcc",
-      "web_analytics_token": "021e1057c18547eca7b79f2516f06o7x"
+      "web_analytics_tag": null,
+      "web_analytics_token": null
     },
-    "canonical_deployment": null,
-    "created_on": "2017-01-01T00:00:00Z",
     "deployment_configs": {
       "preview": {
-        "analytics_engine_datasets": {
-          "ANALYTICS_ENGINE_BINDING": {
-            "dataset": "api_analytics"
-          }
-        },
-        "compatibility_date": "2022-01-01",
-        "compatibility_flags": ["url_standard"],
-        "d1_databases": {
-          "D1_BINDING": {
-            "id": "445e2955-951a-43f8-a35b-a4d0c8138f63"
-          }
-        },
-        "durable_object_namespaces": {
-          "DO_BINDING": {
-            "namespace_id": "5eb63bbbe01eeed093cb22bb8f5acdc3"
-          }
-        },
-        "env_vars": {
-          "ENVIRONMENT_VARIABLE": {
-            "type": "plain_text",
-            "value": "hello world"
-          }
-        },
-        "kv_namespaces": {
-          "KV_BINDING": {
-            "namespace_id": "5eb63bbbe01eeed093cb22bb8f5acdc3"
-          }
-        },
-        "placement": {
-          "mode": "smart"
-        },
-        "queue_producers": {
-          "QUEUE_PRODUCER_BINDING": {
-            "name": "some-queue"
-          }
-        },
-        "r2_buckets": {
-          "R2_BINDING": {
-            "name": "some-bucket"
-          }
-        },
-        "service_bindings": {
-          "SERVICE_BINDING": {
-            "environment": "production",
-            "service": "example-worker"
-          }
-        }
+        "env_vars": null,
+        "fail_open": true,
+        "always_use_latest_compatibility_date": false,
+        "compatibility_date": "2026-02-24",
+        "compatibility_flags": [],
+        "build_image_major_version": 1,
+        "usage_model": "standard"
       },
       "production": {
-        "analytics_engine_datasets": {
-          "ANALYTICS_ENGINE_BINDING": {
-            "dataset": "api_analytics"
-          }
-        },
-        "compatibility_date": "2022-01-01",
-        "compatibility_flags": ["url_standard"],
-        "d1_databases": {
-          "D1_BINDING": {
-            "id": "445e2955-951a-43f8-a35b-a4d0c8138f63"
-          }
-        },
-        "durable_object_namespaces": {
-          "DO_BINDING": {
-            "namespace_id": "5eb63bbbe01eeed093cb22bb8f5acdc3"
-          }
-        },
-        "env_vars": {
-          "ENVIRONMENT_VARIABLE": {
-            "type": "plain_text",
-            "value": "hello world"
-          }
-        },
-        "kv_namespaces": {
-          "KV_BINDING": {
-            "namespace_id": "5eb63bbbe01eeed093cb22bb8f5acdc3"
-          }
-        },
-        "placement": {
-          "mode": "smart"
-        },
-        "queue_producers": {
-          "QUEUE_PRODUCER_BINDING": {
-            "name": "some-queue"
-          }
-        },
-        "r2_buckets": {
-          "R2_BINDING": {
-            "name": "some-bucket"
-          }
-        },
-        "service_bindings": {
-          "SERVICE_BINDING": {
-            "environment": "production",
-            "service": "example-worker"
-          }
-        }
+        "env_vars": null,
+        "fail_open": true,
+        "always_use_latest_compatibility_date": false,
+        "compatibility_date": "2026-02-24",
+        "compatibility_flags": [],
+        "build_image_major_version": 1,
+        "usage_model": "standard"
       }
     },
-    "domains": ["customdomain.com", "customdomain.org"],
-    "id": "7b162ea7-7367-4d67-bcde-1160995d5",
-    "latest_deployment": null,
-    "name": "NextJS Blog",
+    "latest_deployment": {
+      "id": "6ae23287-83c7-48a2-89df-89b2c24c7bf9",
+      "short_id": "6ae23287",
+      "project_id": "48ddb51b-4568-4f38-94de-10614c2fa270",
+      "project_name": "cloudflare-pages-action",
+      "environment": "preview",
+      "url": "https://6ae23287.cloudflare-pages-action-a5z.pages.dev",
+      "created_on": "2026-09-11T20:12:37.66251Z",
+      "modified_on": "2026-09-11T20:12:39.189069Z",
+      "latest_stage": {
+        "name": "deploy",
+        "started_on": null,
+        "ended_on": "2026-09-11T20:12:39.189069Z",
+        "status": "success"
+      },
+      "deployment_trigger": {
+        "type": "ad_hoc",
+        "metadata": {
+          "branch": "changeset-release/main",
+          "commit_hash": "cac0f48b4638206e882be5f469411f4f195a4a31",
+          "commit_message": "Merge 12b0fc191f6a6d3e1afcc7e9ff2993baca5f602a into c483daf8c62674f02887452731cf7b3be22c45d9",
+          "commit_dirty": true
+        }
+      },
+      "stages": [
+        {
+          "name": "queued",
+          "started_on": "2026-09-11T20:12:37.66251Z",
+          "ended_on": null,
+          "status": "active"
+        },
+        {
+          "name": "initialize",
+          "started_on": null,
+          "ended_on": null,
+          "status": "idle"
+        },
+        {
+          "name": "clone_repo",
+          "started_on": null,
+          "ended_on": null,
+          "status": "idle"
+        },
+        {
+          "name": "build",
+          "started_on": null,
+          "ended_on": null,
+          "status": "idle"
+        },
+        {
+          "name": "deploy",
+          "started_on": null,
+          "ended_on": "2026-09-11T20:12:39.189069Z",
+          "status": "success"
+        }
+      ],
+      "build_config": {
+        "build_command": null,
+        "destination_dir": null,
+        "build_caching": null,
+        "root_dir": null,
+        "web_analytics_tag": null,
+        "web_analytics_token": null
+      },
+      "env_vars": {},
+      "compatibility_date": "2026-02-24",
+      "compatibility_flags": [],
+      "build_image_major_version": 1,
+      "usage_model": "bundled",
+      "aliases": [
+        "https://changeset-release-main.cloudflare-pages-action-a5z.pages.dev"
+      ],
+      "is_skipped": false,
+      "production_branch": "main",
+      "uses_functions": true
+    },
+    "canonical_deployment": {
+      "id": "d53d0d07-537f-47a7-b6d1-90fc34727040",
+      "short_id": "d53d0d07",
+      "project_id": "48ddb51b-4568-4f38-94de-10614c2fa270",
+      "project_name": "cloudflare-pages-action",
+      "environment": "production",
+      "url": "https://d53d0d07.cloudflare-pages-action-a5z.pages.dev",
+      "created_on": "2026-09-11T20:11:26.488706Z",
+      "modified_on": "2026-09-11T20:11:28.042279Z",
+      "latest_stage": {
+        "name": "deploy",
+        "started_on": null,
+        "ended_on": "2026-09-11T20:11:28.042279Z",
+        "status": "success"
+      },
+      "deployment_trigger": {
+        "type": "ad_hoc",
+        "metadata": {
+          "branch": "main",
+          "commit_hash": "c483daf8c62674f02887452731cf7b3be22c45d9",
+          "commit_message": "ci: report vitest coverage on pull requests (#869)\r\n\r\nAdd @vitest/coverage-v8 and a `test:coverage` script. test.yml now runs\r\nthe tests with coverage and posts the report as a step summary and a PR\r\ncomment via davelosert/vitest-coverage-report-action (fork PRs get only\r\nthe summary, as their token can't comment).\r\n\r\nDocument how contributors and agents check a file's uncovered li\n\n[commit_message truncated]",
+          "commit_dirty": true
+        }
+      },
+      "stages": [
+        {
+          "name": "queued",
+          "started_on": "2026-09-11T20:11:26.488706Z",
+          "ended_on": null,
+          "status": "active"
+        },
+        {
+          "name": "initialize",
+          "started_on": null,
+          "ended_on": null,
+          "status": "idle"
+        },
+        {
+          "name": "clone_repo",
+          "started_on": null,
+          "ended_on": null,
+          "status": "idle"
+        },
+        {
+          "name": "build",
+          "started_on": null,
+          "ended_on": null,
+          "status": "idle"
+        },
+        {
+          "name": "deploy",
+          "started_on": null,
+          "ended_on": "2026-09-11T20:11:28.042279Z",
+          "status": "success"
+        }
+      ],
+      "build_config": {
+        "build_command": null,
+        "destination_dir": null,
+        "build_caching": null,
+        "root_dir": null,
+        "web_analytics_tag": null,
+        "web_analytics_token": null
+      },
+      "env_vars": {},
+      "compatibility_date": "2026-02-24",
+      "compatibility_flags": [],
+      "build_image_major_version": 1,
+      "usage_model": "bundled",
+      "aliases": null,
+      "is_skipped": false,
+      "production_branch": "main",
+      "uses_functions": true
+    },
+    "created_on": "2023-06-02T18:29:55.944449Z",
     "production_branch": "main",
-    "source": null,
-    "subdomain": "helloworld.pages.dev"
+    "production_script_name": "pages-worker--1132921-production",
+    "preview_script_name": "pages-worker--1132921-preview",
+    "uses_functions": true,
+    "framework": "",
+    "framework_version": ""
   },
-  "success": true
+  "success": true,
+  "errors": [],
+  "messages": []
 }

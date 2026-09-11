@@ -84,7 +84,7 @@ export const batchDelete: (
       deployment: {id: deployment.node_id}
     }
 
-    const {errors} = commentId
+    const {data, errors} = commentId
       ? yield* github.request({
           query: DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
           variables: {...variables, comment: {id: commentId}},
@@ -96,9 +96,9 @@ export const batchDelete: (
           options: {errorThrows: false}
         })
 
-    // An error without a `path` failed the whole request (e.g. a rate limit),
-    // so no mutation ran.
-    if (errors?.some(error => !error.path)) {
+    // No `data`, or an error without a `path`, means GitHub ran none of the
+    // mutations: a rate limit, or a request it rejected as invalid.
+    if (!data || errors?.some(error => !error.path)) {
       warning(
         `${PREFIX} Error deleting GitHub deployment: ${JSON.stringify(errors)}`
       )

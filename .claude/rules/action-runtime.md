@@ -13,7 +13,7 @@ paths:
 
 1. Read inputs. The event name comes from `GITHUB_EVENT_NAME` (validated against the generated `EVENT_NAMES` when the `GitHubContext` layer is built) and the payload from `GITHUB_EVENT_PATH`; `main.ts` then checks the supported set: `push`, `pull_request`, `workflow_dispatch`, `workflow_run`.
 2. Concurrently: check the GitHub Environment exists, resolve the PR to comment on, and run `npx wrangler@<v> pages deploy <directory> --project-name … --branch … --commit-dirty=true --commit-hash <sha>` in `working-directory`. If the environment check or the PR lookup fails, the deploy is interrupted and wrangler killed through the `AbortSignal` passed to `execFile`.
-3. Poll the deployment whose id wrangler wrote to `WRANGLER_OUTPUT_FILE_PATH` — or, for an old `wrangler-version` that writes none, the newest one matching the commit hash — every 1s for up to 10 min, until stage `deploy` is `success`/`active` or any stage is `failure`/`canceled`.
+3. Poll the deployment whose id wrangler wrote to `WRANGLER_OUTPUT_FILE_PATH` — or, for an old `wrangler-version` that writes none, the newest one matching the commit hash — every 1s for up to 10 min, until stage `deploy` is `success` (`active` means it is still running) or any stage is `failure`/`canceled`.
 4. Set outputs `id`, `url`, `environment`, `alias`, `wrangler` and the job summary. If the build ended `failure`/`canceled`, `createCloudflareDeployment` then fails with `CreateDeploymentError` (linking the Cloudflare build log), so steps 5 and 6 don't run.
 5. Post the PR comment.
 6. Create the GitHub Deployment (payload `{cloudflare: {id, accountId, projectName}, url, commentId}`) and a `SUCCESS` status with the dashboard log URL.
@@ -24,7 +24,7 @@ paths:
 ## Delete (`src/delete/main.ts`)
 
 1. List GitHub deployments for the context branch (plus optional `github-environment`), newest first; skip the first `keep-latest`.
-2. Run `batchDelete` (`src/common/batch-delete.ts`) on each, 5 at a time (`DELETE_CONCURRENCY` in `main.ts`): decode the payload → Cloudflare `DELETE …?force=true` (error code `8000009` "not found" counts as success) → one GraphQL request that sets status `INACTIVE`, then deletes the deployment and its PR comment. Mutation fields run in order and one error doesn't stop the next: a status error fails the row, later errors only warn. An error without a `path` means GitHub ran none of them (e.g. a rate limit) and fails the row too.
+2. Run `batchDelete` (`src/common/batch-delete.ts`) on each, 5 at a time (`DELETE_CONCURRENCY` in `main.ts`): decode the payload → Cloudflare `DELETE …?force=true` (error code `8000009` "not found" counts as success) → one GraphQL request that sets status `INACTIVE`, then deletes the deployment and its PR comment. Mutation fields run in order and one error doesn't stop the next: a status error fails the row, later errors only warn. A response without `data`, or an error without a `path`, means GitHub ran none of them (a rate limit, or a request rejected as invalid) and fails the row too.
 3. Write the job summary table. `batchDelete` returns failures as `success: false` rows rather than throwing; `run` then fails the step with `DeleteError` if any row failed.
 
 - **Payload versions** (`src/common/github/deployment/payload.ts`): V2 embeds the Cloudflare account and project; legacy V1 (`cloudflareId`) falls back to the `cloudflare-account-id` / `cloudflare-project-name` inputs. Keep V1 decoding — old deployments still exist in users' repos.

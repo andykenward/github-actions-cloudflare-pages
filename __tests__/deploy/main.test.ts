@@ -24,8 +24,20 @@ vi.mock(import('@/common/github/comment.js'))
 const REF_ID = 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk='
 
 /** `checkEnvironment`'s answer when the environment has not been created. */
-const ENVIRONMENT_MISSING: {data: GetEnvironmentAndRefQuery} = {
-  data: {repository: {environment: null, ref: {id: REF_ID}}}
+/** What GitHub returns for an environment that doesn't exist. */
+const ENVIRONMENT_MISSING: {
+  data: GetEnvironmentAndRefQuery
+  errors: {type: string; path: string[]; message: string}[]
+} = {
+  data: {repository: {environment: null, ref: {id: REF_ID}}},
+  errors: [
+    {
+      type: 'NOT_FOUND',
+      path: ['repository', 'environment'],
+      message:
+        'Could not resolve to an Environment with the name mock-github-environment.'
+    }
+  ]
 }
 
 describe('deploy', () => {

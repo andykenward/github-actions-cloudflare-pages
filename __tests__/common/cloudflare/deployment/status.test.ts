@@ -112,6 +112,52 @@ describe('statusCloudflareDeployment', () => {
     }).pipe(Effect.provide(CommonLayer))
   )
 
+  it.live('keeps polling while the deploy stage is still active', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // `active` means the stage is running, not that the deploy is live.
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS,
+        withLatestStage('deploy', 'active')
+      )
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS,
+        RESPONSE_DEPLOYMENTS
+      )
+
+      const {status} = yield* statusCloudflareDeployment(
+        API_ENDPOINT,
+        POLL_OPTIONS
+      )
+
+      expect(status).toBe('success')
+    }).pipe(Effect.provide(CommonLayer))
+  )
+
+  it.live('keeps polling after an earlier stage succeeds', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // e.g. `build` done, `deploy` not started: only `deploy` success is live.
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS,
+        withLatestStage('build', 'success')
+      )
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS,
+        RESPONSE_DEPLOYMENTS
+      )
+
+      const {status} = yield* statusCloudflareDeployment(
+        API_ENDPOINT,
+        POLL_OPTIONS
+      )
+
+      expect(status).toBe('success')
+    }).pipe(Effect.provide(CommonLayer))
+  )
+
   it.live('polls when the deployment is not registered yet', () =>
     Effect.gen(function* () {
       expect.assertions(2)
@@ -167,8 +213,7 @@ describe('statusCloudflareDeployment', () => {
 
   it.live.each([
     {stage: 'build', status: 'failure'},
-    {stage: 'build', status: 'canceled'},
-    {stage: 'deploy', status: 'active'}
+    {stage: 'build', status: 'canceled'}
   ] satisfies {stage: LatestStage['name']; status: LatestStage['status']}[])(
     'returns $status immediately without polling ($stage stage)',
     ({stage, status}) =>

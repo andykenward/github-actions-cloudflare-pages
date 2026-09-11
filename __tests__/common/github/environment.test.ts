@@ -129,6 +129,7 @@ describe('environment', () => {
         expected: `GitHub Environment: Errors - ${JSON.stringify(FORBIDDEN_ERRORS)}`
       },
       {
+        // What GitHub returns: `environment: null` and a NOT_FOUND error.
         title: 'a missing environment',
         response: [
           {
@@ -138,7 +139,15 @@ describe('environment', () => {
                 id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk='
               }
             }
-          }
+          },
+          [
+            {
+              type: 'NOT_FOUND',
+              path: ['repository', 'environment'],
+              message:
+                'Could not resolve to an Environment with the name mock-github-environment.'
+            }
+          ]
         ],
         expected: `GitHub Environment: Not created for mock-github-environment`
       },

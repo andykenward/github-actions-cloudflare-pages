@@ -58,8 +58,14 @@ describe('batchDelete', () => {
    */
   const interceptDeletes = ({
     errors,
-    withComment = true
-  }: {errors?: GitHubGraphQLError[]; withComment?: boolean} = {}): void => {
+    withComment = true,
+    withData = true
+  }: {
+    errors?: GitHubGraphQLError[]
+    withComment?: boolean
+    /** `false` for a request GitHub rejected before running any mutation. */
+    withData?: boolean
+  } = {}): void => {
     mockApi.interceptCloudflare<boolean>(
       MOCK_API_PATH_DEPLOYMENTS_DELETE,
       RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE,
@@ -91,12 +97,18 @@ describe('batchDelete', () => {
           query: DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
           variables: {...variables, comment: {id: 'IC_kwDOJn0nrM55B77z'}}
         },
-        {data: {...data, deleteIssueComment: {clientMutationId: null}}, errors}
+        withData
+          ? {
+              data: {...data, deleteIssueComment: {clientMutationId: null}},
+              errors
+            }
+          : // `GraphqlResponse` types `data` as always present; GitHub omits it.
+            ({errors} as never)
       )
     } else {
       mockApi.interceptGithub(
         {query: DeactivateAndDeleteGitHubDeploymentDocument, variables},
-        {data, errors}
+        withData ? {data, errors} : ({errors} as never)
       )
     }
   }
@@ -207,6 +219,34 @@ describe('batchDelete', () => {
       expect(core.warning).toHaveBeenCalledWith(
         `delete - Error deleting GitHub deployment: ${JSON.stringify(errors)}`
       )
+    }).pipe(Effect.provide(TestLayer))
+  )
+
+  it.effect('fails the row when GitHub rejects the request as invalid', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // A static validation error (e.g. a field GitHub removed): no `data`,
+      // no `type`, and a `path` that starts with the operation.
+      const errors = [
+        {
+          path: [
+            'mutation DeactivateAndDeleteGitHubDeploymentAndComment',
+            'deleteDeployment',
+            'noSuchField'
+          ],
+          extensions: {code: 'undefinedField'},
+          message:
+            "Field 'noSuchField' doesn't exist on type 'DeleteDeploymentPayload'"
+        }
+      ]
+      interceptDeletes({errors, withData: false})
+
+      expect(yield* batchDelete(DEPLOYMENT)).toStrictEqual({
+        ...ROW,
+        success: false,
+        error: 'Deleting GitHub deployment failed'
+      })
     }).pipe(Effect.provide(TestLayer))
   )
 
