@@ -1,142 +1,160 @@
-import {strict} from 'node:assert'
+import {setOutput} from '@actions/core'
+import * as Effect from 'effect/Effect'
+import * as Schema from 'effect/Schema'
 
-import {info, setOutput, summary} from '@actions/core'
+import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
+import {errorMessage} from '@/common/errors.js'
+import {GitHubContext} from '@/common/github/context.js'
+import {code, escapeHtml, githubUrl, link} from '@/common/html.js'
+import {CommonInputs} from '@/common/inputs.js'
+import {writeSummary} from '@/common/summary.js'
+import {logVerbatim} from '@/common/utils.js'
 
-import {useContext} from '@/common/github/context.js'
-import {useCommonInputs} from '@/common/inputs.js'
-import {execFileAsync} from '@/common/utils.js'
-
-import type {PagesDeployment} from '../types.js'
+import type {StatusOptions} from './status.js'
 
 import {getCloudflareDeploymentAlias} from './get.js'
 import {statusCloudflareDeployment} from './status.js'
+import {wranglerPagesDeploy} from './wrangler.js'
 
-export const CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN'
-export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
 const ERROR_KEY = `Create Deployment:`
 
-export const createCloudflareDeployment = async ({
+// oxlint-disable-next-line unicorn/throw-new-error
+class CreateDeploymentError extends Schema.TaggedError<CreateDeploymentError>()(
+  'CreateDeploymentError',
+  {
+    message: Schema.String,
+    cause: Schema.Defect()
+  }
+) {
+  static readonly from = (cause: unknown): CreateDeploymentError =>
+    new CreateDeploymentError({message: errorMessage(cause), cause})
+}
+
+export const createCloudflareDeployment = Effect.fn(
+  'createCloudflareDeployment'
+)(function* ({
   accountId,
   projectName,
   directory,
   workingDirectory = '',
-  branch: branchOverride
+  branch: branchOverride,
+  statusOptions
 }: {
   accountId: string
   projectName: string
   directory: string
   workingDirectory?: string
   branch?: string
-}): Promise<{
-  deployment: PagesDeployment
-  wranglerOutput: string
-}> => {
-  const {cloudflareApiToken, wranglerVersion} = useCommonInputs()
-
-  process.env[CLOUDFLARE_API_TOKEN] = cloudflareApiToken
-  process.env[CLOUDFLARE_ACCOUNT_ID] = accountId
-
-  const {repo, branch: contextBranch, sha: commitHash} = useContext()
+  /**
+   * Poll tuning, forwarded to `statusCloudflareDeployment`. Tests use it to
+   * poll without delay.
+   */
+  statusOptions?: StatusOptions
+}) {
+  const {cloudflareApiToken, wranglerVersion} = yield* CommonInputs
+  const {repo, branch: contextBranch, sha: commitHash} = yield* GitHubContext
 
   const branch = branchOverride ?? contextBranch
 
   if (branch === undefined) {
-    throw new Error(`${ERROR_KEY} branch is undefined`)
+    return yield* new CreateDeploymentError({
+      message: `${ERROR_KEY} branch is undefined`,
+      cause: undefined
+    })
   }
 
-  try {
-    const WRANGLER_VERSION = wranglerVersion
-    strict.ok(WRANGLER_VERSION, 'wrangler version should exist')
-    /**
-     * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
-     */
-    const {stdout} = await execFileAsync(
-      'npx',
-      [
-        `wrangler@${WRANGLER_VERSION}`,
-        'pages',
-        'deploy',
-        directory,
-        '--project-name',
-        projectName,
-        '--branch',
-        branch,
-        '--commit-dirty=true',
-        '--commit-hash',
-        commitHash
-      ],
-      {
-        env: process.env,
-        cwd: workingDirectory
-      }
-    )
-    /**
-     * Log out wrangler output.
-     */
-    info(stdout)
-    /**
-     * Get the latest deployment by commitHash and poll until required status.
-     */
-    const {deployment, status} = await statusCloudflareDeployment({
+  const {stdout, deploymentId} = yield* wranglerPagesDeploy({
+    wranglerVersion,
+    apiToken: cloudflareApiToken,
+    accountId,
+    projectName,
+    directory,
+    branch,
+    commitHash,
+    workingDirectory
+  })
+  /**
+   * Log out wrangler output.
+   */
+  logVerbatim(stdout)
+  /**
+   * Poll the deployment wrangler created until it reaches a terminal stage.
+   */
+  const {deployment, status} = yield* statusCloudflareDeployment(
+    {accountId, projectName, deploymentId},
+    statusOptions
+  )
+
+  setOutput('id', deployment.id)
+  setOutput('url', deployment.url)
+  setOutput('environment', deployment.environment)
+
+  const alias: string = getCloudflareDeploymentAlias(deployment)
+  setOutput('alias', alias)
+  setOutput('wrangler', stdout)
+
+  const {metadata} = deployment.deployment_trigger
+
+  yield* writeSummary(
+    summary =>
+      summary
+        .addHeading('Cloudflare Pages Deployment')
+        .addBreak()
+        .addTable([
+          [
+            {
+              data: 'Name',
+              header: true
+            },
+            {
+              data: 'Result',
+              header: true
+            }
+          ],
+          ['Environment:', escapeHtml(deployment.environment)],
+          [
+            'Branch:',
+            link(
+              githubUrl(repo.owner, repo.repo, 'tree', metadata.branch),
+              code(metadata.branch)
+            )
+          ],
+          [
+            'Commit Hash:',
+            link(
+              githubUrl(repo.owner, repo.repo, 'commit', metadata.commit_hash),
+              code(metadata.commit_hash)
+            )
+          ],
+          ['Commit Message:', escapeHtml(metadata.commit_message)],
+          [
+            'Status:',
+            `<strong>${escapeHtml(status.toUpperCase() || 'UNKNOWN')}</strong>`
+          ],
+          ['Preview URL:', link(deployment.url, escapeHtml(deployment.url))],
+          ['Branch Preview URL:', link(alias, escapeHtml(alias))],
+          ['Wrangler Output:', escapeHtml(stdout)]
+        ]),
+    CreateDeploymentError.from
+  )
+
+  /**
+   * A failed or canceled build used to fall through to the pull request
+   * comment and a `SUCCESS` GitHub Deployment, so a broken deploy looked green.
+   * Fail once the outputs and summary are written, so both still show it.
+   */
+  if (status === 'failure' || status === 'canceled') {
+    const outcome = status === 'failure' ? 'failed' : 'was canceled'
+    const logUrl = getCloudflareLogEndpoint({
+      id: deployment.id,
       accountId,
       projectName
     })
-
-    setOutput('id', deployment.id)
-    setOutput('url', deployment.url)
-    setOutput('environment', deployment.environment)
-
-    const alias: string = getCloudflareDeploymentAlias(deployment)
-    setOutput('alias', alias)
-    setOutput('wrangler', stdout)
-
-    await summary
-      .addHeading('Cloudflare Pages Deployment')
-      .addBreak()
-      .addTable([
-        [
-          {
-            data: 'Name',
-            header: true
-          },
-          {
-            data: 'Result',
-            header: true
-          }
-        ],
-        ['Environment:', deployment.environment],
-        [
-          'Branch:',
-          `<a href='https://github.com/${repo.owner}/${repo.repo}/tree/${deployment.deployment_trigger.metadata.branch}'><code>${deployment.deployment_trigger.metadata.branch}</code></a>`
-        ],
-        [
-          'Commit Hash:',
-          `<a href='https://github.com/${repo.owner}/${repo.repo}/commit/${deployment.deployment_trigger.metadata.commit_hash}'><code>${deployment.deployment_trigger.metadata.commit_hash}</code></a>`
-        ],
-        [
-          'Commit Message:',
-          deployment.deployment_trigger.metadata.commit_message
-        ],
-        ['Status:', `<strong>${status.toUpperCase() || `UNKNOWN`}</strong>`],
-        ['Preview URL:', `<a href='${deployment.url}'>${deployment.url}</a>`],
-        ['Branch Preview URL:', `<a href='${alias}'>${alias}</a>`],
-        ['Wrangler Output:', `${stdout}`]
-      ])
-      .write()
-
-    return {deployment, wranglerOutput: stdout}
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error
-    }
-    if (
-      error &&
-      typeof error === 'object' &&
-      'stderr' in error &&
-      typeof error.stderr === 'string'
-    ) {
-      throw new Error(error.stderr, {cause: error})
-    }
-    throw new Error(`${ERROR_KEY} unknown error`, {cause: error})
+    return yield* new CreateDeploymentError({
+      message: `${ERROR_KEY} the Cloudflare Pages build ${outcome}. Build log: ${logUrl}`,
+      cause: undefined
+    })
   }
-}
+
+  return {deployment, wranglerOutput: stdout}
+})

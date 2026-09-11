@@ -1,38 +1,55 @@
-import {strict as assert} from 'node:assert'
 import {existsSync, readFileSync} from 'node:fs'
 import {EOL} from 'node:os'
 
 import {debug, isDebug} from '@actions/core'
+import * as Option from 'effect/Option'
+import * as Schema from 'effect/Schema'
 
-import type {EventName} from '@/types/github/workflow-events.js'
-
+import {parseJson} from '@/common/json.js'
 import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 
 import type {WorkflowEventExtract, WorkflowEventPayload} from './types.js'
 
+const decodeEventName = Schema.decodeUnknownOption(Schema.Literals(EVENT_NAMES))
+
 /**
  * Loads the file from the runner that contains the full event webhook payload.
+ *
+ * The payload is *not* schema-validated: its shape is the union of every
+ * generated webhook type, which is far too large to restate by hand. Only the
+ * JSON parse is guarded, so a truncated or malformed file reports itself rather
+ * than surfacing as an opaque `SyntaxError`.
  */
 const getPayload = (): unknown => {
-  if (process.env.GITHUB_EVENT_PATH) {
-    if (existsSync(process.env.GITHUB_EVENT_PATH)) {
-      return JSON.parse(
-        readFileSync(process.env.GITHUB_EVENT_PATH, {encoding: 'utf8'})
-      )
-    } else {
-      const path = process.env.GITHUB_EVENT_PATH
-      process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${EOL}`)
-    }
+  const path = process.env.GITHUB_EVENT_PATH
+
+  if (!path) return
+
+  if (!existsSync(path)) {
+    process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${EOL}`)
+    return
   }
+
+  const parsed = parseJson(readFileSync(path, {encoding: 'utf8'}))
+
+  if (parsed === undefined) {
+    throw new Error(`GITHUB_EVENT_PATH ${path} is not valid JSON`)
+  }
+
+  return parsed
 }
 
 export const getWorkflowEvent = () => {
-  const eventName = process.env.GITHUB_EVENT_NAME as EventName
-
-  assert.ok(
-    EVENT_NAMES.includes(eventName),
-    `eventName ${eventName} is not supported`
+  const eventName = Option.getOrUndefined(
+    decodeEventName(process.env.GITHUB_EVENT_NAME)
   )
+
+  if (eventName === undefined) {
+    throw new Error(
+      `eventName ${process.env.GITHUB_EVENT_NAME} is not supported`
+    )
+  }
+
   /** Assume that the payload matches the eventName */
   const payload = getPayload() as WorkflowEventPayload<typeof eventName>
 

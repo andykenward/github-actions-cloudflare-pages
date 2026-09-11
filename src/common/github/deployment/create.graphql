@@ -1,0 +1,15 @@
+# @see https://docs.github.com/en/graphql/reference/mutations#createdeployment
+mutation CreateGitHubDeployment($input: CreateDeploymentInput!) {
+  createDeployment(input: $input) {
+    deployment {
+      id
+    }
+  }
+}
+
+# @see https://docs.github.com/en/graphql/reference/mutations#createdeploymentstatus
+mutation CreateGitHubDeploymentStatus($input: CreateDeploymentStatusInput!) {
+  createDeploymentStatus(input: $input) {
+    clientMutationId
+  }
+}

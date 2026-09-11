@@ -1,53 +1,93 @@
-import {setFailed} from '@actions/core'
+import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
+import * as Schema from 'effect/Schema'
 
 import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.js'
-import {addComment} from '@/common/github/comment.js'
-import {useContextEvent} from '@/common/github/context.js'
+import {addComment, pullRequestToComment} from '@/common/github/comment.js'
+import {GitHubContext} from '@/common/github/context.js'
 import {createGitHubDeployment} from '@/common/github/deployment/create.js'
 import {checkEnvironment} from '@/common/github/environment.js'
+import {CommonLayer} from '@/common/layer.js'
 
-import {useInputs} from './inputs.js'
+import {DeployInputs} from './inputs.js'
 
-export async function run() {
+/** Only these events carry the context the deploy needs. */
+const SUPPORTED_EVENT_NAMES = new Set([
+  'push',
+  'pull_request',
+  'workflow_dispatch',
+  'workflow_run'
+])
+
+/**
+ * `message` is what `Error.message` resolves to, so `index.ts` only has to
+ * surface it via `setFailed`.
+ */
+// oxlint-disable-next-line unicorn/throw-new-error
+class DeployError extends Schema.TaggedError<DeployError>()('DeployError', {
+  message: Schema.String
+}) {}
+
+/** Every service `run` needs, built from the action inputs and runner env. */
+export const DeployLayer = Layer.mergeAll(CommonLayer, DeployInputs.layer)
+
+/**
+ * Exported as an Effect value rather than a function: Effect is already lazy,
+ * so a zero-argument wrapper is pure indirection (`effecttsgo/lazy-effect`).
+ * Requires the services in `DeployLayer`; tests can provide their own.
+ */
+export const run = Effect.gen(function* () {
   const {
     cloudflareAccountId,
     cloudflareProjectName,
     directory,
     workingDirectory,
     branch
-  } = useInputs()
-  const {eventName} = useContextEvent()
+  } = yield* DeployInputs
 
-  /**
-   * Only support eventName push, pull_request, workflow_dispatch & workflow_run.
-   */
-  if (
-    eventName !== 'push' &&
-    eventName !== 'pull_request' &&
-    eventName !== 'workflow_dispatch' &&
-    eventName !== 'workflow_run'
-  ) {
-    setFailed(`GitHub Action event name '${eventName}' not supported.`)
-    return
+  const {event} = yield* GitHubContext
+
+  if (!SUPPORTED_EVENT_NAMES.has(event.eventName)) {
+    return yield* new DeployError({
+      message: `GitHub Action event name '${event.eventName}' not supported.`
+    })
   }
 
-  const {deployment: cloudflareDeployment, wranglerOutput} =
-    await createCloudflareDeployment({
-      accountId: cloudflareAccountId,
-      projectName: cloudflareProjectName,
-      directory,
-      workingDirectory,
-      branch
-    })
-  const [commentId, environment] = await Promise.all([
-    addComment(cloudflareDeployment, wranglerOutput),
-    checkEnvironment()
-  ])
+  /**
+   * The environment check and the pull request lookup don't need the
+   * deployment, so they run while wrangler does. Either failing interrupts the
+   * deploy, which kills wrangler — previously a missing environment failed the
+   * step only after a full upload, leaving an orphaned Cloudflare deployment.
+   */
+  const [
+    {deployment: cloudflareDeployment, wranglerOutput},
+    environment,
+    pullRequestId
+  ] = yield* Effect.all(
+    [
+      createCloudflareDeployment({
+        accountId: cloudflareAccountId,
+        projectName: cloudflareProjectName,
+        directory,
+        workingDirectory,
+        branch
+      }),
+      checkEnvironment,
+      pullRequestToComment
+    ],
+    {concurrency: 'unbounded'}
+  )
 
-  await createGitHubDeployment({
+  const commentId = yield* addComment(
+    pullRequestId,
+    cloudflareDeployment,
+    wranglerOutput
+  )
+
+  yield* createGitHubDeployment({
     cloudflareDeployment,
     commentId,
     cloudflareAccountId,
     environment
   })
-}
+})

@@ -10,7 +10,9 @@ Delete deployments created by [`andykenward/github-actions-cloudflare-pages`](..
 - Delete the Cloudflare Pages deployment.
 - Mark the GitHub deployment status `INACTIVE` once the Cloudflare Pages deployment is deleted.
 - Delete the GitHub deployment and its related comment.
+- Delete up to 5 deployments at a time.
 - Write a [job summary] of what was deleted.
+- Fail the step if any deployment could not be deleted. The rest are still deleted, and the job summary lists which failed and why.
 
 ## Quick start
 

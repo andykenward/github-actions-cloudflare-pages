@@ -1,116 +1,116 @@
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {it} from '@effect/vitest'
+import * as Effect from 'effect/Effect'
+import {describe, expect, vi} from 'vitest'
 
+import {GitHubContext} from '@/common/github/context.js'
 import {stubTestEnvVars} from '@/tests/helpers/env.js'
 
-describe('useContext', () => {
-  beforeEach(() => {
-    vi.resetModules()
-  })
+/** Builds the layer when run, so env stubbed beforehand is picked up. */
+const context = Effect.gen(function* () {
+  return yield* GitHubContext
+}).pipe(Effect.provide(GitHubContext.layer))
 
-  test('returns context for `pull_request`', async () => {
-    expect.assertions(8)
+describe(GitHubContext, () => {
+  it.effect('returns context for `pull_request`', () =>
+    Effect.gen(function* () {
+      expect.assertions(8)
 
-    const {useContext} = await import('@/common/github/context.js')
+      const {repo, event, branch, sha, graphqlEndpoint, ref} = yield* context
 
-    const {repo, event, branch, sha, graphqlEndpoint, ref} = useContext()
+      /** Repo */
+      expect(repo).toMatchInlineSnapshot(`
+        {
+          "node_id": "MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=",
+          "owner": "andykenward",
+          "repo": "github-actions-cloudflare-pages",
+        }
+      `)
 
-    /** Repo */
-    expect(repo).toMatchInlineSnapshot(`
-      {
-        "node_id": "MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=",
-        "owner": "andykenward",
-        "repo": "github-actions-cloudflare-pages",
-      }
-    `)
+      /** Event */
+      expect(event.payload).toBeDefined()
+      expect(event.payload).toMatchSnapshot()
+      expect(event.eventName).toBe('pull_request')
 
-    /** Event */
-    expect(event.payload).toBeDefined()
-    expect(event.payload).toMatchSnapshot()
-    expect(event.eventName).toBe('pull_request')
-
-    expect(branch).toBe(`mock-github-head-ref`)
-    expect(sha).toBe(`mock-github-sha`)
-    expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
-    expect(ref).toBe(`mock-github-head-ref`)
-  })
-
-  test('returns context for `workflow_dispatch`', async () => {
-    expect.assertions(8)
-
-    stubTestEnvVars('workflow_dispatch')
-
-    vi.stubEnv('GITHUB_HEAD_REF', '')
-
-    const {useContext} = await import('@/common/github/context.js')
-
-    const {repo, event, branch, sha, graphqlEndpoint, ref} = useContext()
-
-    expect(repo).toStrictEqual({
-      node_id: 'MDEwOlJlcG9zaXRvcnkxNzI3MzA1MQ==',
-      owner: 'andykenward',
-      repo: 'github-actions-cloudflare-pages'
+      expect(branch).toBe(`mock-github-head-ref`)
+      expect(sha).toBe(`mock-github-sha`)
+      expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
+      expect(ref).toBe(`mock-github-head-ref`)
     })
+  )
 
-    expect(event.payload).toBeDefined()
-    expect(event.payload).toMatchSnapshot()
-    expect(event.eventName).toBe('workflow_dispatch')
+  it.effect('returns context for `workflow_dispatch`', () =>
+    Effect.gen(function* () {
+      expect.assertions(8)
 
-    expect(branch).toBe(`mock-github-ref-name`)
-    expect(sha).toBe(`mock-github-sha`)
-    expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
-    expect(ref).toBe(`refs/heads/master`)
+      stubTestEnvVars('workflow_dispatch')
 
-    vi.unstubAllEnvs()
-  })
+      vi.stubEnv('GITHUB_HEAD_REF', '')
 
-  test('throws when GITHUB_REPOSITORY is missing', async () => {
-    expect.assertions(1)
+      const {repo, event, branch, sha, graphqlEndpoint, ref} = yield* context
 
-    vi.stubEnv('GITHUB_REPOSITORY', '')
+      expect(repo).toStrictEqual({
+        node_id: 'MDEwOlJlcG9zaXRvcnkxNzI3MzA1MQ==',
+        owner: 'andykenward',
+        repo: 'github-actions-cloudflare-pages'
+      })
 
-    const {useContext} = await import('@/common/github/context.js')
+      expect(event.payload).toBeDefined()
+      expect(event.payload).toMatchSnapshot()
+      expect(event.eventName).toBe('workflow_dispatch')
 
-    expect(() => useContext()).toThrow(
-      "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-    )
+      expect(branch).toBe(`mock-github-ref-name`)
+      expect(sha).toBe(`mock-github-sha`)
+      expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
+      expect(ref).toBe(`refs/heads/master`)
+    })
+  )
 
-    vi.unstubAllEnvs()
-  })
+  it.effect('fails when GITHUB_REPOSITORY is missing', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
 
-  test('throws when GITHUB_REPOSITORY has no slash', async () => {
-    expect.assertions(1)
+      vi.stubEnv('GITHUB_REPOSITORY', '')
 
-    vi.stubEnv('GITHUB_REPOSITORY', 'noslash')
+      const error = yield* Effect.flip(context)
 
-    const {useContext} = await import('@/common/github/context.js')
+      expect(error.message).toBe(
+        "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+      )
+    })
+  )
 
-    expect(() => useContext()).toThrow(
-      "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-    )
+  it.effect('fails when GITHUB_REPOSITORY has no slash', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
 
-    vi.unstubAllEnvs()
-  })
+      vi.stubEnv('GITHUB_REPOSITORY', 'noslash')
 
-  test('returns context for `workflow_run`', async () => {
-    expect.assertions(9)
+      const error = yield* Effect.flip(context)
 
-    stubTestEnvVars('workflow_run')
+      expect(error.message).toBe(
+        "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+      )
+    })
+  )
 
-    const {useContext} = await import('@/common/github/context.js')
+  it.effect('returns context for `workflow_run`', () =>
+    Effect.gen(function* () {
+      expect.assertions(9)
 
-    const {event, branch, sha, graphqlEndpoint, ref} = useContext()
+      stubTestEnvVars('workflow_run')
 
-    expect(event.payload).toBeDefined()
-    expect(event.eventName).toBe('workflow_run')
+      const {event, branch, sha, graphqlEndpoint, ref} = yield* context
 
-    expect(branch).toBe('master')
-    expect(branch).not.toBe(`mock-github-head-ref`)
-    expect(sha).toBe('3484a3fb816e0859fd6e1cea078d76385ff50625')
-    expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
-    expect(ref).toBe('master')
-    expect(ref).not.toBe(`mock-github-head-ref`)
-    expect(sha).not.toBe(`mock-github-sha`)
+      expect(event.payload).toBeDefined()
+      expect(event.eventName).toBe('workflow_run')
 
-    vi.unstubAllEnvs()
-  })
+      expect(branch).toBe('master')
+      expect(branch).not.toBe(`mock-github-head-ref`)
+      expect(sha).toBe('3484a3fb816e0859fd6e1cea078d76385ff50625')
+      expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
+      expect(ref).toBe('master')
+      expect(ref).not.toBe(`mock-github-head-ref`)
+      expect(sha).not.toBe(`mock-github-sha`)
+    })
+  )
 })

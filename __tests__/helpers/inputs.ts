@@ -1,6 +1,6 @@
 import {vi} from 'vitest'
 
-import {INPUT_KEYS_REQUIRED} from '@/input-keys'
+import {INPUT_KEYS_KEEP_LATEST, INPUT_KEYS_REQUIRED} from '@/input-keys'
 
 const INPUT_KEY = `INPUT_`
 
@@ -14,10 +14,18 @@ export const stubInputEnv = (input: string, value?: string): void => {
 }
 
 /**
+ * Inputs whose mock value cannot be the generic `mock-<name>` string because
+ * they are parsed as something other than a free-form string.
+ */
+const TYPED_INPUT_VALUES: Partial<Record<string, string>> = {
+  [INPUT_KEYS_KEEP_LATEST]: '0'
+}
+
+/**
  * Set all required GitHub Action inputs to mock values.
  */
 export const stubRequiredInputEnv = () => {
   for (const input of INPUT_KEYS_REQUIRED) {
-    stubInputEnv(input)
+    stubInputEnv(input, TYPED_INPUT_VALUES[input])
   }
 }

@@ -1,4 +1,4 @@
-import type {getGitHubDeployments} from '@/common/github/deployment/get.js'
+import type {GitHubDeployment} from '@/common/github/deployment/get.js'
 
 import {
   MOCK_ACCOUNT_ID,
@@ -6,9 +6,7 @@ import {
   MOCK_PROJECT_NAME
 } from '@/tests/helpers/api.js'
 
-export const DEPLOYMENT: Awaited<
-  ReturnType<typeof getGitHubDeployments>
->[number] = {
+export const DEPLOYMENT: GitHubDeployment = {
   url: 'https://api.github.com/repos/andykenward/github-actions-cloudflare-pages/deployments/1423939219',
   id: 1423939219,
   node_id: 'DE_kwDOJn0nrM5U35aT',

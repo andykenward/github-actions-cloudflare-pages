@@ -1,13 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/deploy/index.ts", "src/delete/index.ts"],
-  "ignore": [
-    "__generated__/**",
-    "dist/**",
-    "example/**",
-    "repos/**",
-    "src/**/fragments.ts"
-  ],
+  "ignore": ["__generated__/**", "dist/**", "example/**", "repos/**"],
   "ignoreBinaries": ["act"],
-  "ignoreDependencies": ["@octokit/openapi-webhooks", "graphql-tag", "wrangler"]
+  "ignoreDependencies": [
+    "@effect/language-service",
+    "@octokit/openapi-webhooks",
+    "graphql-tag",
+    "wrangler"
+  ]
 }

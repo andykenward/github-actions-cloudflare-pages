@@ -1,6 +1,10 @@
 {
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "unicorn", "import"],
+  "$schema": "./node_modules/@effect/tsgo/oxlint-schema.json",
+  "extends": [
+    "./node_modules/@effect/tsgo/oxlint-presets/correctness.json",
+    "./node_modules/@effect/tsgo/oxlint-presets/antipattern.json"
+  ],
+  "plugins": ["typescript", "unicorn", "import", "effecttsgo"],
   "categories": {
     "correctness": "off"
   },
@@ -314,7 +318,17 @@
         "vitest/no-large-snapshots": "warn",
         "vitest/no-mocks-import": "off",
         "vitest/no-restricted-matchers": "warn",
-        "vitest/no-standalone-expect": "warn",
+        "vitest/no-standalone-expect": [
+          "warn",
+          {
+            "additionalTestBlockFunctions": [
+              "it.effect",
+              "it.live",
+              "it.effect.each",
+              "it.live.each"
+            ]
+          }
+        ],
         "vitest/no-test-prefixes": "warn",
         "vitest/no-test-return-statement": "warn",
         "vitest/no-unneeded-async-expect-function": "warn",
@@ -349,7 +363,11 @@
         "vitest/valid-expect": "warn",
         "unicorn/numeric-separators-style": "off",
         "unicorn/no-null": "off",
-        "@typescript-eslint/unbound-method": "off"
+        "@typescript-eslint/unbound-method": "off",
+        // Each test is its own entry point: it provides the layers it needs,
+        // sometimes a stub ahead of the real layer to take its place.
+        "effecttsgo/strict-effect-provide": "off",
+        "effecttsgo/multiple-effect-provide": "off"
       },
       "plugins": ["vitest"]
     },

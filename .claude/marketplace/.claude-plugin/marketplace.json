@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "cloudflare-pages-action",
+  "description": "Project-local Claude Code plugins for this repo",
+  "owner": {"name": "Andy Kenward"},
+  "plugins": [
+    {
+      "name": "typescript-7-lsp",
+      "source": "./typescript-7-lsp",
+      "description": "TypeScript 7 (typescript-go) language server from the project's node_modules"
+    }
+  ]
+}

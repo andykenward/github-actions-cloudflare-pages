@@ -1,5 +1,10 @@
 import {debug, isDebug} from '@actions/core'
+import * as Context from 'effect/Context'
+import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
+import * as Schema from 'effect/Schema'
 
+import {errorMessage} from '../errors.js'
 import {raise} from '../utils.js'
 import {getWorkflowEvent} from './workflow-event/workflow-event.js'
 
@@ -12,7 +17,7 @@ interface Repo {
   node_id: string
 }
 
-interface Context {
+interface GitHubContextShape {
   /**
    * The event that triggered the workflow run.
    */
@@ -41,28 +46,22 @@ interface Context {
   ref: string
 }
 
-const getGitHubContext = (): Context => {
+const getGitHubContext = (): GitHubContextShape => {
   const event = getWorkflowEvent()
 
   const repo = ((): Repo => {
-    const [
-      owner = raise(
-        "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-      ),
-      repo = raise(
+    const [owner, repo] = process.env.GITHUB_REPOSITORY?.split('/') ?? []
+
+    if (!owner || !repo) {
+      return raise(
         "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
       )
-    ] = process.env.GITHUB_REPOSITORY
-      ? process.env.GITHUB_REPOSITORY.split('/')
-      : raise(
-          "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-        )
+    }
 
     const node_id =
-      'repository' in event.payload
-        ? event.payload.repository?.node_id ||
-          raise('context.repo: no repo node_id in payload')
-        : raise('context.repo: no repo node_id in payload')
+      ('repository' in event.payload
+        ? event.payload.repository?.node_id
+        : undefined) || raise('context.repo: no repo node_id in payload')
 
     return {owner, repo, node_id}
   })()
@@ -92,7 +91,7 @@ const getGitHubContext = (): Context => {
 
   const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
 
-  const ref = ((): Context['ref'] => {
+  const ref = ((): GitHubContextShape['ref'] => {
     /**
      * Keep ref aligned with branch for workflow_run so this action resolves
      * a consistent source branch/commit pair for deployments and comments.
@@ -139,11 +138,29 @@ const getGitHubContext = (): Context => {
   return context
 }
 
-type UseContext = ReturnType<typeof getGitHubContext>
+// oxlint-disable-next-line unicorn/throw-new-error
+class GitHubContextError extends Schema.TaggedError<GitHubContextError>()(
+  'GitHubContextError',
+  {
+    message: Schema.String,
+    cause: Schema.Defect()
+  }
+) {}
 
-let _context: UseContext
-export const useContext = (): UseContext => {
-  return _context ?? (_context = getGitHubContext())
+/**
+ * The workflow run: its event payload, repository, branch and commit, read
+ * from the runner's `GITHUB_*` environment variables once per run.
+ */
+export class GitHubContext extends Context.Service<
+  GitHubContext,
+  GitHubContextShape
+>()('github-actions-cloudflare-pages/common/github/context/GitHubContext') {
+  static readonly layer = Layer.effect(
+    GitHubContext,
+    Effect.try({
+      try: () => GitHubContext.of(getGitHubContext()),
+      catch: cause =>
+        new GitHubContextError({message: errorMessage(cause), cause})
+    })
+  )
 }
-
-export const useContextEvent = (): UseContext['event'] => useContext().event

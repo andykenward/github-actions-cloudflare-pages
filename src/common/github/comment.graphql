@@ -1,0 +1,35 @@
+# Posts the deployment comment; `input.subjectId` is the pull request node id.
+mutation AddPullRequestComment($input: AddCommentInput!) {
+  addComment(input: $input) {
+    commentEdge {
+      node {
+        id
+      }
+    }
+  }
+}
+
+# The node id of pull request `number`, from the `pr-number` input or a
+# `workflow_run` payload.
+query GetPullRequestId($owner: String!, $repo: String!, $number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $number) {
+      id
+    }
+  }
+}
+
+# The open pull request whose head is `headRefName`, for `workflow_dispatch`.
+query GetOpenPullRequestByBranch(
+  $owner: String!
+  $repo: String!
+  $headRefName: String!
+) {
+  repository(owner: $owner, name: $repo) {
+    pullRequests(first: 1, states: [OPEN], headRefName: $headRefName) {
+      nodes {
+        id
+      }
+    }
+  }
+}

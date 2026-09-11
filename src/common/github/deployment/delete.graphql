@@ -1,0 +1,32 @@
+# Marks the deployment INACTIVE, then deletes it, in one request. Mutation
+# fields run in order, so the status is set before the delete; an error in one
+# field does not stop the next.
+# @see https://docs.github.com/en/graphql/reference/mutations#deletedeployment
+mutation DeactivateAndDeleteGitHubDeployment(
+  $status: CreateDeploymentStatusInput!
+  $deployment: DeleteDeploymentInput!
+) {
+  createDeploymentStatus(input: $status) {
+    clientMutationId
+  }
+  deleteDeployment(input: $deployment) {
+    clientMutationId
+  }
+}
+
+# As DeactivateAndDeleteGitHubDeployment, also deleting its PR comment.
+mutation DeactivateAndDeleteGitHubDeploymentAndComment(
+  $status: CreateDeploymentStatusInput!
+  $deployment: DeleteDeploymentInput!
+  $comment: DeleteIssueCommentInput!
+) {
+  createDeploymentStatus(input: $status) {
+    clientMutationId
+  }
+  deleteDeployment(input: $deployment) {
+    clientMutationId
+  }
+  deleteIssueComment(input: $comment) {
+    clientMutationId
+  }
+}

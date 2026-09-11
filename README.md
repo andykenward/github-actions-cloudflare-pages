@@ -6,9 +6,10 @@ Deploy your build output to [Cloudflare Pages] with [Wrangler], while tracking e
 
 **Features**
 
-- Deploy to [Cloudflare Pages].
+- Deploy to [Cloudflare Pages] and wait for the deployment to finish — the step fails if the build fails or isn't live within 10 minutes.
 - Track releases with [GitHub Environments] & [GitHub Deployment].
 - Comment the deployment URL on pull requests.
+- Write a [job summary] of each deployment.
 - Delete old deployments with the companion [`/delete`](./delete/README.md) action.
 - Run Wrangler from a subfolder via the `working-directory` input — handy for monorepos where `functions` isn't in the repo root.
 
@@ -105,20 +106,42 @@ permissions:
   pull-requests: write
 ```
 
+## How it works
+
+1. **Checks while uploading.** While Wrangler uploads `directory`, the action checks that `github-environment` exists and finds the pull request to comment on. If either fails, the upload is stopped and the step fails straight away, so no orphaned Cloudflare deployment is left behind.
+2. **Waits for Cloudflare.** It polls the deployment Wrangler just created every second, for up to 10 minutes, until it's live. A build still running after 10 minutes fails the step. So does a failed or canceled build, once the outputs and job summary are written: the error links to the Cloudflare build log, and no pull request comment or GitHub Deployment is created.
+3. **Reports.** It sets the [outputs](#outputs) and writes a [job summary] with the environment, branch, commit, status, URLs and Wrangler output.
+4. **Comments** on the pull request, if there is one — see [below](#which-pull-request-gets-the-comment).
+5. **Records a [GitHub Deployment]** in `github-environment`, with a success status that links to the deployment URL and its Cloudflare build log.
+
+### Supported events
+
+`push`, `pull_request`, `workflow_dispatch` and `workflow_run`. Any other event fails the step.
+
+### Which pull request gets the comment
+
+| Trigger                           | Pull request commented on                                                                                                                                                                                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pr-number` input set (any event) | That pull request. The step fails if the value isn't a valid pull request number.                                                                                                                                                                             |
+| `pull_request`                    | The event's pull request. No comment when the pull request is `closed`.                                                                                                                                                                                       |
+| `workflow_dispatch`               | The first open pull request whose head is the run's branch. The step fails if there is none.                                                                                                                                                                  |
+| `workflow_run`                    | The one pull request in the event's `pull_requests` that matches its head branch and commit. The step fails if there are none or several. For pull requests from forks the list is always empty, so [set `pr-number`](#fork-pull-requests-with-workflow_run). |
+| `push`                            | None.                                                                                                                                                                                                                                                         |
+
 ## Inputs
 
-| Input                     | Required | Description                                                                                                                   |
-| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `cloudflare-api-token`    | yes      | Cloudflare API Token                                                                                                          |
-| `cloudflare-account-id`   | yes      | Cloudflare Account ID                                                                                                         |
-| `cloudflare-project-name` | yes      | Cloudflare Pages project to upload to                                                                                         |
-| `directory`               | yes      | Directory of static files to upload                                                                                           |
-| `github-token`            | yes      | Github API key, make sure to add the required permissions for this action.                                                    |
-| `github-environment`      | yes      | GitHub environment to deploy to. You need to manually create this for the github repo                                         |
-| `pr-number`               | no       | GitHub pull request number to comment on. If not set, the action auto-detects from the event payload.                         |
-| `working-directory`       | no       | Directory to run wrangler cli from                                                                                            |
-| `wrangler-version`        | no       | Wrangler version to use. Otherwise a default version from the action will be used.                                            |
-| `branch`                  | no       | Branch name to use for Cloudflare Pages deployment. If not set, the branch is automatically detected from the GitHub context. |
+| Input                     | Required | Description                                                                                                                                                                                  |
+| ------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloudflare-api-token`    | yes      | Cloudflare API token with permission to edit Cloudflare Pages. It's passed only to the Wrangler process and masked in logs, even when it doesn't come from `secrets`.                        |
+| `cloudflare-account-id`   | yes      | Cloudflare account ID.                                                                                                                                                                       |
+| `cloudflare-project-name` | yes      | Cloudflare Pages project to upload to.                                                                                                                                                       |
+| `directory`               | yes      | Directory of static files to upload.                                                                                                                                                         |
+| `github-token`            | yes      | GitHub token with the [required permissions](#3-permissions). Masked in logs, even when it doesn't come from `secrets`.                                                                      |
+| `github-environment`      | yes      | [GitHub Environment](#2-github-environments-required) to record the deployment in. It must already exist.                                                                                    |
+| `pr-number`               | no       | Pull request number to comment on. If not set, it's detected from the event — see [Which pull request gets the comment](#which-pull-request-gets-the-comment).                               |
+| `working-directory`       | no       | Directory to run Wrangler from.                                                                                                                                                              |
+| `wrangler-version`        | no       | Wrangler version to run. Defaults to the version this release of the action pins. Versions too old to report the new deployment's id fall back to the most recent deployment for the commit. |
+| `branch`                  | no       | Branch name for the Cloudflare Pages deployment. If not set, it's detected from the GitHub context.                                                                                          |
 
 ## Outputs
 
@@ -139,7 +162,7 @@ Ready-to-use GitHub Workflow Templates live in [.github/workflow-templates/](.gi
 
 ### Fork pull requests with `workflow_run`
 
-Pull requests from forks don't have access to secrets in the initial `pull_request` workflow. Use a second workflow triggered by `workflow_run` to deploy from the original repository context after the first workflow succeeds, and set the `pr-number` input so the action can find the right pull request to comment on.
+Pull requests from forks don't have access to secrets in the initial `pull_request` workflow. Use a second workflow triggered by `workflow_run` to deploy from the original repository context after the first workflow succeeds, and set the `pr-number` input. For pull requests from forks, `workflow_run` lists no pull requests, so without `pr-number` the action can't find the pull request and the step fails.
 
 ```yaml
 name: Deploy PR Preview (Fork Safe)
@@ -262,26 +285,12 @@ The GitHub Deployment payload this action creates includes the Cloudflare metada
 
 GitHub provides two debug log levels — see [Action Debugging]. Enable them by [setting a repository secret]:
 
-- **Step debug logs**: set `ACTIONS_STEP_DEBUG` to `true`. Debug events then appear in the [downloaded logs] and [web logs].
+- **Step debug logs**: set `ACTIONS_STEP_DEBUG` to `true`. Debug events then appear in the [downloaded logs] and [web logs]. When a step fails, its annotation carries a one-line message; the full error (stack trace and nested causes) is only logged at this level.
 - **Runner diagnostic logs**: set `ACTIONS_RUNNER_DEBUG` to `true`. Extra diagnostic files then appear in the `runner-diagnostic-logs` folder of the [log archive][downloaded logs].
 
-## Development
+## Contributing
 
-### Vendored Effect source
-
-The [Effect](https://effect.website/) source is vendored as a [git subtree](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging#_subtree_merge) at `repos/effect/`, so its source, tests and docs are available offline — for reading, grepping and as reference material for AI agents. It is read-only: nothing in `src/` imports from `repos/`. Every tool in the repo is configured to ignore `repos/` — TypeScript, Vitest, oxfmt, oxlint, knip, prek, zizmor, CodeQL, git diffs and the VS Code editor — so vendoring it does not slow down or pollute the build.
-
-To update it, run this from the repository root with a clean working tree:
-
-```sh
-git subtree pull \
-  --prefix=repos/effect \
-  https://github.com/Effect-TS/effect.git \
-  effect@<version> \
-  --squash
-```
-
-`--squash` collapses the upstream history into a single commit, which `git subtree` then joins to this repository with a merge commit. Merge a PR that adds or pulls the subtree with **Create a merge commit** — squash or rebase merging drops that merge and the `git-subtree-split` trailer the next pull depends on.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setting up the repository, running the checks and opening a pull request.
 
 ## Upgrading
 
@@ -290,9 +299,9 @@ Upgrading from an older version? Check [CHANGELOG.md](./CHANGELOG.md) for breaki
 ## Related docs
 
 - [GitHub Actions variables](https://docs.github.com/en/actions/learn-github-actions/variables) and [default environment variables](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables)
-- [TypeScript ESM Node](https://www.typescriptlang.org/docs/handbook/esm-node.html)
 
 [Cloudflare Pages]: https://pages.cloudflare.com/
+[job summary]: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary
 [Wrangler]: https://developers.cloudflare.com/workers/wrangler/
 [pull request]: https://docs.github.com/en/pull-requests
 [GitHub Environments]: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment

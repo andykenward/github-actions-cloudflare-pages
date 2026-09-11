@@ -1,0 +1,18 @@
+# The GitHub Environment to deploy to, and the ref the deployment is created
+# on. The action cannot create environments, so a missing one is an error.
+query GetEnvironmentAndRef(
+  $owner: String!
+  $repo: String!
+  $environmentName: String!
+  $qualifiedName: String!
+) {
+  repository(owner: $owner, name: $repo) {
+    environment(name: $environmentName) {
+      id
+      name
+    }
+    ref(qualifiedName: $qualifiedName) {
+      id
+    }
+  }
+}

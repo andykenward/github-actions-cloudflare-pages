@@ -1,26 +1,27 @@
-import {useCommonInputs} from '@/common/inputs.js'
+import * as Effect from 'effect/Effect'
 
-import type {PaginateResponse} from '../api/paginate.js'
+import {CommonInputs} from '@/common/inputs.js'
 
-import {paginate} from '../api/paginate.js'
-import {useContext} from '../context.js'
+import {GitHubRestApi} from '../api/paginate.js'
+import {GitHubContext} from '../context.js'
 
 /**
  * Get all github deployments from the current repo ref
  */
-export const getGitHubDeployments = async (): Promise<
-  PaginateResponse<'GET /repos/{owner}/{repo}/deployments'>
-> => {
-  const {gitHubEnvironment} = useCommonInputs()
-  const {repo, branch} = useContext()
+export const getGitHubDeployments = Effect.gen(function* () {
+  const {gitHubEnvironment} = yield* CommonInputs
+  const {repo, branch} = yield* GitHubContext
+  const github = yield* GitHubRestApi
 
-  const deployments = await paginate('GET /repos/{owner}/{repo}/deployments', {
+  return yield* github.paginate('GET /repos/{owner}/{repo}/deployments', {
     owner: repo.owner,
     repo: repo.repo,
     ref: branch,
     per_page: 100,
     environment: gitHubEnvironment
   })
+})
 
-  return deployments
-}
+export type GitHubDeployment = Effect.Success<
+  typeof getGitHubDeployments
+>[number]

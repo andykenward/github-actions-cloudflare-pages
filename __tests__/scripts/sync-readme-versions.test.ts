@@ -1,16 +1,16 @@
 import {afterEach, beforeEach, describe, expect, test} from 'vitest'
 
 import type {
-  LatestReleaseQuery,
-  LatestReleaseQueryVariables
+  GetLatestReleaseQuery,
+  GetLatestReleaseQueryVariables
 } from '@/gql/graphql.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
+import {GetLatestReleaseDocument} from '@/gql/graphql.js'
 import {setMockApi} from '@/tests/helpers/api.js'
 
 import {
   getLatestRelease,
-  QueryLatestRelease,
   replaceVersionReferences
 } from '../../bin/sync-readme-versions.js'
 
@@ -19,7 +19,7 @@ const VERSION = '3.4.0'
 const VARIABLES = {
   owner: 'andykenward',
   repo: 'github-actions-cloudflare-pages'
-} as const satisfies LatestReleaseQueryVariables
+} as const satisfies GetLatestReleaseQueryVariables
 
 describe(replaceVersionReferences, () => {
   describe('main action', () => {
@@ -129,8 +129,11 @@ describe(getLatestRelease, () => {
   })
 
   test('returns sha and version from GraphQL response', async () => {
-    mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
-      {query: QueryLatestRelease, variables: VARIABLES},
+    mockApi.interceptGithub<
+      GetLatestReleaseQuery,
+      GetLatestReleaseQueryVariables
+    >(
+      {query: GetLatestReleaseDocument, variables: VARIABLES},
       {
         data: {
           repository: {
@@ -147,8 +150,11 @@ describe(getLatestRelease, () => {
   })
 
   test('strips v prefix from tagName', async () => {
-    mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
-      {query: QueryLatestRelease, variables: VARIABLES},
+    mockApi.interceptGithub<
+      GetLatestReleaseQuery,
+      GetLatestReleaseQueryVariables
+    >(
+      {query: GetLatestReleaseDocument, variables: VARIABLES},
       {
         data: {
           repository: {
@@ -163,9 +169,12 @@ describe(getLatestRelease, () => {
   })
 
   test('throws on non-ok HTTP response', async () => {
-    mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
-      {query: QueryLatestRelease, variables: VARIABLES},
-      {data: {} as LatestReleaseQuery},
+    mockApi.interceptGithub<
+      GetLatestReleaseQuery,
+      GetLatestReleaseQueryVariables
+    >(
+      {query: GetLatestReleaseDocument, variables: VARIABLES},
+      {data: {} as GetLatestReleaseQuery},
       401
     )
 
@@ -175,10 +184,13 @@ describe(getLatestRelease, () => {
   })
 
   test('throws when GraphQL errors are present', async () => {
-    mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
-      {query: QueryLatestRelease, variables: VARIABLES},
+    mockApi.interceptGithub<
+      GetLatestReleaseQuery,
+      GetLatestReleaseQueryVariables
+    >(
+      {query: GetLatestReleaseDocument, variables: VARIABLES},
       {
-        data: {} as LatestReleaseQuery,
+        data: {} as GetLatestReleaseQuery,
         errors: [{type: 'NOT_FOUND', message: 'Not found'}]
       }
     )
@@ -187,8 +199,11 @@ describe(getLatestRelease, () => {
   })
 
   test('throws when repository is missing from response', async () => {
-    mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
-      {query: QueryLatestRelease, variables: VARIABLES},
+    mockApi.interceptGithub<
+      GetLatestReleaseQuery,
+      GetLatestReleaseQueryVariables
+    >(
+      {query: GetLatestReleaseDocument, variables: VARIABLES},
       {data: {repository: null}}
     )
 
@@ -198,8 +213,11 @@ describe(getLatestRelease, () => {
   })
 
   test('throws when latestRelease is missing from response', async () => {
-    mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
-      {query: QueryLatestRelease, variables: VARIABLES},
+    mockApi.interceptGithub<
+      GetLatestReleaseQuery,
+      GetLatestReleaseQueryVariables
+    >(
+      {query: GetLatestReleaseDocument, variables: VARIABLES},
       {data: {repository: {latestRelease: null}}}
     )
 
@@ -209,8 +227,11 @@ describe(getLatestRelease, () => {
   })
 
   test('throws when tagCommit is missing from response', async () => {
-    mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
-      {query: QueryLatestRelease, variables: VARIABLES},
+    mockApi.interceptGithub<
+      GetLatestReleaseQuery,
+      GetLatestReleaseQueryVariables
+    >(
+      {query: GetLatestReleaseDocument, variables: VARIABLES},
       {
         data: {
           repository: {latestRelease: {tagName: `v${VERSION}`, tagCommit: null}}
@@ -224,8 +245,11 @@ describe(getLatestRelease, () => {
   })
 
   test('throws when SHA is not 40 characters', async () => {
-    mockApi.interceptGithub<LatestReleaseQuery, LatestReleaseQueryVariables>(
-      {query: QueryLatestRelease, variables: VARIABLES},
+    mockApi.interceptGithub<
+      GetLatestReleaseQuery,
+      GetLatestReleaseQueryVariables
+    >(
+      {query: GetLatestReleaseDocument, variables: VARIABLES},
       {
         data: {
           repository: {

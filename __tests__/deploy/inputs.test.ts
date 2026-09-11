@@ -1,26 +1,29 @@
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {it} from '@effect/vitest'
+import * as Effect from 'effect/Effect'
+import {beforeEach, describe, expect, vi} from 'vitest'
 
+import {errorMessage} from '@/common/errors.js'
+import {DeployInputs} from '@/deploy/inputs.js'
 import {INPUT_KEY_BRANCH} from '@/input-keys'
 import {stubInputEnv, stubRequiredInputEnv} from '@/tests/helpers/inputs.js'
 
-const setup = async () => {
-  return await import('@/deploy/inputs.js')
-}
+/** Builds the layer when run, so env stubbed beforehand is picked up. */
+const deployInputs = Effect.gen(function* () {
+  return yield* DeployInputs
+}).pipe(Effect.provide(DeployInputs.layer))
 
-describe('deploy', () => {
-  describe('inputs', () => {
-    beforeEach(() => {
-      vi.resetModules()
-      vi.unstubAllEnvs()
-    })
+describe(DeployInputs, () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs()
+  })
 
-    test('returns correct values', async () => {
+  it.effect('returns correct values', () =>
+    Effect.gen(function* () {
       expect.assertions(1)
 
       stubRequiredInputEnv()
-      const {useInputs} = await setup()
 
-      expect(useInputs()).toStrictEqual({
+      expect(yield* deployInputs).toStrictEqual({
         cloudflareAccountId: 'mock-cloudflare-account-id',
         cloudflareProjectName: 'mock-cloudflare-project-name',
         directory: 'mock-directory',
@@ -28,25 +31,28 @@ describe('deploy', () => {
         branch: undefined
       })
     })
+  )
 
-    test('throws error', async () => {
+  it.effect('fails naming the first missing input', () =>
+    Effect.gen(function* () {
       expect.assertions(1)
 
-      const {useInputs} = await setup()
+      const error = yield* Effect.flip(deployInputs)
 
-      expect(() => useInputs()).toThrow(
+      expect(errorMessage(error)).toBe(
         'Input required and not supplied: cloudflare-account-id'
       )
     })
+  )
 
-    test('returns branch when provided', async () => {
+  it.effect('returns branch when provided', () =>
+    Effect.gen(function* () {
       expect.assertions(1)
 
       stubRequiredInputEnv()
       stubInputEnv(INPUT_KEY_BRANCH, 'pr-123')
-      const {useInputs} = await setup()
 
-      expect(useInputs()).toStrictEqual({
+      expect(yield* deployInputs).toStrictEqual({
         cloudflareAccountId: 'mock-cloudflare-account-id',
         cloudflareProjectName: 'mock-cloudflare-project-name',
         directory: 'mock-directory',
@@ -54,5 +60,5 @@ describe('deploy', () => {
         branch: 'pr-123'
       })
     })
-  })
+  )
 })

@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+# Keep the vendored `repos/effect` snapshot on the release tag matching
+# `dependencies.effect`, so a merged Effect bump (e.g. from Dependabot) is
+# followed by a PR that refreshes it. Dependabot can't do this itself: it only
+# edits manifests and lockfiles.
+#
+# The snapshot is replaced in one plain commit rather than pulled with
+# `git subtree`, so the PR can be merged any way. `git subtree` finds its last
+# squash by grepping commit messages for `git-subtree-dir:`, and a merge or
+# squash commit whose message lists the PR's commits matches too — after which
+# every later pull conflicts.
+name: sync effect
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - .github/workflows/sync-effect.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+permissions: {}
+
+jobs:
+  sync:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compare repos/effect with dependencies.effect
+        id: check
+        run: |
+          wanted=$(jq -r '.dependencies.effect' package.json)
+          vendored=$(jq -r '.version' repos/effect/packages/effect/package.json)
+          echo "tag=effect@${wanted}" >> "$GITHUB_OUTPUT"
+          if [ "$vendored" = "$wanted" ]; then
+            echo "repos/effect is already at effect@${wanted}"
+            echo "sync=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "repos/effect is at ${vendored}; package.json wants ${wanted}"
+            echo "sync=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Replace repos/effect with the tag's tree
+        id: replace
+        if: steps.check.outputs.sync == 'true'
+        env:
+          EFFECT_REPO: https://github.com/Effect-TS/effect.git
+          TAG: ${{ steps.check.outputs.tag }}
+        run: |
+          git fetch --depth=1 --no-tags "$EFFECT_REPO" "refs/tags/${TAG}"
+          git rm -rq repos/effect
+          git read-tree --prefix=repos/effect/ -u FETCH_HEAD
+          echo "commit=$(git rev-parse 'FETCH_HEAD^{commit}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 #v3.2.0
+        if: steps.check.outputs.sync == 'true'
+        id: app-token
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Create Pull Request
+        if: steps.check.outputs.sync == 'true'
+        id: cpr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 #v8.1.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          commit-message: 'chore: sync repos/effect to ${{ steps.check.outputs.tag }}'
+          # Required: the "Branches" ruleset rejects unsigned commits on every
+          # branch, and this commit is created through the API to get signed.
+          sign-commits: true
+          branch: 'chore/sync-effect'
+          delete-branch: true
+          title: 'chore: sync repos/effect to ${{ steps.check.outputs.tag }}'
+          body: |
+            This is an automated PR to replace the vendored `repos/effect` with the Effect source at tag `${{ steps.check.outputs.tag }}` (`${{ steps.replace.outputs.commit }}`), matching `dependencies.effect` in `package.json`.

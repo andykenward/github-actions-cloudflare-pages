@@ -1,49 +1,40 @@
-import type {InputOptions} from '@actions/core'
+import type * as Effect from 'effect/Effect'
 
-import {getInput} from '@actions/core'
+import * as Config from 'effect/Config'
+import * as Context from 'effect/Context'
+import * as Layer from 'effect/Layer'
 
+import {input, optionalInput, readInputs} from '@/common/config/provider.js'
+import {
+  cloudflareAccountIdInput,
+  cloudflareProjectNameInput
+} from '@/common/inputs.js'
 import {checkWorkingDirectory} from '@/common/utils.js'
 import {
-  INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
-  INPUT_KEY_CLOUDFLARE_PROJECT_NAME,
   INPUT_KEY_DIRECTORY,
   INPUT_KEY_WORKING_DIRECTORY,
   INPUT_KEY_BRANCH
 } from '@/input-keys'
 
-const OPTIONS = {
-  required: true
-} as const satisfies InputOptions
-
-interface Inputs {
+const deployConfig = Config.all({
   /** Cloudflare Account Id */
-  cloudflareAccountId: string
-  /**  Cloudflare Pages Project Name */
-  cloudflareProjectName: string
+  cloudflareAccountId: cloudflareAccountIdInput,
+  /** Cloudflare Pages Project Name */
+  cloudflareProjectName: cloudflareProjectNameInput,
   /** Directory of static files to upload */
-  directory: string
+  directory: input(INPUT_KEY_DIRECTORY),
+  workingDirectory: input(INPUT_KEY_WORKING_DIRECTORY).pipe(
+    Config.withDefault('.'),
+    Config.map(directory => checkWorkingDirectory(directory))
+  ),
+  /** Branch name override for Cloudflare Pages; `undefined` means none. */
+  branch: optionalInput(INPUT_KEY_BRANCH)
+})
 
-  workingDirectory?: string
-  /** Branch name override for Cloudflare Pages deployment */
-  branch?: string
-}
-
-const getInputs = (): Inputs => {
-  return {
-    cloudflareAccountId: getInput(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID, OPTIONS),
-    cloudflareProjectName: getInput(INPUT_KEY_CLOUDFLARE_PROJECT_NAME, OPTIONS),
-    directory: getInput(INPUT_KEY_DIRECTORY, OPTIONS),
-    workingDirectory: checkWorkingDirectory(
-      getInput(INPUT_KEY_WORKING_DIRECTORY, {required: false})
-    ),
-    branch: getInput(INPUT_KEY_BRANCH, {required: false}) || undefined
-  }
-}
-
-type UseInputs = ReturnType<typeof getInputs>
-
-let _inputs: UseInputs
-
-export const useInputs = (): UseInputs => {
-  return _inputs ?? (_inputs = getInputs())
+/** Inputs only the deploy action uses. See `CommonInputs` on memoisation. */
+export class DeployInputs extends Context.Service<
+  DeployInputs,
+  Effect.Success<typeof deployConfig>
+>()('github-actions-cloudflare-pages/deploy/inputs/DeployInputs') {
+  static readonly layer = Layer.effect(DeployInputs, readInputs(deployConfig))
 }

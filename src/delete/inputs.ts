@@ -1,24 +1,26 @@
-import {getInput} from '@actions/core'
+import type * as Effect from 'effect/Effect'
 
+import * as Config from 'effect/Config'
+import * as Context from 'effect/Context'
+import * as Layer from 'effect/Layer'
+
+import {readInputs} from '@/common/config/provider.js'
 import {INPUT_KEYS_KEEP_LATEST} from '@/input-keys'
 
-interface Inputs {
+/**
+ * The provider treats absent and empty-string inputs alike, so the default
+ * covers both — matching the previous `Number(getInput(...) || '')` behaviour,
+ * which yielded `0` when the input was not supplied.
+ */
+const deleteConfig = Config.all({
   /** How many deployments to keep. */
-  keepLatest: number
-}
+  keepLatest: Config.int(INPUT_KEYS_KEEP_LATEST).pipe(Config.withDefault(0))
+})
 
-const getInputs = (): Inputs => {
-  return {
-    keepLatest: Number(
-      getInput(INPUT_KEYS_KEEP_LATEST, {required: false, trimWhitespace: true})
-    )
-  }
-}
-
-type UseInputs = ReturnType<typeof getInputs>
-
-let _inputs: UseInputs
-
-export const useInputs = (): UseInputs => {
-  return _inputs ?? (_inputs = getInputs())
+/** Inputs only the delete action uses. See `CommonInputs` on memoisation. */
+export class DeleteInputs extends Context.Service<
+  DeleteInputs,
+  Effect.Success<typeof deleteConfig>
+>()('github-actions-cloudflare-pages/delete/inputs/DeleteInputs') {
+  static readonly layer = Layer.effect(DeleteInputs, readInputs(deleteConfig))
 }

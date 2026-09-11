@@ -5,13 +5,25 @@
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/cloudflare/SKILL.md",
-      "computedHash": "a1646a6a2fb7cc683de5bf8357e5d6ae02db6fd0bf771d633c1890318e25bff2"
+      "computedHash": "c9b25ff6c3be26e74162e7df183990f8ee76ad6d1ee37d9ca50b4dd23cb06ad1"
+    },
+    "effect-ts": {
+      "source": "Effect-TS/skills",
+      "sourceType": "github",
+      "skillPath": "skills/effect-ts/SKILL.md",
+      "computedHash": "6bdb9b95aa83071eca2f67ae947b7d398a22e9e6e08f6cfa35de9516b03efa6e"
+    },
+    "effect-v3-to-v4": {
+      "source": "Effect-TS/skills",
+      "sourceType": "github",
+      "skillPath": "skills/effect-v3-to-v4/SKILL.md",
+      "computedHash": "6b16daab60925a09aa1c4d678cd4a74724410d0ca11d2019ed17d20843a870da"
     },
     "gh": {
       "source": "cli/cli",
       "sourceType": "github",
       "skillPath": "skills/gh/SKILL.md",
-      "computedHash": "d6812a8155e8db4aae6dffcfbc3a340ede4da0ea123bb98c16ba32d79f239906"
+      "computedHash": "d60297badbe5f8c59397e533e41d2ed454e72fbdf08b9348aa0a166366d4c20b"
     },
     "gh-stack": {
       "source": "github/gh-stack",
@@ -37,11 +49,17 @@
       "skillPath": "plugins/javascript-typescript/skills/typescript-advanced-types/SKILL.md",
       "computedHash": "8cbf2bf600f392d7260e476e3202932a876e2281cda3b15a8b6a5a43f383252d"
     },
+    "vitest": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vitest/SKILL.md",
+      "computedHash": "943d436114c677802426741980146c07560bf375297666b03062444f4b98a785"
+    },
     "wrangler": {
       "source": "cloudflare/skills",
       "sourceType": "github",
       "skillPath": "skills/wrangler/SKILL.md",
-      "computedHash": "11edeb37eedb91deedde694b2bb1cc4ff4e8b5a8f1836c217a8c871fe39abcb5"
+      "computedHash": "4d247a243fec7e23f1247976e0e491520cb0feb397c5477022551e7b4f5cdd93"
     }
   }
 }

@@ -3,7 +3,9 @@ import type {CodegenConfig} from '@graphql-codegen/cli'
 const config: CodegenConfig = {
   overwrite: true,
   schema: ['./schema/github/schema.graphql'],
-  documents: ['./src/**/*.{graphql,js,ts}', './bin/**/*.{graphql,js,ts}'],
+  // Operations live in .graphql files only; code imports the generated
+  // `…Document` constants from `__generated__/gql/graphql.ts`.
+  documents: ['./src/**/*.graphql', './bin/**/*.graphql'],
   emitLegacyCommonJSImports: false,
   generates: {
     '__generated__/gql/': {
