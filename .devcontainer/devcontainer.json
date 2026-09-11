@@ -10,7 +10,11 @@
       "version": "24",
       "pnpmVersion": "11.17.0"
     },
-    "ghcr.io/devcontainers/features/github-cli:1.1.2": {},
+    // Extensions install at image build as the remote user. The option can't
+    // pin a version, so each rebuild pulls the extension's latest release.
+    "ghcr.io/devcontainers/features/github-cli:1.1.2": {
+      "extensions": "github/gh-stack"
+    },
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0.5": {},
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.0": {}
   },
