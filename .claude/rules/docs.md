@@ -6,6 +6,7 @@ paths:
   - 'action.yml'
   - 'delete/action.yml'
   - '.github/workflow-templates/**'
+  - 'skills/**'
   - '.claude/**/*.md'
 ---
 
@@ -15,7 +16,8 @@ paths:
 
 - `README.md` documents the deploy action; `delete/README.md` the delete action. Adding, changing or removing an input or output — or any user-visible behavior — means updating the matching Inputs/Outputs table and examples.
 - Keep the input and output descriptions in `action.yml` / `delete/action.yml` in step with the README tables — agents and the Marketplace read `action.yml` first. Don't hardcode the default Wrangler version there: `bin/sync-versions.ts` only updates `src/common/inputs.ts`.
-- Never hand-edit the pinned `andykenward/...@<sha> #vX.Y.Z` refs — `bin/sync-readme-versions.ts` (`pnpm run sync:readme`) maintains them.
+- Never hand-edit the pinned `andykenward/...@<sha> #vX.Y.Z` refs — `bin/sync-readme-versions.ts` (`pnpm run sync:readme`) maintains them. A new file with pinned refs goes in both its `files` list and the `add-paths` of `.github/workflows/sync-readme-versions.yml`.
+- `skills/github-actions-cloudflare-pages/SKILL.md` is the installable skill for agents setting the action up in other projects (`npx skills add andykenward/github-actions-cloudflare-pages`). Keep it in step with the README's setup, examples and error messages, and link to docs with absolute GitHub URLs — it's installed outside this repo. It must stay the only skill under `skills/`: the `skills` CLI searches the whole repo, including `repos/effect`, when it finds none there. Check what it discovers with `pnpm exec skills add . --list`.
 - `CONTRIBUTING.md` is for contributors: setup, commands, the pull request checklist and the vendored Effect source. Keep its checklist in step with `.claude/CLAUDE.md` ("Before you finish") and its vendored-source section with `.claude/rules/repos.md`. Keep contributor material out of the READMEs.
 - Facts the docs must get right:
   - GitHub Environments must be created manually — the action can't create them (that needs `administration:write`).

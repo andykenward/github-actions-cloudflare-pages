@@ -125,7 +125,13 @@ permissions:
 
 ## Setting up with an AI agent
 
-Adding this action with an AI coding agent? Point it at this section.
+Adding this action with an AI coding agent? Install its skill, which walks the agent through the steps below:
+
+```sh
+npx skills add andykenward/github-actions-cloudflare-pages
+```
+
+Or point the agent at this section.
 
 1. **Do the steps outside the workflow file first** — they can't be expressed in YAML. Run them, or ask the user to:
    - create a Cloudflare Pages project and an API token with the **Cloudflare Pages: Edit** permission;

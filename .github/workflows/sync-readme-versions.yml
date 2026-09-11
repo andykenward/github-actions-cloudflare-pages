@@ -54,3 +54,4 @@ jobs:
             delete/README.md
             .github/workflow-templates/deploy.yml
             .github/workflow-templates/delete.yml
+            skills/github-actions-cloudflare-pages/SKILL.md

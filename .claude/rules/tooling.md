@@ -39,7 +39,7 @@ paths:
 
 - Prefer `node path/to/script.ts` (native type-stripping, no extra dependency). It works when the script's **runtime** imports are only `node:*`, relative paths, `package.json`, npm packages or **type-only** `@/` aliases (`import type` is erased) — e.g. `node bin/deployments/index.ts`.
 - Use `tsx` for anything that transitively imports `__generated__/gql/` (e.g. `tsx bin/sync-readme-versions.ts`): `graphql.ts` emits `export enum`, which type-stripping rejects, and `gql.ts` has a runtime `import * as types from './graphql.js'` that node won't remap to `.ts`. Neither is fixable — they're generated. `tsx` reads tsconfig paths, transforms enums and remaps extensions; `verbatimModuleSyntax` doesn't change any of this, and `#`-prefixed subpath imports only redirect the entry import.
-- A `bin/` script that is both importable (for tests) and executable wraps side effects in `if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href)` and exports pure functions (reference: `bin/sync-readme-versions.ts`). Its tests go in `__tests__/scripts/`.
+- A `bin/` script that is both importable (for tests) and executable wraps side effects in `if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href)` and exports pure functions (reference: `bin/sync-readme-versions.ts`). Its tests go in `__tests__/scripts/`. To call its exports ad hoc, import them from an `.mts` file run with `tsx` — `tsx -e` evaluates as CommonJS and fails on the script's top-level `await`.
 
 ## Bundling (`esbuild.config.js`)
 
