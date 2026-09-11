@@ -1,8 +1,7 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 
 name: test
-permissions:
-  contents: read
+permissions: {}
 on:
   pull_request:
     branches:
@@ -20,6 +19,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      # Coverage report comment
+      pull-requests: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
         with:
@@ -30,4 +33,14 @@ jobs:
       - name: Typecheck
         run: pnpm run tsc:check
       - name: Test
-        run: pnpm run test:ci
+        id: test
+        run: pnpm run test:ci --coverage
+      - name: Coverage report
+        # Also report when tests fail (`reportOnFailure` in vitest.config.ts)
+        if: ${{ !cancelled() && steps.test.outcome != 'skipped' }}
+        uses: davelosert/vitest-coverage-report-action@c4bbc33a89b7ace0e63d35f1f7d4bcee31155a73 #v2.13.0
+        with:
+          json-summary-path: .cache/coverage/coverage-summary.json
+          json-final-path: .cache/coverage/coverage-final.json
+          # A fork PR's token can't comment, so it gets only the step summary
+          comment-on: ${{ github.event.pull_request.head.repo.fork && 'none' || 'pr' }}

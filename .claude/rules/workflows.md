@@ -8,8 +8,9 @@ paths:
 ## Hygiene (enforced by zizmor, `.github/workflows/zizmor.yml`)
 
 - Pin every action to a full commit SHA with a `#vX.Y.Z` comment.
-- Default to `permissions: {}` at workflow level and grant per job (a few read-only workflows, such as `test.yml` and `check-dist.yml`, set `contents: read` instead).
+- Default to `permissions: {}` at workflow level and grant per job (a few read-only workflows, such as `check-dist.yml`, set `contents: read` instead).
 - Use `persist-credentials: false` on every checkout.
+- zizmor isn't installed in the devcontainer, and Docker can't bind-mount `/workspaces`. Check locally by copying `.github/` into the container: `cid=$(docker create ghcr.io/zizmorcore/zizmor --offline /w/.github/workflows/test.yml) && docker cp <dir containing .github> "$cid:/w" && docker start -a "$cid"`. The file must sit under `.github/workflows/` — anywhere else zizmor parses it as a zizmor config.
 - zizmor's `inputs` is an allowlist (`.github action.yml delete/action.yml`) — it has no exclude setting, and its default `.` would scan `repos/*/.github/`.
 
 ## Commits made by workflows
@@ -19,7 +20,7 @@ paths:
 
 ## What runs
 
-- `test.yml` runs only `lint`, `tsc:check` and `test:ci` — not knip, format or codegen drift.
+- `test.yml` runs only `lint`, `tsc:check` and `test:ci --coverage` — not knip, format or codegen drift. `davelosert/vitest-coverage-report-action` then writes the coverage step summary and a PR comment (hence `pull-requests: write`) — vitest's `github-actions` reporter summarizes test results only, not coverage. It reads `.cache/coverage/coverage-{summary,final}.json`, so keep the `json-summary` and `json` reporters and `reportsDirectory` in `vitest.config.ts` in step. Fork PRs get a read-only token, so they get `comment-on: none` and only the summary.
 - `check-dist.yml` rebuilds and fails if the committed `dist/` differs.
 - `prek.yml` runs `prek run --all-files` on PRs and `main`; keep its `prek-version` equal to the prek in `.devcontainer/Dockerfile`.
 - `deploy.yml`, `deploy-main.yml` and `deploy-delete.yml` dogfood the action (`uses: ./`, `./delete`) against `example/`. Only `deploy.yml` skips fork PRs. Deploy jobs need `timeout-minutes` above the action's 10-minute polling ceiling plus upload time (they use 15); delete jobs don't poll.
@@ -30,6 +31,6 @@ paths:
 
 ## Dependabot (`.github/dependabot.yml`)
 
-- Groups bump coupled packages together (`effect` + `@effect/vitest`; `@effect/tsgo` + `oxlint` + `oxlint-tsgolint`).
+- Groups bump coupled packages together (`effect` + `@effect/vitest`; `vitest` + `@vitest/coverage-v8`; `@effect/tsgo` + `oxlint` + `oxlint-tsgolint`).
 - `undici` majors are ignored on purpose — see the tooling rule.
 - `exclude-paths: ['repos/**']` stops version updates for the vendored source. It doesn't affect alerts: the dependency graph still reads `repos/effect/pnpm-lock.yaml`.

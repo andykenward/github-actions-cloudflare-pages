@@ -21,7 +21,16 @@ export default defineConfig({
       'repos/**'
     ],
     clearMocks: true,
-    restoreMocks: false
+    restoreMocks: false,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/__mocks__/**'],
+      // `json-summary` and `json` feed the PR coverage report in test.yml
+      reporter: ['text', 'html', 'lcov', 'json-summary', 'json'],
+      reportsDirectory: '.cache/coverage',
+      reportOnFailure: true
+    }
   },
   resolve: {
     alias: {
