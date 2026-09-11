@@ -9,6 +9,7 @@ import type {MockApi} from '@/tests/helpers/api.js'
 
 import {GitHubApi} from '@/common/github/api/client.js'
 import {addComment} from '@/common/github/comment.js'
+import {createGitHubDeployment} from '@/common/github/deployment/create.js'
 import {execFileAsync} from '@/common/utils.js'
 import {DeployLayer, run} from '@/deploy/main.js'
 import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
@@ -79,12 +80,26 @@ describe('deploy', () => {
             }
           )
 
-          expect(yield* run).toBeUndefined()
+          yield* run
+
           expect(setOutput).toHaveBeenCalledTimes(5)
           // The pull request was resolved alongside wrangler, then commented on.
           expect(vi.mocked(addComment).mock.calls[0]?.[0]).toBe(
             'mock-pull-request-id'
           )
+          expect(createGitHubDeployment).toHaveBeenCalledExactlyOnceWith({
+            // oxlint-disable-next-line typescript/no-unsafe-assignment
+            cloudflareDeployment: expect.objectContaining({
+              id: '206e215c-33b3-4ce4-adf4-7fc6c9b65483'
+            }),
+            commentId: 'mock-comment-id',
+            cloudflareAccountId: 'mock-cloudflare-account-id',
+            environment: {
+              name: 'unlike-dev (Preview)',
+              id: 'EN_kwDOJn0nrM5D_l8n',
+              refId: REF_ID
+            }
+          })
         }).pipe(Effect.provide(DeployLayer))
       )
 

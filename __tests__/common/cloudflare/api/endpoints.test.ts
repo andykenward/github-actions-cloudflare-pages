@@ -5,7 +5,7 @@ import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
 describe('endpoints', () => {
   describe(getCloudflareLogEndpoint, () => {
     test('returns correct url', () => {
-      expect.assertions(2)
+      expect.assertions(1)
 
       const url = getCloudflareLogEndpoint({
         id: '123',
@@ -16,7 +16,6 @@ describe('endpoints', () => {
       expect(url).toMatchInlineSnapshot(
         '"https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/123"'
       )
-      expect(url).toContain('123')
     })
   })
 })

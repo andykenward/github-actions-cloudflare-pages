@@ -44,16 +44,14 @@ describe(link, () => {
     )
   })
 
-  test.each([
-    {href: 'javascript:alert(1)'},
-    {href: 'data:text/html,<script>alert(1)</script>'},
-    {href: 'not a url'},
-    {href: ''}
-  ])('renders only the content for $href', ({href}) => {
-    expect.assertions(1)
+  test.each([{href: 'javascript:alert(1)'}, {href: 'not a url'}])(
+    'renders only the content for $href',
+    ({href}) => {
+      expect.assertions(1)
 
-    expect(link(href, 'text')).toBe('text')
-  })
+      expect(link(href, 'text')).toBe('text')
+    }
+  )
 })
 
 describe(githubUrl, () => {

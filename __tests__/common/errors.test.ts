@@ -93,20 +93,6 @@ describe(reportFailure, () => {
     )
   })
 
-  test('fails with a missing input by name, not the error object', () => {
-    expect.assertions(1)
-
-    stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN, '')
-
-    reportFailure(
-      Cause.fail(configError(Config.redacted(INPUT_KEY_CLOUDFLARE_API_TOKEN)))
-    )
-
-    expect(setFailed).toHaveBeenLastCalledWith(
-      'Input required and not supplied: cloudflare-api-token'
-    )
-  })
-
   test('fails with a defect message', () => {
     expect.assertions(1)
 

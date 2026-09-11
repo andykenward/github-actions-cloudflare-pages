@@ -39,8 +39,8 @@ describe(DeleteInputs, () => {
 
       stubInputEnv(INPUT_KEYS_KEEP_LATEST, 'abc')
 
-      expect(errorMessage(yield* Effect.flip(deleteInputs))).toMatch(
-        /^Input 'keep-latest' is invalid/
+      expect(errorMessage(yield* Effect.flip(deleteInputs))).toBe(
+        "Input 'keep-latest' is invalid: Expected a string representing a finite number"
       )
     })
   )

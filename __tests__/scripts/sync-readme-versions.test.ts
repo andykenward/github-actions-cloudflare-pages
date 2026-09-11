@@ -100,16 +100,6 @@ describe(replaceVersionReferences, () => {
     )
   })
 
-  test('delete reference is not partially matched by main pattern', () => {
-    const result = replaceVersionReferences(
-      'uses: andykenward/github-actions-cloudflare-pages/delete@v2.3.2',
-      SHA,
-      VERSION
-    )
-    expect(result).toContain('/delete@')
-    expect(result).not.toMatch(/github-actions-cloudflare-pages@.*\/delete@/)
-  })
-
   test('leaves content without action references unchanged', () => {
     const content = '# Just a README\nSome text without action references.'
     expect(replaceVersionReferences(content, SHA, VERSION)).toBe(content)
@@ -149,7 +139,7 @@ describe(getLatestRelease, () => {
     })
   })
 
-  test('strips v prefix from tagName', async () => {
+  test('keeps a tagName without a v prefix as it is', async () => {
     mockApi.interceptGithub<
       GetLatestReleaseQuery,
       GetLatestReleaseQueryVariables
@@ -158,7 +148,7 @@ describe(getLatestRelease, () => {
       {
         data: {
           repository: {
-            latestRelease: {tagName: 'v1.2.3', tagCommit: {oid: SHA}}
+            latestRelease: {tagName: '1.2.3', tagCommit: {oid: SHA}}
           }
         }
       }

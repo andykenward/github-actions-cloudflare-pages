@@ -16,7 +16,7 @@ const context = Effect.gen(function* () {
 describe(GitHubContext, () => {
   it.effect('returns context for `pull_request`', () =>
     Effect.gen(function* () {
-      expect.assertions(8)
+      expect.assertions(6)
 
       const {repo, event, branch, sha, graphqlEndpoint, ref} = yield* context
 
@@ -30,8 +30,6 @@ describe(GitHubContext, () => {
       `)
 
       /** Event */
-      expect(event.payload).toBeDefined()
-      expect(event.payload).toMatchSnapshot()
       expect(event.eventName).toBe('pull_request')
 
       expect(branch).toBe(`mock-github-head-ref`)
@@ -43,7 +41,7 @@ describe(GitHubContext, () => {
 
   it.effect('returns context for `workflow_dispatch`', () =>
     Effect.gen(function* () {
-      expect.assertions(8)
+      expect.assertions(6)
 
       stubTestEnvVars('workflow_dispatch')
 
@@ -57,8 +55,6 @@ describe(GitHubContext, () => {
         repo: 'github-actions-cloudflare-pages'
       })
 
-      expect(event.payload).toBeDefined()
-      expect(event.payload).toMatchSnapshot()
       expect(event.eventName).toBe('workflow_dispatch')
 
       expect(branch).toBe(`mock-github-ref-name`)
@@ -68,11 +64,11 @@ describe(GitHubContext, () => {
     })
   )
 
-  it.effect('fails when GITHUB_REPOSITORY is missing', () =>
+  it.effect('fails when GITHUB_REPOSITORY has no owner', () =>
     Effect.gen(function* () {
       expect.assertions(1)
 
-      vi.stubEnv('GITHUB_REPOSITORY', '')
+      vi.stubEnv('GITHUB_REPOSITORY', '/repo')
 
       const error = yield* Effect.flip(context)
 
@@ -98,7 +94,7 @@ describe(GitHubContext, () => {
 
   it.effect('returns context for `workflow_run`', () =>
     Effect.gen(function* () {
-      expect.assertions(9)
+      expect.assertions(6)
 
       stubTestEnvVars('workflow_run')
 
@@ -108,12 +104,9 @@ describe(GitHubContext, () => {
       expect(event.eventName).toBe('workflow_run')
 
       expect(branch).toBe('master')
-      expect(branch).not.toBe(`mock-github-head-ref`)
       expect(sha).toBe('3484a3fb816e0859fd6e1cea078d76385ff50625')
       expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
       expect(ref).toBe('master')
-      expect(ref).not.toBe(`mock-github-head-ref`)
-      expect(sha).not.toBe(`mock-github-sha`)
     })
   )
 

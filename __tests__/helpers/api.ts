@@ -7,6 +7,13 @@ import type {
   Variables
 } from '@/common/github/api/client.js'
 
+/**
+ * The header `CloudflareApi`'s middleware sends, from the token
+ * `vitest.setup.ts` stubs (`mock-<input name>`). Every Cloudflare interceptor
+ * requires it, so a request without it matches none and fails.
+ */
+const CLOUDFLARE_HEADERS = {authorization: 'Bearer mock-cloudflare-api-token'}
+
 export const setMockApi = () => {
   return getMockApi()
 }
@@ -27,7 +34,8 @@ export const getMockApi = () => {
     return mockPoolCloudflare
       .intercept({
         path,
-        method
+        method,
+        headers: CLOUDFLARE_HEADERS
       })
       .reply(statusCode || 200, response)
   }
@@ -37,7 +45,7 @@ export const getMockApi = () => {
    * network error: returns the interceptor for `.reply` / `.replyWithError`.
    */
   const interceptCloudflareRaw = (path: string, method: 'GET' | 'DELETE') =>
-    mockPoolCloudflare.intercept({path, method})
+    mockPoolCloudflare.intercept({path, method, headers: CLOUDFLARE_HEADERS})
 
   /**
    * A GitHub REST `GET`, as `GitHubRestApi.paginate` (Octokit) sends. undici

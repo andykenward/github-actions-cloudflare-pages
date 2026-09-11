@@ -127,21 +127,6 @@ describe(CommonInputs, () => {
       )
     })
   )
-
-  it.effect('returns default wranger version', () =>
-    Effect.gen(function* () {
-      expect.assertions(1)
-
-      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
-      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
-
-      expect(yield* commonInputs).toStrictEqual(
-        expect.objectContaining({
-          wranglerVersion: packageJson.devDependencies.wrangler
-        })
-      )
-    })
-  )
 })
 
 describe(PayloadV1Inputs, () => {

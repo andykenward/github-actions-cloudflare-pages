@@ -38,7 +38,7 @@ describe('getGitHubDeployments', () => {
     {
       environment: 'preview',
       query: {
-        ref: 'mock-github-head-ref',
+        ref: 'mock-github-ref-name',
         per_page: 100,
         environment: 'preview'
       }
@@ -47,12 +47,16 @@ describe('getGitHubDeployments', () => {
       // Unset, the delete action lists every environment — so the parameter
       // must be left out, not sent as `environment=undefined`.
       environment: '',
-      query: {ref: 'mock-github-head-ref', per_page: 100}
+      query: {ref: 'mock-github-ref-name', per_page: 100}
     }
   ])(
     'lists the branch deployments for github-environment $environment',
     ({environment, query}) => {
       stubInputEnv(INPUT_KEY_GITHUB_ENVIRONMENT, environment)
+      // Without GITHUB_HEAD_REF the context's `branch` is GITHUB_REF_NAME
+      // (`mock-github-ref-name`) but its `ref` is the payload's head ref
+      // (`changes`), so the query shows which one deployments are listed by.
+      vi.stubEnv('GITHUB_HEAD_REF', '')
 
       return Effect.gen(function* () {
         expect.assertions(1)

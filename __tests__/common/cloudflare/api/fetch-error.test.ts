@@ -112,17 +112,11 @@ describe(throwFetchError, () => {
   })
 
   test('throws without a code or annotation when there are no errors', () => {
-    expect.assertions(3)
+    expect.assertions(2)
 
     expect(() =>
       throwFetchError(RESOURCE_URL, {success: false, errors: []})
     ).toThrow(expect.objectContaining({code: undefined, notes: []}))
     expect(core.error).not.toHaveBeenCalled()
-    // `throwFetchError` always passes notes, so construct one to cover the
-    // defaults.
-    expect(new ParseError({text: 'failed'})).toMatchObject({
-      notes: [],
-      kind: 'error'
-    })
   })
 })

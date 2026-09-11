@@ -41,6 +41,25 @@ describe(GitHubApi, () => {
     }).pipe(Effect.provide(CommonLayer))
   )
 
+  it.effect(
+    'fails with the status on a non-2xx response when errorThrows is false',
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        // `errorThrows: false` only returns GraphQL `errors`; a transport,
+        // auth or rate-limit failure still fails, as `checkEnvironment` relies on.
+        mockApi.interceptGithub({query: QUERY}, {data: {}}, 401)
+
+        const github = yield* GitHubApi
+        const error = yield* Effect.flip(
+          github.request({query: QUERY, options: {errorThrows: false}})
+        )
+
+        expect(error.message).toContain('GitHub API request failed: 401')
+      }).pipe(Effect.provide(CommonLayer))
+  )
+
   it.effect('fails when a 2xx response is not JSON', () =>
     Effect.gen(function* () {
       expect.assertions(1)

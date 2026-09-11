@@ -7,7 +7,6 @@ import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 import type {GitHubGraphQLError} from '@/common/github/api/client.js'
 
 import {batchDelete} from '@/common/batch-delete.js'
-import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
 import {PayloadV1Inputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
 import {DEPLOYMENT} from '@/fixtures/github-deployment.js'
@@ -74,11 +73,8 @@ describe('batchDelete', () => {
         deploymentId: 'DE_kwDOJn0nrM5U35aT',
         environment: 'preview',
         environmentUrl: ENVIRONMENT_URL,
-        logUrl: getCloudflareLogEndpoint({
-          id: MOCK_DEPLOYMENT_ID,
-          projectName: MOCK_PROJECT_NAME,
-          accountId: MOCK_ACCOUNT_ID
-        }),
+        logUrl:
+          'https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/mock-deployment-id',
         state: DeploymentStatusState.Inactive,
         autoInactive: false
       },

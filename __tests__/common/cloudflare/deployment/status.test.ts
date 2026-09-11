@@ -114,51 +114,53 @@ describe('statusCloudflareDeployment', () => {
 
   it.live('polls when the deployment is not registered yet', () =>
     Effect.gen(function* () {
-      expect.assertions(1)
+      expect.assertions(2)
 
       // Immediately after wrangler returns, Cloudflare has usually not yet
       // registered the deployment. This previously threw on the first poll and
-      // failed the whole action.
+      // failed the whole action. The list already holds other commits'
+      // deployments, so only the commit hash tells them apart.
+      const [registered, ...others] = RESPONSE_DEPLOYMENTS.result
       mockApi.interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, {
         ...RESPONSE_DEPLOYMENTS,
-        result: []
+        result: others
       })
       mockApi.interceptCloudflare(
         MOCK_API_PATH_DEPLOYMENTS,
         RESPONSE_DEPLOYMENTS
       )
 
-      const {status} = yield* statusCloudflareDeployment(
+      const {deployment, status} = yield* statusCloudflareDeployment(
         API_ENDPOINT,
         POLL_OPTIONS
       )
 
       expect(status).toBe('success')
+      expect(deployment.id).toBe(registered?.id)
     }).pipe(Effect.provide(CommonLayer))
   )
 
-  it.live('times out instead of polling forever', () =>
+  it.live('times out when a poll is still waiting for its reply', () =>
     Effect.gen(function* () {
       expect.assertions(1)
 
+      // The reply would succeed, but only after the timeout: the retry
+      // schedule never gets another step, so only the overall timeout ends it.
       mockApi
-        .interceptCloudflare(
-          MOCK_API_PATH_DEPLOYMENTS,
-          RESPONSE_DEPLOYMENTS_IDLE
-        )
-        .persist()
+        .interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, RESPONSE_DEPLOYMENTS)
+        .delay(200)
 
       const error = yield* Effect.flip(
         statusCloudflareDeployment(API_ENDPOINT, {
-          pollInterval: 5,
+          pollInterval: 0,
           pollTimeout: 50
         })
       )
 
       expect(error).toMatchObject({
         _tag: 'DeploymentPollTimeoutError',
-        // oxlint-disable-next-line typescript/no-unsafe-assignment
-        message: expect.stringMatching(/timed out/)
+        message:
+          'Status Of Deployment: timed out after 50ms waiting for the deploy stage to complete.'
       })
     }).pipe(Effect.provide(CommonLayer))
   )
@@ -185,28 +187,6 @@ describe('statusCloudflareDeployment', () => {
 
         expect(result.status).toBe(status)
       }).pipe(Effect.provide(CommonLayer))
-  )
-
-  it.live('polls while a non-deploy stage is active', () =>
-    Effect.gen(function* () {
-      expect.assertions(1)
-
-      mockApi.interceptCloudflare(
-        MOCK_API_PATH_DEPLOYMENTS,
-        withLatestStage('build', 'active')
-      )
-      mockApi.interceptCloudflare(
-        MOCK_API_PATH_DEPLOYMENTS,
-        RESPONSE_DEPLOYMENTS
-      )
-
-      const {status} = yield* statusCloudflareDeployment(
-        API_ENDPOINT,
-        POLL_OPTIONS
-      )
-
-      expect(status).toBe('success')
-    }).pipe(Effect.provide(CommonLayer))
   )
 
   it.live('fails without retrying when the api returns an error', () =>

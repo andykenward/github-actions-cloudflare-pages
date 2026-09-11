@@ -42,9 +42,10 @@ describe('delete', () => {
   describe('run effect', () => {
     it.effect('succeeds when there are no deployments', () =>
       Effect.gen(function* () {
-        expect.assertions(2)
+        expect.assertions(1)
 
-        expect(yield* run).toBeUndefined()
+        yield* run
+
         expect(info).toHaveBeenCalledWith('delete - No deployments to delete')
       }).pipe(Effect.provide(listing([])), Effect.provide(DeleteLayer))
     )
@@ -62,13 +63,14 @@ describe('delete', () => {
 
     it.effect('succeeds when every deployment is deleted', () =>
       Effect.gen(function* () {
-        expect.assertions(2)
+        expect.assertions(1)
 
         vi.mocked(batchDelete).mockReturnValue(
           Effect.succeed({...ROW, success: true})
         )
 
-        expect(yield* run).toBeUndefined()
+        yield* run
+
         expect(batchDelete).toHaveBeenCalledTimes(2)
       }).pipe(
         Effect.provide(listing([DEPLOYMENT, DEPLOYMENT])),

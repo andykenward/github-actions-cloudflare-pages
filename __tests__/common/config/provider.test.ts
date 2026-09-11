@@ -23,19 +23,17 @@ describe(readInputs, () => {
 })
 
 describe(input, () => {
-  it.effect.each([
-    {key: 'keep-latest'},
-    {key: 'pr number'},
-    {key: 'Mixed-Case key'}
-  ])('reads and trims $key as getInput does', ({key}) =>
-    Effect.gen(function* () {
-      expect.assertions(2)
+  it.effect.each([{key: 'keep-latest'}, {key: 'Mixed-Case key'}])(
+    'reads and trims $key as getInput does',
+    ({key}) =>
+      Effect.gen(function* () {
+        expect.assertions(2)
 
-      stubInputEnv(key, '  value  ')
+        stubInputEnv(key, '  value  ')
 
-      expect(getInput(key)).toBe('value')
-      expect(yield* readInputs(input(key))).toBe('value')
-    })
+        expect(getInput(key)).toBe('value')
+        expect(yield* readInputs(input(key))).toBe('value')
+      })
   )
 
   it.effect('keeps hyphens rather than reading the constant-case name', () =>

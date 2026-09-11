@@ -22,7 +22,6 @@ import {INPUT_KEY_PR_NUMBER} from '@/input-keys'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {setMockApi} from '@/tests/helpers/api.js'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
-import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 
 vi.mock(import('@actions/core'))
 
@@ -187,6 +186,8 @@ describe('addComment', () => {
                 workflow_run: {
                   head_branch: 'master',
                   head_sha: '3484a3fb816e0859fd6e1cea078d76385ff50625',
+                  // Only #3 matches both the head branch and sha; #4 and #5
+                  // each differ in one, so each condition must be checked.
                   pull_requests: [
                     {
                       number: 2,
@@ -201,6 +202,20 @@ describe('addComment', () => {
                         ref: 'master',
                         sha: '3484a3fb816e0859fd6e1cea078d76385ff50625'
                       }
+                    },
+                    {
+                      number: 4,
+                      head: {
+                        ref: 'master',
+                        sha: 'different-sha'
+                      }
+                    },
+                    {
+                      number: 5,
+                      head: {
+                        ref: 'other-branch',
+                        sha: '3484a3fb816e0859fd6e1cea078d76385ff50625'
+                      }
                     }
                   ]
                 }
@@ -212,31 +227,33 @@ describe('addComment', () => {
       )
     )
 
-    it.effect('should fail when workflow_run has no pull request number', () =>
-      Effect.gen(function* () {
-        expect.assertions(1)
+    it.effect(
+      'should fail when no workflow_run pull request matches the head branch and sha',
+      () =>
+        Effect.gen(function* () {
+          expect.assertions(1)
 
-        const error = yield* Effect.flip(comment(mockData, 'success'))
+          const error = yield* Effect.flip(comment(mockData, 'success'))
 
-        expect(error.message).toBe(
-          'No pull request found in workflow_run event matching head branch and sha'
-        )
-      }).pipe(
-        Effect.provide(
-          withContext({
-            event: {
-              eventName: 'workflow_run',
-              payload: {
-                workflow_run: {
-                  head_branch: 'master',
-                  head_sha: '3484a3fb816e0859fd6e1cea078d76385ff50625',
-                  pull_requests: []
+          expect(error.message).toBe(
+            'No pull request found in workflow_run event matching head branch and sha'
+          )
+        }).pipe(
+          Effect.provide(
+            withContext({
+              event: {
+                eventName: 'workflow_run',
+                payload: {
+                  workflow_run: {
+                    head_branch: 'master',
+                    head_sha: '3484a3fb816e0859fd6e1cea078d76385ff50625',
+                    pull_requests: []
+                  }
                 }
-              }
-            } as unknown as Readonly<WorkflowEventExtract<'workflow_run'>>
-          })
+              } as unknown as Readonly<WorkflowEventExtract<'workflow_run'>>
+            })
+          )
         )
-      )
     )
 
     it.effect(
@@ -349,17 +366,21 @@ describe('addComment', () => {
       )
     })
 
-    it.effect('should fail for invalid pr-number input', () => {
-      stubInputEnv(INPUT_KEY_PR_NUMBER, 'abc')
+    it.effect.each([{prNumber: 'abc'}, {prNumber: '0'}, {prNumber: '-1'}])(
+      'should fail for invalid pr-number input $prNumber',
+      ({prNumber}) => {
+        stubInputEnv(INPUT_KEY_PR_NUMBER, prNumber)
 
-      return Effect.gen(function* () {
-        expect.assertions(1)
+        return Effect.gen(function* () {
+          expect.assertions(1)
 
-        const error = yield* Effect.flip(comment(mockData, 'success'))
+          // No interceptors: a lookup would fail with a `GitHubApiError`.
+          const error = yield* Effect.flip(comment(mockData, 'success'))
 
-        expect(error.message).toBe('Invalid pr-number input: abc')
-      }).pipe(Effect.provide(CommonLayer))
-    })
+          expect(error.message).toBe(`Invalid pr-number input: ${prNumber}`)
+        }).pipe(Effect.provide(CommonLayer))
+      }
+    )
 
     it.effect(
       'fails with the not-found message when pr-number does not exist',
@@ -553,32 +574,28 @@ describe('addComment', () => {
     )
   })
 
-  describe('eventName: unsupported', () => {
-    const eventNames = EVENT_NAMES.filter(
-      eventName =>
-        eventName !== 'pull_request' &&
-        eventName !== 'workflow_dispatch' &&
-        eventName !== 'workflow_run'
-    )
+  describe('eventName: other', () => {
+    // `push` is supported but has no pull request; `issues` stands in for the
+    // events `main.ts` rejects before the comment is resolved.
+    it.effect.each([
+      {eventName: 'push' as const},
+      {eventName: 'issues' as const}
+    ])('posts no comment for $eventName', ({eventName}) =>
+      Effect.gen(function* () {
+        expect.assertions(1)
 
-    it.effect.each(eventNames.map(eventName => ({eventName})))(
-      `should return undefined for eventName: $eventName`,
-      ({eventName}) =>
-        Effect.gen(function* () {
-          expect.assertions(2)
-          expect(EVENT_NAMES).toContain(eventName)
-
-          expect(yield* comment(mockData, 'success')).toBeUndefined()
-        }).pipe(
-          Effect.provide(
-            withContext({
-              event: {
-                eventName,
-                payload: {}
-              } as Readonly<WorkflowEventExtract<typeof eventName>>
-            })
-          )
+        // No interceptors: any GitHub request would fail the test.
+        expect(yield* comment(mockData, 'success')).toBeUndefined()
+      }).pipe(
+        Effect.provide(
+          withContext({
+            event: {
+              eventName,
+              payload: {}
+            } as Readonly<WorkflowEventExtract<typeof eventName>>
+          })
         )
+      )
     )
   })
 })

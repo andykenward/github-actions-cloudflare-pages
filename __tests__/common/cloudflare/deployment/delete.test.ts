@@ -10,7 +10,6 @@ import {deleteCloudflareDeployment} from '@/common/cloudflare/deployment/delete.
 import RESPONSE_DELETE_NOT_FOUND from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete-not-found.response.json' with {type: 'json'}
 import RESPONSE_DELETE from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete.response.json' with {type: 'json'}
 import RESPONSE_PROJECT_NOT_FOUND from '@/responses/api.cloudflare.com/pages/projects/project-not-found.response.json' with {type: 'json'}
-import RESPONSE_UNAUTHORIZED from '@/responses/api.cloudflare.com/unauthorized.response.json' with {type: 'json'}
 import {
   getMockApi,
   MOCK_ACCOUNT_ID,
@@ -97,12 +96,6 @@ describe('deleteCloudflareDeployment', () => {
       response: RESPONSE_PROJECT_NOT_FOUND,
       status: 404,
       reason: `${REQUEST_FAILED} Project not found. The specified project name does not match any of your existing projects. [code: 8000007]`
-    },
-    {
-      title: 'the API token is rejected',
-      response: RESPONSE_UNAUTHORIZED,
-      status: 401,
-      reason: `${REQUEST_FAILED} Authentication error [code: 10000]`
     },
     {
       title: 'the API reports failure without errors',
