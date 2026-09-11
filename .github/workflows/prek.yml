@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+# Runs the prek.toml hooks on every file. Replaces pre-commit.ci, which reads
+# only .pre-commit-config.yaml and stopped running when the repo moved to prek.
+name: prek
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          persist-credentials: false
+      # The oxc-format-and-lint hook runs oxfmt and oxlint from node_modules.
+      - uses: ./.github/actions/setup-pnpm
+      - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece #v3.0.0
+        with:
+          prek-version: '0.4.11' # match .devcontainer/Dockerfile

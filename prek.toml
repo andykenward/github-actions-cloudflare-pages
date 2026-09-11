@@ -6,21 +6,22 @@
 # .github/workflows/changeset.yml and check-dist.yml.
 exclude = '^(__generated__|\.changeset|dist|example/dist|schema|\.agents|\.claude)/|^pnpm-lock\.yaml$|^\.devcontainer/devcontainer-lock\.json$'
 
+# prek's native Rust ports of the pre-commit-hooks hooks: no clone and no
+# Python environment, so the hooks run on a Node-only machine.
+# https://prek.j178.dev/builtin/
 [[repos]]
-repo = "https://github.com/pre-commit/pre-commit-hooks"
-rev = "v6.0.0"
+repo = "builtin"
 hooks = [
   { id = "trailing-whitespace" },
   { id = "end-of-file-fixer" },
   { id = "check-yaml" },
   { id = "check-added-large-files" },
-  { id = "check-merge-conflict" }
+  { id = "check-merge-conflict" },
+  # The builtin defaults to `types = ["json5"]`, and `types` is ANDed with
+  # `types_or` — clear it so .json files (tsconfig, devcontainer and others
+  # allow comments) are parsed too, as the check-json5 repo hook did.
+  { id = "check-json5", types = [], types_or = ["json", "json5"] }
 ]
-
-[[repos]]
-repo = "https://gitlab.com/bmares/check-json5"
-rev = "v1.0.1"
-hooks = [{ id = "check-json5" }]
 
 [[repos]]
 repo = "local"
