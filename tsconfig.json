@@ -29,5 +29,5 @@
       "@/types/*": ["./__generated__/types/*"]
     }
   },
-  "exclude": ["dist", "example", "node_modules"]
+  "exclude": ["dist", "example", "node_modules", "repos"]
 }
