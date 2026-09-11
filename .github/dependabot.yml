@@ -51,11 +51,20 @@ updates:
           - '@vitest*'
           - 'vitest'
           - 'vite'
+      # `@effect/vitest` peers on `^<effect version>`, so bump them together.
+      # After merging, re-pull the `repos/effect` subtree to match.
+      effect:
+        patterns:
+          - 'effect'
+          - '@effect/vitest'
+      # `@effect/tsgo` patches the `oxlint` / `oxlint-tsgolint` binaries in
+      # place, so it is version-coupled to them rather than to `effect`.
       ox:
         patterns:
           - 'oxfmt'
           - 'oxlint'
           - 'oxlint-tsgolint'
+          - '@effect/tsgo'
       octokit:
         patterns:
           - '@octokit/*'
