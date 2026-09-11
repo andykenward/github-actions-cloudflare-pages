@@ -52,7 +52,7 @@ updates:
           - 'vitest'
           - 'vite'
       # `@effect/vitest` peers on `^<effect version>`, so bump them together.
-      # After merging, re-pull the `repos/effect` subtree to match.
+      # After merging, sync-effect.yml opens a PR refreshing `repos/effect`.
       effect:
         patterns:
           - 'effect'

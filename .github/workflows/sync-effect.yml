@@ -1,10 +1,16 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 
-# Keep the vendored `repos/effect` subtree on the release tag matching
+# Keep the vendored `repos/effect` snapshot on the release tag matching
 # `dependencies.effect`, so a merged Effect bump (e.g. from Dependabot) is
-# followed by a PR that re-pulls the subtree. Dependabot can't do this itself:
-# it only edits manifests and lockfiles.
-name: sync effect subtree
+# followed by a PR that refreshes it. Dependabot can't do this itself: it only
+# edits manifests and lockfiles.
+#
+# The snapshot is replaced in one plain commit rather than pulled with
+# `git subtree`, so the PR can be merged any way. `git subtree` finds its last
+# squash by grepping commit messages for `git-subtree-dir:`, and a merge or
+# squash commit whose message lists the PR's commits matches too — after which
+# every later pull conflicts.
+name: sync effect
 on:
   push:
     branches: [main]
@@ -24,43 +30,34 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      EFFECT_REPO: https://github.com/Effect-TS/effect.git
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
         with:
-          # `git subtree` reads the last squash commit's `git-subtree-split`
-          # trailer from history, so it needs a full clone.
-          fetch-depth: 0
           persist-credentials: false
-      - name: Compare subtree with dependencies.effect
+      - name: Compare repos/effect with dependencies.effect
         id: check
         run: |
-          version=$(jq -r '.dependencies.effect' package.json)
-          tag="effect@${version}"
-          # The last line is the peeled commit (`^{}`) when the tag is annotated.
-          target=$(git ls-remote --tags "$EFFECT_REPO" "$tag" | awk 'END {print $1}')
-          if [ -z "$target" ]; then
-            echo "::error::Tag $tag not found in $EFFECT_REPO"
-            exit 1
-          fi
-          current=$(git log -1 --grep='^git-subtree-dir: repos/effect$' --format=%B | sed -n 's/^git-subtree-split: //p')
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          if [ "$current" = "$target" ]; then
-            echo "repos/effect is already at $tag ($target)"
+          wanted=$(jq -r '.dependencies.effect' package.json)
+          vendored=$(jq -r '.version' repos/effect/packages/effect/package.json)
+          echo "tag=effect@${wanted}" >> "$GITHUB_OUTPUT"
+          if [ "$vendored" = "$wanted" ]; then
+            echo "repos/effect is already at effect@${wanted}"
             echo "sync=false" >> "$GITHUB_OUTPUT"
           else
-            echo "repos/effect is at ${current:-an unknown commit}; $tag is $target"
+            echo "repos/effect is at ${vendored}; package.json wants ${wanted}"
             echo "sync=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Pull subtree
+      - name: Replace repos/effect with the tag's tree
+        id: replace
         if: steps.check.outputs.sync == 'true'
         env:
+          EFFECT_REPO: https://github.com/Effect-TS/effect.git
           TAG: ${{ steps.check.outputs.tag }}
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git subtree pull --prefix=repos/effect "$EFFECT_REPO" "$TAG" --squash -m "chore: sync repos/effect to $TAG"
+          git fetch --depth=1 --no-tags "$EFFECT_REPO" "refs/tags/${TAG}"
+          git rm -rq repos/effect
+          git read-tree --prefix=repos/effect/ -u FETCH_HEAD
+          echo "commit=$(git rev-parse 'FETCH_HEAD^{commit}')" >> "$GITHUB_OUTPUT"
       - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 #v3.2.0
         if: steps.check.outputs.sync == 'true'
         id: app-token
@@ -75,14 +72,12 @@ jobs:
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 #v8.1.1
         with:
           token: ${{ steps.app-token.outputs.token }}
-          # Push the local subtree merge commit as-is: signing recreates commits
-          # through the API, which flattens the merge and drops the
-          # `git-subtree-*` trailers the next pull depends on.
-          sign-commits: false
-          branch: 'chore/sync-effect-subtree'
+          commit-message: 'chore: sync repos/effect to ${{ steps.check.outputs.tag }}'
+          # Required: the "Branches" ruleset rejects unsigned commits on every
+          # branch, and this commit is created through the API to get signed.
+          sign-commits: true
+          branch: 'chore/sync-effect'
           delete-branch: true
           title: 'chore: sync repos/effect to ${{ steps.check.outputs.tag }}'
           body: |
-            This is an automated PR to re-pull the vendored `repos/effect` subtree at `${{ steps.check.outputs.tag }}`, matching `dependencies.effect` in `package.json`.
-
-            **Merge with "Create a merge commit"** — squash or rebase merging drops the subtree merge commit and its `git-subtree-split` trailer, and the next `git subtree pull` then conflicts.
+            This is an automated PR to replace the vendored `repos/effect` with the Effect source at tag `${{ steps.check.outputs.tag }}` (`${{ steps.replace.outputs.commit }}`), matching `dependencies.effect` in `package.json`.

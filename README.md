@@ -269,21 +269,17 @@ GitHub provides two debug log levels — see [Action Debugging]. Enable them by 
 
 ### Vendored Effect source
 
-The [Effect] source is vendored as a [git subtree] at `repos/effect/`, so the source, tests and docs of the exact library this action builds on are available offline — for reading, grepping and as reference material for AI agents. It is read-only: nothing in `src/` imports from `repos/`, and application code keeps importing the published `effect` package. Every tool in the repo is configured to ignore `repos/` — TypeScript, Vitest, oxfmt, oxlint, knip, prek, git diffs and the VS Code editor — so vendoring it does not slow down or pollute the build.
+The [Effect] source is vendored at `repos/effect/`, so the source, tests and docs of the exact library this action builds on are available offline — for reading, grepping and as reference material for AI agents. It is read-only: nothing in `src/` imports from `repos/`, and application code keeps importing the published `effect` package. Every tool in the repo is configured to ignore `repos/` — TypeScript, Vitest, oxfmt, oxlint, knip, prek, git diffs and the VS Code editor — so vendoring it does not slow down or pollute the build.
 
-It tracks the Effect release tag matching the `effect` version in [package.json](package.json). When a change to `package.json` lands on `main`, the [sync-effect.yml](.github/workflows/sync-effect.yml) workflow compares the two and, if they differ, opens a PR that re-pulls the subtree — merge it with **Create a merge commit**, since squash or rebase merging drops the subtree metadata the next pull depends on. To pull it by hand, run this from the repository root with a clean working tree:
+It is a plain snapshot of the Effect release tag matching the `effect` version in [package.json](package.json) — one ordinary commit per update, with no Effect history and no `git subtree` metadata, so its PRs can be merged any way. When a change to `package.json` lands on `main`, the [sync-effect.yml](.github/workflows/sync-effect.yml) workflow compares that version with the one in `repos/effect/packages/effect/package.json` and, if they differ, opens a PR that replaces the snapshot. To run it on demand, use **Actions → sync effect → Run workflow**. To update by hand, run this from the repository root with a clean working tree:
 
 ```sh
-git subtree pull \
-  --prefix=repos/effect \
-  https://github.com/Effect-TS/effect.git \
-  effect@<version> \
-  --squash
+tag="effect@$(jq -r .dependencies.effect package.json)"
+git fetch --no-tags https://github.com/Effect-TS/effect.git "refs/tags/$tag"
+git rm -rq --ignore-unmatch repos/effect
+git read-tree --prefix=repos/effect/ -u FETCH_HEAD
+git commit -m "chore: sync repos/effect to $tag"
 ```
-
-`--squash` collapses the upstream history into a single merge commit, so this repository doesn't absorb every Effect commit. To check the two are aligned, compare the `version` in `repos/effect/packages/effect/package.json` with `dependencies.effect` in [package.json](package.json).
-
-If the directory is ever missing (a fresh clone gets it, since the subtree is committed), re-create it with the same arguments and `git subtree add`.
 
 ## Upgrading
 
@@ -296,7 +292,6 @@ Upgrading from an older version? Check [CHANGELOG.md](./CHANGELOG.md) for breaki
 
 [Cloudflare Pages]: https://pages.cloudflare.com/
 [Effect]: https://effect.website/
-[git subtree]: https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging#_subtree_merge
 [Wrangler]: https://developers.cloudflare.com/workers/wrangler/
 [pull request]: https://docs.github.com/en/pull-requests
 [GitHub Environments]: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
