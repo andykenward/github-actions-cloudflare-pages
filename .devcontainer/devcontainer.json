@@ -49,10 +49,13 @@
     "DISABLE_AUTOUPDATER": "1",
     "HISTFILE": "/home/vscode/.commandhistory/.zsh_history"
   },
-  // Named volumes keyed by ${devcontainerId}, so Claude Code sign-in and zsh
-  // history survive rebuilds without being shared with other projects.
+  // Named volumes keyed by ${devcontainerId}, so Claude Code sign-in, gh CLI
+  // auth and zsh history survive rebuilds without being shared with other
+  // projects. gh extensions live in ~/.local/share/gh, outside the gh volume,
+  // so they still come from the image build.
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    "source=gh-config-${devcontainerId},target=/home/vscode/.config/gh,type=volume",
     "source=zsh-history-${devcontainerId},target=/home/vscode/.commandhistory,type=volume"
   ],
   "remoteUser": "vscode"
