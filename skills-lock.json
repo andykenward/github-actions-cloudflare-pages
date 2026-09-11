@@ -13,6 +13,12 @@
       "skillPath": "skills/gh/SKILL.md",
       "computedHash": "d6812a8155e8db4aae6dffcfbc3a340ede4da0ea123bb98c16ba32d79f239906"
     },
+    "gh-stack": {
+      "source": "github/gh-stack",
+      "sourceType": "github",
+      "skillPath": "skills/gh-stack/SKILL.md",
+      "computedHash": "28d42250d52f33424b807add6fbdec75736e835f98752311db321ab51733fea6"
+    },
     "github-actions-docs": {
       "source": "xixu-me/skills",
       "sourceType": "github",
