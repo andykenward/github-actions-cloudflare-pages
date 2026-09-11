@@ -565,4 +565,45 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
       expect(existsSync(path.dirname(outputFile))).toBe(false)
     }).pipe(Effect.provide(CommonLayer))
   )
+
+  it.live.each([
+    {status: 'failure', outcome: 'failed'},
+    {status: 'canceled', outcome: 'was canceled'}
+  ] as const)(
+    'fails after writing the outputs and summary when the build is $status',
+    ({status, outcome}) =>
+      Effect.gen(function* () {
+        expect.assertions(4)
+
+        vi.mocked(execFileAsync).mockImplementationOnce(
+          wranglerReporting(MOCK_DEPLOYMENT_ID, () => {}) as never
+        )
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENT,
+          deploymentResponse(status)
+        )
+
+        const error = yield* Effect.flip(
+          createCloudflareDeployment({
+            accountId: 'mock-cloudflare-account-id',
+            projectName: 'mock-cloudflare-project-name',
+            directory: 'mock-directory',
+            statusOptions: {pollInterval: 0}
+          })
+        )
+
+        const id = RESPONSE_DEPLOYMENTS.result[0]?.id
+        expect(error).toMatchObject({
+          _tag: 'CreateDeploymentError',
+          message: `Create Deployment: the Cloudflare Pages build ${outcome}. Build log: https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/${id}`
+        })
+        // The outputs and summary still record the failed deployment.
+        expect(setOutput).toHaveBeenCalledWith('id', id)
+        expect(summary.addTable).toHaveBeenCalledTimes(1)
+        expect(vi.mocked(summary.addTable).mock.calls[0]?.[0]).toContainEqual([
+          'Status:',
+          `<strong>${status.toUpperCase()}</strong>`
+        ])
+      }).pipe(Effect.provide(CommonLayer))
+  )
 })

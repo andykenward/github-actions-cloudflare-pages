@@ -2,6 +2,7 @@ import {setOutput} from '@actions/core'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
+import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
 import {errorMessage} from '@/common/errors.js'
 import {GitHubContext} from '@/common/github/context.js'
 import {code, escapeHtml, githubUrl, link} from '@/common/html.js'
@@ -136,6 +137,24 @@ export const createCloudflareDeployment = Effect.fn(
         ]),
     CreateDeploymentError.from
   )
+
+  /**
+   * A failed or canceled build used to fall through to the pull request
+   * comment and a `SUCCESS` GitHub Deployment, so a broken deploy looked green.
+   * Fail once the outputs and summary are written, so both still show it.
+   */
+  if (status === 'failure' || status === 'canceled') {
+    const outcome = status === 'failure' ? 'failed' : 'was canceled'
+    const logUrl = getCloudflareLogEndpoint({
+      id: deployment.id,
+      accountId,
+      projectName
+    })
+    return yield* new CreateDeploymentError({
+      message: `${ERROR_KEY} the Cloudflare Pages build ${outcome}. Build log: ${logUrl}`,
+      cause: undefined
+    })
+  }
 
   return {deployment, wranglerOutput: stdout}
 })
