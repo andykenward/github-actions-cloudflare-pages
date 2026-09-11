@@ -1,6 +1,7 @@
 import {debug, setFailed} from '@actions/core'
 import * as Cause from 'effect/Cause'
 import * as Config from 'effect/Config'
+import * as ConfigProvider from 'effect/ConfigProvider'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 import {describe, expect, test, vi} from 'vitest'
@@ -51,6 +52,20 @@ describe(errorMessage, () => {
     expect(errorMessage(configError(Config.int(INPUT_KEYS_KEEP_LATEST)))).toBe(
       "Input 'keep-latest' is invalid: Expected a string representing a finite number"
     )
+  })
+
+  test('uses the source message when no one input is at fault', () => {
+    expect.assertions(1)
+
+    expect(
+      errorMessage(
+        configError(
+          Config.fail(
+            new ConfigProvider.SourceError({message: 'connection refused'})
+          )
+        )
+      )
+    ).toBe('connection refused')
   })
 
   test('uses an Error message', () => {

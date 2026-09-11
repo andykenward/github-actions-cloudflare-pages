@@ -1,3 +1,4 @@
+import {info} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
@@ -109,6 +110,23 @@ describe('addComment', () => {
         expect(yield* comment(mockData, 'success')).toBe('1')
       }).pipe(Effect.provide(CommonLayer))
     )
+
+    it.effect('should not comment on a closed pull request', () => {
+      vi.stubEnv(
+        'GITHUB_EVENT_PATH',
+        '__generated__/payloads/api.github.com/pull_request/closed.payload.json'
+      )
+
+      return Effect.gen(function* () {
+        expect.assertions(2)
+
+        // No interceptors: any GitHub request would fail the test.
+        expect(yield* comment(mockData, 'success')).toBeUndefined()
+        expect(info).toHaveBeenCalledWith(
+          'addComment - No Pull Request could be found to post comment.'
+        )
+      }).pipe(Effect.provide(CommonLayer))
+    })
   })
 
   describe('eventName: workflow_run', () => {
@@ -342,6 +360,51 @@ describe('addComment', () => {
         expect(error.message).toBe('Invalid pr-number input: abc')
       }).pipe(Effect.provide(CommonLayer))
     })
+
+    // Pins current behavior, which contradicts README.md's Troubleshooting
+    // entry `No pull request node id found for pr-number input: <number>`:
+    // GitHub's NOT_FOUND error fails the request first, so that branch of
+    // `pullRequestNodeId` is unreachable.
+    it.effect(
+      'fails with GitHubApiError on NOT_FOUND when pr-number does not exist',
+      () => {
+        stubInputEnv(INPUT_KEY_PR_NUMBER, '999')
+
+        return Effect.gen(function* () {
+          expect.assertions(2)
+
+          mockApi.interceptGithub(
+            {
+              query: GetPullRequestIdDocument,
+              variables: {
+                owner: 'andykenward',
+                repo: 'github-actions-cloudflare-pages',
+                number: 999
+              }
+            },
+            {
+              data: {repository: {pullRequest: null}},
+              errors: [
+                {
+                  type: 'NOT_FOUND',
+                  path: ['repository', 'pullRequest'],
+                  locations: [{line: 3, column: 5}],
+                  message:
+                    'Could not resolve to a PullRequest with the number of 999.'
+                }
+              ]
+            }
+          )
+
+          const error = yield* Effect.flip(comment(mockData, 'success'))
+
+          expect(error._tag).toBe('GitHubApiError')
+          expect(error.message).toContain(
+            'Could not resolve to a PullRequest with the number of 999.'
+          )
+        }).pipe(Effect.provide(CommonLayer))
+      }
+    )
   })
 
   describe('eventName: workflow_dispatch', () => {
@@ -437,6 +500,27 @@ describe('addComment', () => {
             'No pull request node id found for workflow_dispatch event'
           )
         }).pipe(Effect.provide(WORKFLOW_DISPATCH))
+    )
+
+    it.effect('should fail without a lookup when there is no branch', () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        // No interceptors: a lookup would fail with a `GitHubApiError`.
+        const error = yield* Effect.flip(comment(mockData, 'success'))
+
+        expect(error.message).toBe('No branch found in context')
+      }).pipe(
+        Effect.provide(
+          withContext({
+            event: {
+              eventName: 'workflow_dispatch',
+              payload: {}
+            } as Readonly<WorkflowEventExtract<'workflow_dispatch'>>,
+            branch: undefined
+          })
+        )
+      )
     )
   })
 

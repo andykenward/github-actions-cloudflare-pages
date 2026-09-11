@@ -135,6 +135,26 @@ describe('deploy', () => {
           expect(addComment).not.toHaveBeenCalled()
         }).pipe(Effect.provide(gitHubApi), Effect.provide(DeployLayer))
       })
+
+      it.effect(
+        'fails for an unsupported event before starting wrangler',
+        () => {
+          // The context accepts any webhook event (and only reads the payload's
+          // repository), so the pull_request payload stands in for a release.
+          vi.stubEnv('GITHUB_EVENT_NAME', 'release')
+
+          return Effect.gen(function* () {
+            expect.assertions(2)
+
+            const error = yield* Effect.flip(run)
+
+            expect(error.message).toBe(
+              "GitHub Action event name 'release' not supported."
+            )
+            expect(execFileAsync).not.toHaveBeenCalled()
+          }).pipe(Effect.provide(DeployLayer))
+        }
+      )
     })
   })
 })

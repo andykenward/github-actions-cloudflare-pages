@@ -16,6 +16,9 @@ paths:
 - A layer reads the env when it is built, so stub before the `Effect.provide` that builds it runs: `yield*` an effect wrapped in `Effect.provide(X.layer)` after stubbing (`__tests__/deploy/inputs.test.ts`), or stub before returning an effect whose outermost pipe provides the layer.
 - `stubTestEnvVars(eventName)` (`__tests__/helpers/env.ts`) loads a payload from `__generated__/payloads/` for `pull_request` (default), `workflow_dispatch` or `workflow_run`. Any other event throws — add a case.
 - HTTP goes through undici `MockAgent` (`__tests__/helpers/api.ts`). Assert `mockApi.mockAgent.assertNoPendingInterceptors()` to catch missed calls.
+- `interceptCloudflare` only replies with a `FetchResult` JSON envelope. For an empty (204) body or a network error, `interceptCloudflareRaw(path, method)` returns the undici interceptor: `.reply(204, '')` / `.replyWithError(error)`. `CloudflareApiTestLayer` (`__tests__/helpers/layers.ts`) provides `CloudflareApi` alone.
+- Mock the one REST call (`GitHubRestApi.paginate`) with `interceptGithubRest({path, query, headers}, body, status?, responseHeaders?)`: it replies with the JSON content type Octokit needs to parse a body. undici matches `query` exactly.
+- Entry-point tests (`__tests__/{deploy,delete}/index.test.ts`) keep `vi.mock` / `vi.hoisted` in the test file (hoisting) and share `runEntryPoint` and `testRunOutcomes` (`__tests__/helpers/entry-point.ts`).
 - Fixtures: `__generated__/payloads/` (generated) and `__generated__/responses/` (hand-maintained — add to it freely).
 
 ## Effect tests
@@ -38,13 +41,13 @@ paths:
 ## Wrangler and polling
 
 - Never execute wrangler — mock `execFileAsync`. It receives the effect's `AbortSignal` as `options.signal`, so a mock that settles only on abort stands in for a long upload (`__tests__/deploy/main.test.ts`).
-- A mock that only resolves exercises the commit-hash fallback. To exercise polling by id, have it first append a `pages-deploy-detailed` line to `options.env.WRANGLER_OUTPUT_FILE_PATH` (`wranglerReporting` in `__tests__/common/cloudflare/deployment/create.test.ts`).
+- A mock that only resolves exercises the commit-hash fallback. To exercise polling by id, have it first append a `pages-deploy-detailed` line to `options.env.WRANGLER_OUTPUT_FILE_PATH` (`wranglerReporting` in `__tests__/helpers/wrangler.ts`).
 - Poll without delay by passing a zero `pollInterval`: as the `statusOptions` field of `createCloudflareDeployment`'s argument, or as the second argument of `statusCloudflareDeployment(target, options)`.
 
 ## Conventions
 
 - Title suites with the real reference — `describe(functionName)` / `describe(ServiceClass)` — for IDE navigation. `Effect.fn` returns an anonymous function and an Effect value isn't a function, so those get a string title plus `// oxlint-disable-next-line vitest/prefer-describe-function-title`.
 - `__tests__/helpers/` isn't collected. Snapshots live in `__snapshots__/` beside the test; update them deliberately with `vitest run -u`.
-- `pnpm run test:coverage` measures `src/**/*.ts` only (not `bin/`, not `__mocks__/`) and writes text, HTML, lcov, `json-summary` and `json` reports to `.cache/coverage/`. A module every test replaces with a manual mock (e.g. `src/common/github/deployment/create.ts`) reports 0% — cover it with a test that imports the real module.
-- To find what a change leaves untested, run the **whole** suite and narrow only the report: `pnpm run test:coverage --coverage.include=src/path/file.ts --coverage.reporter=text` prints the file's uncovered lines. Don't pass a test path — a module is often exercised by tests outside its mirror (`cloudflare/deployment/delete.ts` shows 0% from its own directory's tests, 60% from the suite). Add `--coverage.reporter=json-summary` to read percentages from `.cache/coverage/coverage-summary.json`. On a PR, the coverage comment is in `gh pr view <n> --comments`.
+- `pnpm run test:coverage` measures `src/**/*.ts` only (not `bin/`, not `__mocks__/`) and writes text, HTML, lcov, `json-summary` and `json` reports to `.cache/coverage/`. A module other tests replace with a manual mock reports 0% unless one test imports the real module (`__tests__/common/github/deployment/create.test.ts` does so for `create.ts`).
+- To find what a change leaves untested, run the **whole** suite and narrow only the report: `pnpm run test:coverage --coverage.include=src/path/file.ts --coverage.reporter=text` prints the file's uncovered lines. Don't pass a test path — modules are also exercised by tests outside their mirror (`batch-delete.ts` runs Cloudflare's `delete.ts`), so a scoped run under-reports. Add `--coverage.reporter=json-summary` to read percentages from `.cache/coverage/coverage-summary.json`. On a PR, the coverage comment is in `gh pr view <n> --comments`.
 - Tests hitting the real network and failing with genuine API responses usually means `undici`'s major no longer matches Node's — see the tooling rule.

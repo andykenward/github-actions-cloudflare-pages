@@ -41,6 +41,52 @@ describe(GitHubApi, () => {
     }).pipe(Effect.provide(CommonLayer))
   )
 
+  it.effect('fails when a 2xx response is not JSON', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // e.g. an HTML page from a proxy in front of GitHub Enterprise Server.
+      mockApi.mockAgent
+        .get('https://api.github.com')
+        .intercept({path: '/graphql', method: 'POST'})
+        .reply(200, '<!DOCTYPE html><title>Unicorn!</title>', {
+          headers: {'content-type': 'text/html'}
+        })
+
+      const github = yield* GitHubApi
+      const error = yield* Effect.flip(github.request({query: QUERY}))
+
+      expect(error.message).toBe(
+        'GitHub API returned a non-JSON response (200)'
+      )
+    }).pipe(Effect.provide(CommonLayer))
+  )
+
+  it.effect('posts to GITHUB_GRAPHQL_URL with the github-token', () => {
+    // GitHub Enterprise Server serves GraphQL from its own host.
+    vi.stubEnv('GITHUB_GRAPHQL_URL', 'https://github.example.com/api/graphql')
+
+    return Effect.gen(function* () {
+      expect.assertions(1)
+
+      mockApi.mockAgent
+        .get('https://github.example.com')
+        .intercept({
+          path: '/api/graphql',
+          method: 'POST',
+          headers: {authorization: 'bearer mock-github-token'},
+          body: JSON.stringify({query: QUERY})
+        })
+        .reply(200, {data: {viewer: {login: 'octocat'}}})
+
+      const github = yield* GitHubApi
+
+      expect(yield* github.request({query: QUERY})).toStrictEqual({
+        data: {viewer: {login: 'octocat'}}
+      })
+    }).pipe(Effect.provide(CommonLayer))
+  })
+
   it.effect('fails on GraphQL errors by default', () =>
     Effect.gen(function* () {
       expect.assertions(1)

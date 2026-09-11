@@ -1,5 +1,4 @@
 import {existsSync} from 'node:fs'
-import {appendFile} from 'node:fs/promises'
 import path from 'node:path'
 
 import {info, setOutput, summary} from '@actions/core'
@@ -9,6 +8,7 @@ import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
 import type {MockApi} from '@/tests/helpers/api.js'
+import type {ExecFileOptions} from '@/tests/helpers/wrangler.js'
 
 import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.js'
 import {
@@ -29,6 +29,7 @@ import {
   setMockApi
 } from '@/tests/helpers/api.js'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
+import {wranglerReporting} from '@/tests/helpers/wrangler.js'
 
 import packageJson from '../../../../package.json' with {type: 'json'}
 
@@ -123,6 +124,33 @@ describe('createCloudflareDeployment', () => {
         expect(summary.addTable).not.toHaveBeenCalled()
       }).pipe(Effect.provide(CommonLayer))
     )
+
+    it.effect('fails without running wrangler when there is no branch', () => {
+      // Neither the `branch` argument nor the context gives one. `undefined`
+      // removes the variable; an empty string would still count as a branch.
+      // oxlint-disable-next-line unicorn/no-useless-undefined
+      vi.stubEnv('GITHUB_HEAD_REF', undefined)
+      // oxlint-disable-next-line unicorn/no-useless-undefined
+      vi.stubEnv('GITHUB_REF_NAME', undefined)
+
+      return Effect.gen(function* () {
+        expect.assertions(2)
+
+        const error = yield* Effect.flip(
+          createCloudflareDeployment({
+            accountId: 'mock-cloudflare-account-id',
+            projectName: 'mock-cloudflare-project-name',
+            directory: 'mock-directory'
+          })
+        )
+
+        expect(error).toMatchObject({
+          _tag: 'CreateDeploymentError',
+          message: 'Create Deployment: branch is undefined'
+        })
+        expect(execFileAsync).not.toHaveBeenCalled()
+      }).pipe(Effect.provide(CommonLayer))
+    })
 
     it.live('handles thrown error from getDeployments', () =>
       Effect.gen(function* () {
@@ -464,29 +492,6 @@ const deploymentResponse = (status: LatestStage['status']) => ({
   }
 })
 
-type ExecFileOptions = {env: NodeJS.ProcessEnv}
-
-/**
- * An `execFileAsync` that behaves like wrangler: appends a
- * `pages-deploy-detailed` entry to `WRANGLER_OUTPUT_FILE_PATH`, then succeeds.
- * `onOutputFile` receives the file's path.
- */
-const wranglerReporting =
-  (deploymentId: string, onOutputFile: (file: string) => void) =>
-  async (
-    _file: string,
-    _args: ReadonlyArray<string>,
-    {env}: ExecFileOptions
-  ) => {
-    const outputFile = env[WRANGLER_OUTPUT_FILE_PATH] ?? ''
-    onOutputFile(outputFile)
-    await appendFile(
-      outputFile,
-      `${JSON.stringify({type: 'pages-deploy-detailed', version: 1, deployment_id: deploymentId})}\n`
-    )
-    return {stdout: 'success', stderr: ''}
-  }
-
 describe('createCloudflareDeployment with the deployment id wrangler reports', () => {
   let mockApi: MockApi
 
@@ -564,6 +569,40 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
       })
       expect(existsSync(path.dirname(outputFile))).toBe(false)
     }).pipe(Effect.provide(CommonLayer))
+  )
+
+  it.live(
+    'fails after setting the outputs when the summary is not written',
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(2)
+
+        const message =
+          'Unable to find environment variable for $GITHUB_STEP_SUMMARY. Check if your runtime environment supports job summaries.'
+        vi.mocked(summary.write).mockRejectedValueOnce(new Error(message))
+        vi.mocked(execFileAsync).mockImplementationOnce(
+          wranglerReporting(MOCK_DEPLOYMENT_ID, () => {}) as never
+        )
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENT,
+          deploymentResponse('success')
+        )
+
+        const error = yield* Effect.flip(
+          createCloudflareDeployment({
+            accountId: 'mock-cloudflare-account-id',
+            projectName: 'mock-cloudflare-project-name',
+            directory: 'mock-directory',
+            statusOptions: {pollInterval: 0}
+          })
+        )
+
+        expect(error).toMatchObject({_tag: 'CreateDeploymentError', message})
+        expect(setOutput).toHaveBeenCalledWith(
+          'id',
+          RESPONSE_DEPLOYMENTS.result[0]?.id
+        )
+      }).pipe(Effect.provide(CommonLayer))
   )
 
   it.live.each([

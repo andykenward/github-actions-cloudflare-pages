@@ -10,7 +10,9 @@ import type {MockApi} from '@/tests/helpers/api.js'
 import {checkEnvironment} from '@/common/github/environment.js'
 import {CommonLayer} from '@/common/layer.js'
 import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
+import {INPUT_KEY_GITHUB_ENVIRONMENT} from '@/input-keys'
 import {getMockApi} from '@/tests/helpers/api.js'
+import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 vi.mock(import('@actions/core'))
 
@@ -62,6 +64,25 @@ describe('environment', () => {
 
         expect(failure.message).toContain('GitHub API request failed: 401')
       }).pipe(Effect.provide(CommonLayer))
+    )
+
+    it.effect(
+      'fails without a request when github-environment is unset',
+      () => {
+        // GitHub doesn't enforce `required: true` on action inputs.
+        stubInputEnv(INPUT_KEY_GITHUB_ENVIRONMENT, '')
+
+        return Effect.gen(function* () {
+          expect.assertions(1)
+
+          const failure = yield* Effect.flip(checkEnvironment)
+
+          // Pins the current wording: property name + `undefined`, not `github-environment`.
+          expect(failure.message).toBe(
+            'GitHub Environment: missing input gitHubEnvironment undefined'
+          )
+        }).pipe(Effect.provide(CommonLayer))
+      }
     )
 
     it.effect('success', () =>

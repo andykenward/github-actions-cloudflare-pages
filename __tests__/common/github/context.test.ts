@@ -1,9 +1,12 @@
+import {debug, isDebug} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, onTestFinished, vi} from 'vitest'
 
 import {GitHubContext} from '@/common/github/context.js'
 import {stubTestEnvVars} from '@/tests/helpers/env.js'
+
+vi.mock(import('@actions/core'))
 
 /** Builds the layer when run, so env stubbed beforehand is picked up. */
 const context = Effect.gen(function* () {
@@ -112,5 +115,47 @@ describe(GitHubContext, () => {
       expect(ref).not.toBe(`mock-github-head-ref`)
       expect(sha).not.toBe(`mock-github-sha`)
     })
+  )
+
+  it.effect(
+    'takes the ref of a `pull_request` from its payload without GITHUB_HEAD_REF',
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(2)
+
+        vi.stubEnv('GITHUB_HEAD_REF', '')
+
+        const {branch, ref} = yield* context
+
+        // The pull request's `head.ref` in the payload fixture.
+        expect(ref).toBe('changes')
+        expect(branch).toBe('mock-github-ref-name')
+      })
+  )
+
+  it.effect(
+    'logs the context but not the event with step debug logging on',
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        vi.mocked(isDebug).mockReturnValue(true)
+        onTestFinished(() => {
+          vi.mocked(isDebug).mockReturnValue(false)
+        })
+
+        const {repo, branch, sha, graphqlEndpoint, ref} = yield* context
+
+        expect(debug).toHaveBeenCalledWith(
+          `context: ${JSON.stringify({
+            event: 'will debug itself as output is large',
+            repo,
+            branch,
+            sha,
+            graphqlEndpoint,
+            ref
+          })}`
+        )
+      })
   )
 })
