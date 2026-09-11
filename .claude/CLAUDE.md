@@ -119,6 +119,7 @@ Non-negotiable. Violating these breaks the build or the type system.
 
 Formatting and linting are automated via [prek](https://prek.j178.dev) (`prek.toml`) and Claude Code hooks ([.claude/settings.json](.claude/settings.json), scripts in [.claude/scripts/](.claude/scripts/)).
 
+- **CI**: [prek.yml](.github/workflows/prek.yml) runs `prek run --all-files` on PRs and `main` (it replaced pre-commit.ci, which can't read `prek.toml`). Pin its `prek-version` to the prek in [.devcontainer/Dockerfile](.devcontainer/Dockerfile).
 - **Hook Sync Rule**: when changing formatter/linter behavior or script paths, update together — the `oxc-format-and-lint` local hook in [prek.toml](prek.toml) and the usage header in [.claude/scripts/pre-commit-oxc.sh](.claude/scripts/pre-commit-oxc.sh).
 - **Session-end review on stop**: [.claude/scripts/stop-review-agents.sh](.claude/scripts/stop-review-agents.sh) (Stop hook) prompts capturing session learnings in .claude/CLAUDE.md (shared repo conventions) and auto-memory (user preferences + project context) when the working tree has changes.
 
