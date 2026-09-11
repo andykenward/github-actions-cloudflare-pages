@@ -23,6 +23,6 @@ Operations live in `.graphql` files beside the module that uses them (`src/commo
 - **Mutations take one input object per field** — `createDeployment(input: $input)` with `$input: CreateDeploymentInput!` — so the generated input type checks the variables. Constant flags (`autoMerge: false`) are set in code.
 - **Variables** for every dynamic value, in camelCase.
 - **Select only what the code reads**; include `id` on an object you use.
-- **Fragments** only for a selection shared by two or more operations; put shared ones in a `fragments.graphql`.
+- **Fragments** only for a selection shared by two or more operations; put shared ones in a `fragments.graphql`. Codegen resolves `...FragmentName` spreads across all documents and inlines them into each `…Document`.
 - **Several mutation fields in one operation** run in order, and an error in one doesn't stop the next. Check `errors[].path[0]` to tell which failed — see `src/common/github/deployment/delete.graphql` and `src/common/batch-delete.ts`.
 - The schema is `schema/github/schema.graphql` (refreshed weekly). A scalar generated as `any` needs a mapping in `graphql.config.ts`. Never edit `__generated__/gql/`.
