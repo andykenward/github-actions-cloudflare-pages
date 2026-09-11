@@ -2,6 +2,7 @@
 paths:
   - 'README.md'
   - 'delete/README.md'
+  - 'CONTRIBUTING.md'
   - 'action.yml'
   - 'delete/action.yml'
   - '.github/workflow-templates/**'
@@ -14,7 +15,7 @@ paths:
 
 - `README.md` documents the deploy action; `delete/README.md` the delete action. Adding, changing or removing an input or output — or any user-visible behavior — means updating the matching Inputs/Outputs table and examples.
 - Never hand-edit the pinned `andykenward/...@<sha> #vX.Y.Z` refs — `bin/sync-readme-versions.ts` (`pnpm run sync:readme`) maintains them.
-- README's Development section (vendored Effect source) mirrors `.claude/rules/repos.md` — keep them in step.
+- `CONTRIBUTING.md` is for contributors: setup, commands, the pull request checklist and the vendored Effect source. Keep its checklist in step with `.claude/CLAUDE.md` ("Before you finish") and its vendored-source section with `.claude/rules/repos.md`. Keep contributor material out of the READMEs.
 - Facts the docs must get right:
   - GitHub Environments must be created manually — the action can't create them (that needs `administration:write`).
   - With `GITHUB_TOKEN`, grant `contents: read`, `deployments: write`, `pull-requests: write`, plus `actions: read` for private repos.
@@ -31,3 +32,4 @@ paths:
 - `CLAUDE.md` loads every session: keep it under 200 lines and limited to session-wide rules. Put anything that matters for only part of the codebase in a rule here, with `paths:` frontmatter.
 - Write imperative, specific bullets with repo-root paths, and a short reason when a rule isn't obvious. Don't restate what the code shows or what another file already says.
 - Adding, renaming or re-scoping a rule → update the rules table in `CLAUDE.md`.
+- `prek.toml` excludes `.claude/`, so these files are never formatted on commit — run `pnpm exec oxfmt --write .claude/CLAUDE.md .claude/rules/*.md` after editing them.

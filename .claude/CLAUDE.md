@@ -68,6 +68,6 @@ These load automatically when you read a matching file. If one hasn't loaded —
 | [tooling.md](rules/tooling.md)               | `package.json`, TS/lint/format/bundler config, `bin/**`, `.claude/` config, `.devcontainer/**`  | Dependencies, TypeScript 6 + 7, `@effect/tsgo`, scripts, bundling, hooks, debugging  |
 | [workflows.md](rules/workflows.md)           | `.github/**`                                                                                    | CI, release, Dependabot, workflow hygiene, signed bot commits                        |
 | [repos.md](rules/repos.md)                   | `repos/**`, the configs that exclude it, `sync-effect.yml`                                      | Vendored-source exclusions and the snapshot sync                                     |
-| [docs.md](rules/docs.md)                     | READMEs, `action.yml`, workflow templates, `.claude/**/*.md`                                    | User docs and examples, Markdown gotchas, maintaining these instructions             |
+| [docs.md](rules/docs.md)                     | READMEs, `CONTRIBUTING.md`, `action.yml`, workflow templates, `.claude/**/*.md`                 | User and contributor docs, Markdown gotchas, maintaining these instructions          |
 
 Record new learnings where they apply: session-wide rules here, path-specific ones in the matching rule.

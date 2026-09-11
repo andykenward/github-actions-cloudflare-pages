@@ -59,4 +59,4 @@ GraphQL codegen needs no entry — its `documents` globs only cover `src/` and `
   git rm -rq --ignore-unmatch repos/effect && git read-tree --prefix=repos/effect/ -u FETCH_HEAD
   ```
 
-- Keep this in step with the Development section of `README.md`.
+- Keep this in step with the "Vendored Effect source" section of `CONTRIBUTING.md`.
