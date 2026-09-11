@@ -5,7 +5,8 @@
     "dockerfile": "Dockerfile"
   },
   "features": {
-    // Node 24 matches CI (.github/actions/setup-pnpm); pnpm matches packageManager.
+    // Node 24 matches CI (.github/actions/setup-pnpm). pnpmVersion is copied
+    // from package.json's packageManager by bin/sync-versions.ts — bump it there.
     "ghcr.io/devcontainers/features/node:2.1.0": {
       "version": "24",
       "pnpmVersion": "11.17.0"
