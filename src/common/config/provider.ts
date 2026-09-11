@@ -20,8 +20,9 @@ import * as Schema from 'effect/Schema'
  * Built from `fromEnvRecord(process.env)` rather than the default provider.
  * The default is a `Context.Reference` whose `defaultValue` snapshots
  * `process.env` once and is then cached on the reference forever, so it cannot
- * see `vi.stubEnv` changes between tests. `fromEnvRecord` re-reads the record
- * on every lookup.
+ * see `vi.stubEnv` changes between tests. `fromEnvRecord` reads a value from
+ * the record on every lookup (only its index of child keys, used for list and
+ * record configs, is built once).
  *
  * Empty strings are treated as missing (the provider default), which reproduces
  * both `getInput(..., {required: true})` throwing and the `|| undefined` idiom
@@ -59,10 +60,14 @@ export const input = (key: string): Config.Config<string> =>
   Config.schema(Schema.Trim, key)
 
 /**
- * An optional string input: `undefined` when absent or empty. `undefined` is
+ * An optional string input: `undefined` when absent, empty or only whitespace
+ * (which trims to empty, as `getInput(...) || undefined` did). `undefined` is
  * the meaningful absent value — callers treat it as "not supplied" — and
  * `unicorn/no-null` rules out the alternative.
  */
 export const optionalInput = (key: string): Config.Config<string | undefined> =>
-  // oxlint-disable-next-line unicorn/no-useless-undefined
-  input(key).pipe(Config.withDefault(undefined))
+  input(key).pipe(
+    Config.map(value => value || undefined),
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    Config.withDefault(undefined)
+  )

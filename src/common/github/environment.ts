@@ -3,6 +3,7 @@ import * as Schema from 'effect/Schema'
 
 import {CommonInputs} from '@/common/inputs.js'
 import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
+import {INPUT_KEY_GITHUB_ENVIRONMENT} from '@/input-keys'
 
 import {GitHubApi} from './api/client.js'
 import {GitHubContext} from './context.js'
@@ -27,7 +28,7 @@ export const checkEnvironment = Effect.gen(function* () {
 
   if (!gitHubEnvironment) {
     return yield* new EnvironmentError({
-      message: `${PREFIX} missing input gitHubEnvironment ${gitHubEnvironment}`
+      message: `${PREFIX} Input required and not supplied: ${INPUT_KEY_GITHUB_ENVIRONMENT}`
     })
   }
 

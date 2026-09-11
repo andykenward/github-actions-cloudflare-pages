@@ -11,8 +11,8 @@ const RESOURCE_URL = `https://api.cloudflare.com/path`
 vi.mock(import('@actions/core'))
 
 describe(throwFetchError, () => {
-  test('throws parsed error with notes', () => {
-    expect.assertions(3)
+  test('puts the notes in the message without annotating them', () => {
+    expect.assertions(2)
 
     const ERRORS = {
       success: false,
@@ -27,17 +27,15 @@ describe(throwFetchError, () => {
     expect(() =>
       throwFetchError(RESOURCE_URL, ERRORS)
     ).toThrowErrorMatchingInlineSnapshot(
-      `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/path) failed.]`
+      `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/path) failed. Authentication error [code: 10000]]`
     )
 
-    expect(core.error).toHaveBeenCalledTimes(1)
-    expect(core.error).toHaveBeenCalledWith(
-      `Cloudflare API: Authentication error [code: 10000]`
-    )
+    // A caller may tolerate the error, so reporting it is the caller's job.
+    expect(core.error).not.toHaveBeenCalled()
   })
 
-  test('throws parsed error with multiple notes', () => {
-    expect.assertions(4)
+  test('puts every note in the message', () => {
+    expect.assertions(1)
 
     const ERRORS = {
       success: false,
@@ -56,17 +54,7 @@ describe(throwFetchError, () => {
     expect(() =>
       throwFetchError(RESOURCE_URL, ERRORS)
     ).toThrowErrorMatchingInlineSnapshot(
-      `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/path) failed.]`
-    )
-
-    expect(core.error).toHaveBeenCalledTimes(2)
-    expect(core.error).toHaveBeenNthCalledWith(
-      1,
-      `Cloudflare API: Authentication error [code: 10000]`
-    )
-    expect(core.error).toHaveBeenNthCalledWith(
-      2,
-      `Cloudflare API: Another error [code: 20000]`
+      `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/path) failed. Authentication error [code: 10000] Another error [code: 20000]]`
     )
   })
 
@@ -114,8 +102,8 @@ describe(throwFetchError, () => {
     } satisfies FetchResult
 
     expect(() => throwFetchError(RESOURCE_URL, ERRORS)).toThrow(ParseError)
-    expect(core.error).toHaveBeenCalledWith(
-      `Cloudflare API: Deployment failed [code: 8000000]
+    expect(() => throwFetchError(RESOURCE_URL, ERRORS)).toThrow(
+      `A request to the Cloudflare API (${RESOURCE_URL}) failed. Deployment failed [code: 8000000]
 - Build failed [code: 8000001]
   - Out of memory [code: 8000002]
 

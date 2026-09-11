@@ -177,7 +177,7 @@ describe('createCloudflareDeployment', () => {
 
         expect(error).toMatchObject({
           _tag: 'CloudflareApiError',
-          message: `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.`
+          message: `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed. Project not found. The specified project name does not match any of your existing projects. [code: 8000007]`
         })
         expect(execFileAsync).toHaveBeenCalledTimes(1)
         expect(info).toHaveBeenCalledWith('success')

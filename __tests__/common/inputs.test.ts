@@ -113,6 +113,21 @@ describe(CommonInputs, () => {
       })
   )
 
+  it.effect(`uses the default for a blank ${INPUT_KEY_WRANGLER_VERSION}`, () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
+      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+      // Trimmed to '', it would otherwise install `wrangler@`.
+      stubInputEnv(INPUT_KEY_WRANGLER_VERSION, '   ')
+
+      expect((yield* commonInputs).wranglerVersion).toBe(
+        packageJson.devDependencies.wrangler
+      )
+    })
+  )
+
   it.effect('returns default wranger version', () =>
     Effect.gen(function* () {
       expect.assertions(1)

@@ -77,9 +77,8 @@ describe('environment', () => {
 
           const failure = yield* Effect.flip(checkEnvironment)
 
-          // Pins the current wording: property name + `undefined`, not `github-environment`.
           expect(failure.message).toBe(
-            'GitHub Environment: missing input gitHubEnvironment undefined'
+            'GitHub Environment: Input required and not supplied: github-environment'
           )
         }).pipe(Effect.provide(CommonLayer))
       }

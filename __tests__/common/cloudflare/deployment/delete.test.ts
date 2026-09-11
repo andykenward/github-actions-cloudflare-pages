@@ -67,7 +67,7 @@ describe('deleteCloudflareDeployment', () => {
 
   it.effect('counts a deployment that no longer exists as deleted', () =>
     Effect.gen(function* () {
-      expect.assertions(3)
+      expect.assertions(4)
 
       mockApi.interceptCloudflare(
         MOCK_API_PATH_DEPLOYMENTS_DELETE,
@@ -81,6 +81,8 @@ describe('deleteCloudflareDeployment', () => {
         `Cloudflare Deployment might have been deleted already: ${MOCK_DEPLOYMENT_ID}`
       )
       expect(info).not.toHaveBeenCalled()
+      // A tolerated error leaves no error annotation on the run.
+      expect(error).not.toHaveBeenCalled()
     }).pipe(Effect.provide(CloudflareApiTestLayer))
   )
 
@@ -94,13 +96,13 @@ describe('deleteCloudflareDeployment', () => {
       title: 'the project does not exist',
       response: RESPONSE_PROJECT_NOT_FOUND,
       status: 404,
-      reason: REQUEST_FAILED
+      reason: `${REQUEST_FAILED} Project not found. The specified project name does not match any of your existing projects. [code: 8000007]`
     },
     {
       title: 'the API token is rejected',
       response: RESPONSE_UNAUTHORIZED,
       status: 401,
-      reason: REQUEST_FAILED
+      reason: `${REQUEST_FAILED} Authentication error [code: 10000]`
     },
     {
       title: 'the API reports failure without errors',

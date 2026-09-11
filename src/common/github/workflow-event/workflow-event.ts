@@ -1,5 +1,4 @@
 import {existsSync, readFileSync} from 'node:fs'
-import {EOL} from 'node:os'
 
 import {debug, isDebug} from '@actions/core'
 import * as Option from 'effect/Option'
@@ -23,11 +22,14 @@ const decodeEventName = Schema.decodeUnknownOption(Schema.Literals(EVENT_NAMES))
 const getPayload = (): unknown => {
   const path = process.env.GITHUB_EVENT_PATH
 
-  if (!path) return
+  // The runner always writes the file. Without it every later payload read
+  // would fail with an opaque `TypeError`, so name the problem here.
+  if (!path) {
+    throw new Error('GITHUB_EVENT_PATH is not set')
+  }
 
   if (!existsSync(path)) {
-    process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${EOL}`)
-    return
+    throw new Error(`GITHUB_EVENT_PATH ${path} does not exist`)
   }
 
   const parsed = parseJson(readFileSync(path, {encoding: 'utf8'}))

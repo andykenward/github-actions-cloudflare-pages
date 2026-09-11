@@ -37,9 +37,9 @@ const commonConfig = Config.all({
   gitHubEnvironment: optionalInput(INPUT_KEY_GITHUB_ENVIRONMENT),
   /** Pull request number to use for comment creation. */
   prNumber: optionalInput(INPUT_KEY_PR_NUMBER),
-  /** Wrangler version to use. */
-  wranglerVersion: input(INPUT_KEY_WRANGLER_VERSION).pipe(
-    Config.withDefault(DEFAULT_WRANGLER_VERSION)
+  /** Wrangler version to use; a blank input gets the default too. */
+  wranglerVersion: optionalInput(INPUT_KEY_WRANGLER_VERSION).pipe(
+    Config.map(version => version ?? DEFAULT_WRANGLER_VERSION)
   )
 })
 

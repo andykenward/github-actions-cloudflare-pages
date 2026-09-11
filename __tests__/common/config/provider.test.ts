@@ -60,6 +60,8 @@ describe(optionalInput, () => {
   it.effect.each([
     {supplied: 'absent', value: undefined, expected: undefined},
     {supplied: 'empty', value: '', expected: undefined},
+    // `getInput` trims it to '', which `|| undefined` treated as absent.
+    {supplied: 'only whitespace', value: '   ', expected: undefined},
     {supplied: 'a value', value: ' value ', expected: 'value'}
   ])('reads $expected when $supplied', ({value, expected}) =>
     Effect.gen(function* () {

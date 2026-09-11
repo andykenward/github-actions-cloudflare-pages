@@ -96,6 +96,15 @@ export const batchDelete: (
           options: {errorThrows: false}
         })
 
+    // An error without a `path` failed the whole request (e.g. a rate limit),
+    // so no mutation ran.
+    if (errors?.some(error => !error.path)) {
+      warning(
+        `${PREFIX} Error deleting GitHub deployment: ${JSON.stringify(errors)}`
+      )
+      return row({success: false, error: 'Deleting GitHub deployment failed'})
+    }
+
     if (errors?.some(error => error.path?.[0] === 'createDeploymentStatus')) {
       warning(
         `${PREFIX} Error updating GitHub deployment status: ${JSON.stringify(errors)}`

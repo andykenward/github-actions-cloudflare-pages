@@ -95,11 +95,9 @@ describe('api', () => {
         const failure = yield* Effect.flip(getProject)
 
         expect(failure.cause).toMatchInlineSnapshot(
-          `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name) failed.]`
+          `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name) failed. Project not found. The specified project name does not match any of your existing projects. [code: 8000007]]`
         )
-        expect(error).toHaveBeenCalledWith(
-          `Cloudflare API: Project not found. The specified project name does not match any of your existing projects. [code: 8000007]`
-        )
+        expect(error).not.toHaveBeenCalled()
       }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
 
@@ -116,9 +114,28 @@ describe('api', () => {
         const failure = yield* Effect.flip(getProject)
 
         expect(failure.cause).toMatchInlineSnapshot(
-          `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name) failed.]`
+          `[ParseError: A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name) failed. Authentication error [code: 10000]]`
         )
       }).pipe(Effect.provide(CloudflareApiTestLayer))
+    )
+
+    it.effect(
+      'fails with the HTTP status when the error body is not JSON',
+      () =>
+        Effect.gen(function* () {
+          expect.assertions(1)
+
+          // e.g. an HTML error page from Cloudflare's edge.
+          mockApi
+            .interceptCloudflareRaw(MOCK_API_PATH_PROJECT, 'GET')
+            .reply(502, '<html>Bad gateway</html>')
+
+          const failure = yield* Effect.flip(getProject)
+
+          expect(failure.message).toBe(
+            `A request to the Cloudflare API (https://api.cloudflare.com${MOCK_API_PATH_PROJECT}) failed: 502 Bad Gateway`
+          )
+        }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
 
     it.effect('fails with the envelope errors when a 200 reports failure', () =>
@@ -134,9 +151,7 @@ describe('api', () => {
         const failure = yield* Effect.flip(getProject)
 
         expect(failure.cause).toMatchObject({code: 10000})
-        expect(error).toHaveBeenCalledWith(
-          `Cloudflare API: Authentication error [code: 10000]`
-        )
+        expect(failure.message).toContain('Authentication error [code: 10000]')
       }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
 
@@ -211,6 +226,24 @@ describe('api', () => {
 
         expect(failure.message).toContain(`A request to the Cloudflare API`)
       }).pipe(Effect.provide(CloudflareApiTestLayer))
+    )
+
+    it.effect(
+      'fails with the HTTP status when the error body is not JSON',
+      () =>
+        Effect.gen(function* () {
+          expect.assertions(1)
+
+          mockApi
+            .interceptCloudflareRaw(MOCK_API_PATH_DEPLOYMENTS_DELETE, 'DELETE')
+            .reply(502, '<html>Bad gateway</html>')
+
+          const failure = yield* Effect.flip(deleteDeployment)
+
+          expect(failure.message).toBe(
+            `A request to the Cloudflare API (https://api.cloudflare.com${MOCK_API_PATH_DEPLOYMENTS_DELETE}) failed: 502 Bad Gateway`
+          )
+        }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
 
     it.effect('returns false when the response has no body', () =>

@@ -12,7 +12,7 @@ import {
   GetPullRequestIdDocument
 } from '@/gql/graphql.js'
 
-import {GitHubApi} from './api/client.js'
+import {GitHubApi, GitHubApiError} from './api/client.js'
 import {GitHubContext} from './context.js'
 
 // oxlint-disable-next-line unicorn/throw-new-error
@@ -28,16 +28,24 @@ const pullRequestNodeId = Effect.fn('pullRequestNodeId')(function* (
   const {repo} = yield* GitHubContext
   const github = yield* GitHubApi
 
-  const pullRequest = yield* github.request({
+  const {data, errors} = yield* github.request({
     query: GetPullRequestIdDocument,
     variables: {
       owner: repo.owner,
       repo: repo.repo,
       number
-    }
+    },
+    options: {errorThrows: false}
   })
 
-  const nodeId = pullRequest.data.repository?.pullRequest?.id
+  if (errors) {
+    // GitHub answers a pull request that doesn't exist with a NOT_FOUND error.
+    return yield* errors.every(error => error.type === 'NOT_FOUND')
+      ? new CommentError({message: notFound})
+      : GitHubApiError.from(new Error(JSON.stringify(errors)))
+  }
+
+  const nodeId = data.repository?.pullRequest?.id
   if (!nodeId) {
     return yield* new CommentError({message: notFound})
   }

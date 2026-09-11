@@ -193,6 +193,27 @@ describe('batchDelete', () => {
     }).pipe(Effect.provide(TestLayer))
   )
 
+  it.effect('fails the row when the whole GitHub request errors', () =>
+    Effect.gen(function* () {
+      expect.assertions(2)
+
+      // No `path`: GitHub ran none of the mutations.
+      const errors = [
+        {type: 'RATE_LIMITED', message: 'API rate limit exceeded'}
+      ]
+      interceptDeletes({errors})
+
+      expect(yield* batchDelete(DEPLOYMENT)).toStrictEqual({
+        ...ROW,
+        success: false,
+        error: 'Deleting GitHub deployment failed'
+      })
+      expect(core.warning).toHaveBeenCalledWith(
+        `delete - Error deleting GitHub deployment: ${JSON.stringify(errors)}`
+      )
+    }).pipe(Effect.provide(TestLayer))
+  )
+
   it.effect(
     'keeps the GitHub deployment when the Cloudflare delete fails',
     () =>
@@ -215,7 +236,7 @@ describe('batchDelete', () => {
         })
         // The reason Cloudflare gave.
         expect(core.error).toHaveBeenCalledWith(
-          'Cloudflare API: Authentication error [code: 10000]'
+          expect.stringContaining('Authentication error [code: 10000]')
         )
       }).pipe(Effect.provide(TestLayer))
   )

@@ -1,5 +1,5 @@
 import {mkdtempSync, rmSync, writeFileSync} from 'node:fs'
-import {EOL, tmpdir} from 'node:os'
+import {tmpdir} from 'node:os'
 import path from 'node:path'
 
 import {debug, isDebug} from '@actions/core'
@@ -44,20 +44,22 @@ describe(getWorkflowEvent, () => {
     expect(() => getWorkflowEvent()).toThrow(message)
   })
 
-  test('says so and returns no payload when the event file does not exist', () => {
-    expect.assertions(2)
+  test('throws naming the event file when it does not exist', () => {
+    expect.assertions(1)
 
-    const write = vi.spyOn(process.stdout, 'write').mockReturnValue(true)
-    onTestFinished(() => write.mockRestore())
     vi.stubEnv('GITHUB_EVENT_PATH', '/does/not/exist/event.json')
 
-    expect(getWorkflowEvent()).toStrictEqual({
-      eventName: 'pull_request',
-      payload: undefined
-    })
-    expect(write).toHaveBeenCalledWith(
-      `GITHUB_EVENT_PATH /does/not/exist/event.json does not exist${EOL}`
+    expect(() => getWorkflowEvent()).toThrow(
+      'GITHUB_EVENT_PATH /does/not/exist/event.json does not exist'
     )
+  })
+
+  test('throws when GITHUB_EVENT_PATH is not set', () => {
+    expect.assertions(1)
+
+    vi.stubEnv('GITHUB_EVENT_PATH', '')
+
+    expect(() => getWorkflowEvent()).toThrow('GITHUB_EVENT_PATH is not set')
   })
 
   test('throws naming the event file when it is not valid JSON', () => {
