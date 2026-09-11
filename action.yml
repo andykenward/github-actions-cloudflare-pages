@@ -1,53 +1,53 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 
 name: 'GitHub Action for Cloudflare Pages'
-description: 'Deploy to Cloudflare Pages'
+description: 'Deploy to Cloudflare Pages with Wrangler, record a GitHub Deployment, and comment the preview URL on the pull request'
 branding:
   icon: 'upload-cloud'
   color: 'orange'
 inputs:
   cloudflare-api-token:
-    description: 'Cloudflare API Token'
+    description: 'Cloudflare API token with the Cloudflare Pages Edit permission. Pass it from a secret; it is masked in logs.'
     required: true
   cloudflare-account-id:
-    description: 'Cloudflare Account ID'
+    description: 'Cloudflare account ID'
     required: true
   cloudflare-project-name:
-    description: 'Cloudflare Pages project name to upload to'
+    description: 'Name of the existing Cloudflare Pages project to upload to'
     required: true
   directory:
-    description: 'Directory of static files to upload'
+    description: 'Directory of built static files to upload, relative to working-directory'
     required: true
   github-token:
-    description: 'Github API key'
+    description: 'GitHub token. With GITHUB_TOKEN, grant contents: read, deployments: write and pull-requests: write (plus actions: read for private repositories).'
     required: true
   github-environment:
-    description: 'GitHub environment to deploy to. You need to manually create this for the github repo'
+    description: 'Existing GitHub Environment to record the deployment in, e.g. production or preview. The action cannot create it: create it in the repository settings first.'
     required: true
   pr-number:
-    description: 'GitHub pull request number to comment on. If not set, the action auto-detects from the event payload.'
+    description: 'Pull request number to comment on. If not set, it is detected from the event; for workflow_dispatch and workflow_run the step fails when no pull request matches. Set it for pull requests from forks under workflow_run.'
     required: false
   working-directory:
-    description: 'Directory to run wrangler cli from'
+    description: 'Directory to run Wrangler from, e.g. where your functions folder lives. Defaults to the job working directory.'
     required: false
   wrangler-version:
-    description: 'Wrangler version to use. Otherwise a default version from the action will be used.'
+    description: 'Wrangler version to run with npx. Defaults to the version this release of the action pins.'
     required: false
   branch:
-    description: 'Branch name to use for Cloudflare Pages deployment. If not set, the branch is automatically detected from the GitHub context.'
+    description: 'Branch name for the Cloudflare Pages deployment, which decides production or preview. Defaults to the branch from the GitHub context.'
     required: false
 
 outputs:
   id:
-    description: 'Cloudflare Pages deployed id'
+    description: 'Cloudflare Pages deployment ID'
   url:
-    description: 'Cloudflare Pages deployed url'
+    description: 'Cloudflare Pages deployment URL'
   environment:
-    description: 'Cloudflare Pages deployed environment "production" or "preview"'
+    description: 'Cloudflare Pages environment of the deployment: production or preview'
   alias:
-    description: 'Cloudflare Pages deployed alias. Fallsback to deployed url if deployed alias is null'
+    description: 'Branch alias URL of the deployment, or its URL when there is no alias'
   wrangler:
-    description: 'Wrangler cli output'
+    description: 'Wrangler CLI output'
 
 runs:
   using: node24

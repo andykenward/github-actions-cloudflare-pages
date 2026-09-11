@@ -61,10 +61,10 @@ permissions:
 
 | Input                  | Required | Default | Description                                                                                                                              |
 | ---------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `cloudflare-api-token` | yes      | —       | Cloudflare API Token.                                                                                                                    |
-| `github-token`         | yes      | —       | Github API key, make sure to add the required permissions for this action.                                                               |
+| `cloudflare-api-token` | yes      | —       | Cloudflare API token with the **Cloudflare Pages: Edit** permission. Masked in logs, even when it doesn't come from `secrets`.           |
+| `github-token`         | yes      | —       | GitHub token with the [required permissions](#permissions). Masked in logs, even when it doesn't come from `secrets`.                    |
 | `github-environment`   | no       | —       | GitHub environment to delete deployments from. Leave undefined to delete all deployments referencing the current branch or pull_request. |
-| `keep-latest`          | no       | `0`     | How many deployments to keep. Default is 0.                                                                                              |
+| `keep-latest`          | no       | `0`     | Number of the newest deployments to keep. `0` deletes them all.                                                                          |
 
 ## Examples
 
