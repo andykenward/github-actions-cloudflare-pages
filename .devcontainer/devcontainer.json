@@ -1,16 +1,55 @@
+// For format and config option details, see https://aka.ms/devcontainer.json.
 {
   "name": "Container - Cloudflare Pages Action",
-  "image": "ghcr.io/andykenward/devcontainer-images/node:3.1.0",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
+    // Node 24 matches CI (.github/actions/setup-pnpm); pnpm matches packageManager.
+    "ghcr.io/devcontainers/features/node:2.1.0": {
+      "version": "24",
+      "pnpmVersion": "11.17.0"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1.1.2": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0.5": {},
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.0": {}
   },
   "customizations": {
     "vscode": {
       "extensions": [
-        "TypeScriptTeam.native-preview",
+        "anthropic.claude-code",
+        "eamodio.gitlens",
+        "github.vscode-github-actions",
+        "github.vscode-pull-request-github",
         "GraphQL.vscode-graphql",
-        "GraphQL.vscode-graphql-syntax"
-      ]
+        "GraphQL.vscode-graphql-syntax",
+        "oxc.oxc-vscode",
+        "TypeScriptTeam.native-preview",
+        "vitest.explorer",
+        "webpro.vscode-knip"
+      ],
+      "settings": {
+        "chat.disableAIFeatures": true,
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/usr/bin/zsh"
+          }
+        }
+      }
     }
-  }
+  },
+  "postCreateCommand": "pnpm install && prek install",
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "DISABLE_AUTOUPDATER": "1",
+    "HISTFILE": "/home/vscode/.commandhistory/.zsh_history"
+  },
+  // Named volumes keyed by ${devcontainerId}, so Claude Code sign-in and zsh
+  // history survive rebuilds without being shared with other projects.
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    "source=zsh-history-${devcontainerId},target=/home/vscode/.commandhistory,type=volume"
+  ],
+  "remoteUser": "vscode"
 }
