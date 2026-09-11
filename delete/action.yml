@@ -1,22 +1,22 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-action.json
 
 name: 'GitHub Action for Cloudflare Pages Delete'
-description: 'Delete Deployments to Cloudflare Pages using "andykenward/github-actions-cloudflare-pages"'
+description: 'Delete Cloudflare Pages deployments, with their GitHub Deployments and pull request comments, created by andykenward/github-actions-cloudflare-pages'
 branding:
   icon: 'delete'
   color: 'orange'
 inputs:
   cloudflare-api-token:
-    description: 'Cloudflare API Token'
+    description: 'Cloudflare API token with the Cloudflare Pages Edit permission. Pass it from a secret; it is masked in logs.'
     required: true
   github-token:
-    description: 'Github API key'
+    description: 'GitHub token. With GITHUB_TOKEN, grant contents: read, deployments: write and pull-requests: write (plus actions: read for private repositories).'
     required: true
   github-environment:
-    description: 'GitHub environment to delete deployments from. If not defined any deployments link to the branch/pr are deleted.'
+    description: 'GitHub Environment to delete deployments from. If not set, deletes every deployment for the current branch or pull request.'
     required: false
   keep-latest:
-    description: 'How many deployments to keep. Default is 0.'
+    description: 'Number of the newest deployments to keep. Defaults to 0, which deletes them all.'
     default: '0'
     required: false
 

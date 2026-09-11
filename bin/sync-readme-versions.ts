@@ -104,7 +104,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     path.join(root, 'README.md'),
     path.join(root, 'delete', 'README.md'),
     path.join(root, '.github', 'workflow-templates', 'deploy.yml'),
-    path.join(root, '.github', 'workflow-templates', 'delete.yml')
+    path.join(root, '.github', 'workflow-templates', 'delete.yml'),
+    path.join(root, 'skills', 'github-actions-cloudflare-pages', 'SKILL.md')
   ]
 
   for (const filePath of files) {

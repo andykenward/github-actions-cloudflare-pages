@@ -33,7 +33,7 @@ permissions: {}
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15 # The action waits up to 10 minutes for Cloudflare.
     permissions:
       actions: read # Only required for a private repo.
       contents: read
@@ -64,10 +64,27 @@ Create a [Cloudflare Pages] project, then give the action three values (store th
 - `cloudflare-account-id` — your Cloudflare account ID.
 - `cloudflare-project-name` — the Pages project to upload to.
 
+With the [GitHub CLI], run these from your repository — the token is read from a prompt, so it stays out of your shell history:
+
+```sh
+gh secret set CLOUDFLARE_API_TOKEN
+gh variable set CLOUDFLARE_ACCOUNT_ID --body "<account-id>"
+gh variable set CLOUDFLARE_PROJECT_NAME --body "<project-name>"
+```
+
+No Pages project yet? Create one with `npx wrangler pages project create <project-name> --production-branch main`.
+
 ### 2. GitHub Environments (required)
 
 > [!IMPORTANT]
 > This action does **not** create [GitHub Environments]. Creating them requires the GitHub API `administration:write` permission, which the action can't request — so you must create them manually. See [Creating an environment].
+
+To create them with the [GitHub CLI] — this needs admin access to the repository, which your own `gh auth login` session usually has and the workflow's `GITHUB_TOKEN` never does:
+
+```sh
+gh api --method PUT "repos/{owner}/{repo}/environments/production"
+gh api --method PUT "repos/{owner}/{repo}/environments/preview"
+```
 
 Create each environment you reference (for example `production` and `preview`), then select one per run with the `github-environment` input. A common pattern switches on the branch:
 
@@ -106,6 +123,39 @@ permissions:
   pull-requests: write
 ```
 
+## Setting up with an AI agent
+
+Adding this action with an AI coding agent? Install its skill, which walks the agent through the steps below:
+
+```sh
+npx skills add andykenward/github-actions-cloudflare-pages
+```
+
+Or point the agent at this section.
+
+1. **Do the steps outside the workflow file first** — they can't be expressed in YAML. Run them, or ask the user to:
+   - create a Cloudflare Pages project and an API token with the **Cloudflare Pages: Edit** permission;
+   - add the `CLOUDFLARE_API_TOKEN` secret and the `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_PROJECT_NAME` variables;
+   - create every GitHub Environment the workflow names in `github-environment`.
+
+   The commands are in [Setup](#setup).
+
+2. **Pick the workflow** for how the project receives changes:
+
+   | Situation                                                                | Start from                                                                                                                    |
+   | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+   | Pushes to `main`, and pull requests from branches in the same repository | [Quick start](#quick-start)                                                                                                   |
+   | Pull requests from forks                                                 | [Fork pull requests with `workflow_run`](#fork-pull-requests-with-workflow_run) and [Custom branch name](#custom-branch-name) |
+   | Removing preview deployments when a pull request closes                  | The [delete action](./delete/README.md#quick-start)                                                                           |
+
+3. **Fit it to the project:**
+   - Add the project's build step before the deploy step, and set `directory` to its output (relative to `working-directory`).
+   - Keep `uses:` pinned to the full commit SHA shown in these examples.
+   - Use only environment names that exist.
+   - Never build `pr-number` or `branch` from `github.event.workflow_run.pull_requests[0]` — it's empty for pull requests from forks.
+
+4. **Check the first run:** the step's `url` output, the job summary, the pull request comment, and a new deployment under the repository's Environments.
+
 ## How it works
 
 1. **Checks while uploading.** While Wrangler uploads `directory`, the action checks that `github-environment` exists and finds the pull request to comment on. If either fails, the upload is stopped and the step fails straight away, so no orphaned Cloudflare deployment is left behind.
@@ -135,11 +185,11 @@ permissions:
 | `cloudflare-api-token`    | yes      | Cloudflare API token with permission to edit Cloudflare Pages. It's passed only to the Wrangler process and masked in logs, even when it doesn't come from `secrets`.                        |
 | `cloudflare-account-id`   | yes      | Cloudflare account ID.                                                                                                                                                                       |
 | `cloudflare-project-name` | yes      | Cloudflare Pages project to upload to.                                                                                                                                                       |
-| `directory`               | yes      | Directory of static files to upload.                                                                                                                                                         |
+| `directory`               | yes      | Directory of built static files to upload, relative to `working-directory`.                                                                                                                  |
 | `github-token`            | yes      | GitHub token with the [required permissions](#3-permissions). Masked in logs, even when it doesn't come from `secrets`.                                                                      |
 | `github-environment`      | yes      | [GitHub Environment](#2-github-environments-required) to record the deployment in. It must already exist.                                                                                    |
 | `pr-number`               | no       | Pull request number to comment on. If not set, it's detected from the event — see [Which pull request gets the comment](#which-pull-request-gets-the-comment).                               |
-| `working-directory`       | no       | Directory to run Wrangler from.                                                                                                                                                              |
+| `working-directory`       | no       | Directory to run Wrangler from — e.g. where your `functions/` folder lives. Defaults to `.`, the job's working directory.                                                                    |
 | `wrangler-version`        | no       | Wrangler version to run. Defaults to the version this release of the action pins. Versions too old to report the new deployment's id fall back to the most recent deployment for the commit. |
 | `branch`                  | no       | Branch name for the Cloudflare Pages deployment. If not set, it's detected from the GitHub context.                                                                                          |
 
@@ -281,6 +331,30 @@ The GitHub Deployment payload this action creates includes the Cloudflare metada
 }
 ```
 
+## Troubleshooting
+
+A failed step's annotation carries a one-line message; turn on [step debug logs](#debugging) for the full error.
+
+| Message                                                                                      | Cause and fix                                                                                                                                                                               |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Input required and not supplied: <input>`                                                   | A required input is empty. Check the secret or variable exists — on a fork's `pull_request` run, secrets are empty, so deploy with [`workflow_run`](#fork-pull-requests-with-workflow_run). |
+| `Input '<input>' is invalid: …`                                                              | The input has the wrong format; the rest of the message says what was expected.                                                                                                             |
+| `GitHub Action event name '<name>' not supported.`                                           | Trigger on one of the [supported events](#supported-events).                                                                                                                                |
+| `GitHub Environment: Not created for <name>`                                                 | The environment doesn't exist — [create it](#2-github-environments-required), or fix the `github-environment` expression.                                                                   |
+| `GitHub Environment: No ref id <name>`                                                       | The branch or tag the run is for no longer exists, e.g. it was deleted before the run started.                                                                                              |
+| `GitHub Environment: Errors - […]`                                                           | GitHub rejected the lookup; the JSON lists its errors. Usually `github-token` is missing a [permission](#3-permissions).                                                                    |
+| `GitHub API request failed: <status> …`                                                      | A 401 or 403 means `github-token` is invalid or missing a [permission](#3-permissions).                                                                                                     |
+| A JSON list of errors mentioning `Resource not accessible by integration`                    | `github-token` is missing a [permission](#3-permissions) — usually `deployments: write` or `pull-requests: write`.                                                                          |
+| `Invalid pr-number input: <value>`                                                           | `pr-number` must be a positive whole number.                                                                                                                                                |
+| `No pull request node id found for pr-number input: <number>`                                | No pull request with that number exists in this repository.                                                                                                                                 |
+| `No pull request node id found for workflow_dispatch event`                                  | No open pull request is headed by the dispatched branch. Dispatch from one, or set `pr-number`.                                                                                             |
+| `No pull request found in workflow_run event matching head branch and sha`                   | The run has no matching pull request — always the case for forks. Set `pr-number` ([example](#custom-branch-name)).                                                                         |
+| `Multiple pull requests found in workflow_run event matching head branch and sha`            | Several pull requests share the commit. Set `pr-number`.                                                                                                                                    |
+| `Status Of Deployment: timed out after 10m waiting for the deploy stage to complete.`        | Cloudflare didn't finish within 10 minutes. Check the build in the Cloudflare dashboard.                                                                                                    |
+| An error printed by Wrangler                                                                 | The upload failed and Wrangler's message says why. Check the token's permission, `cloudflare-account-id`, `cloudflare-project-name` and `directory`.                                        |
+| The job is cancelled at its time limit                                                       | Raise the job's `timeout-minutes` to at least 15 — the action waits up to 10 minutes for Cloudflare.                                                                                        |
+| `Create Deployment: the Cloudflare Pages build failed. Build log: <url>` (or `was canceled`) | The build failed or was canceled on Cloudflare. Open the build log link; the outputs and job summary still describe the deployment.                                                         |
+
 ## Debugging
 
 GitHub provides two debug log levels — see [Action Debugging]. Enable them by [setting a repository secret]:
@@ -301,6 +375,7 @@ Upgrading from an older version? Check [CHANGELOG.md](./CHANGELOG.md) for breaki
 - [GitHub Actions variables](https://docs.github.com/en/actions/learn-github-actions/variables) and [default environment variables](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables)
 
 [Cloudflare Pages]: https://pages.cloudflare.com/
+[GitHub CLI]: https://cli.github.com/
 [job summary]: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary
 [Wrangler]: https://developers.cloudflare.com/workers/wrangler/
 [pull request]: https://docs.github.com/en/pull-requests
