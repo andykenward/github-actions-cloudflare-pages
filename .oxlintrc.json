@@ -22,7 +22,8 @@
     "example",
     "schema",
     "node_modules",
-    "payload-examples"
+    "payload-examples",
+    "repos"
   ],
   "rules": {
     "@typescript-eslint/await-thenable": "error",

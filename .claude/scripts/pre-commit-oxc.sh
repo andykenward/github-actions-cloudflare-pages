@@ -33,5 +33,7 @@ done
 # Step 3: Lint only when at least one supported file remains.
 # This ensures lint runs only after successful formatting.
 if [[ "${#lintable_files[@]}" -gt 0 ]]; then
-  pnpm exec oxlint "${lintable_files[@]}"
+  # --disable-nested-config: ignore .oxlintrc.json files inside vendored repos/ subtrees,
+  # which reference oxlint plugins that are not installed here.
+  pnpm exec oxlint --disable-nested-config "${lintable_files[@]}"
 fi

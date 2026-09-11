@@ -10,7 +10,8 @@
     "**/dist": true,
     "**/example": true,
     "**/__generated__/payloads": true,
-    "pnpm-lock.yaml": true
+    "pnpm-lock.yaml": true,
+    "repos/**": true
   },
   "npm.packageManager": "pnpm",
   "js/ts.preferences.importModuleSpecifierEnding": "js",
@@ -25,5 +26,12 @@
   "editor.suggest.showKeywords": false,
   "oxc.enable.oxfmt": true,
   "oxc.enable.oxlint": true,
-  "terminal.integrated.defaultProfile.linux": "zsh"
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "js/ts.preferences.autoImportFileExcludePatterns": ["repos/**"],
+  "files.exclude": {
+    "repos/**": true
+  },
+  "files.watcherExclude": {
+    "repos/**": true
+  }
 }

@@ -265,6 +265,24 @@ GitHub provides two debug log levels — see [Action Debugging]. Enable them by 
 - **Step debug logs**: set `ACTIONS_STEP_DEBUG` to `true`. Debug events then appear in the [downloaded logs] and [web logs].
 - **Runner diagnostic logs**: set `ACTIONS_RUNNER_DEBUG` to `true`. Extra diagnostic files then appear in the `runner-diagnostic-logs` folder of the [log archive][downloaded logs].
 
+## Development
+
+### Vendored Effect source
+
+The [Effect](https://effect.website/) source is vendored as a [git subtree](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging#_subtree_merge) at `repos/effect/`, so its source, tests and docs are available offline — for reading, grepping and as reference material for AI agents. It is read-only: nothing in `src/` imports from `repos/`. Every tool in the repo is configured to ignore `repos/` — TypeScript, Vitest, oxfmt, oxlint, knip, prek, zizmor, CodeQL, git diffs and the VS Code editor — so vendoring it does not slow down or pollute the build.
+
+To update it, run this from the repository root with a clean working tree:
+
+```sh
+git subtree pull \
+  --prefix=repos/effect \
+  https://github.com/Effect-TS/effect.git \
+  effect@<version> \
+  --squash
+```
+
+`--squash` collapses the upstream history into a single commit, which `git subtree` then joins to this repository with a merge commit. Merge a PR that adds or pulls the subtree with **Create a merge commit** — squash or rebase merging drops that merge and the `git-subtree-split` trailer the next pull depends on.
+
 ## Upgrading
 
 Upgrading from an older version? Check [CHANGELOG.md](./CHANGELOG.md) for breaking changes.

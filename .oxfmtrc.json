@@ -16,7 +16,8 @@
     ".cache",
     ".claude/skills",
     ".changeset/*.md",
-    "skills-lock.json"
+    "skills-lock.json",
+    "repos"
   ],
   "printWidth": 80,
   "semi": false,
