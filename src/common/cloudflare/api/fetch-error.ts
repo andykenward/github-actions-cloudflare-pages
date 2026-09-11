@@ -1,5 +1,3 @@
-import {error as coreError} from '@actions/core'
-
 import type {FetchError, FetchResult} from '../types.js'
 
 import {ParseError} from './parse-error.js'
@@ -11,21 +9,20 @@ export const throwFetchError = (
   resource: string,
   response: FetchResult<unknown>
 ): never => {
+  const notes = response.errors.map(err => ({text: renderError(err)}))
   const error = new ParseError({
-    text: `A request to the Cloudflare API (${resource}) failed.`,
-    notes: response.errors.map(err => ({
-      text: renderError(err)
-    }))
+    // Cloudflare's reasons go in the message, which is what reaches the step's
+    // failure annotation or the caller's log line. They aren't annotated here:
+    // a caller may tolerate the error (delete treats "not found" as deleted).
+    text: [
+      `A request to the Cloudflare API (${resource}) failed.`,
+      ...notes.map(note => note.text)
+    ].join(' '),
+    notes
   })
   const code = response.errors[0]?.code
   if (code) {
     error.code = code
-  }
-  if (error.notes?.length > 0) {
-    error.notes.map(note => {
-      // GitHub Action annotation
-      coreError(`Cloudflare API: ${note.text}`)
-    })
   }
   throw error
 }

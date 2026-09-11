@@ -26,7 +26,7 @@ const DEFAULT_POLL_TIMEOUT = Duration.minutes(10)
 
 type DeploymentStatus = Exclude<
   PagesDeployment['latest_stage']['status'],
-  'idle'
+  'idle' | 'active'
 >
 
 type StatusResult = {
@@ -86,7 +86,6 @@ const pollOnce = Effect.fn('pollOnce')(function* (
     case 'canceled': {
       return {deployment, status: latest_stage.status}
     }
-    case 'active':
     case 'success': {
       if (latest_stage.name === 'deploy') {
         return {deployment, status: latest_stage.status}
@@ -95,6 +94,8 @@ const pollOnce = Effect.fn('pollOnce')(function* (
         reason: `stage '${latest_stage.name}' is ${latest_stage.status}`
       })
     }
+    // `idle`, or `active`: the stage is still running — wrangler, too, only
+    // treats a deploy as complete on `success`.
     default: {
       return yield* new DeploymentPendingError({
         reason: `stage '${latest_stage.name}' is ${latest_stage.status}`

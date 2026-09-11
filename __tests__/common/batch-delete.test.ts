@@ -7,15 +7,16 @@ import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 import type {GitHubGraphQLError} from '@/common/github/api/client.js'
 
 import {batchDelete} from '@/common/batch-delete.js'
-import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
 import {PayloadV1Inputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
 import {DEPLOYMENT} from '@/fixtures/github-deployment.js'
 import {
   DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
+  DeactivateAndDeleteGitHubDeploymentDocument,
   DeploymentStatusState
 } from '@/gql/graphql.js'
 import RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete.response.json' with {type: 'json'}
+import RESPONSE_CLOUDFLARE_UNAUTHORIZED from '@/responses/api.cloudflare.com/unauthorized.response.json' with {type: 'json'}
 
 import type {MockApi} from '../helpers/api.js'
 
@@ -51,8 +52,20 @@ const errorAt = (field: string): GitHubGraphQLError => ({
 describe('batchDelete', () => {
   let mockApi: MockApi
 
-  /** The Cloudflare DELETE, then the one GitHub request that follows it. */
-  const interceptDeletes = (errors?: GitHubGraphQLError[]): void => {
+  /**
+   * The Cloudflare DELETE, then the one GitHub request that follows it — with
+   * the comment deletion only when the deployment has a comment.
+   */
+  const interceptDeletes = ({
+    errors,
+    withComment = true,
+    withData = true
+  }: {
+    errors?: GitHubGraphQLError[]
+    withComment?: boolean
+    /** `false` for a request GitHub rejected before running any mutation. */
+    withData?: boolean
+  } = {}): void => {
     mockApi.interceptCloudflare<boolean>(
       MOCK_API_PATH_DEPLOYMENTS_DELETE,
       RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE,
@@ -61,35 +74,43 @@ describe('batchDelete', () => {
     )
 
     // Same key order as `batchDelete` sends: the body must match exactly.
-    mockApi.interceptGithub(
-      {
-        query: DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
-        variables: {
-          status: {
-            deploymentId: 'DE_kwDOJn0nrM5U35aT',
-            environment: 'preview',
-            environmentUrl: ENVIRONMENT_URL,
-            logUrl: getCloudflareLogEndpoint({
-              id: MOCK_DEPLOYMENT_ID,
-              projectName: MOCK_PROJECT_NAME,
-              accountId: MOCK_ACCOUNT_ID
-            }),
-            state: DeploymentStatusState.Inactive,
-            autoInactive: false
-          },
-          deployment: {id: 'DE_kwDOJn0nrM5U35aT'},
-          comment: {id: 'IC_kwDOJn0nrM55B77z'}
-        }
+    const variables = {
+      status: {
+        deploymentId: 'DE_kwDOJn0nrM5U35aT',
+        environment: 'preview',
+        environmentUrl: ENVIRONMENT_URL,
+        logUrl:
+          'https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/mock-deployment-id',
+        state: DeploymentStatusState.Inactive,
+        autoInactive: false
       },
-      {
-        data: {
-          createDeploymentStatus: {clientMutationId: null},
-          deleteDeployment: {clientMutationId: null},
-          deleteIssueComment: {clientMutationId: null}
+      deployment: {id: 'DE_kwDOJn0nrM5U35aT'}
+    }
+    const data = {
+      createDeploymentStatus: {clientMutationId: null},
+      deleteDeployment: {clientMutationId: null}
+    }
+
+    if (withComment) {
+      mockApi.interceptGithub(
+        {
+          query: DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
+          variables: {...variables, comment: {id: 'IC_kwDOJn0nrM55B77z'}}
         },
-        errors
-      }
-    )
+        withData
+          ? {
+              data: {...data, deleteIssueComment: {clientMutationId: null}},
+              errors
+            }
+          : // `GraphqlResponse` types `data` as always present; GitHub omits it.
+            ({errors} as never)
+      )
+    } else {
+      mockApi.interceptGithub(
+        {query: DeactivateAndDeleteGitHubDeploymentDocument, variables},
+        withData ? {data, errors} : ({errors} as never)
+      )
+    }
   }
 
   beforeEach(() => {
@@ -120,6 +141,28 @@ describe('batchDelete', () => {
     }).pipe(Effect.provide(TestLayer))
   )
 
+  it.effect('leaves comments alone for a deployment without one', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      interceptDeletes({withComment: false})
+
+      expect(
+        yield* batchDelete({
+          ...DEPLOYMENT,
+          payload: {
+            cloudflare: {
+              id: MOCK_DEPLOYMENT_ID,
+              projectName: MOCK_PROJECT_NAME,
+              accountId: MOCK_ACCOUNT_ID
+            },
+            url: ENVIRONMENT_URL
+          }
+        })
+      ).toStrictEqual({...ROW, commentId: undefined, success: true})
+    }).pipe(Effect.provide(TestLayer))
+  )
+
   it.effect('fails the row when the status update errors', () =>
     Effect.gen(function* () {
       expect.assertions(2)
@@ -128,7 +171,7 @@ describe('batchDelete', () => {
         errorAt('createDeploymentStatus'),
         errorAt('deleteDeployment')
       ]
-      interceptDeletes(errors)
+      interceptDeletes({errors})
 
       expect(yield* batchDelete(DEPLOYMENT)).toStrictEqual({
         ...ROW,
@@ -146,7 +189,7 @@ describe('batchDelete', () => {
       expect.assertions(2)
 
       const errors = [errorAt('deleteIssueComment')]
-      interceptDeletes(errors)
+      interceptDeletes({errors})
 
       expect(yield* batchDelete(DEPLOYMENT)).toStrictEqual({
         ...ROW,
@@ -156,6 +199,82 @@ describe('batchDelete', () => {
         `delete - Error deleting GitHub deployment: ${JSON.stringify(errors)}`
       )
     }).pipe(Effect.provide(TestLayer))
+  )
+
+  it.effect('fails the row when the whole GitHub request errors', () =>
+    Effect.gen(function* () {
+      expect.assertions(2)
+
+      // No `path`: GitHub ran none of the mutations.
+      const errors = [
+        {type: 'RATE_LIMITED', message: 'API rate limit exceeded'}
+      ]
+      interceptDeletes({errors})
+
+      expect(yield* batchDelete(DEPLOYMENT)).toStrictEqual({
+        ...ROW,
+        success: false,
+        error: 'Deleting GitHub deployment failed'
+      })
+      expect(core.warning).toHaveBeenCalledWith(
+        `delete - Error deleting GitHub deployment: ${JSON.stringify(errors)}`
+      )
+    }).pipe(Effect.provide(TestLayer))
+  )
+
+  it.effect('fails the row when GitHub rejects the request as invalid', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // A static validation error (e.g. a field GitHub removed): no `data`,
+      // no `type`, and a `path` that starts with the operation.
+      const errors = [
+        {
+          path: [
+            'mutation DeactivateAndDeleteGitHubDeploymentAndComment',
+            'deleteDeployment',
+            'noSuchField'
+          ],
+          extensions: {code: 'undefinedField'},
+          message:
+            "Field 'noSuchField' doesn't exist on type 'DeleteDeploymentPayload'"
+        }
+      ]
+      interceptDeletes({errors, withData: false})
+
+      expect(yield* batchDelete(DEPLOYMENT)).toStrictEqual({
+        ...ROW,
+        success: false,
+        error: 'Deleting GitHub deployment failed'
+      })
+    }).pipe(Effect.provide(TestLayer))
+  )
+
+  it.effect(
+    'keeps the GitHub deployment when the Cloudflare delete fails',
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(2)
+
+        // No GitHub intercept: net connect is disabled, so a GitHub request
+        // would fail the row with a different error.
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENTS_DELETE,
+          RESPONSE_CLOUDFLARE_UNAUTHORIZED,
+          403,
+          'DELETE'
+        )
+
+        expect(yield* batchDelete(DEPLOYMENT)).toStrictEqual({
+          ...ROW,
+          success: false,
+          error: 'Deleting Cloudflare deployment failed'
+        })
+        // The reason Cloudflare gave.
+        expect(core.error).toHaveBeenCalledWith(
+          expect.stringContaining('Authentication error [code: 10000]')
+        )
+      }).pipe(Effect.provide(TestLayer))
   )
 
   it.effect('returns a failed row and warns with the deployment id', () =>

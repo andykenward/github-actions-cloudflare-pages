@@ -5,6 +5,3 @@ import type * as utils from '../utils.js'
 export * from '../utils.js'
 
 export const execFileAsync = vi.fn<typeof utils.execFileAsync>()
-export const checkWorkingDirectory = (
-  directory = '.'
-): ReturnType<typeof utils.checkWorkingDirectory> => directory

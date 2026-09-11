@@ -1,3 +1,4 @@
+import {info} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
@@ -21,7 +22,6 @@ import {INPUT_KEY_PR_NUMBER} from '@/input-keys'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {setMockApi} from '@/tests/helpers/api.js'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
-import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 
 vi.mock(import('@actions/core'))
 
@@ -109,6 +109,23 @@ describe('addComment', () => {
         expect(yield* comment(mockData, 'success')).toBe('1')
       }).pipe(Effect.provide(CommonLayer))
     )
+
+    it.effect('should not comment on a closed pull request', () => {
+      vi.stubEnv(
+        'GITHUB_EVENT_PATH',
+        '__generated__/payloads/api.github.com/pull_request/closed.payload.json'
+      )
+
+      return Effect.gen(function* () {
+        expect.assertions(2)
+
+        // No interceptors: any GitHub request would fail the test.
+        expect(yield* comment(mockData, 'success')).toBeUndefined()
+        expect(info).toHaveBeenCalledWith(
+          'addComment - No Pull Request could be found to post comment.'
+        )
+      }).pipe(Effect.provide(CommonLayer))
+    })
   })
 
   describe('eventName: workflow_run', () => {
@@ -169,6 +186,8 @@ describe('addComment', () => {
                 workflow_run: {
                   head_branch: 'master',
                   head_sha: '3484a3fb816e0859fd6e1cea078d76385ff50625',
+                  // Only #3 matches both the head branch and sha; #4 and #5
+                  // each differ in one, so each condition must be checked.
                   pull_requests: [
                     {
                       number: 2,
@@ -183,6 +202,20 @@ describe('addComment', () => {
                         ref: 'master',
                         sha: '3484a3fb816e0859fd6e1cea078d76385ff50625'
                       }
+                    },
+                    {
+                      number: 4,
+                      head: {
+                        ref: 'master',
+                        sha: 'different-sha'
+                      }
+                    },
+                    {
+                      number: 5,
+                      head: {
+                        ref: 'other-branch',
+                        sha: '3484a3fb816e0859fd6e1cea078d76385ff50625'
+                      }
                     }
                   ]
                 }
@@ -194,31 +227,33 @@ describe('addComment', () => {
       )
     )
 
-    it.effect('should fail when workflow_run has no pull request number', () =>
-      Effect.gen(function* () {
-        expect.assertions(1)
+    it.effect(
+      'should fail when no workflow_run pull request matches the head branch and sha',
+      () =>
+        Effect.gen(function* () {
+          expect.assertions(1)
 
-        const error = yield* Effect.flip(comment(mockData, 'success'))
+          const error = yield* Effect.flip(comment(mockData, 'success'))
 
-        expect(error.message).toBe(
-          'No pull request found in workflow_run event matching head branch and sha'
-        )
-      }).pipe(
-        Effect.provide(
-          withContext({
-            event: {
-              eventName: 'workflow_run',
-              payload: {
-                workflow_run: {
-                  head_branch: 'master',
-                  head_sha: '3484a3fb816e0859fd6e1cea078d76385ff50625',
-                  pull_requests: []
+          expect(error.message).toBe(
+            'No pull request found in workflow_run event matching head branch and sha'
+          )
+        }).pipe(
+          Effect.provide(
+            withContext({
+              event: {
+                eventName: 'workflow_run',
+                payload: {
+                  workflow_run: {
+                    head_branch: 'master',
+                    head_sha: '3484a3fb816e0859fd6e1cea078d76385ff50625',
+                    pull_requests: []
+                  }
                 }
-              }
-            } as unknown as Readonly<WorkflowEventExtract<'workflow_run'>>
-          })
+              } as unknown as Readonly<WorkflowEventExtract<'workflow_run'>>
+            })
+          )
         )
-      )
     )
 
     it.effect(
@@ -331,15 +366,93 @@ describe('addComment', () => {
       )
     })
 
-    it.effect('should fail for invalid pr-number input', () => {
-      stubInputEnv(INPUT_KEY_PR_NUMBER, 'abc')
+    it.effect.each([{prNumber: 'abc'}, {prNumber: '0'}, {prNumber: '-1'}])(
+      'should fail for invalid pr-number input $prNumber',
+      ({prNumber}) => {
+        stubInputEnv(INPUT_KEY_PR_NUMBER, prNumber)
+
+        return Effect.gen(function* () {
+          expect.assertions(1)
+
+          // No interceptors: a lookup would fail with a `GitHubApiError`.
+          const error = yield* Effect.flip(comment(mockData, 'success'))
+
+          expect(error.message).toBe(`Invalid pr-number input: ${prNumber}`)
+        }).pipe(Effect.provide(CommonLayer))
+      }
+    )
+
+    it.effect(
+      'fails with the not-found message when pr-number does not exist',
+      () => {
+        stubInputEnv(INPUT_KEY_PR_NUMBER, '999')
+
+        return Effect.gen(function* () {
+          expect.assertions(2)
+
+          mockApi.interceptGithub(
+            {
+              query: GetPullRequestIdDocument,
+              variables: {
+                owner: 'andykenward',
+                repo: 'github-actions-cloudflare-pages',
+                number: 999
+              }
+            },
+            {
+              data: {repository: {pullRequest: null}},
+              errors: [
+                {
+                  type: 'NOT_FOUND',
+                  path: ['repository', 'pullRequest'],
+                  locations: [{line: 3, column: 5}],
+                  message:
+                    'Could not resolve to a PullRequest with the number of 999.'
+                }
+              ]
+            }
+          )
+
+          const error = yield* Effect.flip(comment(mockData, 'success'))
+
+          // README.md's Troubleshooting table quotes this message.
+          expect(error._tag).toBe('CommentError')
+          expect(error.message).toBe(
+            'No pull request node id found for pr-number input: 999'
+          )
+        }).pipe(Effect.provide(CommonLayer))
+      }
+    )
+
+    it.effect('fails with any other GitHub error for pr-number as-is', () => {
+      stubInputEnv(INPUT_KEY_PR_NUMBER, '999')
 
       return Effect.gen(function* () {
-        expect.assertions(1)
+        expect.assertions(2)
+
+        const errors = [
+          {
+            type: 'FORBIDDEN',
+            path: ['repository', 'pullRequest'],
+            message: 'Resource not accessible by integration'
+          }
+        ]
+        mockApi.interceptGithub(
+          {
+            query: GetPullRequestIdDocument,
+            variables: {
+              owner: 'andykenward',
+              repo: 'github-actions-cloudflare-pages',
+              number: 999
+            }
+          },
+          {data: {repository: {pullRequest: null}}, errors}
+        )
 
         const error = yield* Effect.flip(comment(mockData, 'success'))
 
-        expect(error.message).toBe('Invalid pr-number input: abc')
+        expect(error._tag).toBe('GitHubApiError')
+        expect(error.message).toBe(JSON.stringify(errors))
       }).pipe(Effect.provide(CommonLayer))
     })
   })
@@ -438,34 +551,51 @@ describe('addComment', () => {
           )
         }).pipe(Effect.provide(WORKFLOW_DISPATCH))
     )
+
+    it.effect('should fail without a lookup when there is no branch', () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        // No interceptors: a lookup would fail with a `GitHubApiError`.
+        const error = yield* Effect.flip(comment(mockData, 'success'))
+
+        expect(error.message).toBe('No branch found in context')
+      }).pipe(
+        Effect.provide(
+          withContext({
+            event: {
+              eventName: 'workflow_dispatch',
+              payload: {}
+            } as Readonly<WorkflowEventExtract<'workflow_dispatch'>>,
+            branch: undefined
+          })
+        )
+      )
+    )
   })
 
-  describe('eventName: unsupported', () => {
-    const eventNames = EVENT_NAMES.filter(
-      eventName =>
-        eventName !== 'pull_request' &&
-        eventName !== 'workflow_dispatch' &&
-        eventName !== 'workflow_run'
-    )
+  describe('eventName: other', () => {
+    // `push` is supported but has no pull request; `issues` stands in for the
+    // events `main.ts` rejects before the comment is resolved.
+    it.effect.each([
+      {eventName: 'push' as const},
+      {eventName: 'issues' as const}
+    ])('posts no comment for $eventName', ({eventName}) =>
+      Effect.gen(function* () {
+        expect.assertions(1)
 
-    it.effect.each(eventNames.map(eventName => ({eventName})))(
-      `should return undefined for eventName: $eventName`,
-      ({eventName}) =>
-        Effect.gen(function* () {
-          expect.assertions(2)
-          expect(EVENT_NAMES).toContain(eventName)
-
-          expect(yield* comment(mockData, 'success')).toBeUndefined()
-        }).pipe(
-          Effect.provide(
-            withContext({
-              event: {
-                eventName,
-                payload: {}
-              } as Readonly<WorkflowEventExtract<typeof eventName>>
-            })
-          )
+        // No interceptors: any GitHub request would fail the test.
+        expect(yield* comment(mockData, 'success')).toBeUndefined()
+      }).pipe(
+        Effect.provide(
+          withContext({
+            event: {
+              eventName,
+              payload: {}
+            } as Readonly<WorkflowEventExtract<typeof eventName>>
+          })
         )
+      )
     )
   })
 })

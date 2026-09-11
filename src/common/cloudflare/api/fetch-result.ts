@@ -1,6 +1,25 @@
+import * as Predicate from 'effect/Predicate'
+
 import type {FetchError} from '../types.js'
 
 import {throwFetchError} from './fetch-error.js'
+import {ParseError} from './parse-error.js'
+
+type Envelope = {success: boolean; errors: FetchError[]}
+
+/**
+ * openapi-fetch hands back a body that isn't JSON — e.g. an HTML 502 from
+ * Cloudflare's edge — as a string, whatever the declared type says.
+ */
+const isEnvelope = (body: unknown): body is Envelope =>
+  Predicate.isObject(body) && Array.isArray(body['errors'])
+
+/** A non-2xx response without an envelope: all there is to report is the status. */
+const throwStatusError = ({url, status, statusText}: Response): never => {
+  throw new ParseError({
+    text: `A request to the Cloudflare API (${url}) failed: ${status} ${statusText}`.trimEnd()
+  })
+}
 
 /**
  * The Cloudflare response envelope as returned by the typed client. `data` is
@@ -26,8 +45,10 @@ export const unwrap = <Result>({
   response
 }: ClientResponse<Result>): Result => {
   // Non-2xx: the envelope arrives on `error`.
-  if (error) {
-    return throwFetchError(response.url, error)
+  if (!response.ok) {
+    return isEnvelope(error)
+      ? throwFetchError(response.url, error)
+      : throwStatusError(response)
   }
   // 2xx but the API still reports failure.
   if (!data?.success) {
@@ -49,6 +70,9 @@ export const unwrapSuccess = ({
   error,
   response
 }: ClientResponse<unknown>): boolean => {
+  if (!response.ok && !isEnvelope(error)) {
+    return throwStatusError(response)
+  }
   const envelope = data ?? error
   if (envelope && !envelope.success && envelope.errors.length > 0) {
     throwFetchError(response.url, envelope)

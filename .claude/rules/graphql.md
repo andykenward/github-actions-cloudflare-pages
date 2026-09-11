@@ -25,4 +25,8 @@ Operations live in `.graphql` files beside the module that uses them (`src/commo
 - **Select only what the code reads**; include `id` on an object you use.
 - **Fragments** only for a selection shared by two or more operations; put shared ones in a `fragments.graphql`. Codegen resolves `...FragmentName` spreads across all documents and inlines them into each `…Document`.
 - **Several mutation fields in one operation** run in order, and an error in one doesn't stop the next. Check `errors[].path[0]` to tell which failed — see `src/common/github/deployment/delete.graphql` and `src/common/batch-delete.ts`.
+- **Mock what GitHub really sends** (checked live 2026-09-11, all HTTP 200):
+  - A missing object you look up by name is `null` **plus** a `NOT_FOUND` error at its path — `environment: null` with `{type: 'NOT_FOUND', path: ['repository', 'environment']}`, likewise `pullRequest` — never `null` alone. A missing `ref(qualifiedName:)` is plain `ref: null`.
+  - A request GitHub rejects as invalid (e.g. a removed field) has no `data`, and errors with no `type` whose `path` starts with the operation (`['mutation Name', …]`). A primary rate limit is a path-less `RATE_LIMITED` error. Treat both as "nothing ran" (`src/common/batch-delete.ts`).
+  - Capture a new shape with a read-only query: `gh api -i graphql -f query='…'`. Never run a mutation against a real repo to find out.
 - The schema is `schema/github/schema.graphql` (refreshed weekly). A scalar generated as `any` needs a mapping in `graphql.config.ts`. Never edit `__generated__/gql/`.

@@ -74,6 +74,7 @@ permissions:
 | `Payload is not valid` (in the job summary)                                             | The deployment wasn't created by the deploy action, or its payload was changed. This action only deletes its own deployments. |
 | `Deleting Cloudflare deployment failed` (in the job summary)                            | Cloudflare refused the deletion. Check `cloudflare-api-token` has the **Cloudflare Pages: Edit** permission on the account.   |
 | `Updating GitHub deployment status failed` (in the job summary)                         | GitHub refused the status change. Check `github-token` has `deployments: write`.                                              |
+| `Deleting GitHub deployment failed` (in the job summary)                                | GitHub rejected the whole request, e.g. a rate limit, after the Cloudflare deployment was deleted. Re-run the workflow.       |
 
 Errors about inputs or the GitHub API read the same as the deploy action's — see its [Troubleshooting](../README.md#troubleshooting).
 

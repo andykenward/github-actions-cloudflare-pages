@@ -1,6 +1,7 @@
 import {debug, setFailed} from '@actions/core'
 import * as Cause from 'effect/Cause'
 import * as Config from 'effect/Config'
+import * as ConfigProvider from 'effect/ConfigProvider'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 import {describe, expect, test, vi} from 'vitest'
@@ -53,6 +54,20 @@ describe(errorMessage, () => {
     )
   })
 
+  test('uses the source message when no one input is at fault', () => {
+    expect.assertions(1)
+
+    expect(
+      errorMessage(
+        configError(
+          Config.fail(
+            new ConfigProvider.SourceError({message: 'connection refused'})
+          )
+        )
+      )
+    ).toBe('connection refused')
+  })
+
   test('uses an Error message', () => {
     expect.assertions(1)
 
@@ -75,20 +90,6 @@ describe(reportFailure, () => {
     expect(setFailed).toHaveBeenLastCalledWith('boom')
     expect(debug).toHaveBeenLastCalledWith(
       expect.stringMatching(/Error: boom\n\s+at /)
-    )
-  })
-
-  test('fails with a missing input by name, not the error object', () => {
-    expect.assertions(1)
-
-    stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN, '')
-
-    reportFailure(
-      Cause.fail(configError(Config.redacted(INPUT_KEY_CLOUDFLARE_API_TOKEN)))
-    )
-
-    expect(setFailed).toHaveBeenLastCalledWith(
-      'Input required and not supplied: cloudflare-api-token'
     )
   })
 

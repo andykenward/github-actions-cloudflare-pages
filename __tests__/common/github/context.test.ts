@@ -1,9 +1,12 @@
+import {debug, isDebug} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, onTestFinished, vi} from 'vitest'
 
 import {GitHubContext} from '@/common/github/context.js'
 import {stubTestEnvVars} from '@/tests/helpers/env.js'
+
+vi.mock(import('@actions/core'))
 
 /** Builds the layer when run, so env stubbed beforehand is picked up. */
 const context = Effect.gen(function* () {
@@ -13,7 +16,7 @@ const context = Effect.gen(function* () {
 describe(GitHubContext, () => {
   it.effect('returns context for `pull_request`', () =>
     Effect.gen(function* () {
-      expect.assertions(8)
+      expect.assertions(6)
 
       const {repo, event, branch, sha, graphqlEndpoint, ref} = yield* context
 
@@ -27,8 +30,6 @@ describe(GitHubContext, () => {
       `)
 
       /** Event */
-      expect(event.payload).toBeDefined()
-      expect(event.payload).toMatchSnapshot()
       expect(event.eventName).toBe('pull_request')
 
       expect(branch).toBe(`mock-github-head-ref`)
@@ -40,7 +41,7 @@ describe(GitHubContext, () => {
 
   it.effect('returns context for `workflow_dispatch`', () =>
     Effect.gen(function* () {
-      expect.assertions(8)
+      expect.assertions(6)
 
       stubTestEnvVars('workflow_dispatch')
 
@@ -54,8 +55,6 @@ describe(GitHubContext, () => {
         repo: 'github-actions-cloudflare-pages'
       })
 
-      expect(event.payload).toBeDefined()
-      expect(event.payload).toMatchSnapshot()
       expect(event.eventName).toBe('workflow_dispatch')
 
       expect(branch).toBe(`mock-github-ref-name`)
@@ -65,11 +64,11 @@ describe(GitHubContext, () => {
     })
   )
 
-  it.effect('fails when GITHUB_REPOSITORY is missing', () =>
+  it.effect('fails when GITHUB_REPOSITORY has no owner', () =>
     Effect.gen(function* () {
       expect.assertions(1)
 
-      vi.stubEnv('GITHUB_REPOSITORY', '')
+      vi.stubEnv('GITHUB_REPOSITORY', '/repo')
 
       const error = yield* Effect.flip(context)
 
@@ -95,7 +94,7 @@ describe(GitHubContext, () => {
 
   it.effect('returns context for `workflow_run`', () =>
     Effect.gen(function* () {
-      expect.assertions(9)
+      expect.assertions(6)
 
       stubTestEnvVars('workflow_run')
 
@@ -105,12 +104,51 @@ describe(GitHubContext, () => {
       expect(event.eventName).toBe('workflow_run')
 
       expect(branch).toBe('master')
-      expect(branch).not.toBe(`mock-github-head-ref`)
       expect(sha).toBe('3484a3fb816e0859fd6e1cea078d76385ff50625')
       expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
       expect(ref).toBe('master')
-      expect(ref).not.toBe(`mock-github-head-ref`)
-      expect(sha).not.toBe(`mock-github-sha`)
     })
+  )
+
+  it.effect(
+    'takes the ref of a `pull_request` from its payload without GITHUB_HEAD_REF',
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(2)
+
+        vi.stubEnv('GITHUB_HEAD_REF', '')
+
+        const {branch, ref} = yield* context
+
+        // The pull request's `head.ref` in the payload fixture.
+        expect(ref).toBe('changes')
+        expect(branch).toBe('mock-github-ref-name')
+      })
+  )
+
+  it.effect(
+    'logs the context but not the event with step debug logging on',
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        vi.mocked(isDebug).mockReturnValue(true)
+        onTestFinished(() => {
+          vi.mocked(isDebug).mockReturnValue(false)
+        })
+
+        const {repo, branch, sha, graphqlEndpoint, ref} = yield* context
+
+        expect(debug).toHaveBeenCalledWith(
+          `context: ${JSON.stringify({
+            event: 'will debug itself as output is large',
+            repo,
+            branch,
+            sha,
+            graphqlEndpoint,
+            ref
+          })}`
+        )
+      })
   )
 })

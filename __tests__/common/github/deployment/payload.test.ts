@@ -114,32 +114,40 @@ describe('getPayload', () => {
   )
 
   describe('errors', () => {
-    const BAD_PAYLOADS: Array<{payload: Payload}> = [
-      {payload: {invalidData: 'invalid'}},
-      {payload: {cloudflareId: 'cf-id'}},
-      {payload: {cloudflare: undefined}},
-      {payload: {cloudflare: {}}},
-      {payload: {cloudflare: {id: 'cf-id'}}},
-      {payload: {cloudflare: {id: 'cf-id', accountId: 'cf-account-id'}}},
+    const {url} = PAYLOAD_V2
+    const {id, accountId, projectName} = PAYLOAD_V2.cloudflare
+
+    // Each payload lacks exactly one field of the shape it resembles, so a
+    // schema that stopped requiring that field would let its case decode.
+    const BAD_PAYLOADS: Array<{missing: string; payload: Payload}> = [
+      {missing: 'every field', payload: {invalidData: 'invalid'}},
+      {missing: 'v1 url', payload: {cloudflareId: id}},
+      {missing: 'v2 url', payload: {cloudflare: {id, accountId, projectName}}},
+      {missing: 'v2 cloudflare', payload: {url, cloudflare: undefined}},
       {
-        payload: {
-          cloudflare: {
-            id: 'cf-id',
-            accountId: 'cf-account-id',
-            projectName: 'cf-project'
-          }
-        }
+        missing: 'v2 cloudflare.id',
+        payload: {url, cloudflare: {accountId, projectName}}
+      },
+      {
+        missing: 'v2 cloudflare.accountId',
+        payload: {url, cloudflare: {id, projectName}}
+      },
+      {
+        missing: 'v2 cloudflare.projectName',
+        payload: {url, cloudflare: {id, accountId}}
       }
     ]
 
-    it.effect.each(BAD_PAYLOADS)('fails for invalid payloads', ({payload}) =>
-      Effect.gen(function* () {
-        expect.assertions(1)
+    it.effect.each(BAD_PAYLOADS)(
+      'fails for a payload missing $missing',
+      ({payload}) =>
+        Effect.gen(function* () {
+          expect.assertions(1)
 
-        const error = yield* Effect.flip(decode(payload))
+          const error = yield* Effect.flip(decode(payload))
 
-        expect(errorMessage(error)).toBe('Payload is not valid')
-      })
+          expect(errorMessage(error)).toBe('Payload is not valid')
+        })
     )
 
     it.effect('fails for a malformed JSON string instead of crashing', () =>

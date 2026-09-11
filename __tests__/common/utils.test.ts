@@ -1,7 +1,7 @@
 import {info} from '@actions/core'
 import {describe, expect, test, vi} from 'vitest'
 
-import {logVerbatim} from '@/common/utils.js'
+import {checkWorkingDirectory, logVerbatim} from '@/common/utils.js'
 
 vi.mock(import('@actions/core'))
 
@@ -33,5 +33,27 @@ describe(logVerbatim, () => {
     logVerbatim('b')
 
     expect(messages()[0]).not.toBe(messages()[3])
+  })
+})
+
+describe(checkWorkingDirectory, () => {
+  test('defaults to the current directory', () => {
+    expect.assertions(1)
+
+    expect(checkWorkingDirectory()).toBe('.')
+  })
+
+  test('returns an existing directory normalised', () => {
+    expect.assertions(1)
+
+    expect(checkWorkingDirectory('./src//common/../deploy')).toBe('src/deploy')
+  })
+
+  test('fails naming the directory as given', () => {
+    expect.assertions(1)
+
+    expect(() => checkWorkingDirectory('./does-not-exist')).toThrow(
+      'Directory not found: ./does-not-exist'
+    )
   })
 })

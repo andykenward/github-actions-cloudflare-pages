@@ -10,6 +10,8 @@ import {batchDelete} from '@/common/batch-delete.js'
 import {GitHubRestApi} from '@/common/github/api/paginate.js'
 import {DeleteLayer, run} from '@/delete/main.js'
 import {DEPLOYMENT} from '@/fixtures/github-deployment.js'
+import {INPUT_KEYS_KEEP_LATEST} from '@/input-keys'
+import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 vi.mock(import('@actions/core'))
 vi.mock(import('@/common/batch-delete.js'))
@@ -18,6 +20,11 @@ const ROW = {
   deploymentId: DEPLOYMENT.node_id,
   environment: DEPLOYMENT.environment
 }
+
+const withId = (node_id: string): GitHubDeployment => ({
+  ...DEPLOYMENT,
+  node_id
+})
 
 /**
  * A `GitHubRestApi` that lists `deployments`. Provided inside `DeleteLayer`, so
@@ -35,9 +42,10 @@ describe('delete', () => {
   describe('run effect', () => {
     it.effect('succeeds when there are no deployments', () =>
       Effect.gen(function* () {
-        expect.assertions(2)
+        expect.assertions(1)
 
-        expect(yield* run).toBeUndefined()
+        yield* run
+
         expect(info).toHaveBeenCalledWith('delete - No deployments to delete')
       }).pipe(Effect.provide(listing([])), Effect.provide(DeleteLayer))
     )
@@ -55,13 +63,14 @@ describe('delete', () => {
 
     it.effect('succeeds when every deployment is deleted', () =>
       Effect.gen(function* () {
-        expect.assertions(2)
+        expect.assertions(1)
 
         vi.mocked(batchDelete).mockReturnValue(
           Effect.succeed({...ROW, success: true})
         )
 
-        expect(yield* run).toBeUndefined()
+        yield* run
+
         expect(batchDelete).toHaveBeenCalledTimes(2)
       }).pipe(
         Effect.provide(listing([DEPLOYMENT, DEPLOYMENT])),
@@ -124,6 +133,70 @@ describe('delete', () => {
         Effect.provide(listing([DEPLOYMENT])),
         Effect.provide(DeleteLayer)
       )
+    )
+
+    it.effect('keeps the newest keep-latest deployments', () => {
+      stubInputEnv(INPUT_KEYS_KEEP_LATEST, '1')
+
+      return Effect.gen(function* () {
+        expect.assertions(2)
+
+        vi.mocked(batchDelete).mockReturnValue(
+          Effect.succeed({...ROW, success: true})
+        )
+
+        yield* run
+
+        expect(info).toHaveBeenCalledWith(
+          'delete - Keeping latest 1 deployments'
+        )
+        // Listed newest first, so the first is kept.
+        expect(
+          vi.mocked(batchDelete).mock.calls.map(([{node_id}]) => node_id)
+        ).toStrictEqual(['DE_2', 'DE_3'])
+      }).pipe(
+        Effect.provide(
+          listing([withId('DE_1'), withId('DE_2'), withId('DE_3')])
+        ),
+        Effect.provide(DeleteLayer)
+      )
+    })
+
+    it.effect(
+      'deletes nothing when keep-latest covers every deployment',
+      () => {
+        stubInputEnv(INPUT_KEYS_KEEP_LATEST, '2')
+
+        return Effect.gen(function* () {
+          expect.assertions(2)
+
+          yield* run
+
+          expect(batchDelete).not.toHaveBeenCalled()
+          expect(summary.addTable).toHaveBeenCalledWith([
+            ['No deployments to delete']
+          ])
+        }).pipe(
+          Effect.provide(listing([withId('DE_1'), withId('DE_2')])),
+          Effect.provide(DeleteLayer)
+        )
+      }
+    )
+
+    it.effect('fails when the job summary cannot be written', () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        vi.mocked(summary.write).mockRejectedValueOnce(
+          new Error('EACCES: permission denied')
+        )
+
+        const error = yield* Effect.flip(run)
+
+        expect(error.message).toBe(
+          'delete - Error deleting deployments: EACCES: permission denied'
+        )
+      }).pipe(Effect.provide(listing([])), Effect.provide(DeleteLayer))
     )
 
     it.effect('does not link a non-http environment url', () =>

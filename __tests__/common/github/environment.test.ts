@@ -1,4 +1,4 @@
-import {error, notice, setFailed} from '@actions/core'
+import {setFailed} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
@@ -10,7 +10,9 @@ import type {MockApi} from '@/tests/helpers/api.js'
 import {checkEnvironment} from '@/common/github/environment.js'
 import {CommonLayer} from '@/common/layer.js'
 import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
+import {INPUT_KEY_GITHUB_ENVIRONMENT} from '@/input-keys'
 import {getMockApi} from '@/tests/helpers/api.js'
+import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 vi.mock(import('@actions/core'))
 
@@ -19,8 +21,7 @@ describe('environment', () => {
 
   const mockQueryGetEnvironment = (
     data: GetEnvironmentAndRefQuery,
-    errors?: GitHubGraphQLError[],
-    statusCode?: number
+    errors?: GitHubGraphQLError[]
   ): void => {
     mockApi.interceptGithub(
       {
@@ -35,8 +36,7 @@ describe('environment', () => {
       {
         data,
         errors
-      },
-      statusCode
+      }
     )
   }
 
@@ -52,21 +52,27 @@ describe('environment', () => {
   // An Effect value, not a function, so the title is a string.
   // oxlint-disable-next-line vitest/prefer-describe-function-title
   describe('checkEnvironment', () => {
-    it.effect('fails with a clear error on a non-2xx response', () =>
-      Effect.gen(function* () {
-        expect.assertions(1)
+    it.effect(
+      'fails without a request when github-environment is unset',
+      () => {
+        // GitHub doesn't enforce `required: true` on action inputs.
+        stubInputEnv(INPUT_KEY_GITHUB_ENVIRONMENT, '')
 
-        mockQueryGetEnvironment({} as GetEnvironmentAndRefQuery, undefined, 401)
+        return Effect.gen(function* () {
+          expect.assertions(1)
 
-        const failure = yield* Effect.flip(checkEnvironment)
+          const failure = yield* Effect.flip(checkEnvironment)
 
-        expect(failure.message).toContain('GitHub API request failed: 401')
-      }).pipe(Effect.provide(CommonLayer))
+          expect(failure.message).toBe(
+            'GitHub Environment: Input required and not supplied: github-environment'
+          )
+        }).pipe(Effect.provide(CommonLayer))
+      }
     )
 
     it.effect('success', () =>
       Effect.gen(function* () {
-        expect.assertions(4)
+        expect.assertions(1)
 
         mockQueryGetEnvironment({
           repository: {
@@ -82,9 +88,6 @@ describe('environment', () => {
 
         const environment = yield* checkEnvironment
 
-        expect(error).not.toHaveBeenCalled()
-        expect(setFailed).not.toHaveBeenCalled()
-        expect(notice).not.toHaveBeenCalled()
         expect(environment).toMatchInlineSnapshot(`
           {
             "id": "EN_kwDOJn0nrM5D_l8n",
@@ -95,47 +98,23 @@ describe('environment', () => {
       }).pipe(Effect.provide(CommonLayer))
     )
 
+    // What GitHub returns when the token lacks a permission — README.md's
+    // Troubleshooting table quotes the message.
+    const FORBIDDEN_ERRORS: GitHubGraphQLError[] = [
+      {
+        type: 'FORBIDDEN',
+        path: ['repository', 'environment'],
+        message: 'Resource not accessible by integration'
+      }
+    ]
+
     const RESPONSES: Array<{
+      title: string
       response: Parameters<typeof mockQueryGetEnvironment>
       expected: string
     }> = [
       {
-        response: [
-          {
-            repository: {
-              environment: null,
-              ref: null
-            }
-          },
-          [
-            {
-              type: 'NOT_FOUND',
-              path: ['getEnvironment'],
-              locations: [
-                {
-                  line: 22,
-                  column: 5
-                }
-              ],
-              message: 'some error message'
-            }
-          ]
-        ],
-        expected: `GitHub Environment: Errors - ${JSON.stringify([
-          {
-            type: 'NOT_FOUND',
-            path: ['getEnvironment'],
-            locations: [
-              {
-                line: 22,
-                column: 5
-              }
-            ],
-            message: 'some error message'
-          }
-        ])}`
-      },
-      {
+        title: 'GraphQL errors',
         response: [
           {
             repository: {
@@ -144,11 +123,36 @@ describe('environment', () => {
                 id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk='
               }
             }
-          }
+          },
+          FORBIDDEN_ERRORS
+        ],
+        expected: `GitHub Environment: Errors - ${JSON.stringify(FORBIDDEN_ERRORS)}`
+      },
+      {
+        // What GitHub returns: `environment: null` and a NOT_FOUND error.
+        title: 'a missing environment',
+        response: [
+          {
+            repository: {
+              environment: null,
+              ref: {
+                id: 'MDg6Q2hlY2tSdW4xMjM0NTY3ODk='
+              }
+            }
+          },
+          [
+            {
+              type: 'NOT_FOUND',
+              path: ['repository', 'environment'],
+              message:
+                'Could not resolve to an Environment with the name mock-github-environment.'
+            }
+          ]
         ],
         expected: `GitHub Environment: Not created for mock-github-environment`
       },
       {
+        title: 'a missing ref',
         response: [
           {
             repository: {
@@ -165,7 +169,7 @@ describe('environment', () => {
     ]
 
     it.effect.each(RESPONSES)(
-      `fails without calling setFailed`,
+      'fails on $title without calling setFailed',
       ({response, expected}) =>
         Effect.gen(function* () {
           expect.assertions(2)

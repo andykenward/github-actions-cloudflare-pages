@@ -17,9 +17,8 @@ const TOKEN = process.env['GITHUB_TOKEN']
  * Replaces all `andykenward/github-actions-cloudflare-pages` action version
  * references in a file's content with the given SHA and version.
  *
- * Handles both tag-only (`@v3.0.0`) and SHA+tag (`@abc123 #v3.0.0`) forms.
- * The /delete sub-action pattern is replaced first to prevent partial matching
- * by the main action pattern.
+ * Handles both tag-only (`@v3.0.0`) and SHA+tag (`@abc123 #v3.0.0`) forms, for
+ * the main action and its /delete sub-action.
  */
 export function replaceVersionReferences(
   content: string,
