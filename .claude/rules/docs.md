@@ -23,6 +23,8 @@ paths:
   - GitHub Environments must be created manually — the action can't create them (that needs `administration:write`).
   - With `GITHUB_TOKEN`, grant `contents: read`, `deployments: write`, `pull-requests: write`, plus `actions: read` for private repos.
   - Supported events: `push`, `pull_request`, `workflow_dispatch`, `workflow_run`.
+  - A failed or canceled Cloudflare build fails the step, as does one still running after 10 minutes. The outputs and job summary are written first; no pull request comment or GitHub Deployment is created.
+  - The README's Troubleshooting table quotes the actions' exact error messages. Changing a message in `src/` means updating that table, `delete/README.md`'s, and the skill's.
   - A deploy job's `timeout-minutes` must exceed the action's 10-minute polling ceiling plus upload time, or the runner kills the job before the action can report. Agents copy examples verbatim.
   - The deployment payload embeds Cloudflare metadata so the delete action can find deployments (`src/common/github/deployment/types.ts`).
 - **`workflow_run` + fork PRs**: `github.event.workflow_run.pull_requests` is **empty for fork PRs** ([community #25220](https://github.com/orgs/community/discussions/25220)). Never derive `pr-number` or `branch` from `pull_requests[0]` in docs or examples — it silently resolves to empty for exactly the fork case those examples target. Save the number in the triggering `pull_request` workflow and hand it over as an artifact (`upload-artifact` → `download-artifact` with `run-id: ${{ github.event.workflow_run.id }}` + `github-token`). See "Custom branch name" in `README.md`.

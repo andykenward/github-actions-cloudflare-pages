@@ -331,6 +331,30 @@ The GitHub Deployment payload this action creates includes the Cloudflare metada
 }
 ```
 
+## Troubleshooting
+
+A failed step's annotation carries a one-line message; turn on [step debug logs](#debugging) for the full error.
+
+| Message                                                                                      | Cause and fix                                                                                                                                                                               |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Input required and not supplied: <input>`                                                   | A required input is empty. Check the secret or variable exists — on a fork's `pull_request` run, secrets are empty, so deploy with [`workflow_run`](#fork-pull-requests-with-workflow_run). |
+| `Input '<input>' is invalid: …`                                                              | The input has the wrong format; the rest of the message says what was expected.                                                                                                             |
+| `GitHub Action event name '<name>' not supported.`                                           | Trigger on one of the [supported events](#supported-events).                                                                                                                                |
+| `GitHub Environment: Not created for <name>`                                                 | The environment doesn't exist — [create it](#2-github-environments-required), or fix the `github-environment` expression.                                                                   |
+| `GitHub Environment: No ref id <name>`                                                       | The branch or tag the run is for no longer exists, e.g. it was deleted before the run started.                                                                                              |
+| `GitHub Environment: Errors - […]`                                                           | GitHub rejected the lookup; the JSON lists its errors. Usually `github-token` is missing a [permission](#3-permissions).                                                                    |
+| `GitHub API request failed: <status> …`                                                      | A 401 or 403 means `github-token` is invalid or missing a [permission](#3-permissions).                                                                                                     |
+| A JSON list of errors mentioning `Resource not accessible by integration`                    | `github-token` is missing a [permission](#3-permissions) — usually `deployments: write` or `pull-requests: write`.                                                                          |
+| `Invalid pr-number input: <value>`                                                           | `pr-number` must be a positive whole number.                                                                                                                                                |
+| `No pull request node id found for pr-number input: <number>`                                | No pull request with that number exists in this repository.                                                                                                                                 |
+| `No pull request node id found for workflow_dispatch event`                                  | No open pull request is headed by the dispatched branch. Dispatch from one, or set `pr-number`.                                                                                             |
+| `No pull request found in workflow_run event matching head branch and sha`                   | The run has no matching pull request — always the case for forks. Set `pr-number` ([example](#custom-branch-name)).                                                                         |
+| `Multiple pull requests found in workflow_run event matching head branch and sha`            | Several pull requests share the commit. Set `pr-number`.                                                                                                                                    |
+| `Status Of Deployment: timed out after 10m waiting for the deploy stage to complete.`        | Cloudflare didn't finish within 10 minutes. Check the build in the Cloudflare dashboard.                                                                                                    |
+| An error printed by Wrangler                                                                 | The upload failed and Wrangler's message says why. Check the token's permission, `cloudflare-account-id`, `cloudflare-project-name` and `directory`.                                        |
+| The job is cancelled at its time limit                                                       | Raise the job's `timeout-minutes` to at least 15 — the action waits up to 10 minutes for Cloudflare.                                                                                        |
+| `Create Deployment: the Cloudflare Pages build failed. Build log: <url>` (or `was canceled`) | The build failed or was canceled on Cloudflare. Open the build log link; the outputs and job summary still describe the deployment.                                                         |
+
 ## Debugging
 
 GitHub provides two debug log levels — see [Action Debugging]. Enable them by [setting a repository secret]:

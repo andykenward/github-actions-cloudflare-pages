@@ -121,6 +121,8 @@ After the first run (`gh run watch`), check:
 
 ## Troubleshooting
 
+A failed or canceled Cloudflare build fails the step with `Create Deployment: the Cloudflare Pages build failed. Build log: <url>` — open that link for Cloudflare's build output. The full list of messages is in the [README](https://github.com/andykenward/github-actions-cloudflare-pages#troubleshooting).
+
 | Log message                                                                | Fix                                                                                               |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `Input required and not supplied: <input>`                                 | Set the input. On a fork's `pull_request` run secrets are empty — use the `workflow_run` variant. |
