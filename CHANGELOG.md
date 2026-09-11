@@ -1,5 +1,89 @@
 # github-actions-cloudflare-pages
 
+## 3.6.0
+
+### Minor Changes
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: failed deployments now fail the action. `run()` was called without being awaited, so a rejection became an unhandled promise rejection and the step exited `0` — a failed deploy reported success.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: fail the step when the Cloudflare Pages build fails or is canceled. Previously the action reported success — it commented on the pull request and marked the GitHub Deployment `SUCCESS` for a broken deploy. The outputs and job summary are still written, the error links to the Cloudflare build log, and no pull request comment or GitHub Deployment is created.
+
+- [#784](https://github.com/andykenward/github-actions-cloudflare-pages/pull/784) [`4a48332`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/4a48332c4abd4ac4224173d396a0acd5aa5f76c1) Thanks [@andykenward](https://github.com/andykenward)! - feat: use npm package openapi-fetch and generate TypeScript types from Cloudflare OpenAPI schema
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix(delete): the delete action now fails the step when any deployment could not be deleted. Previously it exited successfully even if every deletion failed, and the only sign was ❌ rows in the job summary. The remaining deployments are still deleted and the summary is still written. Per-deployment errors are now logged as warnings naming the deployment, instead of an `info` line that blamed the payload for every error.
+
+### Patch Changes
+
+- [#870](https://github.com/andykenward/github-actions-cloudflare-pages/pull/870) [`cb4b3b8`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/cb4b3b8c799e0d84e400ba0da049d274edae641c) Thanks [@andykenward](https://github.com/andykenward)! - fix: treat a whitespace-only optional input as not supplied, as before the move to Effect. `branch: ' '` ran wrangler with `--branch ''`, and a blank `wrangler-version` installed `wrangler@` instead of the default.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: check the HTTP status of GitHub GraphQL responses. GitHub returns JSON for a 401, so an auth failure parsed cleanly and the caller silently received `data: undefined`.
+
+- [#820](https://github.com/andykenward/github-actions-cloudflare-pages/pull/820) [`0e4ed5a`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/0e4ed5a33d13f3ad7afcad84ea9670b03c2b6907) Thanks [@dependabot](https://github.com/apps/dependabot)! - bump: wrangler from 4.86.0 to 4.113.0
+
+- [#870](https://github.com/andykenward/github-actions-cloudflare-pages/pull/870) [`cb4b3b8`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/cb4b3b8c799e0d84e400ba0da049d274edae641c) Thanks [@andykenward](https://github.com/andykenward)! - fix: clearer error messages. A `pr-number` with no matching pull request fails with `No pull request node id found for pr-number input: <number>`, as documented, instead of GitHub's raw error JSON; an unset `github-environment` names the input; and a missing `GITHUB_EVENT_PATH` file names the file instead of failing with a `TypeError`.
+
+- [#870](https://github.com/andykenward/github-actions-cloudflare-pages/pull/870) [`cb4b3b8`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/cb4b3b8c799e0d84e400ba0da049d274edae641c) Thanks [@andykenward](https://github.com/andykenward)! - fix: Cloudflare API errors now carry Cloudflare's reason in the failure message instead of separate annotations. A deployment the delete action finds already gone no longer leaves an error annotation on a successful run, and a non-JSON error response (e.g. an HTML 502 from Cloudflare's edge) reports its HTTP status instead of `Cannot read properties of undefined`.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - perf: the delete action marks each GitHub deployment inactive and deletes it (and its comment) in one GraphQL request instead of two.
+
+- [#870](https://github.com/andykenward/github-actions-cloudflare-pages/pull/870) [`cb4b3b8`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/cb4b3b8c799e0d84e400ba0da049d274edae641c) Thanks [@andykenward](https://github.com/andykenward)! - fix: the delete action fails a row when GitHub rejects the whole delete request (e.g. a rate limit, or a request it rejects as invalid) with `Deleting GitHub deployment failed`. It was reported as deleted while the GitHub deployment remained.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: check the GitHub Environment and find the pull request while wrangler uploads. A missing environment now stops wrangler and fails the step straight away, instead of failing after a full deploy and leaving an orphaned Cloudflare deployment.
+
+- [#870](https://github.com/andykenward/github-actions-cloudflare-pages/pull/870) [`cb4b3b8`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/cb4b3b8c799e0d84e400ba0da049d274edae641c) Thanks [@andykenward](https://github.com/andykenward)! - fix: keep polling while Cloudflare's deploy stage is still `active`. The action treated `active` as finished, so it could record a successful GitHub Deployment before Cloudflare had finished deploying.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: decode deployment payloads supplied as JSON strings. The payload was returned unparsed but typed as an object, so deletion silently read `undefined` fields.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: escape the values written to the job summary tables. A commit message, branch name, wrangler output or delete error was inserted as raw HTML, so a pull request could inject markup into the summary; link targets are now percent-encoded, escaped, and only rendered for `http(s)` URLs.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - perf: bundled actions are ~70% smaller (808 KB → 233 KB each). The unused undici proxy code pulled in by `@actions/core`'s OIDC client is now tree-shaken.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: deployment polling now gives up after 10 minutes instead of looping until the job timeout
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - security: register `cloudflare-api-token` and `github-token` with the runner's log masking. GitHub only masks values that come from `secrets.*` automatically, so a token passed from another step's output or an environment variable could previously appear unredacted in logs.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - refactor: build the action entrypoints, inputs and deployment polling on Effect
+
+- [#870](https://github.com/andykenward/github-actions-cloudflare-pages/pull/870) [`cb4b3b8`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/cb4b3b8c799e0d84e400ba0da049d274edae641c) Thanks [@andykenward](https://github.com/andykenward)! - fix: a `github-environment` that doesn't exist fails with `GitHub Environment: Not created for <name>`, as documented. GitHub reports it as a `NOT_FOUND` error, which was shown as raw JSON that pointed at a missing permission instead.
+
+- [#851](https://github.com/andykenward/github-actions-cloudflare-pages/pull/851) [`11bca1e`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/11bca1eb644f09d078bbcf01fbe41cdf1c47256b) Thanks [@andykenward](https://github.com/andykenward)! - chore: replace deprecated `@octokit/webhooks-schemas` / `@octokit/webhooks-types` with `@octokit/openapi-webhooks` / `@octokit/openapi-webhooks-types`
+
+  Webhook event types now come from GitHub's official OpenAPI webhooks spec. `WorkflowEvent` and its payloads are derived from `@octokit/openapi-webhooks-types` at the type level rather than code generated, so `codegen:events` only emits the `EVENT_NAMES` runtime array. Nine event names GitHub has added since the old schema was last published are now recognised, including `projects_v2`, `repository_ruleset` and `sub_issues`.
+
+  The new schema is stricter about nullability, so a `workflow_run` event with a `null` `head_branch` now fails with `context: no head_branch in workflow_run event` instead of silently producing an empty ref.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: report the reason a Cloudflare deployment delete failed, instead of logging only the deployment id
+
+- [#851](https://github.com/andykenward/github-actions-cloudflare-pages/pull/851) [`11bca1e`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/11bca1eb644f09d078bbcf01fbe41cdf1c47256b) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps): bump `@octokit/plugin-paginate-rest` from 14.0.0 to 15.0.0
+
+- [#854](https://github.com/andykenward/github-actions-cloudflare-pages/pull/854) [`dbdba21`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/dbdba21e8e6fb1efa2a78aa5fd729d2ab8013ace) Thanks [@andykenward](https://github.com/andykenward)! - chore(deps-dev): migrate changesets to v3 — bump `@changesets/cli` from 2.31.1 to 3.0.1 and `@changesets/changelog-github` from 0.7.0 to 1.0.0
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: poll the deployment wrangler created, by its id, rather than the newest deployment for the commit. On a re-run for the same commit, the action could report the previous deployment's id, URL and status. Wranglers too old to write an output file fall back to the old lookup.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: retry instead of failing when Cloudflare has not yet registered a deployment. The first poll after wrangler returns treated this expected race as fatal.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: a failed step now reports a one-line error, e.g. `Input required and not supplied: cloudflare-api-token`, instead of a stack trace or (in the delete action) the whole error object serialised as JSON. The full error is still logged when step debug logging is enabled.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: stop writing the Cloudflare API token into the global process environment. It is now scoped to the wrangler child process, and both API tokens are redacted.
+
+- [#797](https://github.com/andykenward/github-actions-cloudflare-pages/pull/797) [`85ee7f4`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/85ee7f48befccb4a12dd5a60dbf03d7547f0b3d2) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump undici from 7.24.4 to 7.28.0
+
+- [#847](https://github.com/andykenward/github-actions-cloudflare-pages/pull/847) [`aa08c78`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/aa08c782e5b06acb4af298c55bbf3a69bb4a835d) Thanks [@andykenward-pr-automation](https://github.com/apps/andykenward-pr-automation)! - GitHub GraphQL schema update
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: a missing or misconfigured GitHub Environment no longer produces two identical error annotations.
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: bound concurrency to 5 when deleting deployments, rather than firing every deployment at Cloudflare and GitHub at once
+
+- [#803](https://github.com/andykenward/github-actions-cloudflare-pages/pull/803) [`7bd6718`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/7bd671840bd5f43f500775ecea7852bb62fa96e1) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump graphql to 17.0.2 and the @graphql-codegen toolchain (cli 7.2.0, client-preset 6.1.0) — the newer codegen supports graphql-js v17, fixing the "spread.directives is not iterable" codegen failure
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - fix: validate the workflow event name and guard parsing of the event payload file
+
+- [#853](https://github.com/andykenward/github-actions-cloudflare-pages/pull/853) [`8f2bdb0`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/8f2bdb033884cb8a2558b40c2177fa1a27cbee17) Thanks [@andykenward](https://github.com/andykenward)! - security: wrangler's output is now logged inside a `stop-commands` block with a random token, so a line in it that looks like a workflow command (`::…`) is printed rather than executed by the runner.
+
+- [#803](https://github.com/andykenward/github-actions-cloudflare-pages/pull/803) [`7bd6718`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/7bd671840bd5f43f500775ecea7852bb62fa96e1) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore: @actions/core undici bump
+
+- [#790](https://github.com/andykenward/github-actions-cloudflare-pages/pull/790) [`3428e72`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/3428e7229fb6950c6b0d503fc23794442f2bbc99) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps-dev): bump esbuild from 0.28.0 to 0.28.1
+
 ## 3.5.0
 
 ### Minor Changes
