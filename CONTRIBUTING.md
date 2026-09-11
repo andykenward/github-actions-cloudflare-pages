@@ -21,6 +21,7 @@ pnpm refuses package versions published less than 7 days ago (`minimumReleaseAge
 | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | `pnpm run all`                 | Every check: version sync, knip, codegen, type-check, format, lint, test and build                        |
 | `pnpm run test` / `test:watch` | Run the tests once / in watch mode                                                                        |
+| `pnpm run test:coverage`       | Run the tests with V8 coverage of `src/`; the HTML report lands in `.cache/coverage/`                     |
 | `pnpm run lint`                | Lint, including the Effect diagnostics                                                                    |
 | `pnpm run format`              | Format with oxfmt                                                                                         |
 | `pnpm run build`               | Bundle the actions into `dist/`                                                                           |
@@ -31,6 +32,7 @@ pnpm refuses package versions published less than 7 days ago (`minimumReleaseAge
 ## Pull requests
 
 - **Run `pnpm run all` before pushing.** CI's test workflow only runs lint, type-check and tests, so knip, formatting and generated-code drift are yours to catch.
+- **Test what you change.** `pnpm run test:coverage --coverage.include=<file> --coverage.reporter=text` lists a file's uncovered lines; the test workflow also posts a coverage report on your pull request.
 - **Commit `dist/`.** The action runs the committed bundle, and CI fails if it differs from a fresh `pnpm run build`.
 - **Sign your commits.** Every branch requires [signed commits].
 - **Record user-facing changes.** Add a changeset with `pnpm changeset`, and update [README.md](README.md) or [delete/README.md](delete/README.md) when an input, output or behavior changes.

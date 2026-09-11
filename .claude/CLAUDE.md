@@ -27,6 +27,7 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 | `pnpm run download`            | Refresh `__generated__/payloads/` from `octokit/webhooks` (needs `GITHUB_TOKEN` in `.env`)                                 |
 | `pnpm run tsc:check`           | Type-check                                                                                                                 |
 | `pnpm run test` / `test:watch` | Vitest (`test:ci` adds the GitHub Actions reporter)                                                                        |
+| `pnpm run test:coverage`       | Vitest with V8 coverage of `src/` → `.cache/coverage/`                                                                     |
 | `pnpm run lint` / `lint:fix`   | oxlint, type-aware — also where Effect diagnostics come from                                                               |
 | `pnpm run format`              | oxfmt (`format:check` to verify)                                                                                           |
 | `pnpm run start`               | Run the built deploy action with `.env` loaded (see `.env.example`)                                                        |
@@ -38,6 +39,7 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 ## Before you finish
 
 - Run `pnpm run all` before opening a PR — CI's `test.yml` only runs `lint`, `tsc:check` and `test:ci`, so knip, format and codegen drift go unchecked.
+- Added or changed `src/` code → check its uncovered lines with `pnpm run test:coverage --coverage.include=<file> --coverage.reporter=text` (see the testing rule).
 - User-visible change (input, output, behavior) → update `README.md` (deploy) or `delete/README.md` (delete).
 - Notable or breaking change → `pnpm changeset`.
 - Code style is oxfmt's: no semicolons, single quotes, no bracket spacing, no trailing commas, `arrowParens: avoid`, imports sorted type → `node:` → external → internal → relative. Don't hand-match it — prek formats and lints on commit.
