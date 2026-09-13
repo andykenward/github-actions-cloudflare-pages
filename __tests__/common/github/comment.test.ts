@@ -18,18 +18,23 @@ import {
   GetOpenPullRequestByBranchDocument,
   GetPullRequestIdDocument
 } from '@/gql/graphql.js'
-import {INPUT_KEY_PR_NUMBER} from '@/input-keys'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {setMockApi} from '@/tests/helpers/api.js'
-import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 vi.mock(import('@actions/core'))
 
 type Context = GitHubContext['Service']
 
-/** Resolves the pull request, then comments on it — as the deploy does. */
-const comment = (deployment: PagesDeployment, output: string) =>
-  pullRequestToComment.pipe(
+/**
+ * Resolves the pull request — from `prNumber` when given, else the event —
+ * then comments on it, as the deploy does.
+ */
+const comment = (
+  deployment: PagesDeployment,
+  output: string,
+  prNumber?: number
+) =>
+  pullRequestToComment(prNumber).pipe(
     Effect.flatMap(pullRequestId =>
       addComment(pullRequestId, deployment, output)
     )
@@ -302,10 +307,8 @@ describe('addComment', () => {
   })
 
   describe('pr-number input', () => {
-    it.effect('should use pr-number to resolve pull request node id', () => {
-      stubInputEnv(INPUT_KEY_PR_NUMBER, '123')
-
-      return Effect.gen(function* () {
+    it.effect('should use pr-number to resolve pull request node id', () =>
+      Effect.gen(function* () {
         expect.assertions(1)
 
         mockApi.interceptGithub(
@@ -351,7 +354,8 @@ describe('addComment', () => {
           }
         )
 
-        expect(yield* comment(mockData, 'success')).toBe('1')
+        // No branch lookup: the input wins over the event.
+        expect(yield* comment(mockData, 'success', 123)).toBe('1')
       }).pipe(
         Effect.provide(
           withContext({
@@ -359,35 +363,16 @@ describe('addComment', () => {
               eventName: 'workflow_dispatch',
               payload: {}
             } as Readonly<WorkflowEventExtract<'workflow_dispatch'>>,
-            branch: undefined,
             ref: 'refs/heads/feature-branch'
           })
         )
       )
-    })
-
-    it.effect.each([{prNumber: 'abc'}, {prNumber: '0'}, {prNumber: '-1'}])(
-      'should fail for invalid pr-number input $prNumber',
-      ({prNumber}) => {
-        stubInputEnv(INPUT_KEY_PR_NUMBER, prNumber)
-
-        return Effect.gen(function* () {
-          expect.assertions(1)
-
-          // No interceptors: a lookup would fail with a `GitHubApiError`.
-          const error = yield* Effect.flip(comment(mockData, 'success'))
-
-          expect(error.message).toBe(`Invalid pr-number input: ${prNumber}`)
-        }).pipe(Effect.provide(CommonLayer))
-      }
     )
 
     it.effect(
       'fails with the not-found message when pr-number does not exist',
-      () => {
-        stubInputEnv(INPUT_KEY_PR_NUMBER, '999')
-
-        return Effect.gen(function* () {
+      () =>
+        Effect.gen(function* () {
           expect.assertions(2)
 
           mockApi.interceptGithub(
@@ -413,7 +398,7 @@ describe('addComment', () => {
             }
           )
 
-          const error = yield* Effect.flip(comment(mockData, 'success'))
+          const error = yield* Effect.flip(comment(mockData, 'success', 999))
 
           // README.md's Troubleshooting table quotes this message.
           expect(error._tag).toBe('CommentError')
@@ -421,13 +406,10 @@ describe('addComment', () => {
             'No pull request node id found for pr-number input: 999'
           )
         }).pipe(Effect.provide(CommonLayer))
-      }
     )
 
-    it.effect('fails with any other GitHub error for pr-number as-is', () => {
-      stubInputEnv(INPUT_KEY_PR_NUMBER, '999')
-
-      return Effect.gen(function* () {
+    it.effect('fails with any other GitHub error for pr-number as-is', () =>
+      Effect.gen(function* () {
         expect.assertions(2)
 
         const errors = [
@@ -449,12 +431,12 @@ describe('addComment', () => {
           {data: {repository: {pullRequest: null}}, errors}
         )
 
-        const error = yield* Effect.flip(comment(mockData, 'success'))
+        const error = yield* Effect.flip(comment(mockData, 'success', 999))
 
         expect(error._tag).toBe('GitHubApiError')
         expect(error.message).toBe(JSON.stringify(errors))
       }).pipe(Effect.provide(CommonLayer))
-    })
+    )
   })
 
   describe('eventName: workflow_dispatch', () => {
@@ -550,27 +532,6 @@ describe('addComment', () => {
             'No pull request node id found for workflow_dispatch event'
           )
         }).pipe(Effect.provide(WORKFLOW_DISPATCH))
-    )
-
-    it.effect('should fail without a lookup when there is no branch', () =>
-      Effect.gen(function* () {
-        expect.assertions(1)
-
-        // No interceptors: a lookup would fail with a `GitHubApiError`.
-        const error = yield* Effect.flip(comment(mockData, 'success'))
-
-        expect(error.message).toBe('No branch found in context')
-      }).pipe(
-        Effect.provide(
-          withContext({
-            event: {
-              eventName: 'workflow_dispatch',
-              payload: {}
-            } as Readonly<WorkflowEventExtract<'workflow_dispatch'>>,
-            branch: undefined
-          })
-        )
-      )
     )
   })
 

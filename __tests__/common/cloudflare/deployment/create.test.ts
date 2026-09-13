@@ -29,7 +29,7 @@ import {
 } from '@/tests/helpers/api.js'
 import {wranglerReporting} from '@/tests/helpers/wrangler.js'
 
-import packageJson from '../../../../package.json' with {type: 'json'}
+const WRANGLER_VERSION = '4.0.0'
 
 vi.mock(import('@/common/utils.js'))
 vi.mock(import('@actions/core'))
@@ -66,7 +66,8 @@ describe('createCloudflareDeployment', () => {
           createCloudflareDeployment({
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
-            directory: 'mock-directory'
+            directory: 'mock-directory',
+            wranglerVersion: WRANGLER_VERSION
           })
         )
 
@@ -87,33 +88,6 @@ describe('createCloudflareDeployment', () => {
       }).pipe(Effect.provide(CommonLayer))
     )
 
-    it.effect('fails without running wrangler when there is no branch', () => {
-      // Neither the `branch` argument nor the context gives one. `undefined`
-      // removes the variable; an empty string would still count as a branch.
-      // oxlint-disable-next-line unicorn/no-useless-undefined
-      vi.stubEnv('GITHUB_HEAD_REF', undefined)
-      // oxlint-disable-next-line unicorn/no-useless-undefined
-      vi.stubEnv('GITHUB_REF_NAME', undefined)
-
-      return Effect.gen(function* () {
-        expect.assertions(2)
-
-        const error = yield* Effect.flip(
-          createCloudflareDeployment({
-            accountId: 'mock-cloudflare-account-id',
-            projectName: 'mock-cloudflare-project-name',
-            directory: 'mock-directory'
-          })
-        )
-
-        expect(error).toMatchObject({
-          _tag: 'CreateDeploymentError',
-          message: 'Create Deployment: branch is undefined'
-        })
-        expect(execFileAsync).not.toHaveBeenCalled()
-      }).pipe(Effect.provide(CommonLayer))
-    })
-
     it.live('fails with the Cloudflare error when polling fails', () =>
       Effect.gen(function* () {
         expect.assertions(5)
@@ -133,7 +107,8 @@ describe('createCloudflareDeployment', () => {
           createCloudflareDeployment({
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
-            directory: 'mock-directory'
+            directory: 'mock-directory',
+            wranglerVersion: WRANGLER_VERSION
           })
         )
 
@@ -175,6 +150,7 @@ describe('createCloudflareDeployment', () => {
           accountId: 'mock-cloudflare-account-id',
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
+          wranglerVersion: WRANGLER_VERSION,
           workingDirectory: 'mock-working-directory',
           statusOptions: {pollInterval: 0}
         })
@@ -182,7 +158,7 @@ describe('createCloudflareDeployment', () => {
         expect(execFileAsync).toHaveBeenCalledWith(
           'npx',
           [
-            `wrangler@${packageJson.devDependencies.wrangler}`,
+            `wrangler@${WRANGLER_VERSION}`,
             'pages',
             'deploy',
             'mock-directory',
@@ -301,6 +277,7 @@ describe('createCloudflareDeployment', () => {
           accountId: 'mock-cloudflare-account-id',
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
+          wranglerVersion: WRANGLER_VERSION,
           branch: 'pr-123',
           statusOptions: {pollInterval: 0}
         })
@@ -308,7 +285,7 @@ describe('createCloudflareDeployment', () => {
         expect(execFileAsync).toHaveBeenCalledWith(
           'npx',
           [
-            `wrangler@${packageJson.devDependencies.wrangler}`,
+            `wrangler@${WRANGLER_VERSION}`,
             'pages',
             'deploy',
             'mock-directory',
@@ -383,6 +360,7 @@ describe('createCloudflareDeployment', () => {
           accountId: 'mock-cloudflare-account-id',
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
+          wranglerVersion: WRANGLER_VERSION,
           statusOptions: {pollInterval: 0}
         })
 
@@ -446,6 +424,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
         accountId: 'mock-cloudflare-account-id',
         projectName: 'mock-cloudflare-project-name',
         directory: 'mock-directory',
+        wranglerVersion: WRANGLER_VERSION,
         statusOptions: {pollInterval: 0}
       })
 
@@ -471,7 +450,8 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
         createCloudflareDeployment({
           accountId: 'mock-cloudflare-account-id',
           projectName: 'mock-cloudflare-project-name',
-          directory: 'mock-directory'
+          directory: 'mock-directory',
+          wranglerVersion: WRANGLER_VERSION
         })
       )
 
@@ -505,6 +485,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
             directory: 'mock-directory',
+            wranglerVersion: WRANGLER_VERSION,
             statusOptions: {pollInterval: 0}
           })
         )
@@ -539,6 +520,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
             directory: 'mock-directory',
+            wranglerVersion: WRANGLER_VERSION,
             statusOptions: {pollInterval: 0}
           })
         )

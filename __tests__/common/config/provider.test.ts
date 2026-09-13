@@ -5,7 +5,7 @@ import {describe, expect, vi} from 'vitest'
 
 import {input, optionalInput, readInputs} from '@/common/config/provider.js'
 import {errorMessage} from '@/common/errors.js'
-import {INPUT_KEYS_KEEP_LATEST} from '@/input-keys'
+import {INPUT_KEY_KEEP_LATEST} from '@/input-keys'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 describe(readInputs, () => {
@@ -40,12 +40,10 @@ describe(input, () => {
     Effect.gen(function* () {
       expect.assertions(1)
 
-      stubInputEnv(INPUT_KEYS_KEEP_LATEST, '')
+      stubInputEnv(INPUT_KEY_KEEP_LATEST, '')
       vi.stubEnv('INPUT_KEEP_LATEST', '3')
 
-      const error = yield* Effect.flip(
-        readInputs(input(INPUT_KEYS_KEEP_LATEST))
-      )
+      const error = yield* Effect.flip(readInputs(input(INPUT_KEY_KEEP_LATEST)))
 
       expect(errorMessage(error)).toBe(
         'Input required and not supplied: keep-latest'

@@ -6,7 +6,7 @@ export const INPUT_KEY_GITHUB_ENVIRONMENT = 'github-environment'
 export const INPUT_KEY_GITHUB_TOKEN = 'github-token'
 export const INPUT_KEY_PR_NUMBER = 'pr-number'
 export const INPUT_KEY_WORKING_DIRECTORY = 'working-directory'
-export const INPUT_KEYS_KEEP_LATEST = 'keep-latest'
+export const INPUT_KEY_KEEP_LATEST = 'keep-latest'
 export const INPUT_KEY_WRANGLER_VERSION = 'wrangler-version'
 export const INPUT_KEY_BRANCH = 'branch'
 
@@ -17,5 +17,5 @@ export const INPUT_KEYS_REQUIRED = [
   INPUT_KEY_DIRECTORY,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN,
-  INPUT_KEYS_KEEP_LATEST
+  INPUT_KEY_KEEP_LATEST
 ] as const

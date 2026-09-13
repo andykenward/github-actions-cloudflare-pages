@@ -11,7 +11,7 @@ import {errorMessage, reportFailure} from '@/common/errors.js'
 import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
-  INPUT_KEYS_KEEP_LATEST
+  INPUT_KEY_KEEP_LATEST
 } from '@/input-keys'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
@@ -47,9 +47,9 @@ describe(errorMessage, () => {
   test('describes an invalid input', () => {
     expect.assertions(1)
 
-    stubInputEnv(INPUT_KEYS_KEEP_LATEST, 'abc')
+    stubInputEnv(INPUT_KEY_KEEP_LATEST, 'abc')
 
-    expect(errorMessage(configError(Config.int(INPUT_KEYS_KEEP_LATEST)))).toBe(
+    expect(errorMessage(configError(Config.int(INPUT_KEY_KEEP_LATEST)))).toBe(
       "Input 'keep-latest' is invalid: Expected a string representing a finite number"
     )
   })
