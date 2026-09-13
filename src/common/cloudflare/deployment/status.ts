@@ -16,7 +16,7 @@ import type {PagesDeployment} from '../types.js'
 
 import {findCloudflareLatestDeployment, getCloudflareDeployment} from './get.js'
 
-const ERROR_KEY = `Status Of Deployment:`
+const PREFIX = `Status Of Deployment:`
 
 /**
  * How long to wait between polls. A `Context.Reference` rather than an
@@ -111,7 +111,7 @@ const pollOnce = Effect.fn('pollOnce')(function* (
   const {latest_stage} = deployment
   const {name, status} = latest_stage
 
-  debug(`${ERROR_KEY} ${JSON.stringify(latest_stage)}`)
+  debug(`${PREFIX} ${JSON.stringify(latest_stage)}`)
 
   // Any stage failing or canceled ends the deploy; only the `deploy` stage
   // succeeding completes it. Anything else — an earlier stage done, or a
@@ -170,7 +170,7 @@ export const statusCloudflareDeployment = Effect.fn(
       ['DeploymentPendingError', 'TimeoutError'],
       () =>
         new DeploymentPollTimeoutError({
-          message: `${ERROR_KEY} timed out after ${Duration.format(pollTimeout)} waiting for the deploy stage to complete.`
+          message: `${PREFIX} timed out after ${Duration.format(pollTimeout)} waiting for the deploy stage to complete.`
         })
     )
   )

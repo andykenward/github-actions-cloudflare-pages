@@ -42,7 +42,7 @@ describe(DeployInputs, () => {
         ...REQUIRED,
         workingDirectory: '.',
         branch: undefined,
-        prNumber: undefined,
+        pullRequestNumber: undefined,
         wranglerVersion: packageJson.devDependencies.wrangler,
         wranglerCommentOutput: true
       })
@@ -64,7 +64,7 @@ describe(DeployInputs, () => {
         ...REQUIRED,
         workingDirectory: 'src/deploy',
         branch: 'pr-123',
-        prNumber: 123,
+        pullRequestNumber: 123,
         wranglerVersion: '4.0.0',
         wranglerCommentOutput: false
       })

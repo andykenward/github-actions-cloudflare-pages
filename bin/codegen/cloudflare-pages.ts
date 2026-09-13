@@ -208,15 +208,15 @@ const run = async (): Promise<void> => {
     `/* Source: cloudflare/api-schemas @ ${REF} */\n`
   const contents = `${banner}${astToString(ast)}`
 
-  const DIR = '__generated__/types/cloudflare'
-  if (!existsSync(DIR)) {
-    await mkdir(DIR, {recursive: true})
+  const DIRECTORY = '__generated__/types/cloudflare'
+  if (!existsSync(DIRECTORY)) {
+    await mkdir(DIRECTORY, {recursive: true})
   }
   const FILENAME = 'pages.ts'
 
-  await writeFile(`${DIR}/${FILENAME}`, contents)
+  await writeFile(`${DIRECTORY}/${FILENAME}`, contents)
   process.stdout.write(
-    `${DIR}/${FILENAME} written (${used.size} components, ${Object.keys(paths).length} paths)\n`
+    `${DIRECTORY}/${FILENAME} written (${used.size} components, ${Object.keys(paths).length} paths)\n`
   )
 }
 

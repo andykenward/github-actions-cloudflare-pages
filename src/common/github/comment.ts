@@ -120,18 +120,18 @@ const pullRequestToCommentWorkflowRun = Effect.fn(
 })
 
 /**
- * The pull request to comment on — `prNumber` when the input is set, else
+ * The pull request to comment on — `pullRequestNumber` when the input is set, else
  * detected from the event — or `undefined` when there is none. It does not
  * depend on the deployment, so the deploy resolves it while wrangler runs.
  */
 export const pullRequestToComment = Effect.fn('pullRequestToComment')(
-  function* (prNumber: number | undefined) {
+  function* (pullRequestNumber: number | undefined) {
     const {event} = yield* GitHubContext
 
-    if (prNumber !== undefined) {
+    if (pullRequestNumber !== undefined) {
       return yield* pullRequestNodeId(
-        prNumber,
-        `No pull request node id found for pr-number input: ${prNumber}`
+        pullRequestNumber,
+        `No pull request node id found for pr-number input: ${pullRequestNumber}`
       )
     }
 

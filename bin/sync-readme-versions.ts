@@ -43,7 +43,7 @@ const request = async <TResult, TVariables>(
   query: TypedDocumentString<TResult, TVariables>,
   variables: TVariables
 ): Promise<TResult> => {
-  const res = await fetch(GITHUB_GRAPHQL_API, {
+  const response = await fetch(GITHUB_GRAPHQL_API, {
     method: 'POST',
     headers: {
       authorization: `bearer ${TOKEN}`,
@@ -51,8 +51,11 @@ const request = async <TResult, TVariables>(
     },
     body: JSON.stringify({query, variables})
   })
-  assert.ok(res.ok, `GitHub API request failed: ${res.status}`)
-  const {data, errors} = (await res.json()) as {data: TResult; errors?: unknown}
+  assert.ok(response.ok, `GitHub API request failed: ${response.status}`)
+  const {data, errors} = (await response.json()) as {
+    data: TResult
+    errors?: unknown
+  }
   assert.ok(!errors, `GitHub API errors: ${JSON.stringify(errors)}`)
   return data
 }

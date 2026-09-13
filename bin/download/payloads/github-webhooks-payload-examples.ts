@@ -37,12 +37,12 @@ const request = async <T, V>(query: string, variables: V): Promise<T> => {
     },
     body: JSON.stringify({query, variables})
   })
-    .then(res => res.json() as Promise<{data: T; errors: unknown}>)
-    .then(res => {
-      if (res.errors) {
-        throw new Error(JSON.stringify(res.errors))
+    .then(response => response.json() as Promise<{data: T; errors: unknown}>)
+    .then(response => {
+      if (response.errors) {
+        throw new Error(JSON.stringify(response.errors))
       }
-      return res.data
+      return response.data
     })
 }
 

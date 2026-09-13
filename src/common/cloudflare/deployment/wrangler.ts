@@ -28,7 +28,7 @@ export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
  */
 export const WRANGLER_OUTPUT_FILE_PATH = 'WRANGLER_OUTPUT_FILE_PATH'
 
-const ERROR_KEY = `Wrangler:`
+const PREFIX = `Wrangler:`
 
 /**
  * A safety net, not the expected duration: the documented job
@@ -68,7 +68,7 @@ class WranglerError extends Schema.TaggedError<WranglerError>()(
     if (cause instanceof Error) {
       return new WranglerError({message: errorMessage(cause), cause})
     }
-    return new WranglerError({message: `${ERROR_KEY} unknown error`, cause})
+    return new WranglerError({message: `${PREFIX} unknown error`, cause})
   }
 }
 
@@ -115,7 +115,7 @@ const outputDirectory = Effect.acquireRelease(
       // on, so the reason goes to the debug log rather than an annotation.
       Effect.catch(error =>
         Effect.sync(() => {
-          debug(`${ERROR_KEY} could not remove ${directory}: ${error.message}`)
+          debug(`${PREFIX} could not remove ${directory}: ${error.message}`)
         })
       )
     )
@@ -190,7 +190,7 @@ const wranglerPagesDeployOutput = Effect.fn('wranglerPagesDeployOutput')(
 
     if (deploymentId === undefined) {
       debug(
-        `${ERROR_KEY} wrangler reported no deployment id; finding the deployment by commit hash`
+        `${PREFIX} wrangler reported no deployment id; finding the deployment by commit hash`
       )
     }
 
@@ -259,7 +259,7 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
       'TimeoutError',
       cause =>
         new WranglerError({
-          message: `${ERROR_KEY} timed out after ${Duration.format(wranglerTimeout)}`,
+          message: `${PREFIX} timed out after ${Duration.format(wranglerTimeout)}`,
           cause
         })
     )

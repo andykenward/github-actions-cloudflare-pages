@@ -18,7 +18,7 @@ assert.ok(
 
 const inputsPath = path.resolve(import.meta.dirname, '../src/common/inputs.ts')
 const content = fs.readFileSync(inputsPath, 'utf8')
-const wranglerVersionPattern = /const DEFAULT_WRANGLER_VERSION = '([^']+)'/
+const wranglerVersionPattern = /const WRANGLER_VERSION_DEFAULT = '([^']+)'/
 
 const currentWranglerVersion = content.match(wranglerVersionPattern)?.[1]
 
@@ -30,7 +30,7 @@ assert.ok(
 if (currentWranglerVersion !== wranglerVersion) {
   const updated = content.replace(
     wranglerVersionPattern,
-    `const DEFAULT_WRANGLER_VERSION = '${wranglerVersion}'`
+    `const WRANGLER_VERSION_DEFAULT = '${wranglerVersion}'`
   )
 
   fs.writeFileSync(inputsPath, updated)

@@ -42,7 +42,7 @@ type Outcome =
   | {success: false; error: string}
 
 /** The summary row for `deployment`, with what its payload gave, if decoded. */
-const row = (
+const batchDeleteRow = (
   deployment: GitHubDeployment,
   outcome: Outcome,
   payload?: {url: string; commentId: string | undefined}
@@ -128,7 +128,7 @@ export const batchDelete: (
       error(
         `Cloudflare Error deleting deployment: ${cloudflare.id} - ${deleted.failure.message}`
       )
-      return row(
+      return batchDeleteRow(
         deployment,
         {success: false, error: 'Deleting Cloudflare deployment failed'},
         payload
@@ -151,7 +151,7 @@ export const batchDelete: (
     // mutations: a rate limit, or a request it rejected as invalid.
     if (!data || errors?.some(error => !error.path)) {
       warn('GitHub ran none of the deployment mutations')
-      return row(
+      return batchDeleteRow(
         deployment,
         {success: false, error: 'Deleting GitHub deployment failed'},
         payload
@@ -160,7 +160,7 @@ export const batchDelete: (
 
     if (errors?.some(error => error.path?.[0] === 'createDeploymentStatus')) {
       warn('Error updating GitHub deployment status')
-      return row(
+      return batchDeleteRow(
         deployment,
         {success: false, error: 'Updating GitHub deployment status failed'},
         payload
@@ -173,7 +173,7 @@ export const batchDelete: (
     // comment) failed. The row succeeds but records it, so the summary says.
     if (errors) {
       warn('Error deleting GitHub deployment or its comment')
-      return row(
+      return batchDeleteRow(
         deployment,
         {
           success: true,
@@ -183,7 +183,7 @@ export const batchDelete: (
       )
     }
 
-    return row(deployment, {success: true}, payload)
+    return batchDeleteRow(deployment, {success: true}, payload)
   },
   (effect, deployment) =>
     Effect.catch(effect, failure => {
@@ -194,6 +194,8 @@ export const batchDelete: (
         `${PREFIX} Error deleting deployment ${deployment.node_id}: ${message}`
       )
 
-      return Effect.succeed(row(deployment, {success: false, error: message}))
+      return Effect.succeed(
+        batchDeleteRow(deployment, {success: false, error: message})
+      )
     })
 )
