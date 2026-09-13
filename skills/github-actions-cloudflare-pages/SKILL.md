@@ -131,4 +131,5 @@ A failed or canceled Cloudflare build fails the step with `Create Deployment: th
 | `No pull request found in workflow_run event matching head branch and sha` | A fork or branch with no pull request — pass `pr-number` (see the fork example).                  |
 | `No pull request node id found for workflow_dispatch event`                | Dispatch from a branch with an open pull request, or set `pr-number`.                             |
 | `… waiting for the deploy stage to complete`                               | Cloudflare didn't finish within 10 minutes — check the build in the Cloudflare dashboard.         |
+| `Wrangler: timed out after 30m`                                            | The upload ran for 30 minutes — check `directory` isn't far larger than intended.                 |
 | The job is cancelled at its time limit                                     | Raise `timeout-minutes` to at least 15.                                                           |

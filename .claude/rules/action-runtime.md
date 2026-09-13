@@ -12,8 +12,8 @@ paths:
 ## Deploy (`src/deploy/main.ts`)
 
 1. Read inputs. When the `GitHubContext` layer is built, `GITHUB_EVENT_NAME` is checked against the generated `EVENT_NAMES` and the `GITHUB_EVENT_PATH` file is decoded with the `WorkflowEvent` schema (`src/common/github/workflow-event/types.ts`) — only the fields the action reads, per event, so a payload missing one fails there naming it. Reading a new payload field means adding it to that schema. `main.ts` then checks the supported set: `push`, `pull_request`, `workflow_dispatch`, `workflow_run`.
-2. Concurrently: check the GitHub Environment exists, resolve the PR to comment on, and run `npx wrangler@<v> pages deploy <directory> --project-name … --branch … --commit-dirty=true --commit-hash <sha>` in `working-directory`. If the environment check or the PR lookup fails, the deploy is interrupted and wrangler killed through the `AbortSignal` passed to `execFile`.
-3. Poll the deployment whose id wrangler wrote to `WRANGLER_OUTPUT_FILE_PATH` — or, for an old `wrangler-version` that writes none, the newest one matching the commit hash — every 1s for up to 10 min, until stage `deploy` is `success` (`active` means it is still running) or any stage is `failure`/`canceled`.
+2. Concurrently: check the GitHub Environment exists, resolve the PR to comment on, and run `npx wrangler@<v> pages deploy <directory> --project-name … --branch … --commit-dirty=true --commit-hash <sha>` in `working-directory`, for at most 30 minutes (`WranglerTimeout`). If the environment check or the PR lookup fails, or the timeout passes, the deploy is interrupted and wrangler killed through the `AbortSignal` passed to `execFile`.
+3. Poll the deployment whose id wrangler wrote to `WRANGLER_OUTPUT_FILE_PATH` — or, for an old `wrangler-version` that writes none, the newest one matching the commit hash — every 1s for up to 10 min and at most 1000 polls (`PollCountMax`), until stage `deploy` is `success` (`active` means it is still running) or any stage is `failure`/`canceled`.
 4. Set outputs `id`, `url`, `environment`, `alias`, `wrangler` and the job summary. If the build ended `failure`/`canceled`, `createCloudflareDeployment` then fails with `CreateDeploymentError` (linking the Cloudflare build log), so steps 5 and 6 don't run.
 5. Post the PR comment, with wrangler's output in a code block unless `wrangler-comment-output` is `false`.
 6. Create the GitHub Deployment (payload `{cloudflare: {id, accountId, projectName}, url, commentId}`) and a `SUCCESS` status with the dashboard log URL.
@@ -23,7 +23,7 @@ paths:
 
 ## Delete (`src/delete/main.ts`)
 
-1. List GitHub deployments for the context branch (plus optional `github-environment`), newest first; skip the first `keep-latest`.
+1. List GitHub deployments for the context branch (plus optional `github-environment`), newest first, following at most `PageCountMax` (100) pages of `PAGE_SIZE` (100); skip the first `keep-latest`, then keep only the oldest `DELETE_COUNT_MAX` (500) with a warning.
 2. Run `batchDelete` (`src/common/batch-delete.ts`) on each, 5 at a time (`DELETE_CONCURRENCY` in `main.ts`): decode the payload → Cloudflare `DELETE …?force=true` (error code `8000009` "not found" counts as success) → one GraphQL request that sets status `INACTIVE`, then deletes the deployment and its PR comment. Mutation fields run in order and one error doesn't stop the next: a status error fails the row, later errors only warn. A response without `data`, or an error without a `path`, means GitHub ran none of them (a rate limit, or a request rejected as invalid) and fails the row too.
 3. Write the job summary table. `batchDelete` returns failures as `success: false` rows rather than throwing; `run` then fails the step with `DeleteError` if any row failed.
 

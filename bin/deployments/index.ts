@@ -1,10 +1,19 @@
+import assert from 'node:assert'
+
 import type {FetchResult, PagesDeployment} from '@/common/cloudflare/types.js'
+
 import 'dotenv/config'
 
 const API_ENDPOINT = 'https://api.cloudflare.com'
 const CLOUDFLARE_ACCOUNT_ID = process.env['CLOUDFLARE_ACCOUNT_ID']
 const CLOUDFLARE_PROJECT_NAME = process.env['CLOUDFLARE_PROJECT_NAME']
 const CLOUDFLARE_API_TOKEN = process.env['CLOUDFLARE_API_TOKEN']
+
+/**
+ * Each pass lists one page and deletes what it can, so a project with more
+ * pages than this needs another run.
+ */
+const PASS_COUNT_MAX = 100
 
 if (!CLOUDFLARE_API_TOKEN) {
   throw new Error('CLOUDFLARE_API_TOKEN environment variable not set')
@@ -31,9 +40,7 @@ const getHeaders = (): RequestInit['headers'] => ({
 const run = async () => {
   const URL = getUrl()
 
-  let deleting = true
-
-  while (deleting) {
+  for (let pass = 0; pass < PASS_COUNT_MAX; pass++) {
     const result = await fetch(URL, {
       method: 'GET',
       headers: getHeaders()
@@ -53,10 +60,9 @@ const run = async () => {
     )
 
     if (!previewDeployments?.length) {
-      deleting = false
       // oxlint-disable-next-line no-console
       console.log('---> No more deployments to delete')
-      break
+      return
     }
 
     let deletedCount = 0
@@ -80,11 +86,13 @@ const run = async () => {
     // Each pass re-lists the first page, so a pass that deletes nothing would
     // otherwise re-fetch the same undeletable deployments forever.
     if (deletedCount === 0) {
-      deleting = false
       // oxlint-disable-next-line no-console
       console.log('---> No deployments could be deleted, stopping')
+      return
     }
   }
+
+  assert.fail(`Still deleting after ${PASS_COUNT_MAX} passes; run again`)
 }
 
 void run()

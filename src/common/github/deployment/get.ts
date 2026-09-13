@@ -2,7 +2,7 @@ import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
 import {GitHubApiError} from '../api/client.js'
-import {GitHubRestApi} from '../api/paginate.js'
+import {GitHubRestApi, PAGE_SIZE} from '../api/paginate.js'
 import {GitHubContext} from '../context.js'
 import {GitHubDeployment} from './types.js'
 
@@ -25,7 +25,7 @@ export const getGitHubDeployments = Effect.fn('getGitHubDeployments')(
 
     const listed = yield* github.paginate(
       `/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.repo)}/deployments`,
-      {ref: branch, per_page: 100, environment}
+      {ref: branch, per_page: PAGE_SIZE, environment}
     )
 
     return yield* decodeDeployments(listed).pipe(

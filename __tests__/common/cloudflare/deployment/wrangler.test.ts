@@ -3,13 +3,16 @@ import {tmpdir} from 'node:os'
 import path from 'node:path'
 
 import {it} from '@effect/vitest'
+import * as Duration from 'effect/Duration'
 import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
 import * as Redacted from 'effect/Redacted'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {
   deploymentIdFrom,
-  wranglerPagesDeploy
+  wranglerPagesDeploy,
+  WranglerTimeout
 } from '@/common/cloudflare/deployment/wrangler.js'
 import {execFileAsync} from '@/common/utils.js'
 import {
@@ -126,6 +129,35 @@ describe('wranglerPagesDeploy', () => {
         )
       })
     }
+  )
+
+  it.live('stops wrangler once WranglerTimeout has passed', () =>
+    Effect.gen(function* () {
+      expect.assertions(2)
+
+      let signal: AbortSignal | undefined
+      vi.mocked(execFileAsync).mockImplementationOnce(((
+        _file: string,
+        _args: ReadonlyArray<string>,
+        options: {signal: AbortSignal}
+      ) => {
+        signal = options.signal
+        // A stuck upload: settles only when aborted.
+        return new Promise((_resolve, reject) => {
+          options.signal.addEventListener('abort', () =>
+            reject(new Error('aborted'))
+          )
+        })
+      }) as never)
+
+      const error = yield* Effect.flip(wranglerPagesDeploy(DEPLOY_ARGS))
+
+      expect(error).toMatchObject({
+        _tag: 'WranglerError',
+        message: 'Wrangler: timed out after 50ms'
+      })
+      expect(signal?.aborted).toBe(true)
+    }).pipe(Effect.provide(Layer.succeed(WranglerTimeout, Duration.millis(50))))
   )
 
   it.effect.each([

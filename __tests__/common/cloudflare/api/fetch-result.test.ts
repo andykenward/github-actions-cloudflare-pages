@@ -349,6 +349,21 @@ describe(CloudflareApiError, () => {
     )
   })
 
+  test('stops rendering a chain after 64 errors', () => {
+    expect.assertions(3)
+
+    let chain: FetchResult['errors'][number] = {code: 1, message: 'leaf'}
+    for (let depth = 0; depth < 100; depth++) {
+      chain = {code: 1, message: `level ${depth}`, error_chain: [chain]}
+    }
+
+    const {message} = apiErrors([chain])
+
+    expect(message).toContain('level 99 [code: 1]')
+    expect(message).toMatch(/\n- … \(more errors omitted\)$/)
+    expect(message).not.toContain('leaf')
+  })
+
   test('has no code when there are no errors', () => {
     expect.assertions(1)
 

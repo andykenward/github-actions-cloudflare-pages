@@ -7,24 +7,23 @@ import * as SchemaIssue from 'effect/SchemaIssue'
 
 const formatIssue = SchemaIssue.makeFormatterDefault()
 
+/** Input schemas nest a few transformations deep; a chain longer than this is a bug. */
+const ISSUE_DEPTH_MAX = 16
+
 /**
  * Action inputs are always strings, so a type mismatch below the input's
  * `Pointer` means the input was absent — the provider treats an empty string
- * as absent too.
+ * as absent too. Walks through `Encoding` wrappers to the issue beneath.
  */
 const isMissing = (issue: SchemaIssue.Issue): boolean => {
-  switch (issue._tag) {
-    case 'Encoding': {
-      return isMissing(issue.issue)
+  let current = issue
+  for (let depth = 0; depth < ISSUE_DEPTH_MAX; depth++) {
+    if (current._tag !== 'Encoding') {
+      return current._tag === 'InvalidType' || current._tag === 'MissingKey'
     }
-    case 'InvalidType':
-    case 'MissingKey': {
-      return true
-    }
-    default: {
-      return false
-    }
+    current = current.issue
   }
+  return false
 }
 
 /**

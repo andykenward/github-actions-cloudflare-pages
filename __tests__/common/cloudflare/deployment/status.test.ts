@@ -11,6 +11,7 @@ import type {MockApi} from '@/tests/helpers/api.js'
 
 import {CloudflareApi} from '@/common/cloudflare/api/client.js'
 import {
+  PollCountMax,
   PollTimeout,
   statusCloudflareDeployment
 } from '@/common/cloudflare/deployment/status.js'
@@ -215,6 +216,27 @@ describe('statusCloudflareDeployment', () => {
       })
     }).pipe(
       Effect.provide(Layer.succeed(PollTimeout, Duration.millis(50))),
+      Effect.provide(TestLayer)
+    )
+  )
+
+  it.live('gives up after PollCountMax polls, whatever the clock says', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // `times: 2` steps the schedule twice after the first poll: three polls.
+      mockApi
+        .interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENTS,
+          RESPONSE_DEPLOYMENTS_IDLE
+        )
+        .times(3)
+
+      const error = yield* Effect.flip(statusCloudflareDeployment(API_ENDPOINT))
+
+      expect(error).toMatchObject({_tag: 'DeploymentPollTimeoutError'})
+    }).pipe(
+      Effect.provide(Layer.succeed(PollCountMax, 2)),
       Effect.provide(TestLayer)
     )
   )

@@ -1,4 +1,4 @@
-import {info, setSecret, summary} from '@actions/core'
+import {info, setSecret, summary, warning} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
@@ -161,6 +161,35 @@ describe('delete', () => {
         Effect.provide(DeleteLayer)
       )
     })
+
+    it.effect('deletes at most 500 of the oldest, and says so', () =>
+      Effect.gen(function* () {
+        expect.assertions(3)
+
+        vi.mocked(batchDelete).mockReturnValue(
+          Effect.succeed({...ROW, success: true})
+        )
+
+        yield* run
+
+        expect(warning).toHaveBeenCalledWith(
+          'delete - Deleting the oldest 500 of 501 deployments; re-run to delete the rest'
+        )
+        const deleted = vi
+          .mocked(batchDelete)
+          .mock.calls.map(([{node_id}]) => node_id)
+        expect(deleted).toHaveLength(500)
+        // Listed newest first: the newest, DE_0, is the one left over.
+        expect(deleted).not.toContain('DE_0')
+      }).pipe(
+        Effect.provide(
+          listing(
+            Array.from({length: 501}, (_unused, index) => withId(`DE_${index}`))
+          )
+        ),
+        Effect.provide(DeleteLayer)
+      )
+    )
 
     it.effect(
       'deletes nothing when keep-latest covers every deployment',

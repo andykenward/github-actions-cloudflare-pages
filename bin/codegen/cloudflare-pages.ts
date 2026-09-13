@@ -134,32 +134,52 @@ const prunePaths = (paths: JsonObject): JsonObject => {
   return pruned
 }
 
-/** Transitively collect every `#/components/...` pointer reachable from `node`. */
-const collectRefs = (root: JsonObject, node: Json, used: Set<string>): void => {
+/** Cloudflare's whole schema is far smaller; the bound catches a `$ref` cycle the `used` set missed. */
+const NODE_COUNT_MAX = 10_000_000
+
+/** A value still to walk, or a pointer still to resolve, in visit order. */
+type Frame = {node: Json} | {pointer: string}
+
+/** The frames for `node`'s children, in reverse so the first is popped first. */
+const childFrames = (node: Json): Array<Frame> => {
   if (Array.isArray(node)) {
-    for (const item of node) {
-      collectRefs(root, item, used)
-    }
-    return
+    return node.map(item => ({node: item})).toReversed()
   }
   if (!isObject(node)) {
-    return
+    return []
   }
+  return Object.entries(node)
+    .map(
+      ([key, value]): Frame =>
+        key === '$ref' &&
+        typeof value === 'string' &&
+        value.startsWith('#/components/')
+          ? {pointer: value.slice('#/'.length)}
+          : {node: value}
+    )
+    .toReversed()
+}
 
-  for (const [key, value] of Object.entries(node)) {
-    if (
-      key === '$ref' &&
-      typeof value === 'string' &&
-      value.startsWith('#/components/')
-    ) {
-      const pointer = value.slice('#/'.length)
-      if (!used.has(pointer)) {
-        used.add(pointer)
-        collectRefs(root, resolvePointer(root, pointer), used)
-      }
-    } else {
-      collectRefs(root, value, used)
+/**
+ * Transitively collect every `#/components/...` pointer reachable from `node`,
+ * in depth-first visit order (the order `used` is written out in).
+ */
+const collectRefs = (root: JsonObject, node: Json, used: Set<string>): void => {
+  const stack: Array<Frame> = [{node}]
+  for (let visited = 0; stack.length > 0; visited++) {
+    assert.ok(visited < NODE_COUNT_MAX, `More than ${NODE_COUNT_MAX} nodes`)
+    const frame = stack.pop()
+    if (frame === undefined) {
+      break
     }
+    if ('pointer' in frame) {
+      if (!used.has(frame.pointer)) {
+        used.add(frame.pointer)
+        stack.push({node: resolvePointer(root, frame.pointer)})
+      }
+      continue
+    }
+    stack.push(...childFrames(frame.node))
   }
 }
 
