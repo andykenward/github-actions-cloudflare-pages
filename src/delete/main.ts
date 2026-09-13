@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+
 import {debug, info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
@@ -101,6 +103,7 @@ export const run = Effect.gen(function* () {
   }
   // Listed newest first, so the first `keepLatest` are the ones to keep.
   const remaining = keepLatest ? listed.slice(keepLatest) : listed
+  assert.ok(remaining.length <= listed.length)
 
   if (remaining.length > DELETE_COUNT_MAX) {
     warning(
@@ -109,6 +112,7 @@ export const run = Effect.gen(function* () {
   }
   // The oldest go first, so repeated runs converge on `keepLatest`.
   const deployments = remaining.slice(-DELETE_COUNT_MAX)
+  assert.ok(deployments.length <= DELETE_COUNT_MAX)
 
   if (deployments.length === 0) {
     info(`${PREFIX} No deployments to delete`)
@@ -128,6 +132,7 @@ export const run = Effect.gen(function* () {
     {concurrency: DELETE_CONCURRENCY}
   )
 
+  assert.equal(values.length, deployments.length)
   debug(`${PREFIX} Deleted deployments: ${JSON.stringify(values)}`)
 
   yield* writeDeleteSummary(deletedSummary(values))

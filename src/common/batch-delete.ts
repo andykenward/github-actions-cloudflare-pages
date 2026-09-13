@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+
 import {error, info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 import * as Result from 'effect/Result'
@@ -44,12 +46,17 @@ const row = (
   deployment: GitHubDeployment,
   outcome: Outcome,
   payload?: {url: string; commentId: string | undefined}
-): BatchDeleteItem => ({
-  deploymentId: deployment.node_id,
-  environment: deployment.environment,
-  ...(payload && {environmentUrl: payload.url, commentId: payload.commentId}),
-  ...outcome
-})
+): BatchDeleteItem => {
+  assert.ok(deployment.node_id.length > 0)
+  // A failed row must say why: the summary's Error column is its only trace.
+  assert.ok(outcome.success || outcome.error.length > 0)
+  return {
+    deploymentId: deployment.node_id,
+    environment: deployment.environment,
+    ...(payload && {environmentUrl: payload.url, commentId: payload.commentId}),
+    ...outcome
+  }
+}
 
 /**
  * One GraphQL request that marks the GitHub deployment inactive and deletes

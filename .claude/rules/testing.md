@@ -24,6 +24,7 @@ paths:
 - Entry-point tests (`__tests__/{deploy,delete}/index.test.ts`) keep `vi.mock` / `vi.hoisted` in the test file (hoisting) and share `runEntryPoint` and `testRunOutcomes` (`__tests__/helpers/entry-point.ts`).
 - To make one `node:fs/promises` call fail, mock the module partially: `vi.mock(import('node:fs/promises'), async importOriginal => { const original = await importOriginal(); return {...original, rm: vi.fn(original.rm)} })`, then `vi.mocked(rm).mockRejectedValueOnce(…)` in the test (`wrangler.test.ts`). Build the object in two statements — `unicorn/no-await-expression-member` rejects `(await importOriginal()).rm`.
 - `test:coverage --coverage.include=<file> --coverage.reporter=text` prints no row for a fully covered file; only the summary shows 100%.
+- Fixture values must satisfy the assertions in `src/`: `GITHUB_SHA` (`helpers/env.ts`) and the Cloudflare responses' `commit_hash` are the same 40-hex sha, and `MOCK_DEPLOYMENT_ID` (`helpers/api.ts`) is the id inside `deployments.response.json`, so a GET for it answers with itself.
 - Fixtures: `__generated__/payloads/` (generated) and `__generated__/responses/` (hand-maintained — add to it freely). A payload shape no generated example has (e.g. `workflow_dispatch` without `ref`) goes in `__fixtures__/payloads/` and is pointed at by stubbing `GITHUB_EVENT_PATH` after `stubTestEnvVars()`.
 
 ## Effect tests

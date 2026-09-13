@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+
 import * as Context from 'effect/Context'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
@@ -32,8 +34,12 @@ type Page = {items: ReadonlyArray<unknown>; next: string | undefined}
  * with a paginated response, e.g.
  * `<https://api.github.com/…?page=2>; rel="next", <…?page=5>; rel="last"`.
  */
-const nextLink = (link: string | null): string | undefined =>
-  link?.match(/<([^>]+)>;\s*rel="next"/)?.[1]
+const nextLink = (link: string | null): string | undefined => {
+  const nextUrl = link?.match(/<([^>]+)>;\s*rel="next"/)?.[1]
+  // GitHub links absolute URLs; a relative one would be a parsing bug.
+  assert.ok(nextUrl === undefined || URL.canParse(nextUrl))
+  return nextUrl
+}
 
 const fetchPage = async (
   url: string,
@@ -122,6 +128,7 @@ export class GitHubRestApi extends Context.Service<
         }
 
         const pageCountMax = yield* PageCountMax
+        assert.ok(pageCountMax >= 1)
         const items: Array<unknown> = []
         let nextUrl: string | undefined = url.href
 
@@ -136,6 +143,8 @@ export class GitHubRestApi extends Context.Service<
             try: signal => fetchPage(pageUrl, secret(gitHubApiToken), signal),
             catch: GitHubApiError.from
           })
+          // GitHub caps a page at 100 whatever `per_page` asks for.
+          assert.ok(page.items.length <= PAGE_SIZE)
           items.push(...page.items)
           nextUrl = page.next
         }

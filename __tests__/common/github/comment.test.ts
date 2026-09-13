@@ -57,7 +57,7 @@ const withContext = (context: Pick<Context, 'event'> & Partial<Context>) =>
               node_id: 'repo_node_id'
             },
             branch: 'master',
-            sha: 'mock-github-sha',
+            sha: 'ffac537e6cbbf934b08745a378932722df287a53',
             graphqlEndpoint: 'https://api.github.com/graphql',
             apiUrl: 'https://api.github.com',
             ref: 'master',
@@ -94,7 +94,7 @@ describe('addComment', () => {
             variables: {
               input: {
                 subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-                body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
+                body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** ffac537e6cbbf934b08745a378932722df287a53\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
               }
             }
           },
@@ -125,7 +125,7 @@ describe('addComment', () => {
             variables: {
               input: {
                 subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-                body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
+                body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** ffac537e6cbbf934b08745a378932722df287a53\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
               }
             }
           },
@@ -369,7 +369,7 @@ describe('addComment', () => {
             variables: {
               input: {
                 subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
+                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** ffac537e6cbbf934b08745a378932722df287a53\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
               }
             }
           },
@@ -511,7 +511,7 @@ describe('addComment', () => {
             variables: {
               input: {
                 subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
+                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** ffac537e6cbbf934b08745a378932722df287a53\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
               }
             }
           },

@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict'
 import {existsSync, readFileSync} from 'node:fs'
 
 import {debug, isDebug} from '@actions/core'
@@ -62,6 +63,8 @@ export const getWorkflowEvent = (): WorkflowEvent => {
       `GITHUB_EVENT_PATH ${path} is not a ${eventName} payload: ${event.failure.message}`
     )
   }
+
+  assert.equal(event.success.eventName, eventName)
 
   if (isDebug()) {
     debug(`eventName: ${eventName}`)

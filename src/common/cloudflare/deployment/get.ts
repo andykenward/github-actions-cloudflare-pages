@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+
 import * as Effect from 'effect/Effect'
 
 import {GitHubContext} from '@/common/github/context.js'
@@ -10,7 +12,9 @@ import {CloudflareApi} from '../api/client.js'
 export const getCloudflareDeploymentAlias = (
   deployment: PagesDeployment
 ): string => {
-  return deployment.aliases?.at(0) ?? deployment.url
+  const alias = deployment.aliases?.at(0) ?? deployment.url
+  assert.ok(alias.length > 0)
+  return alias
 }
 
 /** The deployment with `deploymentId`. */

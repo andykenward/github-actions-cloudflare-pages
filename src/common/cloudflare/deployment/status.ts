@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+
 import {debug} from '@actions/core'
 import * as Context from 'effect/Context'
 import * as Duration from 'effect/Duration'
@@ -101,6 +103,10 @@ const pollOnce = Effect.fn('pollOnce')(function* (
   if (deployment === undefined) {
     return yield* new DeploymentPendingError({reason: 'not-registered'})
   }
+  assert.ok(deployment.id.length > 0)
+  if (deploymentId !== undefined) {
+    assert.equal(deployment.id, deploymentId)
+  }
 
   const {latest_stage} = deployment
   const {name, status} = latest_stage
@@ -141,6 +147,8 @@ export const statusCloudflareDeployment = Effect.fn(
   const pollInterval = yield* PollInterval
   const pollTimeout = yield* PollTimeout
   const pollCountMax = yield* PollCountMax
+  assert.ok(pollCountMax >= 1)
+  assert.ok(Duration.toMillis(pollTimeout) > 0)
 
   return yield* pollOnce(target).pipe(
     Effect.retry({

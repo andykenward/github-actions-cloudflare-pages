@@ -172,7 +172,7 @@ describe('createCloudflareDeployment', () => {
             'mock-github-head-ref',
             '--commit-dirty=true',
             '--commit-hash',
-            'mock-github-sha'
+            'ffac537e6cbbf934b08745a378932722df287a53'
           ],
           {
             // oxlint-disable-next-line typescript/no-unsafe-assignment
@@ -237,7 +237,7 @@ describe('createCloudflareDeployment', () => {
           ],
           [
             'Commit Hash:',
-            `<a href='https://github.com/andykenward/github-actions-cloudflare-pages/commit/mock-github-sha'><code>mock-github-sha</code></a>`
+            `<a href='https://github.com/andykenward/github-actions-cloudflare-pages/commit/ffac537e6cbbf934b08745a378932722df287a53'><code>ffac537e6cbbf934b08745a378932722df287a53</code></a>`
           ],
           ['Commit Message:', `chore(deps-dev): update eslint packages`],
           ['Status:', `<strong>SUCCESS</strong>`],
@@ -298,7 +298,7 @@ describe('createCloudflareDeployment', () => {
             'pr-123',
             '--commit-dirty=true',
             '--commit-hash',
-            'mock-github-sha'
+            'ffac537e6cbbf934b08745a378932722df287a53'
           ],
           {
             // oxlint-disable-next-line typescript/no-unsafe-assignment

@@ -34,7 +34,7 @@ describe(GitHubContext, () => {
       expect(event.eventName).toBe('pull_request')
 
       expect(branch).toBe(`mock-github-head-ref`)
-      expect(sha).toBe(`mock-github-sha`)
+      expect(sha).toBe(`ffac537e6cbbf934b08745a378932722df287a53`)
       expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
       expect(apiUrl).toBe(`https://api.github.com`)
       expect(ref).toBe(`mock-github-head-ref`)
@@ -61,7 +61,7 @@ describe(GitHubContext, () => {
       expect(event.eventName).toBe('workflow_dispatch')
 
       expect(branch).toBe(`mock-github-ref-name`)
-      expect(sha).toBe(`mock-github-sha`)
+      expect(sha).toBe(`ffac537e6cbbf934b08745a378932722df287a53`)
       expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
       expect(apiUrl).toBe(`https://api.github.com`)
       expect(ref).toBe(`refs/heads/master`)
@@ -87,6 +87,36 @@ describe(GitHubContext, () => {
       expect.assertions(1)
 
       vi.stubEnv('GITHUB_REPOSITORY', 'noslash')
+
+      const error = yield* Effect.flip(context)
+
+      expect(error.message).toBe(
+        "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+      )
+    })
+  )
+
+  it.effect('fails when GITHUB_SHA is not a commit sha', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // A local run with a placeholder: the deployment would record it.
+      vi.stubEnv('GITHUB_SHA', 'mock-github-sha')
+
+      const error = yield* Effect.flip(context)
+
+      expect(error.message).toBe(
+        "context: 'mock-github-sha' is not a commit sha"
+      )
+    })
+  )
+
+  it.effect('fails when GITHUB_REPOSITORY has more than one slash', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // Previously read as owner `a`, repo `b`, silently dropping `c`.
+      vi.stubEnv('GITHUB_REPOSITORY', 'a/b/c')
 
       const error = yield* Effect.flip(context)
 

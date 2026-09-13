@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+
 import {debug, setFailed} from '@actions/core'
 import * as Cause from 'effect/Cause'
 import * as Config from 'effect/Config'
@@ -61,6 +63,8 @@ export const errorMessage = (cause: unknown): string => {
  * logging is enabled (`ACTIONS_STEP_DEBUG` / re-run with debug logging).
  */
 export const reportFailure = (cause: Cause.Cause<unknown>): void => {
+  // The entry points skip an interrupt-only cause; nothing else may send one.
+  assert.ok(!Cause.hasInterruptsOnly(cause))
   debug(Cause.pretty(cause))
   setFailed(errorMessage(Cause.squash(cause)))
 }

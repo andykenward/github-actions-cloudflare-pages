@@ -5,6 +5,8 @@
  * GitHub's renderer to sanitise them.
  */
 
+import assert from 'node:assert/strict'
+
 const ENTITIES: Record<string, string> = {
   '&': '&amp;',
   '<': '&lt;',
@@ -14,8 +16,11 @@ const ENTITIES: Record<string, string> = {
 }
 
 /** `text` as HTML text or a quoted attribute value. */
-export const escapeHtml = (text: string): string =>
-  text.replaceAll(/[&<>"']/g, char => ENTITIES[char] ?? char)
+export const escapeHtml = (text: string): string => {
+  const escaped = text.replaceAll(/[&<>"']/g, char => ENTITIES[char] ?? char)
+  assert.doesNotMatch(escaped, /[<>"']/)
+  return escaped
+}
 
 /** A `summary.addTable` header row. */
 export const headerRow = (
@@ -43,11 +48,14 @@ export const link = (href: string, html: string): string =>
  * `base` followed by `segments`, each percent-encoded so a value cannot add a
  * query or fragment; a segment's own `/` (as in `feature/x`) is kept.
  */
-export const url = (base: string, ...segments: Array<string>): string =>
-  `${base}/${segments
+export const url = (base: string, ...segments: Array<string>): string => {
+  const result = `${base}/${segments
     .flatMap(segment => segment.split('/'))
     .map(part => encodeURIComponent(part))
     .join('/')}`
+  assert.ok(URL.canParse(result))
+  return result
+}
 
 /** A `https://github.com/<owner>/<repo>/<path…>` URL. */
 export const githubUrl = (...segments: Array<string>): string =>

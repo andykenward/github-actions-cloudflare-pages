@@ -25,7 +25,7 @@ const TEST_ENV_VARS = (
   GITHUB_HEAD_REF: 'mock-github-head-ref',
   GITHUB_REF: 'refs/heads/mock-github-ref',
   GITHUB_REF_NAME: 'mock-github-ref-name',
-  GITHUB_SHA: 'mock-github-sha',
+  GITHUB_SHA: 'ffac537e6cbbf934b08745a378932722df287a53',
   GITHUB_EVENT_NAME: eventName,
   GITHUB_REPOSITORY: 'andykenward/github-actions-cloudflare-pages',
   GITHUB_REPOSITORY_ID: 'R_kgDOJn0nrA',

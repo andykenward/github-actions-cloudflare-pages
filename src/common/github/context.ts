@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+
 import {debug, isDebug} from '@actions/core'
 import * as Context from 'effect/Context'
 import * as Effect from 'effect/Effect'
@@ -53,9 +55,9 @@ interface GitHubContextShape {
 }
 
 const getGitHubContextRepo = (event: WorkflowEvent): Repo => {
-  const [owner, repo] = process.env.GITHUB_REPOSITORY?.split('/') ?? []
+  const [owner, repo, ...rest] = process.env.GITHUB_REPOSITORY?.split('/') ?? []
 
-  if (!owner || !repo) {
+  if (!owner || !repo || rest.length > 0) {
     return raise(
       "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
     )
@@ -92,11 +94,18 @@ const getGitHubContextBranch = (event: WorkflowEvent): string => {
   )
 }
 
+/** A full commit SHA, as `GITHUB_SHA` and a payload's `head_sha` always are. */
+const COMMIT_SHA = /^[0-9a-f]{40}$/
+
 const getGitHubContextSha = (event: WorkflowEvent): string => {
-  if (event.eventName === 'workflow_run') {
-    return event.payload.workflow_run.head_sha
+  const sha =
+    event.eventName === 'workflow_run'
+      ? event.payload.workflow_run.head_sha
+      : process.env.GITHUB_SHA
+  if (!COMMIT_SHA.test(sha)) {
+    return raise(`context: '${sha}' is not a commit sha`)
   }
-  return process.env.GITHUB_SHA
+  return sha
 }
 
 /**
@@ -143,6 +152,12 @@ const getGitHubContext = (): GitHubContextShape => {
     apiUrl,
     ref: getGitHubContextRef(event)
   }
+  // Each field was checked where it was read; this pairs those checks.
+  assert.ok(context.repo.owner.length > 0)
+  assert.ok(context.branch.length > 0)
+  assert.match(context.sha, COMMIT_SHA)
+  assert.ok(URL.canParse(context.apiUrl))
+  assert.ok(URL.canParse(context.graphqlEndpoint))
 
   if (isDebug()) {
     const debugContext = {
