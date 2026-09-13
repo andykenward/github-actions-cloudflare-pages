@@ -30,7 +30,7 @@ type Context = GitHubContext['Service']
  */
 const comment = (
   deployment: PagesDeployment,
-  output: string,
+  output: string | undefined,
   prNumber?: number
 ) =>
   pullRequestToComment(prNumber).pipe(
@@ -112,6 +112,38 @@ describe('addComment', () => {
         )
 
         expect(yield* comment(mockData, 'success')).toBe('1')
+      }).pipe(Effect.provide(CommonLayer))
+    )
+
+    it.effect('leaves the Wrangler Output section out when given none', () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        mockApi.interceptGithub(
+          {
+            query: AddPullRequestCommentDocument,
+            variables: {
+              input: {
+                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
+                body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** mock-github-sha\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
+              }
+            }
+          },
+          {
+            data: {
+              addComment: {
+                commentEdge: {
+                  node: {
+                    id: '1'
+                  }
+                }
+              }
+            }
+          }
+        )
+
+        // oxlint-disable-next-line unicorn/no-useless-undefined
+        expect(yield* comment(mockData, undefined)).toBe('1')
       }).pipe(Effect.provide(CommonLayer))
     )
 

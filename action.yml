@@ -36,6 +36,10 @@ inputs:
   branch:
     description: 'Branch name for the Cloudflare Pages deployment, which decides production or preview. Defaults to the branch from the GitHub context.'
     required: false
+  wrangler-comment-output:
+    description: 'Whether the pull request comment includes the Wrangler CLI output: true or false. Defaults to true. The wrangler output and the job summary are unaffected.'
+    required: false
+    default: 'true'
 
 outputs:
   id:

@@ -1,9 +1,15 @@
 import {getInput} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
+import * as Schema from 'effect/Schema'
 import {describe, expect, vi} from 'vitest'
 
-import {input, optionalInput, readInputs} from '@/common/config/provider.js'
+import {
+  BooleanInput,
+  input,
+  optionalInput,
+  readInputs
+} from '@/common/config/provider.js'
 import {errorMessage} from '@/common/errors.js'
 import {INPUT_KEY_KEEP_LATEST} from '@/input-keys'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
@@ -68,6 +74,20 @@ describe(optionalInput, () => {
       }
 
       expect(yield* readInputs(optionalInput('optional'))).toBe(expected)
+    })
+  )
+})
+
+describe(BooleanInput, () => {
+  // Decoding is covered through `DeployInputs`; this keeps the codec round-trippable.
+  it.effect.each([
+    {value: true, encoded: 'true'},
+    {value: false, encoded: 'false'}
+  ])('encodes $value as $encoded', ({value, encoded}) =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      expect(yield* Schema.encodeEffect(BooleanInput)(value)).toBe(encoded)
     })
   )
 })

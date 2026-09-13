@@ -47,7 +47,8 @@ export const run = Effect.gen(function* () {
     branch,
     gitHubEnvironment,
     prNumber,
-    wranglerVersion
+    wranglerVersion,
+    wranglerCommentOutput
   } = yield* DeployInputs
 
   const {event} = yield* GitHubContext
@@ -87,7 +88,7 @@ export const run = Effect.gen(function* () {
   const commentId = yield* addComment(
     pullRequestId,
     cloudflareDeployment,
-    wranglerOutput
+    wranglerCommentOutput ? wranglerOutput : undefined
   )
 
   yield* createGitHubDeployment({
