@@ -2,6 +2,8 @@ import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 
+import type {WebhookEventName} from '@/types/github/workflow-events.js'
+
 import {createCloudflareDeployment} from '@/common/cloudflare/deployment/create.js'
 import {addComment, pullRequestToComment} from '@/common/github/comment.js'
 import {GitHubContext} from '@/common/github/context.js'
@@ -12,12 +14,12 @@ import {CommonLayer} from '@/common/layer.js'
 import {DeployInputs} from './inputs.js'
 
 /** Only these events carry the context the deploy needs. */
-const SUPPORTED_EVENT_NAMES = new Set([
+const SUPPORTED_EVENT_NAMES = new Set<string>([
   'push',
   'pull_request',
   'workflow_dispatch',
   'workflow_run'
-])
+] as const satisfies ReadonlyArray<WebhookEventName>)
 
 /**
  * `message` is what `Error.message` resolves to, so `index.ts` only has to

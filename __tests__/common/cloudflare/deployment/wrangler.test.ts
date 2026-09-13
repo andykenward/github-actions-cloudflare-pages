@@ -41,6 +41,16 @@ describe(deploymentIdFrom, () => {
     expect(deploymentIdFrom(output)).toBe('deployment-id')
   })
 
+  test('reads Windows line endings', () => {
+    expect.assertions(1)
+
+    const output =
+      line({type: 'wrangler-session', version: 1}).replace('\n', '\r\n') +
+      line({type: 'pages-deploy-detailed', version: 1, deployment_id: 'id'})
+
+    expect(deploymentIdFrom(output)).toBe('id')
+  })
+
   test('returns undefined when wrangler wrote no such entry', () => {
     expect.assertions(2)
 
@@ -117,6 +127,41 @@ describe('wranglerPagesDeploy', () => {
       })
     }
   )
+
+  it.effect.each([
+    {
+      // What `execFile` rejects with: an `Error` whose message prepends the
+      // command line, plus the process's stderr.
+      title: 'prefers stderr to the command-line message',
+      rejection: Object.assign(new Error('Command failed: npx wrangler …'), {
+        stderr: '✘ [ERROR] A request to the Cloudflare API failed.'
+      }),
+      message: '✘ [ERROR] A request to the Cloudflare API failed.'
+    },
+    {
+      // A spawn failure (e.g. `npx` missing) carries an empty stderr.
+      title: 'falls back to the Error message when stderr is empty',
+      rejection: Object.assign(new Error('spawn npx ENOENT'), {stderr: ''}),
+      message: 'spawn npx ENOENT'
+    },
+    {
+      title: 'names an unrecognised rejection',
+      rejection: 42,
+      message: 'Wrangler: unknown error'
+    }
+  ])('$title', ({rejection, message}) => {
+    vi.stubEnv('RUNNER_TEMP', runnerTemp)
+
+    return Effect.gen(function* () {
+      expect.assertions(1)
+
+      vi.mocked(execFileAsync).mockRejectedValueOnce(rejection)
+
+      const error = yield* Effect.flip(wranglerPagesDeploy(DEPLOY_ARGS))
+
+      expect(error).toMatchObject({_tag: 'WranglerError', message})
+    })
+  })
 
   it.effect(
     'fails without running wrangler when the output directory cannot be created',

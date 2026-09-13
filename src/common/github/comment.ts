@@ -92,39 +92,30 @@ export const pullRequestToComment = Effect.fn('pullRequestToComment')(
         return nodeId
       }
       case 'workflow_run': {
-        const pullRequestsMatchingHead =
-          payload.workflow_run.pull_requests.filter(pullRequest => {
-            return (
-              pullRequest !== null &&
-              pullRequest.head.ref === payload.workflow_run.head_branch &&
-              pullRequest.head.sha === payload.workflow_run.head_sha
-            )
-          })
+        const {head_branch, head_sha} = payload.workflow_run
+        const [match, ...rest] = payload.workflow_run.pull_requests.filter(
+          pullRequest =>
+            pullRequest !== null &&
+            pullRequest.head.ref === head_branch &&
+            pullRequest.head.sha === head_sha
+        )
 
-        if (pullRequestsMatchingHead.length === 0) {
+        if (!match) {
           return yield* new CommentError({
             message:
               'No pull request found in workflow_run event matching head branch and sha'
           })
         }
 
-        if (pullRequestsMatchingHead.length > 1) {
+        if (rest.length > 0) {
           return yield* new CommentError({
             message:
               'Multiple pull requests found in workflow_run event matching head branch and sha'
           })
         }
 
-        const pullRequestNumber = pullRequestsMatchingHead[0]?.number
-
-        if (!pullRequestNumber) {
-          return yield* new CommentError({
-            message: 'No pull request number found in workflow_run event'
-          })
-        }
-
         return yield* pullRequestNodeId(
-          pullRequestNumber,
+          match.number,
           'No pull request node id found for workflow_run event'
         )
       }

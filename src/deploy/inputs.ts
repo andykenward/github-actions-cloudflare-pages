@@ -13,9 +13,9 @@ import * as SchemaTransformation from 'effect/SchemaTransformation'
 
 import {input, optionalInput, readInputs} from '@/common/config/provider.js'
 import {
-  cloudflareAccountIdInput,
-  cloudflareProjectNameInput,
-  wranglerVersionInput
+  cloudflareAccountIdConfig,
+  cloudflareProjectNameConfig,
+  wranglerVersionConfig
 } from '@/common/inputs.js'
 import {
   INPUT_KEY_BRANCH,
@@ -53,9 +53,9 @@ const PullRequestNumber = Schema.Int.check(Schema.isGreaterThan(0))
 
 const deployConfig = Config.all({
   /** Cloudflare Account Id */
-  cloudflareAccountId: cloudflareAccountIdInput,
+  cloudflareAccountId: cloudflareAccountIdConfig,
   /** Cloudflare Pages Project Name */
-  cloudflareProjectName: cloudflareProjectNameInput,
+  cloudflareProjectName: cloudflareProjectNameConfig,
   /** Directory of static files to upload */
   directory: input(INPUT_KEY_DIRECTORY),
   workingDirectory: Config.schema(
@@ -72,7 +72,7 @@ const deployConfig = Config.all({
     Config.map(number => Option.getOrUndefined(number))
   ),
   /** Wrangler version to install. */
-  wranglerVersion: wranglerVersionInput
+  wranglerVersion: wranglerVersionConfig
 })
 
 /** Inputs only the deploy action uses. See `CommonInputs` on memoisation. */

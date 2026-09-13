@@ -5,7 +5,7 @@ import * as Schema from 'effect/Schema'
 import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
 import {errorMessage} from '@/common/errors.js'
 import {GitHubContext} from '@/common/github/context.js'
-import {code, escapeHtml, githubUrl, link} from '@/common/html.js'
+import {code, escapeHtml, githubUrl, headerRow, link} from '@/common/html.js'
 import {CommonInputs} from '@/common/inputs.js'
 import {writeSummary} from '@/common/summary.js'
 import {logVerbatim} from '@/common/utils.js'
@@ -21,11 +21,15 @@ class CreateDeploymentError extends Schema.TaggedError<CreateDeploymentError>()(
   'CreateDeploymentError',
   {
     message: Schema.String,
-    cause: Schema.Defect()
+    cause: Schema.optional(Schema.Defect())
   }
 ) {
+  /** Prefixed, so a failed summary write is attributable in the annotation. */
   static readonly from = (cause: unknown): CreateDeploymentError =>
-    new CreateDeploymentError({message: errorMessage(cause), cause})
+    new CreateDeploymentError({
+      message: `${ERROR_KEY} ${errorMessage(cause)}`,
+      cause
+    })
 }
 
 export const createCloudflareDeployment = Effect.fn(
@@ -77,7 +81,7 @@ export const createCloudflareDeployment = Effect.fn(
   setOutput('url', deployment.url)
   setOutput('environment', deployment.environment)
 
-  const alias: string = getCloudflareDeploymentAlias(deployment)
+  const alias = getCloudflareDeploymentAlias(deployment)
   setOutput('alias', alias)
   setOutput('wrangler', stdout)
 
@@ -89,16 +93,7 @@ export const createCloudflareDeployment = Effect.fn(
         .addHeading('Cloudflare Pages Deployment')
         .addBreak()
         .addTable([
-          [
-            {
-              data: 'Name',
-              header: true
-            },
-            {
-              data: 'Result',
-              header: true
-            }
-          ],
+          headerRow('Name', 'Result'),
           ['Environment:', escapeHtml(deployment.environment)],
           [
             'Branch:',
@@ -115,10 +110,7 @@ export const createCloudflareDeployment = Effect.fn(
             )
           ],
           ['Commit Message:', escapeHtml(metadata.commit_message)],
-          [
-            'Status:',
-            `<strong>${escapeHtml(status.toUpperCase() || 'UNKNOWN')}</strong>`
-          ],
+          ['Status:', `<strong>${escapeHtml(status.toUpperCase())}</strong>`],
           ['Preview URL:', link(deployment.url, escapeHtml(deployment.url))],
           ['Branch Preview URL:', link(alias, escapeHtml(alias))],
           ['Wrangler Output:', escapeHtml(stdout)]
@@ -127,9 +119,9 @@ export const createCloudflareDeployment = Effect.fn(
   )
 
   /**
-   * A failed or canceled build used to fall through to the pull request
-   * comment and a `SUCCESS` GitHub Deployment, so a broken deploy looked green.
-   * Fail once the outputs and summary are written, so both still show it.
+   * A failed or canceled build fails the step — but only once the outputs and
+   * summary are written, so both still describe it. No comment or GitHub
+   * Deployment records a broken deploy as green.
    */
   if (status === 'failure' || status === 'canceled') {
     const outcome = status === 'failure' ? 'failed' : 'was canceled'
@@ -139,8 +131,7 @@ export const createCloudflareDeployment = Effect.fn(
       projectName
     })
     return yield* new CreateDeploymentError({
-      message: `${ERROR_KEY} the Cloudflare Pages build ${outcome}. Build log: ${logUrl}`,
-      cause: undefined
+      message: `${ERROR_KEY} the Cloudflare Pages build ${outcome}. Build log: ${logUrl}`
     })
   }
 

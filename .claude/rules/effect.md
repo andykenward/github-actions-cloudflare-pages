@@ -45,7 +45,7 @@ paths:
 - Tunables that production never overrides (the poll interval and ceiling) are `Context.Reference`s with a default (`PollInterval`, `PollTimeout` in `src/common/cloudflare/deployment/status.ts`), so tests provide `Layer.succeed(PollInterval, Duration.zero)` instead of threading options through call sites.
 - Poll (`src/common/cloudflare/deployment/status.ts`) with `Effect.retry` (`Schedule.spaced` + `Schedule.upTo`; `while` stays a plain boolean predicate) inside an outer `Effect.timeout` (the real ceiling), then `Effect.catchTag(['DeploymentPendingError', 'TimeoutError'], …)` → `DeploymentPollTimeoutError`. Don't retry `CloudflareApiError`.
 - Write a value through the schema that reads it back: `createGitHubDeployment` encodes with `Schema.encodeSync(Schema.fromJsonString(PayloadV2))` and `getPayload` decodes `Schema.Union([PayloadV2, Schema.fromJsonString(PayloadV2)])`, so writer and reader share one definition.
-- Write job summaries with `writeSummary(build, XError.from)` (`src/common/summary.ts`). `summary.addTable` cells are raw HTML and carry PR-author text (commit messages, branch names), so build every cell with `src/common/html.ts`: `escapeHtml(text)`, `code(text)`, `link(href, html)` (http(s) only), `githubUrl(...segments)` (percent-encodes each segment).
+- Write job summaries with `writeSummary(build, XError.from)` (`src/common/summary.ts`). `summary.addTable` cells are raw HTML and carry PR-author text (commit messages, branch names), so build every cell with `src/common/html.ts`: `escapeHtml(text)`, `code(text)`, `link(href, html)` (http(s) only), `headerRow(...names)`, `githubUrl(...segments)` / `url(base, ...segments)` (percent-encode each segment).
 
 ## Lint
 

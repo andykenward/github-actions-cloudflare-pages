@@ -490,7 +490,11 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
           })
         )
 
-        expect(error).toMatchObject({_tag: 'CreateDeploymentError', message})
+        // Prefixed, so the annotation says which step failed.
+        expect(error).toMatchObject({
+          _tag: 'CreateDeploymentError',
+          message: `Create Deployment: ${message}`
+        })
         expect(setOutput).toHaveBeenCalledWith(
           'id',
           RESPONSE_DEPLOYMENTS.result[0]?.id

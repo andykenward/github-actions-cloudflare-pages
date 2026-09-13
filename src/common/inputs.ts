@@ -21,8 +21,8 @@ import {
 const DEFAULT_WRANGLER_VERSION = '4.113.0'
 
 /** Required by the deploy action; the delete action needs them for V1 payloads. */
-export const cloudflareAccountIdInput = input(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID)
-export const cloudflareProjectNameInput = input(
+export const cloudflareAccountIdConfig = input(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID)
+export const cloudflareProjectNameConfig = input(
   INPUT_KEY_CLOUDFLARE_PROJECT_NAME
 )
 
@@ -30,7 +30,7 @@ export const cloudflareProjectNameInput = input(
  * Wrangler version the deploy action installs; a blank input gets the default
  * too. Declared here, next to the default `bin/sync-versions.ts` maintains.
  */
-export const wranglerVersionInput = optionalInput(
+export const wranglerVersionConfig = optionalInput(
   INPUT_KEY_WRANGLER_VERSION
 ).pipe(Config.map(version => version ?? DEFAULT_WRANGLER_VERSION))
 
@@ -69,8 +69,8 @@ export class CommonInputs extends Context.Service<
 }
 
 const payloadV1Config = Config.all({
-  accountId: cloudflareAccountIdInput,
-  projectName: cloudflareProjectNameInput
+  accountId: cloudflareAccountIdConfig,
+  projectName: cloudflareProjectNameConfig
 })
 
 /**

@@ -17,7 +17,10 @@ import {formatGraphqlErrors, GitHubApi} from './github/api/client.js'
 import {deploymentStatusInput} from './github/deployment/deployment-status.js'
 import {getPayload} from './github/deployment/payload.js'
 
-/** Log prefix for the delete action. */
+/**
+ * Log prefix for the delete action. Declared here rather than in
+ * `src/delete/`, which imports this module, so the dependency points one way.
+ */
 export const PREFIX = `delete -`
 
 type BatchDeleteItem = {
@@ -29,9 +32,24 @@ type BatchDeleteItem = {
   error?: string
 }
 
+type Outcome = {success: true} | {success: false; error: string}
+
+/** The summary row for `deployment`, with what its payload gave, if decoded. */
+const row = (
+  deployment: GitHubDeployment,
+  outcome: Outcome,
+  payload?: {url: string; commentId: string | undefined}
+): BatchDeleteItem => ({
+  deploymentId: deployment.node_id,
+  environment: deployment.environment,
+  ...(payload && {environmentUrl: payload.url, commentId: payload.commentId}),
+  ...outcome
+})
+
 /**
  * Deletes one deployment from Cloudflare and GitHub. Never fails: a failure
- * comes back as a `success: false` row, so the rest still get deleted.
+ * comes back as a `success: false` row, so the rest still get deleted. The
+ * explicit type pins the `never` error channel the `Effect.catch` below gives.
  */
 export const batchDelete: (
   deployment: GitHubDeployment
@@ -42,16 +60,7 @@ export const batchDelete: (
 > = Effect.fn('batchDelete')(
   function* (deployment: GitHubDeployment) {
     const {commentId, url, cloudflare} = yield* getPayload(deployment.payload)
-
-    const row = (
-      outcome: {success: true} | {success: false; error: string}
-    ): BatchDeleteItem => ({
-      deploymentId: deployment.node_id,
-      environment: deployment.environment,
-      environmentUrl: url,
-      commentId,
-      ...outcome
-    })
+    const payload = {url, commentId}
 
     /**
      * Delete Cloudflare deployment
@@ -60,10 +69,11 @@ export const batchDelete: (
       yield* deleteCloudflareDeployment(cloudflare)
 
     if (!deletedCloudflareDeployment) {
-      return row({
-        success: false,
-        error: 'Deleting Cloudflare deployment failed'
-      })
+      return row(
+        deployment,
+        {success: false, error: 'Deleting Cloudflare deployment failed'},
+        payload
+      )
     }
 
     /**
@@ -103,15 +113,20 @@ export const batchDelete: (
     // mutations: a rate limit, or a request it rejected as invalid.
     if (!data || errors?.some(error => !error.path)) {
       warn('GitHub ran none of the deployment mutations')
-      return row({success: false, error: 'Deleting GitHub deployment failed'})
+      return row(
+        deployment,
+        {success: false, error: 'Deleting GitHub deployment failed'},
+        payload
+      )
     }
 
     if (errors?.some(error => error.path?.[0] === 'createDeploymentStatus')) {
       warn('Error updating GitHub deployment status')
-      return row({
-        success: false,
-        error: 'Updating GitHub deployment status failed'
-      })
+      return row(
+        deployment,
+        {success: false, error: 'Updating GitHub deployment status failed'},
+        payload
+      )
     }
 
     // The status was set; a later mutation (deleting the deployment or its
@@ -121,7 +136,7 @@ export const batchDelete: (
     }
     info(`${PREFIX} GitHub Deployment Deleted: ${deployment.node_id}`)
 
-    return row({success: true})
+    return row(deployment, {success: true}, payload)
   },
   (effect, deployment) =>
     Effect.catch(effect, failure => {
@@ -132,11 +147,6 @@ export const batchDelete: (
         `${PREFIX} Error deleting deployment ${deployment.node_id}: ${message}`
       )
 
-      return Effect.succeed({
-        success: false,
-        error: message,
-        environment: deployment.environment,
-        deploymentId: deployment.node_id
-      })
+      return Effect.succeed(row(deployment, {success: false, error: message}))
     })
 )

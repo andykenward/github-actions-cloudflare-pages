@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 
-import {code, escapeHtml, githubUrl, link} from '@/common/html.js'
+import {code, escapeHtml, githubUrl, headerRow, link} from '@/common/html.js'
 
 describe(escapeHtml, () => {
   test('escapes markup and both quote characters', () => {
@@ -23,6 +23,17 @@ describe(code, () => {
     expect.assertions(1)
 
     expect(code('<script>')).toBe('<code>&lt;script&gt;</code>')
+  })
+})
+
+describe(headerRow, () => {
+  test('marks every cell as a header', () => {
+    expect.assertions(1)
+
+    expect(headerRow('Name', 'Result')).toStrictEqual([
+      {data: 'Name', header: true},
+      {data: 'Result', header: true}
+    ])
   })
 })
 

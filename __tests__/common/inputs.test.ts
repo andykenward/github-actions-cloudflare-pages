@@ -10,7 +10,7 @@ import {errorMessage} from '@/common/errors.js'
 import {
   CommonInputs,
   PayloadV1Inputs,
-  wranglerVersionInput
+  wranglerVersionConfig
 } from '@/common/inputs.js'
 import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
@@ -92,12 +92,12 @@ describe(CommonInputs, () => {
 
 // A `Config` value, not a function, so the title is a string.
 // oxlint-disable-next-line vitest/prefer-describe-function-title
-describe('wranglerVersionInput', () => {
+describe('wranglerVersionConfig', () => {
   beforeEach(() => {
     vi.unstubAllEnvs()
   })
 
-  const wranglerVersion = readInputs(wranglerVersionInput)
+  const wranglerVersion = readInputs(wranglerVersionConfig)
 
   it.effect('returns the input', () =>
     Effect.gen(function* () {
