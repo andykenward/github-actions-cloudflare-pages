@@ -37,6 +37,7 @@ pnpm refuses package versions published less than 7 days ago (`minimumReleaseAge
 - **Commit `dist/`.** The action runs the committed bundle, and CI fails if it differs from a fresh `pnpm run build`.
 - **Sign your commits.** Every branch requires [signed commits].
 - **Record user-facing changes.** Add a changeset with `pnpm changeset`, and update [README.md](README.md) or [delete/README.md](delete/README.md) when an input, output or behavior changes.
+- **Follow TigerStyle.** Functions under 70 lines, a fixed bound on every loop, assertions on invariants, no swallowed errors — the adaptation is in [`.claude/rules/tiger-style.md`](.claude/rules/tiger-style.md); oxlint enforces what it can.
 - **Don't hand-edit generated files** under `__generated__/` — regenerate them. The API response fixtures in `__generated__/responses/` are the exception.
 
 ## Vendored Effect source

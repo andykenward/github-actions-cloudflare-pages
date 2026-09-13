@@ -34,6 +34,7 @@ paths:
 - `.oxlintrc.json` adds `effecttsgo` to `plugins` and extends only the `correctness` + `antipattern` presets from `node_modules/@effect/tsgo/oxlint-presets/`; `effect-native`, `style` and `recommended` are excluded on purpose (~140 warnings on every `async` function, `process.env` read and `node:*` import). Preset rules are `warn` and `lint` has no `--max-warnings`, so they don't fail CI.
 - The `tsconfig.json` plugin name `@effect/language-service` isn't an installed package (`@effect/tsgo` provides it) — hence its `ignoreDependencies` entry in `knip.json`.
 - Standalone check: `pnpm exec effect-tsgo diagnostics --project tsconfig.json`.
+- To see which rules an oxlint version has (name, category, type-aware), use `oxlint --rules --format=json`; plain `--rules` prints nothing when piped.
 
 ## Scripts
 
