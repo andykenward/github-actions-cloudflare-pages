@@ -6,7 +6,7 @@ paths:
 
 # Effect patterns
 
-`src/common/` is Effect throughout. Code with no dependencies stays plain — `src/common/cloudflare/api/fetch-result.ts`, payload and event decoding, `src/common/utils.ts`, the body of `src/common/github/context.ts`.
+`src/common/` is Effect throughout. Code with no dependencies stays plain — `src/common/cloudflare/api/fetch-result.ts` (returns `Result`, not `Effect`), payload and event decoding, `src/common/utils.ts`, the body of `src/common/github/context.ts`.
 
 ## Structure
 
@@ -25,6 +25,7 @@ paths:
 
 ## Errors and logging
 
+- When a caller must tell failures apart, give the error a tagged `reason` field (`Schema.Union` of `Schema.TaggedError`s) and branch on `reason._tag` — `CloudflareApiError` (`src/common/cloudflare/api/error.ts`). Don't hide the distinction in `cause` for callers to `instanceof`.
 - Give each module its own `Schema.TaggedError` class(es) — `GitHubApiError`, `CloudflareApiError`, `CommentError`, `EnvironmentError`, `PayloadError`, `DeployError`, … — with `message`. When one wraps a rejection, add `cause: Schema.Defect()` and a static `from(cause)` whose message comes from `errorMessage()`. Each class needs `// oxlint-disable-next-line unicorn/throw-new-error`.
 - Fail with `return yield* new XError({message})`. Wrap Promise APIs in `Effect.tryPromise({try, catch: XError.from})`.
 - To recover inside an `Effect.fn`, pass a pipe argument — it receives the call's arguments after the effect: `(effect, deployment) => Effect.catch(effect, …)` (`src/common/batch-delete.ts`).
@@ -48,4 +49,4 @@ paths:
 
 - Suppress `unicorn/no-array-for-each` on `Effect.forEach`.
 - Use `optionalInput()` instead of `Config.withDefault(undefined)` — it carries the `unicorn/no-useless-undefined` suppression.
-- Write `effect.pipe(Effect.map(f))`, not `Effect.map(effect, f)` — `unicorn/no-array-callback-reference` misreads the data-first form as `Array#map`.
+- Write `x.pipe(Effect.map(f))`, not `Effect.map(x, f)` — `unicorn/no-array-callback-reference` misreads the data-first form as `Array#map`; the same goes for `Result.map` / `Result.flatMap` (`src/common/cloudflare/api/fetch-result.ts`).

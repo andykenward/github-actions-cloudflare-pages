@@ -37,12 +37,15 @@ export const link = (href: string, html: string): string =>
   isHttpUrl(href) ? `<a href='${escapeHtml(href)}'>${html}</a>` : html
 
 /**
- * A `https://github.com/<owner>/<repo>/<path…>` URL. Each segment is
- * percent-encoded, so a branch name cannot add a query or fragment; a
- * segment's own `/` (as in `feature/x`) is kept.
+ * `base` followed by `segments`, each percent-encoded so a value cannot add a
+ * query or fragment; a segment's own `/` (as in `feature/x`) is kept.
  */
-export const githubUrl = (...segments: Array<string>): string =>
-  `https://github.com/${segments
+export const url = (base: string, ...segments: Array<string>): string =>
+  `${base}/${segments
     .flatMap(segment => segment.split('/'))
     .map(part => encodeURIComponent(part))
     .join('/')}`
+
+/** A `https://github.com/<owner>/<repo>/<path…>` URL. */
+export const githubUrl = (...segments: Array<string>): string =>
+  url('https://github.com', ...segments)

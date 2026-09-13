@@ -1,17 +1,18 @@
 import * as Context from 'effect/Context'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
-import * as Schema from 'effect/Schema'
 import createClient from 'openapi-fetch'
 
 import type {paths} from '@/types/cloudflare/pages.js'
 
-import {errorMessage} from '@/common/errors.js'
 import {CommonInputs, secret} from '@/common/inputs.js'
 
 import type {ClientResponse} from './fetch-result.js'
 
+import {CloudflareApiError, RequestError} from './error.js'
 import {unwrap, unwrapSuccess} from './fetch-result.js'
+
+export {CloudflareApiError} from './error.js'
 
 /**
  * Base URL for Cloudflare's REST API. The generated `paths` are relative to the
@@ -19,23 +20,16 @@ import {unwrap, unwrapSuccess} from './fetch-result.js'
  */
 const BASE_URL = 'https://api.cloudflare.com/client/v4'
 
-/**
- * A failed Cloudflare request. `cause` keeps the original error — typically a
- * `ParseError` carrying the Cloudflare error `code`.
- */
-// oxlint-disable-next-line unicorn/throw-new-error
-export class CloudflareApiError extends Schema.TaggedError<CloudflareApiError>()(
-  'CloudflareApiError',
-  {
-    message: Schema.String,
-    cause: Schema.Defect()
-  }
-) {
-  static readonly from = (cause: unknown): CloudflareApiError =>
-    new CloudflareApiError({message: errorMessage(cause), cause})
-}
-
 type CloudflareClient = ReturnType<typeof createClient<paths>>
+
+/**
+ * One request. `signal` is the effect's: pass it as the call's `signal` so an
+ * interrupt or timeout aborts the fetch rather than leaving it in flight.
+ */
+type Request<R> = (
+  client: CloudflareClient,
+  signal: AbortSignal
+) => Promise<ClientResponse<R>>
 
 /**
  * The Cloudflare Pages REST API. Each method makes one request with the typed
@@ -43,19 +37,16 @@ type CloudflareClient = ReturnType<typeof createClient<paths>>
  * OpenAPI `paths` ([`__generated__/types/cloudflare/pages.ts`](../../../../__generated__/types/cloudflare/pages.ts))
  * — and unwraps the `{success, result, errors}` envelope with `unwrap` /
  * `unwrapSuccess` ([`fetch-result.ts`](./fetch-result.ts)). A transport
- * failure or an error envelope fails with `CloudflareApiError`.
+ * failure or an error envelope fails with `CloudflareApiError`, whose
+ * `reason` says which ([`error.ts`](./error.ts)).
  */
 export class CloudflareApi extends Context.Service<
   CloudflareApi,
   {
     /** Returns the envelope's typed `result`. */
-    result<R>(
-      request: (client: CloudflareClient) => Promise<ClientResponse<R>>
-    ): Effect.Effect<R, CloudflareApiError>
-    /** For requests with no meaningful `result` (e.g. DELETE): returns `success`. */
-    success(
-      request: (client: CloudflareClient) => Promise<ClientResponse<unknown>>
-    ): Effect.Effect<boolean, CloudflareApiError>
+    result<R>(request: Request<R>): Effect.Effect<R, CloudflareApiError>
+    /** For requests with no meaningful `result` (e.g. DELETE). */
+    success(request: Request<unknown>): Effect.Effect<void, CloudflareApiError>
   }
 >()(
   'github-actions-cloudflare-pages/common/cloudflare/api/client/CloudflareApi'
@@ -78,17 +69,23 @@ export class CloudflareApi extends Context.Service<
         }
       })
 
+      const send = <R>(request: Request<R>) =>
+        Effect.tryPromise({
+          try: signal => request(client, signal),
+          catch: cause => CloudflareApiError.from(new RequestError({cause}))
+        })
+
       return CloudflareApi.of({
         result: request =>
-          Effect.tryPromise({
-            try: async () => unwrap(await request(client)),
-            catch: CloudflareApiError.from
-          }),
+          send(request).pipe(
+            Effect.flatMap(response => Effect.fromResult(unwrap(response)))
+          ),
         success: request =>
-          Effect.tryPromise({
-            try: async () => unwrapSuccess(await request(client)),
-            catch: CloudflareApiError.from
-          })
+          send(request).pipe(
+            Effect.flatMap(response =>
+              Effect.fromResult(unwrapSuccess(response))
+            )
+          )
       })
     })
   )
