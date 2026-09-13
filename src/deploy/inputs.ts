@@ -54,8 +54,14 @@ const WorkingDirectory = Schema.Trim.check(
   )
 )
 
-/** A pull request number: a positive whole number. */
-const PullRequestNumber = Schema.Int.check(Schema.isGreaterThan(0))
+/** GraphQL's `Int`, which `GetPullRequestId` takes the number as. */
+const PULL_REQUEST_NUMBER_MAX = 2_147_483_647
+
+/** A pull request number: a positive whole number that fits a GraphQL `Int`. */
+const PullRequestNumber = Schema.Int.check(
+  Schema.isGreaterThan(0),
+  Schema.isLessThanOrEqualTo(PULL_REQUEST_NUMBER_MAX)
+)
 
 const deployConfig = Config.all({
   /** Cloudflare Account Id */

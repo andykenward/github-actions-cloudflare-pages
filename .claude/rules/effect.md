@@ -27,7 +27,7 @@ paths:
 
 - When a caller must tell failures apart, give the error a tagged `reason` field (`Schema.Union` of `Schema.TaggedError`s) and branch on `reason._tag` — `CloudflareApiError` (`src/common/cloudflare/api/error.ts`). Don't hide the distinction in `cause` for callers to `instanceof`.
 - Give each module its own `Schema.TaggedError` class(es) — `GitHubApiError`, `CloudflareApiError`, `CommentError`, `EnvironmentError`, `PayloadError`, `DeployError`, … — with `message`. When one wraps a rejection, add `cause: Schema.Defect()` and a static `from(cause)` whose message comes from `errorMessage()`. Each class needs `// oxlint-disable-next-line unicorn/throw-new-error`.
-- Fail with `return yield* new XError({message})`. Wrap Promise APIs in `Effect.tryPromise({try, catch: XError.from})`.
+- Fail with `return yield* new XError({message})`. Wrap Promise APIs in `Effect.tryPromise({try, catch: XError.from})` — always with a `catch`: the one-argument form wraps the rejection in an `UnknownError` whose message is "An error occurred in Effect.tryPromise", so `errorMessage()` never shows the real reason.
 - To recover inside an `Effect.fn`, pass a pipe argument — it receives the call's arguments after the effect: `(effect, deployment) => Effect.catch(effect, …)` (`src/common/batch-delete.ts`).
 - Use `raise()` (`src/common/utils.ts`) only in plain synchronous code that an `Effect.try` wraps.
 - Log another tool's output (wrangler stdout) with `logVerbatim()`, not `info()` — `info` writes raw, so a `::` line would run as a workflow command.
@@ -51,6 +51,7 @@ paths:
 ## Lint
 
 - Suppress `unicorn/no-array-for-each` on `Effect.forEach`.
+- Name the parameter of a pipe-style `Effect.catch(error => …)` `error` — `unicorn/catch-error-name` reads it as a `.catch()`; the data-first `Effect.catch(effect, failure => …)` is not matched.
 - Use `optionalInput()` instead of `Config.withDefault(undefined)` — it carries the `unicorn/no-useless-undefined` suppression.
 - Inside an `Effect.gen` (tests included), decode and encode with `Schema.decodeEffect` / `Schema.encodeEffect`, not the `*Sync` variants — `effecttsgo/schema-sync-in-effect` warns.
 - Write `x.pipe(Effect.map(f))`, not `Effect.map(x, f)` — `unicorn/no-array-callback-reference` misreads the data-first form as `Array#map`; the same goes for `Result.map` / `Result.flatMap` (`src/common/cloudflare/api/fetch-result.ts`).

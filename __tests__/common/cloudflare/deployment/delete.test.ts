@@ -1,4 +1,4 @@
-import {error, info, warning} from '@actions/core'
+import {info, warning} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
@@ -45,7 +45,7 @@ describe('deleteCloudflareDeployment', () => {
 
   it.effect('force-deletes the deployment and logs its id', () =>
     Effect.gen(function* () {
-      expect.assertions(4)
+      expect.assertions(3)
 
       // The path carries `?force=true`, so an unforced delete would not match.
       mockApi.interceptCloudflare(
@@ -55,18 +55,17 @@ describe('deleteCloudflareDeployment', () => {
         'DELETE'
       )
 
-      expect(yield* deleteCloudflareDeployment(DEPLOYMENT)).toBe(true)
+      expect(yield* deleteCloudflareDeployment(DEPLOYMENT)).toBeUndefined()
       expect(info).toHaveBeenCalledWith(
         `Cloudflare Deployment Deleted: ${MOCK_DEPLOYMENT_ID}`
       )
       expect(warning).not.toHaveBeenCalled()
-      expect(error).not.toHaveBeenCalled()
     }).pipe(Effect.provide(CloudflareApiTestLayer))
   )
 
   it.effect('counts a deployment that no longer exists as deleted', () =>
     Effect.gen(function* () {
-      expect.assertions(4)
+      expect.assertions(3)
 
       mockApi.interceptCloudflare(
         MOCK_API_PATH_DEPLOYMENTS_DELETE,
@@ -75,13 +74,12 @@ describe('deleteCloudflareDeployment', () => {
         'DELETE'
       )
 
-      expect(yield* deleteCloudflareDeployment(DEPLOYMENT)).toBe(true)
+      expect(yield* deleteCloudflareDeployment(DEPLOYMENT)).toBeUndefined()
       expect(warning).toHaveBeenCalledWith(
         `Cloudflare Deployment might have been deleted already: ${MOCK_DEPLOYMENT_ID}`
       )
       expect(info).not.toHaveBeenCalled()
       // A tolerated error leaves no error annotation on the run.
-      expect(error).not.toHaveBeenCalled()
     }).pipe(Effect.provide(CloudflareApiTestLayer))
   )
 
@@ -103,54 +101,59 @@ describe('deleteCloudflareDeployment', () => {
       status: 200,
       reason: REQUEST_FAILED
     }
-  ])(
-    'returns false and logs the reason when $title',
-    ({response, status, reason}) =>
-      Effect.gen(function* () {
-        expect.assertions(3)
-
-        mockApi.interceptCloudflare(
-          MOCK_API_PATH_DEPLOYMENTS_DELETE,
-          response,
-          status,
-          'DELETE'
-        )
-
-        expect(yield* deleteCloudflareDeployment(DEPLOYMENT)).toBe(false)
-        expect(error).toHaveBeenLastCalledWith(
-          `Cloudflare Error deleting deployment: ${MOCK_DEPLOYMENT_ID} - ${reason}`
-        )
-        expect(warning).not.toHaveBeenCalled()
-      }).pipe(Effect.provide(CloudflareApiTestLayer))
-  )
-
-  it.effect('returns false when Cloudflare replies with no content', () =>
+  ])('fails with the reason when $title', ({response, status, reason}) =>
     Effect.gen(function* () {
       expect.assertions(2)
+
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS_DELETE,
+        response,
+        status,
+        'DELETE'
+      )
+
+      const failure = yield* Effect.flip(deleteCloudflareDeployment(DEPLOYMENT))
+
+      expect(failure).toMatchObject({
+        _tag: 'CloudflareApiError',
+        message: reason
+      })
+      // Nothing is annotated here: the caller reports the failure.
+      expect(warning).not.toHaveBeenCalled()
+    }).pipe(Effect.provide(CloudflareApiTestLayer))
+  )
+
+  it.effect('fails when Cloudflare replies with no content', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
 
       mockApi
         .interceptCloudflareRaw(MOCK_API_PATH_DEPLOYMENTS_DELETE, 'DELETE')
         .reply(204, '')
 
-      expect(yield* deleteCloudflareDeployment(DEPLOYMENT)).toBe(false)
-      expect(error).toHaveBeenCalledWith(
-        `Cloudflare Error deleting deployment: ${MOCK_DEPLOYMENT_ID} - ${REQUEST_FAILED.slice(0, -1)}: 204 No Content`
-      )
+      const failure = yield* Effect.flip(deleteCloudflareDeployment(DEPLOYMENT))
+
+      expect(failure).toMatchObject({
+        _tag: 'CloudflareApiError',
+        message: `${REQUEST_FAILED.slice(0, -1)}: 204 No Content`
+      })
     }).pipe(Effect.provide(CloudflareApiTestLayer))
   )
 
-  it.effect('returns false rather than failing when the request errors', () =>
+  it.effect('fails when the request errors', () =>
     Effect.gen(function* () {
-      expect.assertions(2)
+      expect.assertions(1)
 
       mockApi
         .interceptCloudflareRaw(MOCK_API_PATH_DEPLOYMENTS_DELETE, 'DELETE')
         .replyWithError(new Error('socket hang up'))
 
-      expect(yield* deleteCloudflareDeployment(DEPLOYMENT)).toBe(false)
-      expect(error).toHaveBeenCalledWith(
-        `Cloudflare Error deleting deployment: ${MOCK_DEPLOYMENT_ID} - fetch failed`
-      )
+      const failure = yield* Effect.flip(deleteCloudflareDeployment(DEPLOYMENT))
+
+      expect(failure).toMatchObject({
+        _tag: 'CloudflareApiError',
+        message: 'fetch failed'
+      })
     }).pipe(Effect.provide(CloudflareApiTestLayer))
   )
 })

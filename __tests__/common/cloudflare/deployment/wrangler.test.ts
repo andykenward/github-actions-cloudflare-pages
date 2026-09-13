@@ -1,7 +1,8 @@
-import {mkdtemp, readdir, rm} from 'node:fs/promises'
+import {mkdir, mkdtemp, readdir, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
 
+import {debug} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Duration from 'effect/Duration'
 import * as Effect from 'effect/Effect'
@@ -24,6 +25,10 @@ import {wranglerReporting} from '@/tests/helpers/wrangler.js'
 
 vi.mock(import('@/common/utils.js'))
 vi.mock(import('@actions/core'))
+vi.mock(import('node:fs/promises'), async importOriginal => {
+  const original = await importOriginal()
+  return {...original, rm: vi.fn(original.rm)}
+})
 
 const line = (entry: object): string => `${JSON.stringify(entry)}\n`
 
@@ -126,6 +131,58 @@ describe('wranglerPagesDeploy', () => {
         )
         expect(yield* Effect.promise(() => readdir(runnerTemp))).toStrictEqual(
           []
+        )
+      })
+    }
+  )
+
+  it.effect('fails when the output file cannot be read', () => {
+    vi.stubEnv('RUNNER_TEMP', runnerTemp)
+
+    return Effect.gen(function* () {
+      expect.assertions(1)
+
+      // A directory where the file should be: `EISDIR` on read, not `ENOENT`.
+      vi.mocked(execFileAsync).mockImplementationOnce((async (
+        _file: string,
+        _args: ReadonlyArray<string>,
+        {env}: {env: NodeJS.ProcessEnv}
+      ) => {
+        await mkdir(env['WRANGLER_OUTPUT_FILE_PATH'] ?? '')
+        return {stdout: 'success', stderr: ''}
+      }) as never)
+
+      const error = yield* Effect.flip(wranglerPagesDeploy(DEPLOY_ARGS))
+
+      expect(error).toMatchObject({
+        _tag: 'WranglerError',
+        // oxlint-disable-next-line typescript/no-unsafe-assignment
+        message: expect.stringContaining('EISDIR')
+      })
+    })
+  })
+
+  it.effect(
+    'logs, but succeeds, when the output directory cannot be removed',
+    () => {
+      vi.stubEnv('RUNNER_TEMP', runnerTemp)
+
+      return Effect.gen(function* () {
+        expect.assertions(2)
+
+        vi.mocked(execFileAsync).mockImplementationOnce(
+          wranglerReporting(MOCK_DEPLOYMENT_ID, () => {}) as never
+        )
+        vi.mocked(rm).mockRejectedValueOnce(new Error('EBUSY: resource busy'))
+
+        const result = yield* wranglerPagesDeploy(DEPLOY_ARGS)
+
+        expect(result.deploymentId).toBe(MOCK_DEPLOYMENT_ID)
+        expect(debug).toHaveBeenCalledWith(
+          // oxlint-disable-next-line typescript/no-unsafe-argument
+          expect.stringMatching(
+            /^Wrangler: could not remove .*: EBUSY: resource busy$/
+          )
         )
       })
     }

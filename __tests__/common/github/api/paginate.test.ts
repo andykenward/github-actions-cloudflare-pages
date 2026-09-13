@@ -185,7 +185,7 @@ describe(GitHubRestApi, () => {
 
   it.effect('fails when the response is not JSON', () =>
     Effect.gen(function* () {
-      expect.assertions(2)
+      expect.assertions(3)
 
       mockApi.mockAgent
         .get('https://api.github.com')
@@ -202,6 +202,9 @@ describe(GitHubRestApi, () => {
       expect(error.message).toBe(
         'GitHub API returned a non-JSON response (502)'
       )
+      // The parse error is kept as the cause of the cause.
+      // oxlint-disable-next-line typescript/no-unsafe-assignment
+      expect(error.cause).toMatchObject({cause: expect.any(SyntaxError)})
     }).pipe(Effect.provide(RestApiLayer))
   )
 

@@ -103,10 +103,23 @@ const outputDirectory = Effect.acquireRelease(
     catch: WranglerError.from
   }),
   directory =>
-    Effect.tryPromise(() => rm(directory, {recursive: true, force: true})).pipe(
-      Effect.ignore
+    Effect.tryPromise({
+      try: () => rm(directory, {recursive: true, force: true}),
+      catch: WranglerError.from
+    }).pipe(
+      // A leftover directory under `RUNNER_TEMP` is nothing a user can act
+      // on, so the reason goes to the debug log rather than an annotation.
+      Effect.catch(error =>
+        Effect.sync(() => {
+          debug(`${ERROR_KEY} could not remove ${directory}: ${error.message}`)
+        })
+      )
     )
 )
+
+/** `ENOENT`: the file was never written. */
+const isNoEntry = (cause: unknown): boolean =>
+  Predicate.hasProperty(cause, 'code') && cause.code === 'ENOENT'
 
 /** The `npx` arguments for `wrangler pages deploy`. */
 const wranglerPagesDeployArguments = ({
@@ -158,9 +171,16 @@ const wranglerPagesDeployEnvironment = (
  */
 const wranglerPagesDeployOutput = Effect.fn('wranglerPagesDeployOutput')(
   function* (outputFile: string) {
-    const output = yield* Effect.tryPromise(() =>
-      readFile(outputFile, 'utf8')
-    ).pipe(Effect.orElseSucceed(() => ''))
+    // A missing file is the one tolerated failure: an old wrangler writes
+    // none. Anything else (unreadable, a directory) is reported.
+    const output = yield* Effect.tryPromise({
+      try: () => readFile(outputFile, 'utf8'),
+      catch: WranglerError.from
+    }).pipe(
+      Effect.catch(error =>
+        isNoEntry(error.cause) ? Effect.succeed('') : Effect.fail(error)
+      )
+    )
 
     const deploymentId = deploymentIdFrom(output)
 

@@ -184,7 +184,7 @@ describe('batchDelete', () => {
     }).pipe(Effect.provide(TestLayer))
   )
 
-  it.effect('only warns when a later field errors', () =>
+  it.effect('succeeds with a warning when a later field errors', () =>
     Effect.gen(function* () {
       expect.assertions(2)
 
@@ -193,7 +193,8 @@ describe('batchDelete', () => {
 
       expect(yield* batchDelete(DEPLOYMENT)).toStrictEqual({
         ...ROW,
-        success: true
+        success: true,
+        warning: `Deleting the GitHub deployment or its comment failed: ${JSON.stringify(errors)}`
       })
       expect(core.warning).toHaveBeenCalledWith(
         `delete - Error deleting GitHub deployment or its comment: ${JSON.stringify(errors)}`

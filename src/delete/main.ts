@@ -76,7 +76,7 @@ const deletedSummary =
             ? link(value.environmentUrl, code(value.environmentUrl))
             : '',
           escapeHtml(value.commentId ?? ''),
-          escapeHtml(value.error ?? '')
+          escapeHtml(value.error ?? value.warning ?? '')
         ])
       ])
 
