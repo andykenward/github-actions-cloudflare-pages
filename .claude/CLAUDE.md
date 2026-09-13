@@ -32,6 +32,7 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 | `pnpm run format`              | oxfmt (`format:check` to verify)                                                                                           |
 | `pnpm run start`               | Run the built deploy action with `.env` loaded (see `.env.example`)                                                        |
 | `pnpm run act:d`               | Run `deploy-delete.yml` in Docker with `act` (needs `gh auth login`; event payload in `.github/act/`)                      |
+| `pnpm run sync:effect`         | On a clean branch: replace `repos/effect` with the tag matching `dependencies.effect` and commit it (see repos rule)       |
 | `pnpm run sync:readme`         | Rewrite pinned `@<sha> #vX.Y.Z` refs in READMEs, workflow templates and the skill                                          |
 | `pnpm run deployments:delete`  | Delete **all preview** deployments of the `.env` project, bypassing GitHub; repeats until a pass deletes nothing           |
 | `pnpm changeset`               | Record a notable or breaking change for `CHANGELOG.md`                                                                     |
@@ -70,7 +71,7 @@ These load automatically when you read a matching file. If one hasn't loaded —
 | [testing.md](rules/testing.md)               | `__tests__/**`, `**/__mocks__/**`, vitest config                                                | Helpers, Effect tests, mocks, wrangler, snapshots                                          |
 | [tooling.md](rules/tooling.md)               | `package.json`, TS/lint/format/bundler config, `bin/**`, `.claude/` config, `.devcontainer/**`  | Dependencies, TypeScript 6 + 7, `@effect/tsgo`, scripts, bundling, hooks, debugging        |
 | [workflows.md](rules/workflows.md)           | `.github/**`                                                                                    | CI, release, Dependabot, workflow hygiene, signed bot commits                              |
-| [repos.md](rules/repos.md)                   | `repos/**`, the configs that exclude it, `sync-effect.yml`                                      | Vendored-source exclusions and the snapshot sync                                           |
+| [repos.md](rules/repos.md)                   | `repos/**`, the configs that exclude it, `bin/sync-effect.ts`                                   | Vendored-source exclusions and the snapshot sync                                           |
 | [tiger-style.md](rules/tiger-style.md)       | `src/**/*.ts`, `bin/**/*.ts`, `__tests__/**/*.ts`, `.oxlintrc.json`                             | Function size, bounds, assertions, explicit errors, naming, and the lint rules behind them |
 | [docs.md](rules/docs.md)                     | READMEs, `CONTRIBUTING.md`, `action.yml`, workflow templates, `skills/**`, `.claude/**/*.md`    | User and contributor docs, Markdown gotchas, maintaining these instructions                |
 

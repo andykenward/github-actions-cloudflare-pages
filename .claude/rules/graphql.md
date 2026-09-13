@@ -15,7 +15,7 @@ Operations live in `.graphql` files beside the module that uses them (`src/commo
 1. **`pnpm run codegen`** — the `…Document` constant and its types don't exist, or are stale, until you do. Formatting before or after is safe: code imports documents by name, so re-indenting a `.graphql` file can't break types. Run codegen after `pnpm run format` so the generated text matches the source.
 2. **Use it**: import the `…Document` from `@/gql/graphql.js` and call `yield* github.request({query: XDocument, variables})` (the `GitHubApi` service, `src/common/github/api/client.ts`). A `bin/` script run with plain `node` can't import runtime values from `@/gql/` — read the `.graphql` file at runtime and import only types (see `bin/download/payloads/github-webhooks-payload-examples.ts`).
 3. **Update every test mock** for the operation: `grep -rn XDocument __tests__/`. `interceptGithub` matches the request body exactly, so mock variables in the same key order the code sends them.
-4. `pnpm run tsc:check` and `pnpm run test`; `pnpm run build` when `src/` changed (`dist/` is committed).
+4. `pnpm run tsc:check` and `pnpm run test`; then `pnpm run build` and commit `dist/` — the bundles embed every generated `…Document`, including those of `bin/**/*.graphql`, so any new or edited operation changes `dist/` even when `src/` didn't.
 
 ## Writing operations
 

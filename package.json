@@ -37,6 +37,7 @@
     "release": "pnpm run all && changeset publish",
     "skills:update": "skills update -p -y",
     "start": "node -r dotenv/config ./dist/deploy/index.js",
+    "sync:effect": "node bin/sync-effect.ts",
     "sync:readme": "tsx bin/sync-readme-versions.ts",
     "test": "vitest run",
     "test:ci": "vitest run --reporter=github-actions",

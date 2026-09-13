@@ -44,15 +44,13 @@ pnpm refuses package versions published less than 7 days ago (`minimumReleaseAge
 
 The [Effect] source is vendored at `repos/effect/`, so the source, tests and docs of the exact library this action builds on are available offline — for reading, grepping and as reference material for AI agents. It is read-only: nothing in `src/` imports from `repos/`, and application code keeps importing the published `effect` package. Every tool in the repo is configured to ignore `repos/` — TypeScript, Vitest, oxfmt, oxlint, knip, prek, zizmor, CodeQL, Dependabot version updates, git diffs and the VS Code editor — so vendoring it does not slow down or pollute the build.
 
-It is a plain snapshot of the Effect release tag matching the `effect` version in [package.json](package.json) — one ordinary commit per update, with no Effect history and no `git subtree` metadata, so its pull requests can be merged any way. When a change to `package.json` lands on `main`, the [sync-effect.yml](.github/workflows/sync-effect.yml) workflow compares that version with the one in `repos/effect/packages/effect/package.json` and, if they differ, opens a pull request that replaces the snapshot. To run it on demand, use **Actions → sync effect → Run workflow**. To update by hand, run this from the repository root with a clean working tree:
+It is a plain snapshot of the Effect release tag matching the `effect` version in [package.json](package.json) — one ordinary commit per update, with no Effect history and no `git subtree` metadata, so its pull requests can be merged any way. After an `effect` bump lands on `main`, refresh it from a branch with a clean working tree:
 
 ```sh
-tag="effect@$(jq -r .dependencies.effect package.json)"
-git fetch --no-tags https://github.com/Effect-TS/effect.git "refs/tags/$tag"
-git rm -rq --ignore-unmatch repos/effect
-git read-tree --prefix=repos/effect/ -u FETCH_HEAD
-git commit -m "chore: sync repos/effect to $tag"
+pnpm run sync:effect
 ```
+
+That fetches the tag, replaces `repos/effect` and commits with your git (so the commit is signed), then you push and open a pull request. It does nothing when the snapshot already matches. There is no workflow for this because a workflow cannot push a signed commit and the snapshot is too large to rebuild through GitHub's API within a job.
 
 ## AI agents
 
