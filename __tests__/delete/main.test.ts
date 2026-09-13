@@ -50,7 +50,7 @@ describe('delete', () => {
       }).pipe(Effect.provide(listing([])), Effect.provide(DeleteLayer))
     )
 
-    it.effect('builds CommonInputs once though DeleteLayer uses it twice', () =>
+    it.effect('builds CommonInputs once for every service that needs it', () =>
       Effect.gen(function* () {
         expect.assertions(1)
 

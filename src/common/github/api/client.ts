@@ -23,8 +23,12 @@ export type GitHubGraphQLError = Partial<GraphQLError> & {
   type?: string
 }
 
+/**
+ * `data` is absent when GitHub ran nothing — a rate limit, or a request it
+ * rejected as invalid — which only an `errorThrows: false` caller sees.
+ */
 export type GraphqlResponse<T = unknown> = {
-  data: T
+  data?: T | undefined
   errors?: GitHubGraphQLError[]
 }
 export type Variables = Record<string, unknown>
@@ -37,15 +41,16 @@ type Options = {
   errorThrows?: boolean
 }
 
-// | string
-// | DocumentNode
-// | TypedDocumentNode<TData, TVariables>
-
 export type RequestParams<TData, TVariables> = {
   query: string | TypedDocumentString<TData, TVariables>
   variables?: TVariables
   options?: Options
 }
+
+/** GraphQL `errors` as one log line or message. */
+export const formatGraphqlErrors = (
+  errors: ReadonlyArray<GitHubGraphQLError>
+): string => JSON.stringify(errors)
 
 // oxlint-disable-next-line unicorn/throw-new-error
 export class GitHubApiError extends Schema.TaggedError<GitHubApiError>()(
@@ -57,16 +62,20 @@ export class GitHubApiError extends Schema.TaggedError<GitHubApiError>()(
 ) {
   static readonly from = (cause: unknown): GitHubApiError =>
     new GitHubApiError({message: errorMessage(cause), cause})
+
+  /** The failure a GraphQL `errors` array reports. */
+  static readonly fromGraphqlErrors = (
+    errors: ReadonlyArray<GitHubGraphQLError>
+  ): GitHubApiError =>
+    new GitHubApiError({message: formatGraphqlErrors(errors), cause: errors})
 }
 
 const fetchGraphql = async <TData, TVariables extends Variables>(
   endpoint: string,
   token: string,
-  {query, variables, options}: RequestParams<TData, TVariables>
+  {query, variables}: RequestParams<TData, TVariables>,
+  signal: AbortSignal
 ): Promise<GraphqlResponse<TData>> => {
-  // `options || {errorThrows: true}` let `options: {}` silently disable it.
-  const errorThrows = options?.errorThrows ?? true
-
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -74,7 +83,8 @@ const fetchGraphql = async <TData, TVariables extends Variables>(
       'Content-Type': 'application/json',
       Accept: 'application/vnd.github.flash-preview+json'
     },
-    body: JSON.stringify({query: query.toString(), variables})
+    body: JSON.stringify({query: query.toString(), variables}),
+    signal
   })
 
   /**
@@ -89,17 +99,11 @@ const fetchGraphql = async <TData, TVariables extends Variables>(
     )
   }
 
-  const body = (await response.json().catch(() => {
+  return (await response.json().catch(() => {
     throw new Error(
       `GitHub API returned a non-JSON response (${response.status})`
     )
   })) as GraphqlResponse<TData>
-
-  if (body.errors && errorThrows) {
-    throw new Error(JSON.stringify(body.errors))
-  }
-
-  return body
 }
 
 /**
@@ -112,7 +116,8 @@ export class GitHubApi extends Context.Service<
   {
     /**
      * Fails on a non-2xx response and, unless `options.errorThrows` is
-     * `false`, on a GraphQL `errors` array.
+     * `false`, on a GraphQL `errors` array. Interrupting the effect aborts
+     * the request.
      */
     request<TData = unknown, TVariables extends Variables = Variables>(
       params: RequestParams<TData, TVariables>
@@ -125,14 +130,30 @@ export class GitHubApi extends Context.Service<
       const {gitHubApiToken} = yield* CommonInputs
       const {graphqlEndpoint} = yield* GitHubContext
 
-      return GitHubApi.of({
-        request: params =>
-          Effect.tryPromise({
-            try: () =>
-              fetchGraphql(graphqlEndpoint, secret(gitHubApiToken), params),
-            catch: GitHubApiError.from
-          })
+      const request = Effect.fn('GitHubApi.request')(function* <
+        TData,
+        TVariables extends Variables
+      >(params: RequestParams<TData, TVariables>) {
+        const body = yield* Effect.tryPromise({
+          try: signal =>
+            fetchGraphql(
+              graphqlEndpoint,
+              secret(gitHubApiToken),
+              params,
+              signal
+            ),
+          catch: GitHubApiError.from
+        })
+
+        // `options || {errorThrows: true}` let `options: {}` silently disable it.
+        const errorThrows = params.options?.errorThrows ?? true
+        if (body.errors && errorThrows) {
+          return yield* GitHubApiError.fromGraphqlErrors(body.errors)
+        }
+        return body
       })
+
+      return GitHubApi.of({request})
     })
   )
 }

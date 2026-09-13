@@ -3,7 +3,6 @@ import * as Schema from 'effect/Schema'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
 
-import {getCloudflareLogEndpoint} from '@/common/cloudflare/api/endpoints.js'
 import {
   CreateGitHubDeploymentDocument,
   CreateGitHubDeploymentStatusDocument,
@@ -11,16 +10,23 @@ import {
 } from '@/gql/graphql.js'
 
 import type {Environment} from '../environment.js'
-import type {PayloadGithubDeploymentV2} from './types.js'
 
 import {GitHubApi} from '../api/client.js'
 import {GitHubContext} from '../context.js'
+import {deploymentStatusInput} from './deployment-status.js'
+import {PayloadV2} from './types.js'
 
 // oxlint-disable-next-line unicorn/throw-new-error
 class GitHubDeploymentError extends Schema.TaggedError<GitHubDeploymentError>()(
   'GitHubDeploymentError',
   {message: Schema.String}
 ) {}
+
+/**
+ * Writes the payload through the same schema `getPayload` decodes it with, so
+ * the two cannot drift.
+ */
+const encodePayload = Schema.encodeSync(Schema.fromJsonString(PayloadV2))
 
 export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
   function* ({
@@ -37,11 +43,7 @@ export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
     const {repo} = yield* GitHubContext
     const github = yield* GitHubApi
 
-    const payload: PayloadGithubDeploymentV2 = {
-      cloudflare: {id, projectName, accountId},
-      url,
-      commentId
-    }
+    const cloudflare = {id, projectName, accountId}
 
     /**
      * Create GitHub Deployment. `autoMerge` and `requiredContexts` are off:
@@ -55,13 +57,13 @@ export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
           refId,
           environment: name,
           description: `Cloudflare Pages Deployment: ${id}`,
-          payload: JSON.stringify(payload),
+          payload: encodePayload({url, commentId, cloudflare}),
           autoMerge: false,
           requiredContexts: []
         }
       }
     })
-    const gitHubDeploymentId = deployment.data.createDeployment?.deployment?.id
+    const gitHubDeploymentId = deployment.data?.createDeployment?.deployment?.id
 
     if (!gitHubDeploymentId) {
       return yield* new GitHubDeploymentError({
@@ -69,20 +71,16 @@ export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
       })
     }
 
-    /**
-     * Update GitHub Deployment Status
-     */
     yield* github.request({
       query: CreateGitHubDeploymentStatusDocument,
       variables: {
-        input: {
+        input: deploymentStatusInput({
           deploymentId: gitHubDeploymentId,
           environment: name,
-          environmentUrl: url,
-          logUrl: getCloudflareLogEndpoint({id, accountId, projectName}),
-          state: DeploymentStatusState.Success,
-          autoInactive: false
-        }
+          url,
+          cloudflare,
+          state: DeploymentStatusState.Success
+        })
       }
     })
   }

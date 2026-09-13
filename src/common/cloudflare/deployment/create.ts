@@ -10,8 +10,6 @@ import {CommonInputs} from '@/common/inputs.js'
 import {writeSummary} from '@/common/summary.js'
 import {logVerbatim} from '@/common/utils.js'
 
-import type {StatusOptions} from './status.js'
-
 import {getCloudflareDeploymentAlias} from './get.js'
 import {statusCloudflareDeployment} from './status.js'
 import {wranglerPagesDeploy} from './wrangler.js'
@@ -38,8 +36,7 @@ export const createCloudflareDeployment = Effect.fn(
   directory,
   workingDirectory = '',
   branch: branchOverride,
-  wranglerVersion,
-  statusOptions
+  wranglerVersion
 }: {
   accountId: string
   projectName: string
@@ -47,11 +44,6 @@ export const createCloudflareDeployment = Effect.fn(
   workingDirectory?: string
   branch?: string
   wranglerVersion: string
-  /**
-   * Poll tuning, forwarded to `statusCloudflareDeployment`. Tests use it to
-   * poll without delay.
-   */
-  statusOptions?: StatusOptions
 }) {
   const {cloudflareApiToken} = yield* CommonInputs
   const {repo, branch: contextBranch, sha: commitHash} = yield* GitHubContext
@@ -75,10 +67,11 @@ export const createCloudflareDeployment = Effect.fn(
   /**
    * Poll the deployment wrangler created until it reaches a terminal stage.
    */
-  const {deployment, status} = yield* statusCloudflareDeployment(
-    {accountId, projectName, deploymentId},
-    statusOptions
-  )
+  const {deployment, status} = yield* statusCloudflareDeployment({
+    accountId,
+    projectName,
+    deploymentId
+  })
 
   setOutput('id', deployment.id)
   setOutput('url', deployment.url)

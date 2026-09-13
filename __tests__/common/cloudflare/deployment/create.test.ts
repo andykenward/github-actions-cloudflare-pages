@@ -4,6 +4,7 @@ import path from 'node:path'
 import {info, setOutput, summary} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
+import * as Layer from 'effect/Layer'
 import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
@@ -27,6 +28,7 @@ import {
   MOCK_DEPLOYMENT_ID,
   setMockApi
 } from '@/tests/helpers/api.js'
+import {NoPollDelay} from '@/tests/helpers/layers.js'
 import {wranglerReporting} from '@/tests/helpers/wrangler.js'
 
 const WRANGLER_VERSION = '4.0.0'
@@ -34,8 +36,11 @@ const WRANGLER_VERSION = '4.0.0'
 vi.mock(import('@/common/utils.js'))
 vi.mock(import('@actions/core'))
 
+/** The real services, polling without delay. */
+const TestLayer = Layer.mergeAll(CommonLayer, NoPollDelay)
+
 /**
- * `it.live`: status polling sleeps on the real clock between polls.
+ * `it.live`: the HTTP mocks reply on the real clock, so the polls do too.
  * `Effect.fn` returns an anonymous function, so the title is a string.
  */
 // oxlint-disable-next-line vitest/prefer-describe-function-title
@@ -85,7 +90,7 @@ describe('createCloudflareDeployment', () => {
 
         expect(setOutput).not.toHaveBeenCalled()
         expect(summary.addTable).not.toHaveBeenCalled()
-      }).pipe(Effect.provide(CommonLayer))
+      }).pipe(Effect.provide(TestLayer))
     )
 
     it.live('fails with the Cloudflare error when polling fails', () =>
@@ -120,7 +125,7 @@ describe('createCloudflareDeployment', () => {
         expect(info).toHaveBeenCalledWith('success')
         expect(setOutput).not.toHaveBeenCalled()
         expect(summary.addTable).not.toHaveBeenCalled()
-      }).pipe(Effect.provide(CommonLayer))
+      }).pipe(Effect.provide(TestLayer))
     )
 
     it.live('handles success', () =>
@@ -151,8 +156,7 @@ describe('createCloudflareDeployment', () => {
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
           wranglerVersion: WRANGLER_VERSION,
-          workingDirectory: 'mock-working-directory',
-          statusOptions: {pollInterval: 0}
+          workingDirectory: 'mock-working-directory'
         })
 
         expect(execFileAsync).toHaveBeenCalledWith(
@@ -247,7 +251,7 @@ describe('createCloudflareDeployment', () => {
           ],
           ['Wrangler Output:', `success`]
         ])
-      }).pipe(Effect.provide(CommonLayer))
+      }).pipe(Effect.provide(TestLayer))
     )
 
     it.live('handles branch override', () =>
@@ -278,8 +282,7 @@ describe('createCloudflareDeployment', () => {
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
           wranglerVersion: WRANGLER_VERSION,
-          branch: 'pr-123',
-          statusOptions: {pollInterval: 0}
+          branch: 'pr-123'
         })
 
         expect(execFileAsync).toHaveBeenCalledWith(
@@ -312,7 +315,7 @@ describe('createCloudflareDeployment', () => {
         expect(execFileAsync).toHaveBeenCalledTimes(1)
         expect(info).toHaveBeenCalledWith('success')
         expect(summary.addTable).toHaveBeenCalledTimes(1)
-      }).pipe(Effect.provide(CommonLayer))
+      }).pipe(Effect.provide(TestLayer))
     )
 
     it.live('escapes pull request controlled values in the summary', () =>
@@ -360,8 +363,7 @@ describe('createCloudflareDeployment', () => {
           accountId: 'mock-cloudflare-account-id',
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
-          wranglerVersion: WRANGLER_VERSION,
-          statusOptions: {pollInterval: 0}
+          wranglerVersion: WRANGLER_VERSION
         })
 
         const table = vi.mocked(summary.addTable).mock.calls[0]?.[0]
@@ -377,7 +379,7 @@ describe('createCloudflareDeployment', () => {
           'Wrangler Output:',
           '&lt;b&gt;wrangler&lt;/b&gt;'
         ])
-      }).pipe(Effect.provide(CommonLayer))
+      }).pipe(Effect.provide(TestLayer))
     )
   })
 })
@@ -424,12 +426,11 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
         accountId: 'mock-cloudflare-account-id',
         projectName: 'mock-cloudflare-project-name',
         directory: 'mock-directory',
-        wranglerVersion: WRANGLER_VERSION,
-        statusOptions: {pollInterval: 0}
+        wranglerVersion: WRANGLER_VERSION
       })
 
       expect(deployment.id).toBe(RESPONSE_DEPLOYMENTS.result[0]?.id)
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(Effect.provide(TestLayer))
   )
 
   it.live('removes the output file when wrangler fails', () =>
@@ -460,7 +461,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
         message: 'Command failed'
       })
       expect(existsSync(path.dirname(outputFile))).toBe(false)
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(Effect.provide(TestLayer))
   )
 
   it.live(
@@ -485,8 +486,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
             directory: 'mock-directory',
-            wranglerVersion: WRANGLER_VERSION,
-            statusOptions: {pollInterval: 0}
+            wranglerVersion: WRANGLER_VERSION
           })
         )
 
@@ -495,7 +495,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
           'id',
           RESPONSE_DEPLOYMENTS.result[0]?.id
         )
-      }).pipe(Effect.provide(CommonLayer))
+      }).pipe(Effect.provide(TestLayer))
   )
 
   it.live.each([
@@ -520,8 +520,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
             directory: 'mock-directory',
-            wranglerVersion: WRANGLER_VERSION,
-            statusOptions: {pollInterval: 0}
+            wranglerVersion: WRANGLER_VERSION
           })
         )
 
@@ -537,6 +536,6 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
           'Status:',
           `<strong>${status.toUpperCase()}</strong>`
         ])
-      }).pipe(Effect.provide(CommonLayer))
+      }).pipe(Effect.provide(TestLayer))
   )
 })

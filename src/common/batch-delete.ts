@@ -11,10 +11,10 @@ import type {CloudflareApi} from './cloudflare/api/client.js'
 import type {GitHubDeployment} from './github/deployment/get.js'
 import type {PayloadV1Inputs} from './inputs.js'
 
-import {getCloudflareLogEndpoint} from './cloudflare/api/endpoints.js'
 import {deleteCloudflareDeployment} from './cloudflare/deployment/delete.js'
 import {errorMessage} from './errors.js'
-import {GitHubApi} from './github/api/client.js'
+import {formatGraphqlErrors, GitHubApi} from './github/api/client.js'
+import {deploymentStatusInput} from './github/deployment/deployment-status.js'
 import {getPayload} from './github/deployment/payload.js'
 
 /** Log prefix for the delete action. */
@@ -73,14 +73,13 @@ export const batchDelete: (
     const github = yield* GitHubApi
 
     const variables = {
-      status: {
+      status: deploymentStatusInput({
         deploymentId: deployment.node_id,
         environment: deployment.environment,
-        environmentUrl: url,
-        logUrl: getCloudflareLogEndpoint(cloudflare),
-        state: DeploymentStatusState.Inactive,
-        autoInactive: false
-      },
+        url,
+        cloudflare,
+        state: DeploymentStatusState.Inactive
+      }),
       deployment: {id: deployment.node_id}
     }
 
@@ -96,29 +95,29 @@ export const batchDelete: (
           options: {errorThrows: false}
         })
 
+    const warn = (what: string): void => {
+      warning(`${PREFIX} ${what}: ${formatGraphqlErrors(errors ?? [])}`)
+    }
+
     // No `data`, or an error without a `path`, means GitHub ran none of the
     // mutations: a rate limit, or a request it rejected as invalid.
     if (!data || errors?.some(error => !error.path)) {
-      warning(
-        `${PREFIX} Error deleting GitHub deployment: ${JSON.stringify(errors)}`
-      )
+      warn('GitHub ran none of the deployment mutations')
       return row({success: false, error: 'Deleting GitHub deployment failed'})
     }
 
     if (errors?.some(error => error.path?.[0] === 'createDeploymentStatus')) {
-      warning(
-        `${PREFIX} Error updating GitHub deployment status: ${JSON.stringify(errors)}`
-      )
+      warn('Error updating GitHub deployment status')
       return row({
         success: false,
         error: 'Updating GitHub deployment status failed'
       })
     }
 
+    // The status was set; a later mutation (deleting the deployment or its
+    // comment) failed, which the row tolerates.
     if (errors) {
-      warning(
-        `${PREFIX} Error deleting GitHub deployment: ${JSON.stringify(errors)}`
-      )
+      warn('Error deleting GitHub deployment or its comment')
     }
     info(`${PREFIX} GitHub Deployment Deleted: ${deployment.node_id}`)
 

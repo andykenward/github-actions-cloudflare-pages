@@ -25,7 +25,7 @@ paths:
 ## Effect tests
 
 - Use `it.effect` from `@effect/vitest`. Import only `it` from it and `describe` / `expect` / `vi` from `vitest`, so `vi.mock` hoisting still applies.
-- Use `it.live` where code sleeps (status polling) — `it.effect` runs on a `TestClock`.
+- Use `it.live` where code sleeps on the real clock — `it.effect` runs on a `TestClock`. The polling tests are `it.live` because undici replies in real time; to run the real 10-minute ceiling, stub `CloudflareApi` (no HTTP) under `it.effect`, `Effect.forkChild` the poll and `TestClock.adjust(Duration.minutes(10))` (`status.test.ts`; `TestClock` comes from `effect/testing`).
 - Provide what the test needs: `CommonLayer` (`src/common/layer.ts`), `DeployLayer` / `DeleteLayer`, one `X.layer`, or a stub `Layer.succeed(Service, Service.of({...}))` provided _inside_ the real layer (`Effect.provide(stub), Effect.provide(DeleteLayer)`) to take its place.
 - Assert failures with `const error = yield* Effect.flip(effect)`. Write `it.effect.each` cases as objects.
 - `effecttsgo/strict-effect-provide` and `multiple-effect-provide` are off for tests — each test is an entry point.
@@ -44,7 +44,7 @@ paths:
 - To prove a `CloudflareApi` request aborts on interrupt, pass a request that records its `signal` and settles only on abort, `Effect.forkChild` it, `Fiber.interrupt`, then assert `signal.aborted` (`__tests__/common/cloudflare/api/fetch-result.test.ts`) — no undici interceptor needed.
 - Never execute wrangler — mock `execFileAsync`. It receives the effect's `AbortSignal` as `options.signal`, so a mock that settles only on abort stands in for a long upload (`__tests__/deploy/main.test.ts`).
 - A mock that only resolves exercises the commit-hash fallback. To exercise polling by id, have it first append a `pages-deploy-detailed` line to `options.env.WRANGLER_OUTPUT_FILE_PATH` (`wranglerReporting` in `__tests__/helpers/wrangler.ts`).
-- Poll without delay by passing a zero `pollInterval`: as the `statusOptions` field of `createCloudflareDeployment`'s argument, or as the second argument of `statusCloudflareDeployment(target, options)`.
+- Poll without delay by providing `NoPollDelay` (`__tests__/helpers/layers.ts`, a `PollInterval` of zero) alongside `CommonLayer`; override the ceiling with `Layer.succeed(PollTimeout, …)`.
 
 ## Conventions
 

@@ -11,7 +11,7 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 5. **No `console.log`** — use `@actions/core` (`info`, `debug`, `warning`, `error`). Only entry points call `setFailed` (via `reportFailure`); a helper that calls it before failing duplicates the error annotation.
 6. **Changed an exported function → update its tests.** Tests for `bin/` scripts go in `__tests__/scripts/` (vitest excludes `__tests__/bin/`).
 7. **Run scripts with `node`**, or `tsx` when they transitively import `__generated__/gql/` (its enums and `.js` imports break type-stripping).
-8. **`dist/` is committed and is what runs.** After changing bundled code, run `pnpm run build` and commit `dist/` — CI fails on any diff.
+8. **`dist/` is committed and is what runs.** After changing bundled code, run `pnpm run build` and commit `dist/` — CI fails on any diff. On a rebase or stash pop, `dist/` always conflicts: take main's (`git checkout origin/main -- dist`), continue, then rebuild and amend — never hand-merge it.
 9. **Every commit must be signed** — rulesets reject unsigned commits on all branches. If signing fails with `communication with agent failed`, ask the user to unlock their SSH agent and retry; never set `commit.gpgsign=false`.
 10. **`repos/` is read-only vendored source** — never edit it or import from it.
 
