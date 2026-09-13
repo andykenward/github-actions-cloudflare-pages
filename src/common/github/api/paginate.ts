@@ -19,18 +19,6 @@ export type PaginateResponse<T extends keyof PaginatingEndpoints> = DataType<
   PaginatingEndpoints[T]['response']
 >
 
-const paginate = async <T extends keyof PaginatingEndpoints>(
-  token: string,
-  endpoint: T,
-  options: PaginatingEndpoints[T]['parameters']
-): Promise<PaginateResponse<T>> =>
-  // TODO:@andykenward #32 fix types in @octokit-next/core or @octokit/plugin-paginate-rest . Can then remove the ts-expect-error & as Promise<PaginateResponse<T>>
-  // oxlint-disable-next-line typescript/ban-ts-comment
-  // @ts-expect-error
-  new (Octokit.withPlugins([paginateRest]))({
-    auth: token
-  })['paginate'](endpoint, options) as Promise<PaginateResponse<T>>
-
 /**
  * GitHub's REST API, for the one call that is not GraphQL: listing
  * deployments. Kept apart from `GitHubApi` so that Octokit is bundled only
@@ -39,6 +27,7 @@ const paginate = async <T extends keyof PaginatingEndpoints>(
 export class GitHubRestApi extends Context.Service<
   GitHubRestApi,
   {
+    /** Every page of `endpoint`. Interrupting the effect aborts the request. */
     paginate<T extends keyof PaginatingEndpoints>(
       endpoint: T,
       options: PaginatingEndpoints[T]['parameters']
@@ -47,15 +36,31 @@ export class GitHubRestApi extends Context.Service<
 >()(
   'github-actions-cloudflare-pages/common/github/api/paginate/GitHubRestApi'
 ) {
+  /** The client is built once, with the token, like `CloudflareApi`. */
   static readonly layer = Layer.effect(
     GitHubRestApi,
     Effect.gen(function* () {
       const {gitHubApiToken} = yield* CommonInputs
+      // TODO:@andykenward #32 fix types in @octokit-next/core or @octokit/plugin-paginate-rest . Can then remove both ts-expect-error & as Promise<PaginateResponse<T>>
+      // oxlint-disable-next-line typescript/ban-ts-comment
+      // @ts-expect-error
+      const octokit = new (Octokit.withPlugins([paginateRest]))({
+        auth: secret(gitHubApiToken)
+      })
 
       return GitHubRestApi.of({
-        paginate: (endpoint, options) =>
+        paginate: <T extends keyof PaginatingEndpoints>(
+          endpoint: T,
+          options: PaginatingEndpoints[T]['parameters']
+        ) =>
           Effect.tryPromise({
-            try: () => paginate(secret(gitHubApiToken), endpoint, options),
+            try: signal =>
+              // oxlint-disable-next-line typescript/ban-ts-comment
+              // @ts-expect-error
+              octokit.paginate(endpoint, {
+                ...options,
+                request: {signal}
+              }) as Promise<PaginateResponse<T>>,
             catch: GitHubApiError.from
           })
       })

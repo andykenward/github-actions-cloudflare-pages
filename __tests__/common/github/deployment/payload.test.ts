@@ -4,7 +4,7 @@ import {describe, expect, vi} from 'vitest'
 
 import type {Payload} from '@/common/github/deployment/payload.js'
 import type {
-  PayloadGithubDeployment,
+  PayloadGithubDeploymentV1,
   PayloadGithubDeploymentV2
 } from '@/common/github/deployment/types.js'
 
@@ -21,7 +21,7 @@ const PAYLOAD_V1 = {
   cloudflareId: 'cf-id',
   commentId: 'comment-id-123',
   url: 'https://example.com'
-} as const satisfies PayloadGithubDeployment
+} as const satisfies PayloadGithubDeploymentV1
 
 const PAYLOAD_V2 = {
   cloudflare: {

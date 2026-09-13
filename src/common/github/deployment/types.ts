@@ -20,6 +20,6 @@ export const PayloadV2 = Schema.Struct({
   })
 })
 
-export type PayloadGithubDeployment = typeof PayloadV1.Type
+export type PayloadGithubDeploymentV1 = typeof PayloadV1.Type
 
 export type PayloadGithubDeploymentV2 = typeof PayloadV2.Type

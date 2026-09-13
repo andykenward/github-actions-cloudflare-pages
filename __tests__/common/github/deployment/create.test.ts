@@ -33,8 +33,11 @@ const GITHUB_DEPLOYMENT_ID = 'DE_kwDOJn0nrM5U35aT'
 
 const COMMENT_ID = 'IC_kwDOJn0nrM5vY7Xq'
 
-/** The JSON the delete action later decodes to find what to remove. */
-const PAYLOAD = `{"cloudflare":{"id":"206e215c-33b3-4ce4-adf4-7fc6c9b65483","projectName":"cloudflare-pages-action","accountId":"mock-cloudflare-account-id"},"url":"https://206e215c.cloudflare-pages-action-a5z.pages.dev","commentId":"${COMMENT_ID}"}`
+/**
+ * The JSON the delete action later decodes to find what to remove — written
+ * through `PayloadV2`, so its keys come in the schema's order.
+ */
+const PAYLOAD = `{"url":"https://206e215c.cloudflare-pages-action-a5z.pages.dev","commentId":"${COMMENT_ID}","cloudflare":{"id":"206e215c-33b3-4ce4-adf4-7fc6c9b65483","accountId":"mock-cloudflare-account-id","projectName":"cloudflare-pages-action"}}`
 
 const create = (commentId: string | undefined) =>
   createGitHubDeployment({
@@ -89,7 +92,7 @@ describe('createGitHubDeployment', () => {
       // A `push`, or a pull request that was closed: no comment was posted.
       commentId: undefined,
       payload:
-        '{"cloudflare":{"id":"206e215c-33b3-4ce4-adf4-7fc6c9b65483","projectName":"cloudflare-pages-action","accountId":"mock-cloudflare-account-id"},"url":"https://206e215c.cloudflare-pages-action-a5z.pages.dev"}'
+        '{"url":"https://206e215c.cloudflare-pages-action-a5z.pages.dev","cloudflare":{"id":"206e215c-33b3-4ce4-adf4-7fc6c9b65483","accountId":"mock-cloudflare-account-id","projectName":"cloudflare-pages-action"}}'
     }
   ])(
     'records the deployment and marks it successful (commentId: $commentId)',

@@ -1,4 +1,5 @@
 import {info} from '@actions/core'
+import * as Arr from 'effect/Array'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
@@ -37,14 +38,15 @@ const pullRequestNodeId = Effect.fn('pullRequestNodeId')(function* (
     options: {errorThrows: false}
   })
 
-  if (errors) {
+  // `[].every` is true, so an empty array must not read as not found.
+  if (errors && Arr.isArrayNonEmpty(errors)) {
     // GitHub answers a pull request that doesn't exist with a NOT_FOUND error.
     return yield* errors.every(error => error.type === 'NOT_FOUND')
       ? new CommentError({message: notFound})
-      : GitHubApiError.from(new Error(JSON.stringify(errors)))
+      : GitHubApiError.fromGraphqlErrors(errors)
   }
 
-  const nodeId = data.repository?.pullRequest?.id
+  const nodeId = data?.repository?.pullRequest?.id
   if (!nodeId) {
     return yield* new CommentError({message: notFound})
   }
@@ -81,7 +83,7 @@ export const pullRequestToComment = Effect.fn('pullRequestToComment')(
           }
         })
 
-        const nodeId = pullRequest.data.repository?.pullRequests.nodes?.[0]?.id
+        const nodeId = pullRequest.data?.repository?.pullRequests.nodes?.[0]?.id
         if (!nodeId) {
           return yield* new CommentError({
             message: 'No pull request node id found for workflow_dispatch event'
@@ -160,7 +162,22 @@ export const addComment = Effect.fn('addComment')(function* (
   const {sha, event} = yield* GitHubContext
   const github = yield* GitHubApi
 
-  const rawBody = `## Cloudflare Pages Deployment\n**Event Name:** ${event.eventName}\n**Environment:** ${deployment.environment}\n**Project:** ${deployment.project_name}\n**Built with commit:** ${sha}\n**Preview URL:** ${deployment.url}\n**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}\n\n### Wrangler Output\n${output}`
+  // Wrangler's output goes in a code block, so nothing in it is read as
+  // markdown.
+  const rawBody = [
+    '## Cloudflare Pages Deployment',
+    `**Event Name:** ${event.eventName}`,
+    `**Environment:** ${deployment.environment}`,
+    `**Project:** ${deployment.project_name}`,
+    `**Built with commit:** ${sha}`,
+    `**Preview URL:** ${deployment.url}`,
+    `**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}`,
+    '',
+    '### Wrangler Output',
+    '```',
+    output,
+    '```'
+  ].join('\n')
 
   const comment = yield* github.request({
     query: AddPullRequestCommentDocument,
@@ -168,5 +185,5 @@ export const addComment = Effect.fn('addComment')(function* (
       input: {subjectId: pullRequestId, body: rawBody}
     }
   })
-  return comment.data.addComment?.commentEdge?.node?.id
+  return comment.data?.addComment?.commentEdge?.node?.id
 })

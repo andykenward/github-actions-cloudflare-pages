@@ -10,7 +10,7 @@ import {errorMessage} from '@/common/errors.js'
 import {GitHubRestApi} from '@/common/github/api/paginate.js'
 import {getGitHubDeployments} from '@/common/github/deployment/get.js'
 import {code, escapeHtml, link} from '@/common/html.js'
-import {CommonInputs, PayloadV1Inputs} from '@/common/inputs.js'
+import {PayloadV1Inputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
 import {writeSummary} from '@/common/summary.js'
 
@@ -30,7 +30,7 @@ const HEADING = 'andykenward/github-actions-cloudflare-pages'
 // oxlint-disable-next-line unicorn/throw-new-error
 class DeleteError extends Schema.TaggedError<DeleteError>()('DeleteError', {
   message: Schema.String,
-  cause: Schema.Defect()
+  cause: Schema.optional(Schema.Defect())
 }) {
   static readonly from = (cause: unknown): DeleteError =>
     new DeleteError({
@@ -48,14 +48,12 @@ const writeDeleteSummary = (build: (summary: Summary) => Summary) =>
 
 /**
  * Every service `run` needs, built from the action inputs and runner env.
- * `CommonInputs.layer` is also inside `CommonLayer`, but it is built once: a
- * layer is memoised by reference across a single `Effect.provide`.
+ * `GitHubRestApi` takes its inputs from `CommonLayer`, which stays exposed.
  */
 export const DeleteLayer = Layer.mergeAll(
-  CommonLayer,
+  GitHubRestApi.layer.pipe(Layer.provideMerge(CommonLayer)),
   DeleteInputs.layer,
-  PayloadV1Inputs.layer,
-  GitHubRestApi.layer.pipe(Layer.provide(CommonInputs.layer))
+  PayloadV1Inputs.layer
 )
 
 /** See the note on `run` in `src/deploy/main.ts`. */
@@ -125,8 +123,7 @@ export const run = Effect.gen(function* () {
   const failed = values.filter(value => !value.success).length
   if (failed > 0) {
     return yield* new DeleteError({
-      message: `${PREFIX} ${failed} of ${values.length} deployments failed to delete; see the job summary for details`,
-      cause: undefined
+      message: `${PREFIX} ${failed} of ${values.length} deployments failed to delete; see the job summary for details`
     })
   }
 })

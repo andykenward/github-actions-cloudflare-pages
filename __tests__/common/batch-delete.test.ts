@@ -102,13 +102,13 @@ describe('batchDelete', () => {
               data: {...data, deleteIssueComment: {clientMutationId: null}},
               errors
             }
-          : // `GraphqlResponse` types `data` as always present; GitHub omits it.
-            ({errors} as never)
+          : // GitHub omits `data` when it ran nothing.
+            {errors}
       )
     } else {
       mockApi.interceptGithub(
         {query: DeactivateAndDeleteGitHubDeploymentDocument, variables},
-        withData ? {data, errors} : ({errors} as never)
+        withData ? {data, errors} : {errors}
       )
     }
   }
@@ -196,7 +196,7 @@ describe('batchDelete', () => {
         success: true
       })
       expect(core.warning).toHaveBeenCalledWith(
-        `delete - Error deleting GitHub deployment: ${JSON.stringify(errors)}`
+        `delete - Error deleting GitHub deployment or its comment: ${JSON.stringify(errors)}`
       )
     }).pipe(Effect.provide(TestLayer))
   )
@@ -217,7 +217,7 @@ describe('batchDelete', () => {
         error: 'Deleting GitHub deployment failed'
       })
       expect(core.warning).toHaveBeenCalledWith(
-        `delete - Error deleting GitHub deployment: ${JSON.stringify(errors)}`
+        `delete - GitHub ran none of the deployment mutations: ${JSON.stringify(errors)}`
       )
     }).pipe(Effect.provide(TestLayer))
   )

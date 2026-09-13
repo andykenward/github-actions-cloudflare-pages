@@ -5,7 +5,7 @@ import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
 
 import type {GitHubApiError, GitHubGraphQLError} from './api/client.js'
 
-import {GitHubApi} from './api/client.js'
+import {formatGraphqlErrors, GitHubApi} from './api/client.js'
 import {GitHubContext} from './context.js'
 
 const PREFIX = `GitHub Environment:`
@@ -60,18 +60,18 @@ export const checkEnvironment = Effect.fn('checkEnvironment')(function* (
   // its path, alongside `environment: null` — which the next check reports.
   if (response.errors?.some(error => !isEnvironmentNotFound(error))) {
     return yield* new EnvironmentError({
-      message: `${PREFIX} Errors - ${JSON.stringify(response.errors)}`
+      message: `${PREFIX} Errors - ${formatGraphqlErrors(response.errors)}`
     })
   }
 
-  const environment = response.data.repository?.environment
+  const environment = response.data?.repository?.environment
   if (!environment) {
     return yield* new EnvironmentError({
       message: `${PREFIX} Not created for ${name}`
     })
   }
 
-  const refId = response.data.repository?.ref?.id
+  const refId = response.data?.repository?.ref?.id
   if (!refId) {
     return yield* new EnvironmentError({
       message: `${PREFIX} No ref id ${name}`

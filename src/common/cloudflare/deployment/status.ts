@@ -1,4 +1,5 @@
 import {debug} from '@actions/core'
+import * as Context from 'effect/Context'
 import * as Duration from 'effect/Duration'
 import * as Effect from 'effect/Effect'
 import * as Predicate from 'effect/Predicate'
@@ -15,14 +16,24 @@ import {findCloudflareLatestDeployment, getCloudflareDeployment} from './get.js'
 
 const ERROR_KEY = `Status Of Deployment:`
 
-/** Matches the previous fixed 1s poll cadence. */
-const DEFAULT_POLL_INTERVAL = Duration.seconds(1)
+/**
+ * How long to wait between polls. A `Context.Reference` rather than an
+ * argument: production never overrides it, and tests provide zero instead of
+ * threading a test-only option through `createCloudflareDeployment`.
+ */
+export const PollInterval = Context.Reference<Duration.Duration>(
+  'github-actions-cloudflare-pages/common/cloudflare/deployment/status/PollInterval',
+  {defaultValue: () => Duration.seconds(1)}
+)
 
 /**
- * The previous implementation had no ceiling at all — it span until the
- * GitHub Actions job timeout killed it.
+ * The ceiling on polling. Without one the action spun until the job timeout
+ * killed it; README and `action.yml` document the 10 minutes.
  */
-const DEFAULT_POLL_TIMEOUT = Duration.minutes(10)
+export const PollTimeout = Context.Reference<Duration.Duration>(
+  'github-actions-cloudflare-pages/common/cloudflare/deployment/status/PollTimeout',
+  {defaultValue: () => Duration.minutes(10)}
+)
 
 type DeploymentStatus = Exclude<
   PagesDeployment['latest_stage']['status'],
@@ -113,11 +124,6 @@ const pollOnce = Effect.fn('pollOnce')(function* (
 const isPending = (error: unknown): boolean =>
   Predicate.isTagged(error, 'DeploymentPendingError')
 
-export type StatusOptions = {
-  pollInterval?: Duration.Input
-  pollTimeout?: Duration.Input
-}
-
 /**
  * Polls the deployment until it reaches a terminal stage — by id when wrangler
  * reported one, otherwise the newest deployment for the context commit.
@@ -125,11 +131,11 @@ export type StatusOptions = {
  */
 export const statusCloudflareDeployment = Effect.fn(
   'statusCloudflareDeployment'
-)((target: DeploymentTarget, options?: StatusOptions) => {
-  const pollInterval = options?.pollInterval ?? DEFAULT_POLL_INTERVAL
-  const pollTimeout = options?.pollTimeout ?? DEFAULT_POLL_TIMEOUT
+)(function* (target: DeploymentTarget) {
+  const pollInterval = yield* PollInterval
+  const pollTimeout = yield* PollTimeout
 
-  return pollOnce(target).pipe(
+  return yield* pollOnce(target).pipe(
     Effect.retry({
       while: isPending,
       schedule: Schedule.spaced(pollInterval).pipe(
@@ -147,7 +153,7 @@ export const statusCloudflareDeployment = Effect.fn(
       ['DeploymentPendingError', 'TimeoutError'],
       () =>
         new DeploymentPollTimeoutError({
-          message: `${ERROR_KEY} timed out after ${Duration.format(Duration.fromInputUnsafe(pollTimeout))} waiting for the deploy stage to complete.`
+          message: `${ERROR_KEY} timed out after ${Duration.format(pollTimeout)} waiting for the deploy stage to complete.`
         })
     )
   )

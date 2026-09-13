@@ -13,7 +13,7 @@ paths:
 - Write a helper as `Effect.fn('name')`, or as an Effect value when it takes no arguments (`effecttsgo/lazy-effect`). Take dependencies from services, never module state.
 - Services are `Context.Service` classes with a `static readonly layer`: `CommonInputs` and `PayloadV1Inputs` (`src/common/inputs.ts`), `DeployInputs`, `DeleteInputs`, `GitHubContext` (`src/common/github/context.ts`), `GitHubApi` (`src/common/github/api/client.ts`), `GitHubRestApi` (`src/common/github/api/paginate.ts`), `CloudflareApi` (`src/common/cloudflare/api/client.ts`). API clients capture their token when the layer is built.
 - Layers: `CommonLayer` (`src/common/layer.ts`) = inputs, context, both API clients. `DeployLayer` (`src/deploy/main.ts`) adds `DeployInputs`. `DeleteLayer` (`src/delete/main.ts`) adds `DeleteInputs`, `PayloadV1Inputs` and `GitHubRestApi`.
-- Memoise in the layer, not the module: `Effect.provide` builds each layer once per run and shares it by reference (`CommonInputs.layer` appears twice in `DeleteLayer` and is built once — a test asserts it). With no module-level caches, a failed build never leaks into the next test. Use `Effect.cached` only to defer layer work: `PayloadV1Inputs.cloudflare` parses the optional V1 fallback inputs on first use.
+- Memoise in the layer, not the module: `Effect.provide` builds each layer once per run and shares it by reference. A layer that needs `CommonInputs` gets `CommonLayer` via `Layer.provideMerge` (`GitHubRestApi.layer` in `DeleteLayer`), not `CommonInputs.layer` again — a test asserts it is built once. With no module-level caches, a failed build never leaks into the next test. Use `Effect.cached` only to defer layer work: `PayloadV1Inputs.cloudflare` parses the optional V1 fallback inputs on first use.
 - Export `run` as an `Effect` value that requires the services, so tests can provide their own layers.
 - `GitHubContext.branch` is required: the delete action lists deployments by it, and GitHub lists the whole repository's when `ref` is omitted.
 
@@ -42,7 +42,9 @@ paths:
 ## Decoding, polling, summaries
 
 - Decode without throwing: `Schema.decodeUnknownOption(S)(x)` (`src/common/github/deployment/payload.ts`, `src/common/github/workflow-event/workflow-event.ts`); parse JSON text with `parseJson()` (`src/common/json.ts`), which yields `undefined` when invalid. Payload types derive from their schemas in `src/common/github/deployment/types.ts` — change the schema, not a hand-written type.
+- Tunables that production never overrides (the poll interval and ceiling) are `Context.Reference`s with a default (`PollInterval`, `PollTimeout` in `src/common/cloudflare/deployment/status.ts`), so tests provide `Layer.succeed(PollInterval, Duration.zero)` instead of threading options through call sites.
 - Poll (`src/common/cloudflare/deployment/status.ts`) with `Effect.retry` (`Schedule.spaced` + `Schedule.upTo`; `while` stays a plain boolean predicate) inside an outer `Effect.timeout` (the real ceiling), then `Effect.catchTag(['DeploymentPendingError', 'TimeoutError'], …)` → `DeploymentPollTimeoutError`. Don't retry `CloudflareApiError`.
+- Write a value through the schema that reads it back: `createGitHubDeployment` encodes with `Schema.encodeSync(Schema.fromJsonString(PayloadV2))` and `getPayload` decodes `Schema.Union([PayloadV2, Schema.fromJsonString(PayloadV2)])`, so writer and reader share one definition.
 - Write job summaries with `writeSummary(build, XError.from)` (`src/common/summary.ts`). `summary.addTable` cells are raw HTML and carry PR-author text (commit messages, branch names), so build every cell with `src/common/html.ts`: `escapeHtml(text)`, `code(text)`, `link(href, html)` (http(s) only), `githubUrl(...segments)` (percent-encodes each segment).
 
 ## Lint

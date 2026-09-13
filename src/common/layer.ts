@@ -7,7 +7,9 @@ import {CommonInputs} from './inputs.js'
 
 /**
  * The services both actions use. The API clients need the inputs and context
- * to build, and `provideMerge` exposes all four.
+ * to build, and `provideMerge` exposes all four — so a layer that also needs
+ * `CommonInputs` (e.g. `GitHubRestApi.layer`) is provided this layer, rather
+ * than `CommonInputs.layer` again.
  */
 export const CommonLayer = Layer.mergeAll(
   GitHubApi.layer,

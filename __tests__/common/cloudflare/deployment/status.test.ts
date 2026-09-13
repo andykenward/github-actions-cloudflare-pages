@@ -1,11 +1,20 @@
 import {it} from '@effect/vitest'
+import * as Duration from 'effect/Duration'
 import * as Effect from 'effect/Effect'
+import * as Fiber from 'effect/Fiber'
+import * as Layer from 'effect/Layer'
+import {TestClock} from 'effect/testing'
 import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
-import {statusCloudflareDeployment} from '@/common/cloudflare/deployment/status.js'
+import {CloudflareApi} from '@/common/cloudflare/api/client.js'
+import {
+  PollTimeout,
+  statusCloudflareDeployment
+} from '@/common/cloudflare/deployment/status.js'
+import {GitHubContext} from '@/common/github/context.js'
 import {CommonLayer} from '@/common/layer.js'
 import RESPONSE_DEPLOYMENTS_IDLE from '@/responses/api.cloudflare.com/pages/deployments/deployments.idle.response.json' with {type: 'json'}
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
@@ -17,11 +26,25 @@ import {
   MOCK_PROJECT_NAME,
   setMockApi
 } from '@/tests/helpers/api.js'
+import {NoPollDelay} from '@/tests/helpers/layers.js'
 
 vi.mock(import('@actions/core'))
 
-/** Poll with no delay; the interceptors assert the call count instead. */
-const POLL_OPTIONS = {pollInterval: 0} as const
+/** The real services, polling without delay. */
+const TestLayer = Layer.mergeAll(CommonLayer, NoPollDelay)
+
+/**
+ * A `CloudflareApi` that always lists the deployment as idle, so every poll
+ * is pending and only the ceiling ends it. With no HTTP involved the polls
+ * sleep on the `TestClock`, which can run the real 10 minutes.
+ */
+const IdleCloudflare = Layer.succeed(
+  CloudflareApi,
+  CloudflareApi.of({
+    result: () => Effect.succeed(RESPONSE_DEPLOYMENTS_IDLE.result as never),
+    success: () => Effect.void
+  })
+)
 
 const API_ENDPOINT = {
   accountId: MOCK_ACCOUNT_ID,
@@ -51,7 +74,7 @@ const withLatestStage = (
 })
 
 /**
- * `it.live`: polling sleeps on the real clock between polls.
+ * `it.live`: the HTTP mocks reply on the real clock, so the polls do too.
  * `Effect.fn` returns an anonymous function, so the title is a string.
  */
 // oxlint-disable-next-line vitest/prefer-describe-function-title
@@ -76,16 +99,14 @@ describe('statusCloudflareDeployment', () => {
         RESPONSE_DEPLOYMENTS
       )
 
-      const {deployment, status} = yield* statusCloudflareDeployment(
-        API_ENDPOINT,
-        POLL_OPTIONS
-      )
+      const {deployment, status} =
+        yield* statusCloudflareDeployment(API_ENDPOINT)
 
       expect(status).toBe('success')
       expect(deployment.id).toMatchInlineSnapshot(
         `"206e215c-33b3-4ce4-adf4-7fc6c9b65483"`
       )
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(Effect.provide(TestLayer))
   )
 
   it.live('polls until deploy stage succeeds', () =>
@@ -103,13 +124,10 @@ describe('statusCloudflareDeployment', () => {
         RESPONSE_DEPLOYMENTS
       )
 
-      const {status} = yield* statusCloudflareDeployment(
-        API_ENDPOINT,
-        POLL_OPTIONS
-      )
+      const {status} = yield* statusCloudflareDeployment(API_ENDPOINT)
 
       expect(status).toBe('success')
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(Effect.provide(TestLayer))
   )
 
   it.live('keeps polling while the deploy stage is still active', () =>
@@ -126,13 +144,10 @@ describe('statusCloudflareDeployment', () => {
         RESPONSE_DEPLOYMENTS
       )
 
-      const {status} = yield* statusCloudflareDeployment(
-        API_ENDPOINT,
-        POLL_OPTIONS
-      )
+      const {status} = yield* statusCloudflareDeployment(API_ENDPOINT)
 
       expect(status).toBe('success')
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(Effect.provide(TestLayer))
   )
 
   it.live('keeps polling after an earlier stage succeeds', () =>
@@ -149,13 +164,10 @@ describe('statusCloudflareDeployment', () => {
         RESPONSE_DEPLOYMENTS
       )
 
-      const {status} = yield* statusCloudflareDeployment(
-        API_ENDPOINT,
-        POLL_OPTIONS
-      )
+      const {status} = yield* statusCloudflareDeployment(API_ENDPOINT)
 
       expect(status).toBe('success')
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(Effect.provide(TestLayer))
   )
 
   it.live('polls when the deployment is not registered yet', () =>
@@ -176,14 +188,12 @@ describe('statusCloudflareDeployment', () => {
         RESPONSE_DEPLOYMENTS
       )
 
-      const {deployment, status} = yield* statusCloudflareDeployment(
-        API_ENDPOINT,
-        POLL_OPTIONS
-      )
+      const {deployment, status} =
+        yield* statusCloudflareDeployment(API_ENDPOINT)
 
       expect(status).toBe('success')
       expect(deployment.id).toBe(registered?.id)
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(Effect.provide(TestLayer))
   )
 
   it.live('times out when a poll is still waiting for its reply', () =>
@@ -196,19 +206,34 @@ describe('statusCloudflareDeployment', () => {
         .interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, RESPONSE_DEPLOYMENTS)
         .delay(200)
 
-      const error = yield* Effect.flip(
-        statusCloudflareDeployment(API_ENDPOINT, {
-          pollInterval: 0,
-          pollTimeout: 50
-        })
-      )
+      const error = yield* Effect.flip(statusCloudflareDeployment(API_ENDPOINT))
 
       expect(error).toMatchObject({
         _tag: 'DeploymentPollTimeoutError',
         message:
           'Status Of Deployment: timed out after 50ms waiting for the deploy stage to complete.'
       })
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(
+      Effect.provide(Layer.succeed(PollTimeout, Duration.millis(50))),
+      Effect.provide(TestLayer)
+    )
+  )
+
+  it.effect('times out after the default 10 minutes of pending polls', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      const fiber = yield* Effect.forkChild(
+        Effect.flip(statusCloudflareDeployment(API_ENDPOINT))
+      )
+      yield* TestClock.adjust(Duration.minutes(10))
+
+      expect(yield* Fiber.join(fiber)).toMatchObject({
+        _tag: 'DeploymentPollTimeoutError',
+        message:
+          'Status Of Deployment: timed out after 10m waiting for the deploy stage to complete.'
+      })
+    }).pipe(Effect.provide(Layer.mergeAll(IdleCloudflare, GitHubContext.layer)))
   )
 
   it.live.each([
@@ -225,13 +250,10 @@ describe('statusCloudflareDeployment', () => {
           withLatestStage(stage, status)
         )
 
-        const result = yield* statusCloudflareDeployment(
-          API_ENDPOINT,
-          POLL_OPTIONS
-        )
+        const result = yield* statusCloudflareDeployment(API_ENDPOINT)
 
         expect(result.status).toBe(status)
-      }).pipe(Effect.provide(CommonLayer))
+      }).pipe(Effect.provide(TestLayer))
   )
 
   it.live('fails without retrying when the api returns an error', () =>
@@ -244,15 +266,13 @@ describe('statusCloudflareDeployment', () => {
         404
       )
 
-      const error = yield* Effect.flip(
-        statusCloudflareDeployment(API_ENDPOINT, POLL_OPTIONS)
-      )
+      const error = yield* Effect.flip(statusCloudflareDeployment(API_ENDPOINT))
 
       expect(error).toMatchObject({
         _tag: 'CloudflareApiError',
         message: `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.`
       })
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(Effect.provide(TestLayer))
   )
 })
 
@@ -293,13 +313,13 @@ describe('statusCloudflareDeployment with a deployment id', () => {
         deploymentResponse('success')
       )
 
-      const {deployment, status} = yield* statusCloudflareDeployment(
-        {...API_ENDPOINT, deploymentId: MOCK_DEPLOYMENT_ID},
-        POLL_OPTIONS
-      )
+      const {deployment, status} = yield* statusCloudflareDeployment({
+        ...API_ENDPOINT,
+        deploymentId: MOCK_DEPLOYMENT_ID
+      })
 
       expect(status).toBe('success')
       expect(deployment.id).toBe(RESPONSE_DEPLOYMENTS.result[0]?.id)
-    }).pipe(Effect.provide(CommonLayer))
+    }).pipe(Effect.provide(TestLayer))
   )
 })
