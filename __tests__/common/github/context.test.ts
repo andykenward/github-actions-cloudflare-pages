@@ -16,9 +16,10 @@ const context = Effect.gen(function* () {
 describe(GitHubContext, () => {
   it.effect('returns context for `pull_request`', () =>
     Effect.gen(function* () {
-      expect.assertions(6)
+      expect.assertions(7)
 
-      const {repo, event, branch, sha, graphqlEndpoint, ref} = yield* context
+      const {repo, event, branch, sha, graphqlEndpoint, apiUrl, ref} =
+        yield* context
 
       /** Repo */
       expect(repo).toMatchInlineSnapshot(`
@@ -35,19 +36,21 @@ describe(GitHubContext, () => {
       expect(branch).toBe(`mock-github-head-ref`)
       expect(sha).toBe(`mock-github-sha`)
       expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
+      expect(apiUrl).toBe(`https://api.github.com`)
       expect(ref).toBe(`mock-github-head-ref`)
     })
   )
 
   it.effect('returns context for `workflow_dispatch`', () =>
     Effect.gen(function* () {
-      expect.assertions(6)
+      expect.assertions(7)
 
       stubTestEnvVars('workflow_dispatch')
 
       vi.stubEnv('GITHUB_HEAD_REF', '')
 
-      const {repo, event, branch, sha, graphqlEndpoint, ref} = yield* context
+      const {repo, event, branch, sha, graphqlEndpoint, apiUrl, ref} =
+        yield* context
 
       expect(repo).toStrictEqual({
         node_id: 'MDEwOlJlcG9zaXRvcnkxNzI3MzA1MQ==',
@@ -60,6 +63,7 @@ describe(GitHubContext, () => {
       expect(branch).toBe(`mock-github-ref-name`)
       expect(sha).toBe(`mock-github-sha`)
       expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
+      expect(apiUrl).toBe(`https://api.github.com`)
       expect(ref).toBe(`refs/heads/master`)
     })
   )
@@ -92,16 +96,18 @@ describe(GitHubContext, () => {
     })
   )
 
-  it.effect('falls back to api.github.com without GITHUB_GRAPHQL_URL', () =>
+  it.effect('falls back to api.github.com without the API URL variables', () =>
     Effect.gen(function* () {
-      expect.assertions(1)
+      expect.assertions(2)
 
-      // Running the built action locally; every runner sets it.
+      // Running the built action locally; every runner sets them.
       vi.stubEnv('GITHUB_GRAPHQL_URL', '')
+      vi.stubEnv('GITHUB_API_URL', '')
 
-      expect((yield* context).graphqlEndpoint).toBe(
-        'https://api.github.com/graphql'
-      )
+      const {graphqlEndpoint, apiUrl} = yield* context
+
+      expect(graphqlEndpoint).toBe('https://api.github.com/graphql')
+      expect(apiUrl).toBe('https://api.github.com')
     })
   )
 
@@ -122,11 +128,11 @@ describe(GitHubContext, () => {
 
   it.effect('returns context for `workflow_run`', () =>
     Effect.gen(function* () {
-      expect.assertions(6)
+      expect.assertions(7)
 
       stubTestEnvVars('workflow_run')
 
-      const {event, branch, sha, graphqlEndpoint, ref} = yield* context
+      const {event, branch, sha, graphqlEndpoint, apiUrl, ref} = yield* context
 
       expect(event.payload).toBeDefined()
       expect(event.eventName).toBe('workflow_run')
@@ -134,6 +140,7 @@ describe(GitHubContext, () => {
       expect(branch).toBe('master')
       expect(sha).toBe('3484a3fb816e0859fd6e1cea078d76385ff50625')
       expect(graphqlEndpoint).toBe(`https://api.github.com/graphql`)
+      expect(apiUrl).toBe(`https://api.github.com`)
       expect(ref).toBe('master')
     })
   )
@@ -165,7 +172,7 @@ describe(GitHubContext, () => {
           vi.mocked(isDebug).mockReturnValue(false)
         })
 
-        const {repo, branch, sha, graphqlEndpoint, ref} = yield* context
+        const {repo, branch, sha, graphqlEndpoint, apiUrl, ref} = yield* context
 
         expect(debug).toHaveBeenCalledWith(
           `context: ${JSON.stringify({
@@ -174,6 +181,7 @@ describe(GitHubContext, () => {
             branch,
             sha,
             graphqlEndpoint,
+            apiUrl,
             ref
           })}`
         )

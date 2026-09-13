@@ -109,7 +109,7 @@ const fetchGraphql = async <TData, TVariables extends Variables>(
 /**
  * The GitHub GraphQL API, authenticated with the `github-token` input. The
  * token and endpoint are read once, when the layer is built. The one REST call
- * (listing deployments) is `GitHubRestApi` in `paginate.ts`.
+ * (listing deployments) is `GitHubRestApi.paginate` in `paginate.ts`.
  */
 export class GitHubApi extends Context.Service<
   GitHubApi,

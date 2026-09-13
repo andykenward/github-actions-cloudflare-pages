@@ -2,7 +2,6 @@ import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import {describe, expect, vi} from 'vitest'
 
-import type {Payload} from '@/common/github/deployment/payload.js'
 import type {
   PayloadGithubDeploymentV1,
   PayloadGithubDeploymentV2
@@ -34,7 +33,7 @@ const PAYLOAD_V2 = {
 } as const satisfies PayloadGithubDeploymentV2
 
 /** A fresh `PayloadV1Inputs` per call, so env stubbed beforehand is read. */
-const decode = (payload: Payload) =>
+const decode = (payload: unknown) =>
   getPayload(payload).pipe(Effect.provide(PayloadV1Inputs.layer))
 
 // `Effect.fn` returns an anonymous function, so the title is a string.
@@ -119,7 +118,7 @@ describe('getPayload', () => {
 
     // Each payload lacks exactly one field of the shape it resembles, so a
     // schema that stopped requiring that field would let its case decode.
-    const BAD_PAYLOADS: Array<{missing: string; payload: Payload}> = [
+    const BAD_PAYLOADS: Array<{missing: string; payload: unknown}> = [
       {missing: 'every field', payload: {invalidData: 'invalid'}},
       {missing: 'v1 url', payload: {cloudflareId: id}},
       {missing: 'v2 url', payload: {cloudflare: {id, accountId, projectName}}},

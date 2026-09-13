@@ -48,9 +48,9 @@ export const getMockApi = () => {
     mockPoolCloudflare.intercept({path, method, headers: CLOUDFLARE_HEADERS})
 
   /**
-   * A GitHub REST `GET`, as `GitHubRestApi.paginate` (Octokit) sends. undici
-   * matches `query` exactly. The reply is typed JSON — Octokit parses a body
-   * only then — plus any `responseHeaders` (e.g. `link`).
+   * A GitHub REST `GET`, as `GitHubRestApi.paginate` sends. undici matches
+   * `query` exactly. The reply is JSON plus any `responseHeaders` (e.g. the
+   * `link` header the client follows to the next page).
    */
   const interceptGithubRest = (
     request: {

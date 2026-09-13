@@ -1,69 +1,129 @@
-import type {PaginatingEndpoints} from '@octokit/plugin-paginate-rest'
-
-import {Octokit} from '@octokit-next/core'
-import {paginateRest} from '@octokit/plugin-paginate-rest'
 import * as Context from 'effect/Context'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 
 import {CommonInputs, secret} from '@/common/inputs.js'
 
+import {GitHubContext} from '../context.js'
 import {GitHubApiError} from './client.js'
 
-/**
- * @see {@link https://github.com/octokit/plugin-paginate-rest.js/blob/44d8b933b8fb495fb7b8d95661452f23b482ea55/src/types.ts#L55}
- */
-type DataType<T> = 'data' extends keyof T ? T['data'] : unknown
+/** Query parameters; an `undefined` value leaves the parameter out. */
+export type Query = Record<string, string | number | undefined>
 
-export type PaginateResponse<T extends keyof PaginatingEndpoints> = DataType<
-  PaginatingEndpoints[T]['response']
->
+/** A page of a list endpoint and, from its `Link` header, the next page's URL. */
+type Page = {items: ReadonlyArray<unknown>; next: string | undefined}
+
+/**
+ * The URL of the page after this one, from the `Link` header GitHub sends
+ * with a paginated response, e.g.
+ * `<https://api.github.com/…?page=2>; rel="next", <…?page=5>; rel="last"`.
+ */
+const nextLink = (link: string | null): string | undefined =>
+  link?.match(/<([^>]+)>;\s*rel="next"/)?.[1]
+
+const fetchPage = async (
+  url: string,
+  token: string,
+  signal: AbortSignal
+): Promise<Page> => {
+  const response = await fetch(url, {
+    headers: {
+      authorization: `bearer ${token}`,
+      accept: 'application/vnd.github+json',
+      'x-github-api-version': '2022-11-28'
+    },
+    signal
+  })
+
+  const body: unknown = await response.json().catch(() => {
+    throw new Error(
+      `GitHub API returned a non-JSON response (${response.status})`
+    )
+  })
+
+  /**
+   * A REST error body carries the reason as `message` (e.g. `Resource not
+   * accessible by integration`). The status stays on the error, as the cause
+   * a caller can inspect.
+   */
+  if (!response.ok) {
+    const message =
+      typeof body === 'object' &&
+      body !== null &&
+      'message' in body &&
+      typeof body.message === 'string'
+        ? body.message
+        : `GitHub API request failed: ${response.status} ${response.statusText}`
+
+    throw Object.assign(new Error(message), {status: response.status})
+  }
+
+  if (!Array.isArray(body)) {
+    throw new TypeError(`GitHub API returned a non-array response (${url})`)
+  }
+
+  return {items: body, next: nextLink(response.headers.get('link'))}
+}
 
 /**
  * GitHub's REST API, for the one call that is not GraphQL: listing
- * deployments. Kept apart from `GitHubApi` so that Octokit is bundled only
- * into the delete action, the one action that provides this layer.
+ * deployments, which GraphQL can't filter by branch. Provided by `DeleteLayer`
+ * only, the one action that lists them.
  */
 export class GitHubRestApi extends Context.Service<
   GitHubRestApi,
   {
-    /** Every page of `endpoint`. Interrupting the effect aborts the request. */
-    paginate<T extends keyof PaginatingEndpoints>(
-      endpoint: T,
-      options: PaginatingEndpoints[T]['parameters']
-    ): Effect.Effect<PaginateResponse<T>, GitHubApiError>
+    /**
+     * Every item of every page of the list endpoint at `path` (relative to
+     * the API URL), following `Link` headers. Interrupting the effect aborts
+     * the request in flight.
+     */
+    paginate(
+      path: string,
+      query: Query
+    ): Effect.Effect<ReadonlyArray<unknown>, GitHubApiError>
   }
 >()(
   'github-actions-cloudflare-pages/common/github/api/paginate/GitHubRestApi'
 ) {
-  /** The client is built once, with the token, like `CloudflareApi`. */
+  /** The token and API URL are read once, when the layer is built. */
   static readonly layer = Layer.effect(
     GitHubRestApi,
     Effect.gen(function* () {
       const {gitHubApiToken} = yield* CommonInputs
-      // TODO:@andykenward #32 fix types in @octokit-next/core or @octokit/plugin-paginate-rest . Can then remove both ts-expect-error & as Promise<PaginateResponse<T>>
-      // oxlint-disable-next-line typescript/ban-ts-comment
-      // @ts-expect-error
-      const octokit = new (Octokit.withPlugins([paginateRest]))({
-        auth: secret(gitHubApiToken)
-      })
+      const {apiUrl} = yield* GitHubContext
 
-      return GitHubRestApi.of({
-        paginate: <T extends keyof PaginatingEndpoints>(
-          endpoint: T,
-          options: PaginatingEndpoints[T]['parameters']
-        ) =>
-          Effect.tryPromise({
-            try: signal =>
-              // oxlint-disable-next-line typescript/ban-ts-comment
-              // @ts-expect-error
-              octokit.paginate(endpoint, {
-                ...options,
-                request: {signal}
-              }) as Promise<PaginateResponse<T>>,
+      const paginate = Effect.fn('GitHubRestApi.paginate')(function* (
+        path: string,
+        query: Query
+      ) {
+        // Not `new URL(path, apiUrl)`: a leading `/` would drop a GHES
+        // prefix such as `/api/v3`.
+        const url = new URL(`${apiUrl.replace(/\/+$/, '')}${path}`)
+        for (const [key, value] of Object.entries(query)) {
+          if (value !== undefined) {
+            url.searchParams.set(key, String(value))
+          }
+        }
+
+        const items: Array<unknown> = []
+        let next: string | undefined = url.href
+
+        while (next) {
+          // A closure can't narrow the loop variable, so pin this page's URL.
+          const current = next
+          const page: Page = yield* Effect.tryPromise({
+            try: signal => fetchPage(current, secret(gitHubApiToken), signal),
             catch: GitHubApiError.from
           })
+          items.push(...page.items)
+          next = page.next
+        }
+
+        return items
       })
+
+      return GitHubRestApi.of({paginate})
     })
   )
 }
