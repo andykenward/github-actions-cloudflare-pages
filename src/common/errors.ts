@@ -1,6 +1,7 @@
 import {debug, setFailed} from '@actions/core'
 import * as Cause from 'effect/Cause'
 import * as Config from 'effect/Config'
+import * as Predicate from 'effect/Predicate'
 import * as Schema from 'effect/Schema'
 import * as SchemaIssue from 'effect/SchemaIssue'
 
@@ -51,7 +52,8 @@ export const errorMessage = (cause: unknown): string => {
   if (cause instanceof Error) {
     return cause.message
   }
-  return String(cause)
+  // A rejected plain object (e.g. a response body) would read `[object Object]`.
+  return Predicate.isObject(cause) ? JSON.stringify(cause) : String(cause)
 }
 
 /**

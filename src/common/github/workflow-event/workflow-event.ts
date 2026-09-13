@@ -19,7 +19,7 @@ const decodeEventName = Schema.decodeUnknownOption(Schema.Literals(EVENT_NAMES))
  * JSON parse is guarded, so a truncated or malformed file reports itself rather
  * than surfacing as an opaque `SyntaxError`.
  */
-const getPayload = (): unknown => {
+const readEventPayloadFile = (): unknown => {
   const path = process.env.GITHUB_EVENT_PATH
 
   // The runner always writes the file. Without it every later payload read
@@ -53,7 +53,9 @@ export const getWorkflowEvent = () => {
   }
 
   /** Assume that the payload matches the eventName */
-  const payload = getPayload() as WorkflowEventPayload<typeof eventName>
+  const payload = readEventPayloadFile() as WorkflowEventPayload<
+    typeof eventName
+  >
 
   if (isDebug()) {
     debug(`eventName: ${eventName}`)

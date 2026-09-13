@@ -17,14 +17,17 @@ const ENTITIES: Record<string, string> = {
 export const escapeHtml = (text: string): string =>
   text.replaceAll(/[&<>"']/g, char => ENTITIES[char] ?? char)
 
+/** A `summary.addTable` header row. */
+export const headerRow = (
+  ...names: Array<string>
+): Array<{data: string; header: true}> =>
+  names.map(data => ({data, header: true}))
+
 /** `text` in a `<code>` element. */
 export const code = (text: string): string => `<code>${escapeHtml(text)}</code>`
 
 const isHttpUrl = (href: string): boolean => {
-  if (!URL.canParse(href)) {
-    return false
-  }
-  const {protocol} = new URL(href)
+  const protocol = URL.parse(href)?.protocol
   return protocol === 'https:' || protocol === 'http:'
 }
 

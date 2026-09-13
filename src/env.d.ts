@@ -65,7 +65,7 @@ declare namespace NodeJS {
      *
      * Example: https://api.github.com/graphql.
      */
-    GITHUB_GRAPHQL_URL: string
+    GITHUB_GRAPHQL_URL?: string
 
     /**
      * The owner and repository name.

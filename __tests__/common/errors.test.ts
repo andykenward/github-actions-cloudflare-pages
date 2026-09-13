@@ -79,6 +79,14 @@ describe(errorMessage, () => {
 
     expect(errorMessage('boom')).toBe('boom')
   })
+
+  test('serialises a plain object instead of [object Object]', () => {
+    expect.assertions(1)
+
+    expect(errorMessage({status: 403, message: 'Forbidden'})).toBe(
+      '{"status":403,"message":"Forbidden"}'
+    )
+  })
 })
 
 describe(reportFailure, () => {

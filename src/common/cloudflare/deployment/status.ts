@@ -76,43 +76,33 @@ const pollOnce = Effect.fn('pollOnce')(function* (
   DeploymentPendingError | CloudflareApiError,
   CloudflareApi | GitHubContext
 > {
+  const {deploymentId, ...endpoint} = target
   const deployment =
-    target.deploymentId === undefined
-      ? yield* findCloudflareLatestDeployment(target)
-      : yield* getCloudflareDeployment({
-          ...target,
-          deploymentId: target.deploymentId
-        })
+    deploymentId === undefined
+      ? yield* findCloudflareLatestDeployment(endpoint)
+      : yield* getCloudflareDeployment({...endpoint, deploymentId})
 
   if (deployment === undefined) {
     return yield* new DeploymentPendingError({reason: 'not-registered'})
   }
 
   const {latest_stage} = deployment
+  const {name, status} = latest_stage
 
-  debug(JSON.stringify(latest_stage))
+  debug(`${ERROR_KEY} ${JSON.stringify(latest_stage)}`)
 
-  switch (latest_stage.status) {
-    case 'failure':
-    case 'canceled': {
-      return {deployment, status: latest_stage.status}
-    }
-    case 'success': {
-      if (latest_stage.name === 'deploy') {
-        return {deployment, status: latest_stage.status}
-      }
-      return yield* new DeploymentPendingError({
-        reason: `stage '${latest_stage.name}' is ${latest_stage.status}`
-      })
-    }
-    // `idle`, or `active`: the stage is still running — wrangler, too, only
-    // treats a deploy as complete on `success`.
-    default: {
-      return yield* new DeploymentPendingError({
-        reason: `stage '${latest_stage.name}' is ${latest_stage.status}`
-      })
-    }
+  // Any stage failing or canceled ends the deploy; only the `deploy` stage
+  // succeeding completes it. Anything else — an earlier stage done, or a
+  // stage `idle` / `active` — is still running, as wrangler also treats it.
+  if (status === 'failure' || status === 'canceled') {
+    return {deployment, status}
   }
+  if (status === 'success' && name === 'deploy') {
+    return {deployment, status}
+  }
+  return yield* new DeploymentPendingError({
+    reason: `stage '${name}' is ${status}`
+  })
 })
 
 /**

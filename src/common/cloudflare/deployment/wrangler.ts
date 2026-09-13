@@ -25,7 +25,7 @@ export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
  */
 export const WRANGLER_OUTPUT_FILE_PATH = 'WRANGLER_OUTPUT_FILE_PATH'
 
-const ERROR_KEY = `Create Deployment:`
+const ERROR_KEY = `Wrangler:`
 
 // oxlint-disable-next-line unicorn/throw-new-error
 class WranglerError extends Schema.TaggedError<WranglerError>()(
@@ -36,19 +36,21 @@ class WranglerError extends Schema.TaggedError<WranglerError>()(
   }
 ) {
   /**
-   * A rejected `execFile` is an `Error` whose message already includes
-   * wrangler's stderr. Anything else is reported by its `stderr`, if it has
-   * one.
+   * Wrangler's own stderr is the message when there is one: a rejected
+   * `execFile` carries it, and its `Error` message only prepends the command
+   * line. A spawn failure has an empty stderr, so its `Error` message
+   * (e.g. `ENOENT`) is used instead.
    */
   static readonly from = (cause: unknown): WranglerError => {
-    if (cause instanceof Error) {
-      return new WranglerError({message: errorMessage(cause), cause})
-    }
     if (
       Predicate.hasProperty(cause, 'stderr') &&
-      Predicate.isString(cause.stderr)
+      Predicate.isString(cause.stderr) &&
+      cause.stderr !== ''
     ) {
       return new WranglerError({message: cause.stderr, cause})
+    }
+    if (cause instanceof Error) {
+      return new WranglerError({message: errorMessage(cause), cause})
     }
     return new WranglerError({message: `${ERROR_KEY} unknown error`, cause})
   }
@@ -70,7 +72,7 @@ const decodeEntry = Schema.decodeUnknownOption(
 /** The deployment id in wrangler's output file contents, if it wrote one. */
 export const deploymentIdFrom = (output: string): string | undefined =>
   pipe(
-    output.split('\n'),
+    output.split(/\r?\n/),
     Arr.findFirst(line => decodeEntry(line)),
     Option.map(entry => entry.deployment_id),
     Option.getOrUndefined

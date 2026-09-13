@@ -92,6 +92,19 @@ describe(GitHubContext, () => {
     })
   )
 
+  it.effect('falls back to api.github.com without GITHUB_GRAPHQL_URL', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // Running the built action locally; every runner sets it.
+      vi.stubEnv('GITHUB_GRAPHQL_URL', '')
+
+      expect((yield* context).graphqlEndpoint).toBe(
+        'https://api.github.com/graphql'
+      )
+    })
+  )
+
   it.effect('fails when no branch can be found', () =>
     Effect.gen(function* () {
       expect.assertions(1)

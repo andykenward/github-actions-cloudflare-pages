@@ -9,7 +9,7 @@ import {batchDelete, PREFIX} from '@/common/batch-delete.js'
 import {errorMessage} from '@/common/errors.js'
 import {GitHubRestApi} from '@/common/github/api/paginate.js'
 import {getGitHubDeployments} from '@/common/github/deployment/get.js'
-import {code, escapeHtml, link} from '@/common/html.js'
+import {code, escapeHtml, headerRow, link} from '@/common/html.js'
 import {PayloadV1Inputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
 import {writeSummary} from '@/common/summary.js'
@@ -17,10 +17,8 @@ import {writeSummary} from '@/common/summary.js'
 import {DeleteInputs} from './inputs.js'
 
 /**
- * Bounds the fan-out across Cloudflare and GitHub. Previously every deployment
- * was deleted at once via `Promise.all`, which on a busy repo issued one
- * Cloudflare DELETE plus two or three GitHub GraphQL calls per deployment
- * simultaneously (now one of each).
+ * Bounds the fan-out: each deletion is one Cloudflare DELETE and one GitHub
+ * GraphQL request, so this many run at once on a busy repository.
  */
 const DELETE_CONCURRENCY = 5
 
@@ -60,14 +58,13 @@ export const DeleteLayer = Layer.mergeAll(
 export const run = Effect.gen(function* () {
   const {keepLatest, gitHubEnvironment} = yield* DeleteInputs
 
-  let deployments = yield* getGitHubDeployments({
-    environment: gitHubEnvironment
-  })
+  const listed = yield* getGitHubDeployments({environment: gitHubEnvironment})
 
-  if (deployments.length > 0 && keepLatest) {
+  if (listed.length > 0 && keepLatest) {
     info(`${PREFIX} Keeping latest ${keepLatest} deployments`)
-    deployments = deployments.slice(keepLatest)
   }
+  // Listed newest first, so the first `keepLatest` are the ones to keep.
+  const deployments = keepLatest ? listed.slice(keepLatest) : listed
 
   if (deployments.length === 0) {
     info(`${PREFIX} No deployments to delete`)
@@ -94,14 +91,14 @@ export const run = Effect.gen(function* () {
       .addHeading('Deleted Deployments')
       .addBreak()
       .addTable([
-        [
-          {data: 'GitHub Deployment Id', header: true},
-          {data: 'Success', header: true},
-          {data: 'Environment', header: true},
-          {data: 'Environment Url', header: true},
-          {data: 'Comment Id', header: true},
-          {data: 'Error', header: true}
-        ],
+        headerRow(
+          'GitHub Deployment Id',
+          'Success',
+          'Environment',
+          'Environment Url',
+          'Comment Id',
+          'Error'
+        ),
         ...values.map(value => [
           escapeHtml(value.deploymentId),
           value.success ? '✅' : '❌',
@@ -109,8 +106,8 @@ export const run = Effect.gen(function* () {
           value.environmentUrl
             ? link(value.environmentUrl, code(value.environmentUrl))
             : '',
-          escapeHtml(value.commentId || ''),
-          escapeHtml(value.error || '')
+          escapeHtml(value.commentId ?? ''),
+          escapeHtml(value.error ?? '')
         ])
       ])
   )
@@ -118,7 +115,7 @@ export const run = Effect.gen(function* () {
   /**
    * `batchDelete` reports per-deployment failures as rows rather than
    * failing, so the rest still get deleted. Fail the step once the summary is
-   * written — previously it exited 0 even when every deletion failed.
+   * written, so it still lists every row.
    */
   const failed = values.filter(value => !value.success).length
   if (failed > 0) {

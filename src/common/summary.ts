@@ -4,14 +4,17 @@ import * as Effect from 'effect/Effect'
 export type Summary = typeof summary
 
 /**
- * Adds to the job summary with `build` and writes it. `catchError` maps a
+ * Adds to the job summary with `build` and writes it. `mapError` turns a
  * failed write into the caller's error.
  */
-export const writeSummary = <E>(
+export const writeSummary = Effect.fn('writeSummary')(function* <E>(
   build: (summary: Summary) => Summary,
-  catchError: (cause: unknown) => E
-): Effect.Effect<void, E> =>
-  Effect.tryPromise({
-    try: () => build(summary).write(),
-    catch: catchError
-  }).pipe(Effect.asVoid)
+  mapError: (cause: unknown) => E
+) {
+  yield* Effect.tryPromise({
+    try: async () => {
+      await build(summary).write()
+    },
+    catch: mapError
+  })
+})

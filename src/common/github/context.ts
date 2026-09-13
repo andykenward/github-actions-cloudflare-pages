@@ -90,7 +90,9 @@ const getGitHubContext = (): GitHubContextShape => {
       ? event.payload.workflow_run.head_sha
       : process.env.GITHUB_SHA
 
-  const graphqlEndpoint = process.env.GITHUB_GRAPHQL_URL
+  // Set on every runner; the fallback is for running the built action locally.
+  const graphqlEndpoint =
+    process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/graphql'
 
   const ref = ((): GitHubContextShape['ref'] => {
     /**
