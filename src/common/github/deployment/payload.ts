@@ -4,12 +4,9 @@ import * as Schema from 'effect/Schema'
 
 import {PayloadV1Inputs} from '@/common/inputs.js'
 
-import type {GitHubDeployment} from './get.js'
 import type {PayloadGithubDeploymentV2} from './types.js'
 
 import {PayloadV1, PayloadV2} from './types.js'
-
-export type Payload = GitHubDeployment['payload']
 
 // oxlint-disable-next-line unicorn/throw-new-error
 class PayloadError extends Schema.TaggedError<PayloadError>()('PayloadError', {
@@ -29,7 +26,7 @@ const decodeV1 = Schema.decodeUnknownOption(
 )
 
 export const getPayload = Effect.fn('getPayload')(function* (
-  payload: Payload
+  payload: unknown
 ): Effect.fn.Return<
   PayloadGithubDeploymentV2,
   PayloadError | Effect.Error<PayloadV1Inputs['Service']['cloudflare']>,

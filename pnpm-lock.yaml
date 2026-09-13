@@ -112,12 +112,6 @@ importers:
       '@actions/core':
         specifier: 3.0.1
         version: 3.0.1
-      '@octokit-next/core':
-        specifier: 3.0.0
-        version: 3.0.0
-      '@octokit/plugin-paginate-rest':
-        specifier: 15.0.0
-        version: 15.0.0(@octokit/core@7.0.8)
       effect:
         specifier: 4.0.0-rc.112
         version: 4.0.0-rc.112
@@ -1283,72 +1277,9 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@octokit-next/auth-token@3.0.0':
-    resolution: {integrity: sha512-YENAfHKcpwt2B2/srpbVFZ1tvPEKuyDxKykIjAi4bsY4+8rEdJkt9HaolQzvV9N73FDc8uPgbTtN9Y/bCo5UHw==}
-
-  '@octokit-next/core@3.0.0':
-    resolution: {integrity: sha512-UiogT4B9j4PI5VX04GvgnEXXFL1T70pI+6YSqVK/AGoLOnyhzTiF+SBtA0KCZj2ZW6OhaiHkwWIzc4KMHn+5iw==}
-
-  '@octokit-next/endpoint@3.0.0':
-    resolution: {integrity: sha512-db1JU7oxmDrhplYZBrrA1AYI2gR6wYrWcKp83hcL15kbIyQG4pOCF9gjxpjse563zXsL8P0gWG3NSWyi0sZg6Q==}
-
-  '@octokit-next/graphql@3.0.0':
-    resolution: {integrity: sha512-fgM2h1tevIxh6kUWAKkmA7jK0eNoZBrSc/Ysh+R7KqFe+uexGZaQVDle+R3MWOWaT+HjSpZIGGlTIWrpfWB7aw==}
-
-  '@octokit-next/request-error@3.0.0':
-    resolution: {integrity: sha512-/uW639Bv7DTxNnF9y5VtxF17t6hL+TGKfobfnBBuFrd72TRj9K06DbFMf7dtCNZeL1tqNpyyLW/tBp3U8a4QDw==}
-
-  '@octokit-next/request@3.0.0':
-    resolution: {integrity: sha512-zOZEv/buD6e9w30P8syX/YeZHT/qycTCsikjjd+ezyYRPimWFx8ojK7bhRpisWQLNP3uXKRmxJ4VhiUb5+0n2w==}
-
-  '@octokit-next/types@3.0.0':
-    resolution: {integrity: sha512-43XuP+2bsN/+CfMGZZBwMr5WLAS/hqkIiwfiM4V4VoRC6iMoYNyHwb5U6V7b0d5rvpDK/mDTE3fM7/GMw17oQQ==}
-
-  '@octokit/auth-token@6.0.0':
-    resolution: {integrity: sha512-P4YJBPdPSpWTQ1NU4XYdvHvXJJDxM6YwpS0FZHRgP7YFkdVxsWcpWGy/NVqlAA7PcPCnMacXlRm1y2PFZRWL/w==}
-    engines: {node: '>= 20'}
-
-  '@octokit/core@7.0.8':
-    resolution: {integrity: sha512-L7y8eYc+AwxGr2PWI4WFt1VG4TiJ66c26BD16mXpYIlXxG0SMigM1+m4aTSlYyBr5BlQsGAlz8uDCoZN4SEMcg==}
-    engines: {node: '>= 20'}
-
-  '@octokit/endpoint@11.0.5':
-    resolution: {integrity: sha512-iXa654H3yFafF/ieHkukfbgWo2rmXD2ceD0ZOtrPhw1bc3FDch1d9N/TNs0FQ1/cIbwb7kspUX8jzIs8nzb9DQ==}
-    engines: {node: '>= 20'}
-
-  '@octokit/graphql@9.0.5':
-    resolution: {integrity: sha512-bt/hm03LeU6Vy7FwTrkkC9p3XGT/lBwClglMqxBSe5/q0E5CdJTXeAqEI0vlw89/LF/G6tryTIH8HirZ3prMVg==}
-    engines: {node: '>= 20'}
-
-  '@octokit/openapi-types@28.0.0':
-    resolution: {integrity: sha512-0rFyLuyHvIj6uuZWuDslxkowFYdPXoNIkeAv4b27dzm2Tf4vGWXnPsMcxs7d65kLdMERgP3wc1AEPlqMz8e1cQ==}
-
-  '@octokit/openapi-types@29.0.1':
-    resolution: {integrity: sha512-9qWOMFNxxLokERcms42rU0PTLqQmVs7g5E41TI4mCOxmpFayD1rfC7XxOL55cG9MBZLFlC31BrR37myMKardwg==}
-
   '@octokit/openapi-webhooks@12.1.0':
     resolution: {integrity: sha512-Z5eDsLCUNbx1zHpZb1LNQirADqdMTvWJQ/deahi0ws+tWWnwHXB+Pr4jfmM9OrETS9Y5iW8ZRu1fdbudObhLrg==}
     engines: {node: ^18.20.0 || >= 20.10.0}
-
-  '@octokit/plugin-paginate-rest@15.0.0':
-    resolution: {integrity: sha512-lw9A9YL5s4VPj+VEx8uMxaxQm2YTgrPDkrLEuZuu18R8TK3oPcXF4K6t52nx6xn1RcogZC9i188sAr/4XYJaQQ==}
-    engines: {node: '>= 20'}
-    peerDependencies:
-      '@octokit/core': '>=6'
-
-  '@octokit/request-error@7.1.2':
-    resolution: {integrity: sha512-XZRuT3xZ84D3gYErI1DZvhJ33dCWVV6uzBtWkaBB4TvA/L6eOeTZodxLFVB44bBEEo3vEx7y00UfX1tBLrtLRg==}
-    engines: {node: '>= 20'}
-
-  '@octokit/request@10.0.16':
-    resolution: {integrity: sha512-A0zWGjHzISIb+9ccG8s0dq7LKO5zVpJLRICjgUb+sJxEWqn8RUHB1rD3AE51+PECvXHIxqZ1VVvs4fHTSD9nUQ==}
-    engines: {node: '>= 20'}
-
-  '@octokit/types@17.0.0':
-    resolution: {integrity: sha512-ByP1v7YL5SMveFPP7+sj0/ZuWCOOg/Chs4NafOMpq6WNIM/hdGY0S7C0TCGDBWu1aGmOxmUIhMx3cO+IdwYZ1Q==}
-
-  '@octokit/types@18.0.0':
-    resolution: {integrity: sha512-l6bAF43PNxkJp6g+W4PjoUSSkxHomXw2nOum5CTftJz1NlV3vu93NImgOYtLf6CbBUb5j+fiuzW0PPQ5JTSvZA==}
 
   '@oxc-parser/binding-android-arm-eabi@0.137.0':
     resolution: {integrity: sha512-KDs+0VPdEmasOkpuJHW9V5WCF+cvYdMQv2Jd+aJXt+cxIx12NToRQRbXaRwUEDsZw+/jMk81Ve8ZFbjUkJTOwA==}
@@ -2246,12 +2177,6 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  before-after-hook@3.0.2:
-    resolution: {integrity: sha512-Nik3Sc0ncrMK4UUdXQmAnRtzmNQTAAXmXIopizwZ1W1t8QmfJj+zL4OA2I7XPTPW5z5TDqv4hRo/JzouDJnX3A==}
-
-  before-after-hook@4.0.0:
-    resolution: {integrity: sha512-q6tR3RPqIB1pMiTRMFcZwuG5T8vwp+vUvEG0vuI6B+Rikh5BfPp2fQ82c925FOs+b0lcFQ8CFrL+KbilfZFhOQ==}
-
   blake3-wasm@2.1.5:
     resolution: {integrity: sha512-F1+K8EbfOZE49dtoPtmxUQrpXaBIl3ICvasLh+nJta0xkz+9kF/7uet9fLnwKqhDrmj6g+6K3Tw9yQPUg2ka5g==}
 
@@ -2325,10 +2250,6 @@ packages:
   common-tags@1.8.2:
     resolution: {integrity: sha512-gk/Z852D2Wtb//0I+kRFNKKE9dIIVirjoqPoA1wJU+XePVXZfGeBpk45+A1rKO4Q43prqWBNY/MiIeRLbPWUaA==}
     engines: {node: '>=4.0.0'}
-
-  content-type@3.0.0:
-    resolution: {integrity: sha512-AIi5H6p0xk5uknXcN3/rmhP8jgp69OfSe/JuKiQAFprJ7UGw7mwj7m4XcmDzlrnJDG+cGpphAINGdU3g3g7kDw==}
-    engines: {node: '>=22'}
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
@@ -2627,14 +2548,6 @@ packages:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
     engines: {node: '>=0.12.0'}
 
-  is-plain-obj@4.1.0:
-    resolution: {integrity: sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg==}
-    engines: {node: '>=12'}
-
-  is-plain-object@5.1.0:
-    resolution: {integrity: sha512-bUi/yjmtKYcRVUtWRGr0UA6xEFh2I6zWUwMrUXB3s7bmYCaZ8a+0ZsTRkrawh/mzlSD1Y0Ph8bp/U+TvBpWDNw==}
-    engines: {node: '>=0.10.0'}
-
   is-relative@1.0.0:
     resolution: {integrity: sha512-Kw/ReK0iqwKeu0MITLFuj0jbPAmEiOsIwyIXvvbfa6QfmN9pkD1M+8pdk7Rl/dTKbH34/XBFMbgD4iMJhLQbGA==}
     engines: {node: '>=0.10.0'}
@@ -2712,9 +2625,6 @@ packages:
   json-to-pretty-yaml@1.2.2:
     resolution: {integrity: sha512-rvm6hunfCcqegwYaG5T4yKJWxc9FXFgBVrcTZ4XfSVRwa5HA/Xs+vB/Eo9treYYHCeNM0nrSUr82V/M31Urc7A==}
     engines: {node: '>= 0.2.0'}
-
-  json-with-bigint@3.5.12:
-    resolution: {integrity: sha512-uwbF/wSSuOgC7qqlq27Xp5B6a2MHVug3t0idZdTqu0JnlFvgJuH7ju+KAk/J06C7GfhoYy2gnb9wz2INqcne7w==}
 
   json5@2.2.3:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
@@ -3284,9 +3194,6 @@ packages:
 
   unenv@2.0.0-rc.24:
     resolution: {integrity: sha512-i7qRCmY42zmCwnYlh9H2SvLEypEFGye5iRmEMKjcGi7zk9UquigRjFtTLz0TYqr0ZGLZhaMHl/foy1bZR+Cwlw==}
-
-  universal-user-agent@7.0.3:
-    resolution: {integrity: sha512-TmnEAEAsBJVZM/AADELsK76llnwcf9vMKuPz8JflO1frO8Lchitr0fNaN9d+Ap0BjKtqWqd/J17qeDnXh8CL2A==}
 
   unixify@1.0.0:
     resolution: {integrity: sha512-6bc58dPYhCMHHuwxldQxO3RRNZ4eCogZ/st++0+fcC1nr0jiGUtAdBJ2qzmLQWSxbtz42pWt4QQMiZ9HvZf5cg==}
@@ -4654,106 +4561,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.3
 
-  '@octokit-next/auth-token@3.0.0':
-    dependencies:
-      '@octokit-next/request': 3.0.0
-      '@octokit-next/types': 3.0.0
-
-  '@octokit-next/core@3.0.0':
-    dependencies:
-      '@octokit-next/auth-token': 3.0.0
-      '@octokit-next/endpoint': 3.0.0
-      '@octokit-next/graphql': 3.0.0
-      '@octokit-next/request': 3.0.0
-      '@octokit-next/types': 3.0.0
-      before-after-hook: 3.0.2
-      universal-user-agent: 7.0.3
-
-  '@octokit-next/endpoint@3.0.0':
-    dependencies:
-      '@octokit-next/types': 3.0.0
-      is-plain-obj: 4.1.0
-      type-fest: 4.41.0
-      universal-user-agent: 7.0.3
-
-  '@octokit-next/graphql@3.0.0':
-    dependencies:
-      '@octokit-next/request': 3.0.0
-      '@octokit-next/types': 3.0.0
-      universal-user-agent: 7.0.3
-
-  '@octokit-next/request-error@3.0.0':
-    dependencies:
-      '@octokit-next/types': 3.0.0
-
-  '@octokit-next/request@3.0.0':
-    dependencies:
-      '@octokit-next/endpoint': 3.0.0
-      '@octokit-next/types': 3.0.0
-      is-plain-object: 5.1.0
-      type-fest: 4.41.0
-      universal-user-agent: 7.0.3
-
-  '@octokit-next/types@3.0.0':
-    dependencies:
-      '@octokit-next/request-error': 3.0.0
-      before-after-hook: 3.0.2
-      type-fest: 4.41.0
-
-  '@octokit/auth-token@6.0.0': {}
-
-  '@octokit/core@7.0.8':
-    dependencies:
-      '@octokit/auth-token': 6.0.0
-      '@octokit/graphql': 9.0.5
-      '@octokit/request': 10.0.16
-      '@octokit/request-error': 7.1.2
-      '@octokit/types': 18.0.0
-      before-after-hook: 4.0.0
-      universal-user-agent: 7.0.3
-
-  '@octokit/endpoint@11.0.5':
-    dependencies:
-      '@octokit/types': 18.0.0
-      universal-user-agent: 7.0.3
-
-  '@octokit/graphql@9.0.5':
-    dependencies:
-      '@octokit/request': 10.0.16
-      '@octokit/types': 18.0.0
-      universal-user-agent: 7.0.3
-
-  '@octokit/openapi-types@28.0.0': {}
-
-  '@octokit/openapi-types@29.0.1': {}
-
   '@octokit/openapi-webhooks@12.1.0': {}
-
-  '@octokit/plugin-paginate-rest@15.0.0(@octokit/core@7.0.8)':
-    dependencies:
-      '@octokit/core': 7.0.8
-      '@octokit/types': 17.0.0
-
-  '@octokit/request-error@7.1.2':
-    dependencies:
-      '@octokit/types': 18.0.0
-
-  '@octokit/request@10.0.16':
-    dependencies:
-      '@octokit/endpoint': 11.0.5
-      '@octokit/request-error': 7.1.2
-      '@octokit/types': 18.0.0
-      content-type: 3.0.0
-      json-with-bigint: 3.5.12
-      universal-user-agent: 7.0.3
-
-  '@octokit/types@17.0.0':
-    dependencies:
-      '@octokit/openapi-types': 28.0.0
-
-  '@octokit/types@18.0.0':
-    dependencies:
-      '@octokit/openapi-types': 29.0.1
 
   '@oxc-parser/binding-android-arm-eabi@0.137.0':
     optional: true
@@ -5310,10 +5118,6 @@ snapshots:
 
   baseline-browser-mapping@2.11.21: {}
 
-  before-after-hook@3.0.2: {}
-
-  before-after-hook@4.0.0: {}
-
   blake3-wasm@2.1.5: {}
 
   brace-expansion@2.1.4:
@@ -5379,8 +5183,6 @@ snapshots:
   colorette@1.4.0: {}
 
   common-tags@1.8.2: {}
-
-  content-type@3.0.0: {}
 
   convert-source-map@2.0.0: {}
 
@@ -5661,10 +5463,6 @@ snapshots:
 
   is-number@7.0.0: {}
 
-  is-plain-obj@4.1.0: {}
-
-  is-plain-object@5.1.0: {}
-
   is-relative@1.0.0:
     dependencies:
       is-unc-path: 1.0.0
@@ -5726,8 +5524,6 @@ snapshots:
     dependencies:
       remedial: 1.0.8
       remove-trailing-spaces: 1.0.9
-
-  json-with-bigint@3.5.12: {}
 
   json5@2.2.3: {}
 
@@ -6356,8 +6152,6 @@ snapshots:
   unenv@2.0.0-rc.24:
     dependencies:
       pathe: 2.0.3
-
-  universal-user-agent@7.0.3: {}
 
   unixify@1.0.0:
     dependencies:

@@ -69,10 +69,6 @@ updates:
           - 'oxlint'
           - 'oxlint-tsgolint'
           - '@effect/tsgo'
-      octokit:
-        patterns:
-          - '@octokit/*'
-          - '@octokit-next/*'
       cloudflare:
         patterns:
           - '@cloudflare/*'

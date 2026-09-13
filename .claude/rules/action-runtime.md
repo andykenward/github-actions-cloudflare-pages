@@ -33,7 +33,7 @@ paths:
 
 - Operations are typed by `@graphql-codegen/client-preset` (`graphql.config.ts`): one `TypedDocumentString` `…Document` per operation in `__generated__/gql/graphql.ts`, so `GitHubApi.request` checks variables and results at compile time. The schema, including preview features, is `schema/github/schema.graphql`.
 - `request` fails with `GitHubApiError` on a non-2xx response and, by default, on a GraphQL `errors` array. Pass `options: {errorThrows: false}` to inspect `errors` yourself (as `batchDelete` and `checkEnvironment` do).
-- The one REST exception — `GitHubRestApi.paginate` (Octokit) for listing deployments — is provided only by `DeleteLayer`, so Octokit stays out of the deploy bundle.
+- The one REST exception — `GitHubRestApi.paginate` (`src/common/github/api/paginate.ts`, a plain `fetch` following `Link` headers) for listing deployments — is provided only by `DeleteLayer`, the one action that lists them. It stays REST because GraphQL's `deployments` has no branch filter and its `ref` is `null` once the branch is deleted. `getGitHubDeployments` decodes the list with the `GitHubDeployment` schema (`src/common/github/deployment/types.ts`) — add a field there to read it.
 
 ## Cloudflare
 

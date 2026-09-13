@@ -22,4 +22,17 @@ export const PayloadV2 = Schema.Struct({
 
 export type PayloadGithubDeploymentV1 = typeof PayloadV1.Type
 
+/**
+ * A deployment as the REST list endpoint returns it — only the fields the
+ * delete action reads; decoding drops the rest. `payload` arrives as the
+ * object GitHub stored, or as a JSON string: `getPayload` decodes either.
+ */
+export const GitHubDeployment = Schema.Struct({
+  node_id: Schema.String,
+  environment: Schema.String,
+  payload: Schema.Unknown
+})
+
+export type GitHubDeployment = typeof GitHubDeployment.Type
+
 export type PayloadGithubDeploymentV2 = typeof PayloadV2.Type

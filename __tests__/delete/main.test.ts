@@ -34,7 +34,7 @@ const listing = (deployments: Array<GitHubDeployment>) =>
   Layer.succeed(
     GitHubRestApi,
     GitHubRestApi.of({
-      paginate: () => Effect.succeed(deployments as never)
+      paginate: () => Effect.succeed(deployments)
     })
   )
 

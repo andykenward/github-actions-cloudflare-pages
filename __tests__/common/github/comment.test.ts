@@ -59,6 +59,7 @@ const withContext = (context: Pick<Context, 'event'> & Partial<Context>) =>
             branch: 'master',
             sha: 'mock-github-sha',
             graphqlEndpoint: 'https://api.github.com/graphql',
+            apiUrl: 'https://api.github.com',
             ref: 'master',
             ...context
           })

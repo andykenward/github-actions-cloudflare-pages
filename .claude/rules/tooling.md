@@ -61,3 +61,5 @@ paths:
 - `pnpm run start` runs the built deploy action with a `.env` modelled on `.env.example` (inputs as `INPUT_*` vars).
 - Set `ACTIONS_STEP_DEBUG=true` to see `debug()` output.
 - Add `debugger` statements and run vitest under the Node inspector.
+- `tsx` drops environment variables whose names aren't valid identifiers, so `INPUT_GITHUB-TOKEN=… tsx x.mts` leaves the input unset (`node` passes it through). To run `src/` code ad hoc with inputs, assign them at the top of the `.mts` file (`process.env['INPUT_GITHUB-TOKEN'] = process.env.GH_TOKEN_FOR_TEST`) or run the built `dist/` with `node`.
+- A `tsc:check` error about a variable you just declared in `src/env.d.ts` (`comes from an index signature`) is the incremental cache: delete `.cache/.tsbuildinfo` and rerun.

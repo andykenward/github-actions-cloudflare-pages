@@ -30,7 +30,8 @@ const TEST_ENV_VARS = (
   GITHUB_REPOSITORY: 'andykenward/github-actions-cloudflare-pages',
   GITHUB_REPOSITORY_ID: 'R_kgDOJn0nrA',
   GITHUB_EVENT_PATH: getPayload(eventName),
-  GITHUB_GRAPHQL_URL: 'https://api.github.com/graphql'
+  GITHUB_GRAPHQL_URL: 'https://api.github.com/graphql',
+  GITHUB_API_URL: 'https://api.github.com'
 })
 
 export const stubTestEnvVars = (

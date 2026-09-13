@@ -68,6 +68,13 @@ declare namespace NodeJS {
     GITHUB_GRAPHQL_URL?: string
 
     /**
+     * Returns the API URL.
+     *
+     * Example: https://api.github.com.
+     */
+    GITHUB_API_URL?: string
+
+    /**
      * The owner and repository name.
      *
      * Example: `octocat/Hello-World`.

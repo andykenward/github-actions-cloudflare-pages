@@ -18,6 +18,11 @@ const DeploymentsLayer = GitHubRestApi.layer.pipe(
   Layer.provideMerge(Layer.mergeAll(CommonInputs.layer, GitHubContext.layer))
 )
 
+/** The fields the action reads; decoding drops the rest of the REST record. */
+const DEPLOYMENTS = RESPONSE_DEPLOYMENTS.map(
+  ({node_id, environment, payload}) => ({node_id, environment, payload})
+)
+
 // `Effect.fn` returns an anonymous function, so the title is a string.
 // oxlint-disable-next-line vitest/prefer-describe-function-title
 describe('getGitHubDeployments', () => {
@@ -64,9 +69,33 @@ describe('getGitHubDeployments', () => {
         )
 
         expect(yield* getGitHubDeployments({environment})).toStrictEqual(
-          RESPONSE_DEPLOYMENTS
+          DEPLOYMENTS
         )
       }).pipe(Effect.provide(DeploymentsLayer))
     }
+  )
+
+  it.effect('fails naming the field a listed deployment lacks', () =>
+    Effect.gen(function* () {
+      expect.assertions(2)
+
+      mockApi.interceptGithubRest(
+        {
+          path: MOCK_GITHUB_PATH_DEPLOYMENTS,
+          query: {ref: 'mock-github-head-ref', per_page: 100}
+        },
+        RESPONSE_DEPLOYMENTS.map(({environment, payload}) => ({
+          environment,
+          payload
+        }))
+      )
+
+      const error = yield* Effect.flip(
+        getGitHubDeployments({environment: undefined})
+      )
+
+      expect(error._tag).toBe('GitHubApiError')
+      expect(error.message).toContain('node_id')
+    }).pipe(Effect.provide(DeploymentsLayer))
   )
 })

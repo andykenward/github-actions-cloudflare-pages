@@ -41,6 +41,10 @@ interface GitHubContextShape {
    * Returns the GraphQL API URL. For example: https://api.github.com/graphql.
    */
   graphqlEndpoint: string
+  /**
+   * Returns the REST API URL. For example: https://api.github.com.
+   */
+  apiUrl: string
 
   /**
    * refs/heads/feature-branch-1.
@@ -94,6 +98,7 @@ const getGitHubContext = (): GitHubContextShape => {
   // Set on every runner; the fallback is for running the built action locally.
   const graphqlEndpoint =
     process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/graphql'
+  const apiUrl = process.env.GITHUB_API_URL || 'https://api.github.com'
 
   const ref = ((): GitHubContextShape['ref'] => {
     /**
@@ -127,6 +132,7 @@ const getGitHubContext = (): GitHubContextShape => {
     branch,
     sha,
     graphqlEndpoint,
+    apiUrl,
     ref
   }
 
