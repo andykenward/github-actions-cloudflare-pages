@@ -13,8 +13,10 @@ import {createGitHubDeployment} from '@/common/github/deployment/create.js'
 import {execFileAsync} from '@/common/utils.js'
 import {DeployLayer, run} from '@/deploy/main.js'
 import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
+import {INPUT_KEY_WRANGLER_COMMENT_OUTPUT} from '@/input-keys'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {MOCK_API_PATH_DEPLOYMENTS, setMockApi} from '@/tests/helpers/api.js'
+import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 vi.mock(import('@actions/core'))
 vi.mock(import('@/common/utils.js'))
@@ -55,42 +57,47 @@ describe('deploy', () => {
     })
 
     describe('run effect', () => {
+      /** Wrangler succeeds, Cloudflare reports the deployment, GitHub has the environment. */
+      const mockSuccessfulDeploy = () => {
+        vi.mocked(execFileAsync).mockResolvedValueOnce({
+          stdout: 'success',
+          stderr: ''
+        })
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENTS,
+          RESPONSE_DEPLOYMENTS,
+          200
+        )
+        mockApi.interceptGithub(
+          {
+            query: GetEnvironmentAndRefDocument,
+            variables: {
+              owner: 'andykenward',
+              repo: 'github-actions-cloudflare-pages',
+              environmentName: 'mock-github-environment',
+              qualifiedName: 'mock-github-head-ref'
+            }
+          },
+          {
+            data: {
+              repository: {
+                environment: {
+                  name: 'unlike-dev (Preview)',
+                  id: 'EN_kwDOJn0nrM5D_l8n'
+                },
+                ref: {id: REF_ID}
+              }
+            }
+          }
+        )
+      }
+
       /** `it.live`: status polling sleeps on the real clock. */
       it.live('success', () =>
         Effect.gen(function* () {
-          expect.assertions(3)
+          expect.assertions(4)
 
-          vi.mocked(execFileAsync).mockResolvedValueOnce({
-            stdout: 'success',
-            stderr: ''
-          })
-          mockApi.interceptCloudflare(
-            MOCK_API_PATH_DEPLOYMENTS,
-            RESPONSE_DEPLOYMENTS,
-            200
-          )
-          mockApi.interceptGithub(
-            {
-              query: GetEnvironmentAndRefDocument,
-              variables: {
-                owner: 'andykenward',
-                repo: 'github-actions-cloudflare-pages',
-                environmentName: 'mock-github-environment',
-                qualifiedName: 'mock-github-head-ref'
-              }
-            },
-            {
-              data: {
-                repository: {
-                  environment: {
-                    name: 'unlike-dev (Preview)',
-                    id: 'EN_kwDOJn0nrM5D_l8n'
-                  },
-                  ref: {id: REF_ID}
-                }
-              }
-            }
-          )
+          mockSuccessfulDeploy()
 
           yield* run
 
@@ -99,6 +106,8 @@ describe('deploy', () => {
           expect(vi.mocked(addComment).mock.calls[0]?.[0]).toBe(
             'mock-pull-request-id'
           )
+          // With wrangler's output, by default.
+          expect(vi.mocked(addComment).mock.calls[0]?.[2]).toBe('success')
           expect(createGitHubDeployment).toHaveBeenCalledExactlyOnceWith({
             // oxlint-disable-next-line typescript/no-unsafe-assignment
             cloudflareDeployment: expect.objectContaining({
@@ -113,6 +122,27 @@ describe('deploy', () => {
             }
           })
         }).pipe(Effect.provide(DeployLayer))
+      )
+
+      it.live(
+        'comments without the wrangler output when wrangler-comment-output is false',
+        () => {
+          // Read when `DeployLayer` is built, so stub before providing it.
+          stubInputEnv(INPUT_KEY_WRANGLER_COMMENT_OUTPUT, 'false')
+
+          return Effect.gen(function* () {
+            expect.assertions(2)
+
+            mockSuccessfulDeploy()
+
+            yield* run
+
+            expect(vi.mocked(addComment).mock.calls[0]?.[0]).toBe(
+              'mock-pull-request-id'
+            )
+            expect(vi.mocked(addComment).mock.calls[0]?.[2]).toBeUndefined()
+          }).pipe(Effect.provide(DeployLayer))
+        }
       )
 
       it.live('stops wrangler when the GitHub Environment is missing', () => {

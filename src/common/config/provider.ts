@@ -3,6 +3,7 @@ import * as ConfigProvider from 'effect/ConfigProvider'
 import * as Effect from 'effect/Effect'
 import * as Predicate from 'effect/Predicate'
 import * as Schema from 'effect/Schema'
+import * as SchemaTransformation from 'effect/SchemaTransformation'
 
 /**
  * Resolves `Config` paths against the `INPUT_*` environment variables that the
@@ -71,3 +72,29 @@ export const optionalInput = (key: string): Config.Config<string | undefined> =>
     // oxlint-disable-next-line unicorn/no-useless-undefined
     Config.withDefault(undefined)
   )
+
+const BooleanLiteral = Schema.Literals([
+  'true',
+  'True',
+  'TRUE',
+  'false',
+  'False',
+  'FALSE'
+])
+type BooleanLiteral = typeof BooleanLiteral.Type
+
+/**
+ * A boolean input, accepting exactly what `getBooleanInput` does: `true` or
+ * `false` in any of the YAML 1.2 core schema spellings, after trimming. An
+ * absent or empty input is missing — pair it with `Config.withDefault`.
+ */
+export const BooleanInput = Schema.Trim.pipe(
+  Schema.decodeTo(BooleanLiteral),
+  Schema.decodeTo(
+    Schema.Boolean,
+    SchemaTransformation.transform({
+      decode: (value: BooleanLiteral) => value.toLowerCase() === 'true',
+      encode: (value: boolean): BooleanLiteral => (value ? 'true' : 'false')
+    })
+  )
+)

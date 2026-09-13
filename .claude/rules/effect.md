@@ -51,4 +51,5 @@ paths:
 
 - Suppress `unicorn/no-array-for-each` on `Effect.forEach`.
 - Use `optionalInput()` instead of `Config.withDefault(undefined)` — it carries the `unicorn/no-useless-undefined` suppression.
+- Inside an `Effect.gen` (tests included), decode and encode with `Schema.decodeEffect` / `Schema.encodeEffect`, not the `*Sync` variants — `effecttsgo/schema-sync-in-effect` warns.
 - Write `x.pipe(Effect.map(f))`, not `Effect.map(x, f)` — `unicorn/no-array-callback-reference` misreads the data-first form as `Array#map`; the same goes for `Result.map` / `Result.flatMap` (`src/common/cloudflare/api/fetch-result.ts`).

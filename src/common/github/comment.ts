@@ -133,11 +133,15 @@ export const pullRequestToComment = Effect.fn('pullRequestToComment')(
   }
 )
 
-/** Posts the deployment comment on `pullRequestId`, when there is one. */
+/**
+ * Posts the deployment comment on `pullRequestId`, when there is one.
+ * `wranglerOutput` is appended in its own section; pass `undefined` to leave
+ * it out (the `wrangler-comment-output` input).
+ */
 export const addComment = Effect.fn('addComment')(function* (
   pullRequestId: string | undefined,
   deployment: PagesDeployment,
-  output: string
+  wranglerOutput: string | undefined
 ) {
   if (!pullRequestId) {
     info('addComment - No Pull Request could be found to post comment.')
@@ -157,11 +161,9 @@ export const addComment = Effect.fn('addComment')(function* (
     `**Built with commit:** ${sha}`,
     `**Preview URL:** ${deployment.url}`,
     `**Branch Preview URL:** ${getCloudflareDeploymentAlias(deployment)}`,
-    '',
-    '### Wrangler Output',
-    '```',
-    output,
-    '```'
+    ...(wranglerOutput === undefined
+      ? []
+      : ['', '### Wrangler Output', '```', wranglerOutput, '```'])
   ].join('\n')
 
   const comment = yield* github.request({

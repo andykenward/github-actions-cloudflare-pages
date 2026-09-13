@@ -11,7 +11,12 @@ import * as Option from 'effect/Option'
 import * as Schema from 'effect/Schema'
 import * as SchemaTransformation from 'effect/SchemaTransformation'
 
-import {input, optionalInput, readInputs} from '@/common/config/provider.js'
+import {
+  BooleanInput,
+  input,
+  optionalInput,
+  readInputs
+} from '@/common/config/provider.js'
 import {
   cloudflareAccountIdConfig,
   cloudflareProjectNameConfig,
@@ -19,6 +24,7 @@ import {
 } from '@/common/inputs.js'
 import {
   INPUT_KEY_BRANCH,
+  INPUT_KEY_WRANGLER_COMMENT_OUTPUT,
   INPUT_KEY_DIRECTORY,
   INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_PR_NUMBER,
@@ -72,7 +78,12 @@ const deployConfig = Config.all({
     Config.map(number => Option.getOrUndefined(number))
   ),
   /** Wrangler version to install. */
-  wranglerVersion: wranglerVersionConfig
+  wranglerVersion: wranglerVersionConfig,
+  /** Whether the pull request comment includes wrangler's output. */
+  wranglerCommentOutput: Config.schema(
+    BooleanInput,
+    INPUT_KEY_WRANGLER_COMMENT_OUTPUT
+  ).pipe(Config.withDefault(true))
 })
 
 /** Inputs only the deploy action uses. See `CommonInputs` on memoisation. */

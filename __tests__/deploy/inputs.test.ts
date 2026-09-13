@@ -6,6 +6,7 @@ import {errorMessage} from '@/common/errors.js'
 import {DeployInputs} from '@/deploy/inputs.js'
 import {
   INPUT_KEY_BRANCH,
+  INPUT_KEY_WRANGLER_COMMENT_OUTPUT,
   INPUT_KEY_PR_NUMBER,
   INPUT_KEY_WORKING_DIRECTORY,
   INPUT_KEY_WRANGLER_VERSION
@@ -42,7 +43,8 @@ describe(DeployInputs, () => {
         workingDirectory: '.',
         branch: undefined,
         prNumber: undefined,
-        wranglerVersion: packageJson.devDependencies.wrangler
+        wranglerVersion: packageJson.devDependencies.wrangler,
+        wranglerCommentOutput: true
       })
     })
   )
@@ -56,13 +58,15 @@ describe(DeployInputs, () => {
       stubInputEnv(INPUT_KEY_BRANCH, 'pr-123')
       stubInputEnv(INPUT_KEY_PR_NUMBER, '123')
       stubInputEnv(INPUT_KEY_WRANGLER_VERSION, '4.0.0')
+      stubInputEnv(INPUT_KEY_WRANGLER_COMMENT_OUTPUT, 'false')
 
       expect(yield* deployInputs).toStrictEqual({
         ...REQUIRED,
         workingDirectory: 'src/deploy',
         branch: 'pr-123',
         prNumber: 123,
-        wranglerVersion: '4.0.0'
+        wranglerVersion: '4.0.0',
+        wranglerCommentOutput: false
       })
     })
   )
@@ -131,6 +135,40 @@ describe(DeployInputs, () => {
           `Input 'pr-number' is invalid: ${expected}`
         )
       })
+    )
+  })
+
+  describe(INPUT_KEY_WRANGLER_COMMENT_OUTPUT, () => {
+    // The spellings `getBooleanInput` accepts, with the whitespace it trims.
+    it.effect.each([
+      {value: 'True', expected: true},
+      {value: ' TRUE ', expected: true},
+      {value: 'False', expected: false},
+      {value: 'FALSE', expected: false}
+    ])('reads $value as $expected', ({value, expected}) =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        stubRequiredInputEnv()
+        stubInputEnv(INPUT_KEY_WRANGLER_COMMENT_OUTPUT, value)
+
+        expect((yield* deployInputs).wranglerCommentOutput).toBe(expected)
+      })
+    )
+
+    it.effect.each([{value: 'yes'}, {value: '0'}, {value: '   '}])(
+      'fails for $value',
+      ({value}) =>
+        Effect.gen(function* () {
+          expect.assertions(1)
+
+          stubRequiredInputEnv()
+          stubInputEnv(INPUT_KEY_WRANGLER_COMMENT_OUTPUT, value)
+
+          expect(errorMessage(yield* Effect.flip(deployInputs))).toBe(
+            `Input 'wrangler-comment-output' is invalid: Expected "true" | "True" | "TRUE" | "false" | "False" | "FALSE"`
+          )
+        })
     )
   })
 })
