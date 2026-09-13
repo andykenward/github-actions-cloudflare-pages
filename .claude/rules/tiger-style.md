@@ -27,7 +27,7 @@ paths:
 
 ## No recursion
 
-- Walk a tree with an explicit stack and a node-count bound. A `Schema.suspend` schema may be recursive (it is declarative); the code that walks its values may not (`renderError` in `src/common/cloudflare/api/error.ts` walks `error_chain`).
+- Walk a tree with an explicit stack and a node-count bound. Loop as `for (let node = stack.pop(); node !== undefined; node = stack.pop())` — a `while (stack.length > 0)` plus a pop-then-check leaves an unreachable branch. Push children in reverse so the visit order matches the recursion it replaces (`bin/codegen/cloudflare-pages.ts` writes `used` out in that order; `pnpm run codegen:cloudflare` must yield no diff). A `Schema.suspend` schema may be recursive (it is declarative); the code that walks its values may not (`renderError` in `src/common/cloudflare/api/error.ts` walks `error_chain`).
 
 ## Assertions
 

@@ -7,6 +7,20 @@ import {CommonInputs, secret} from '@/common/inputs.js'
 import {GitHubContext} from '../context.js'
 import {GitHubApiError} from './client.js'
 
+/** GitHub's maximum `per_page`. */
+export const PAGE_SIZE = 100
+
+/**
+ * The most pages one listing follows: 10 000 deployments of one branch. A
+ * server that always sends a `next` link would otherwise be followed forever.
+ */
+const PAGE_COUNT_MAX = 100
+
+export const PageCountMax = Context.Reference<number>(
+  'github-actions-cloudflare-pages/common/github/api/paginate/PageCountMax',
+  {defaultValue: () => PAGE_COUNT_MAX}
+)
+
 /** Query parameters; an `undefined` value leaves the parameter out. */
 export type Query = Record<string, string | number | undefined>
 
@@ -75,8 +89,8 @@ export class GitHubRestApi extends Context.Service<
   {
     /**
      * Every item of every page of the list endpoint at `path` (relative to
-     * the API URL), following `Link` headers. Interrupting the effect aborts
-     * the request in flight.
+     * the API URL), following `Link` headers for up to `PageCountMax` pages.
+     * Interrupting the effect aborts the request in flight.
      */
     paginate(
       path: string,
@@ -106,18 +120,30 @@ export class GitHubRestApi extends Context.Service<
           }
         }
 
+        const pageCountMax = yield* PageCountMax
         const items: Array<unknown> = []
-        let next: string | undefined = url.href
+        let nextUrl: string | undefined = url.href
 
-        while (next) {
+        for (
+          let pageIndex = 0;
+          pageIndex < pageCountMax && nextUrl !== undefined;
+          pageIndex++
+        ) {
           // A closure can't narrow the loop variable, so pin this page's URL.
-          const current = next
+          const pageUrl = nextUrl
           const page: Page = yield* Effect.tryPromise({
-            try: signal => fetchPage(current, secret(gitHubApiToken), signal),
+            try: signal => fetchPage(pageUrl, secret(gitHubApiToken), signal),
             catch: GitHubApiError.from
           })
           items.push(...page.items)
-          next = page.next
+          nextUrl = page.next
+        }
+
+        if (nextUrl !== undefined) {
+          return yield* new GitHubApiError({
+            message: `GitHub API listing ${path} still had pages after ${pageCountMax}; narrow the query`,
+            cause: {pageCountMax, nextUrl}
+          })
         }
 
         return items

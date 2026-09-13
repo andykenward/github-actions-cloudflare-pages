@@ -38,6 +38,19 @@ export const PollTimeout = Context.Reference<Duration.Duration>(
   {defaultValue: () => Duration.minutes(POLL_TIMEOUT_MINUTES)}
 )
 
+/**
+ * With the defaults, 10 minutes at one poll a second is 600 polls, so the
+ * duration is the operative ceiling; the count is the belt for a zero interval
+ * (tests) or a stalled clock, where a duration alone bounds nothing.
+ */
+const POLL_COUNT_MAX = 1000
+
+/** The most polls a deploy makes before giving up, whatever the clock says. */
+export const PollCountMax = Context.Reference<number>(
+  'github-actions-cloudflare-pages/common/cloudflare/deployment/status/PollCountMax',
+  {defaultValue: () => POLL_COUNT_MAX}
+)
+
 type DeploymentStatus = Exclude<
   PagesDeployment['latest_stage']['status'],
   'idle' | 'active'
@@ -127,19 +140,22 @@ export const statusCloudflareDeployment = Effect.fn(
 )(function* (target: DeploymentTarget) {
   const pollInterval = yield* PollInterval
   const pollTimeout = yield* PollTimeout
+  const pollCountMax = yield* PollCountMax
 
   return yield* pollOnce(target).pipe(
     Effect.retry({
       while: isPending,
+      // Bounded both ways. `times` counts schedule steps, and the effect runs
+      // once before the first step, so the poll runs at most `times + 1`.
       schedule: Schedule.spaced(pollInterval).pipe(
-        Schedule.upTo({duration: pollTimeout})
+        Schedule.upTo({duration: pollTimeout, times: pollCountMax})
       )
     }),
     // `Schedule.upTo` is only observed on the following schedule step, so a
     // hung request could outlive it. This is the actual ceiling.
     Effect.timeout(pollTimeout),
-    // The poll ran out of time, by either route: the retry schedule exhausted
-    // (propagating the last `DeploymentPendingError`) or the overall
+    // The poll ran out of time or polls, by either route: the retry schedule
+    // exhausted (propagating the last `DeploymentPendingError`) or the overall
     // `Effect.timeout` fired. `CloudflareApiError` deliberately falls through
     // so transport failures surface unchanged.
     Effect.catchTag(

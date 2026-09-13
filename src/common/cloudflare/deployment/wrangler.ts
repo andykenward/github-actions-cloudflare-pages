@@ -6,6 +6,8 @@ import path from 'node:path'
 
 import {debug} from '@actions/core'
 import * as Arr from 'effect/Array'
+import * as Context from 'effect/Context'
+import * as Duration from 'effect/Duration'
 import * as Effect from 'effect/Effect'
 import {pipe} from 'effect/Function'
 import * as Option from 'effect/Option'
@@ -26,6 +28,19 @@ export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
 export const WRANGLER_OUTPUT_FILE_PATH = 'WRANGLER_OUTPUT_FILE_PATH'
 
 const ERROR_KEY = `Wrangler:`
+
+/**
+ * A safety net, not the expected duration: the documented job
+ * `timeout-minutes` is 15, so this only ends an upload on a job with no
+ * timeout of its own, where wrangler would otherwise run for GitHub's 6 hours.
+ */
+const WRANGLER_TIMEOUT_MINUTES = 30
+
+/** How long `wrangler pages deploy` may run before the step fails. */
+export const WranglerTimeout = Context.Reference<Duration.Duration>(
+  'github-actions-cloudflare-pages/common/cloudflare/deployment/wrangler/WranglerTimeout',
+  {defaultValue: () => Duration.minutes(WRANGLER_TIMEOUT_MINUTES)}
+)
 
 // oxlint-disable-next-line unicorn/throw-new-error
 class WranglerError extends Schema.TaggedError<WranglerError>()(
@@ -184,6 +199,7 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
   workingDirectory: string
 }) {
   const outputFile = path.join(yield* outputDirectory, 'output.jsonl')
+  const wranglerTimeout = yield* WranglerTimeout
 
   /**
    * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
@@ -207,7 +223,18 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
         }
       ),
     catch: WranglerError.from
-  })
+  }).pipe(
+    // The interrupt aborts `signal`, which kills the child.
+    Effect.timeout(wranglerTimeout),
+    Effect.catchTag(
+      'TimeoutError',
+      cause =>
+        new WranglerError({
+          message: `${ERROR_KEY} timed out after ${Duration.format(wranglerTimeout)}`,
+          cause
+        })
+    )
+  )
 
   const deploymentId = yield* wranglerPagesDeployOutput(outputFile)
 

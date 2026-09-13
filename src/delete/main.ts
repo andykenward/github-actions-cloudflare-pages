@@ -1,4 +1,4 @@
-import {debug, info} from '@actions/core'
+import {debug, info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
@@ -22,6 +22,13 @@ import {DeleteInputs} from './inputs.js'
  * GraphQL request, so this many run at once on a busy repository.
  */
 const DELETE_CONCURRENCY = 5
+
+/**
+ * The most deployments one run deletes. Each is one Cloudflare and one GitHub
+ * request, and GitHub's GraphQL budget is 5 000 points an hour; a run that
+ * hits the cap says so and the next run continues.
+ */
+const DELETE_COUNT_MAX = 500
 
 const HEADING = 'andykenward/github-actions-cloudflare-pages'
 
@@ -93,7 +100,15 @@ export const run = Effect.gen(function* () {
     info(`${PREFIX} Keeping latest ${keepLatest} deployments`)
   }
   // Listed newest first, so the first `keepLatest` are the ones to keep.
-  const deployments = keepLatest ? listed.slice(keepLatest) : listed
+  const remaining = keepLatest ? listed.slice(keepLatest) : listed
+
+  if (remaining.length > DELETE_COUNT_MAX) {
+    warning(
+      `${PREFIX} Deleting the oldest ${DELETE_COUNT_MAX} of ${remaining.length} deployments; re-run to delete the rest`
+    )
+  }
+  // The oldest go first, so repeated runs converge on `keepLatest`.
+  const deployments = remaining.slice(-DELETE_COUNT_MAX)
 
   if (deployments.length === 0) {
     info(`${PREFIX} No deployments to delete`)

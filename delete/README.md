@@ -66,6 +66,8 @@ permissions:
 | `github-environment`   | no       | —       | GitHub environment to delete deployments from. Leave undefined to delete all deployments referencing the current branch or pull_request. |
 | `keep-latest`          | no       | `0`     | Number of the newest deployments to keep. `0` deletes them all; a negative number fails the step.                                        |
 
+A run deletes at most 500 deployments, oldest first, and lists at most 10 000 from GitHub. With more, it warns and the next run continues.
+
 ## Troubleshooting
 
 | Message                                                                                 | Cause and fix                                                                                                                 |
@@ -75,6 +77,8 @@ permissions:
 | `Deleting Cloudflare deployment failed` (in the job summary)                            | Cloudflare refused the deletion. Check `cloudflare-api-token` has the **Cloudflare Pages: Edit** permission on the account.   |
 | `Updating GitHub deployment status failed` (in the job summary)                         | GitHub refused the status change. Check `github-token` has `deployments: write`.                                              |
 | `Deleting GitHub deployment failed` (in the job summary)                                | GitHub rejected the whole request, e.g. a rate limit, after the Cloudflare deployment was deleted. Re-run the workflow.       |
+| `delete - Deleting the oldest 500 of <n> deployments; re-run to delete the rest`        | A warning, not a failure: more than 500 deployments were due. Re-run until it stops.                                          |
+| `GitHub API listing <path> still had pages after 100; narrow the query`                 | More than 10 000 deployments reference the branch. Set `github-environment` to list fewer, or delete some by hand.            |
 
 Errors about inputs or the GitHub API read the same as the deploy action's — see its [Troubleshooting](../README.md#troubleshooting).
 

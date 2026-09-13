@@ -5,7 +5,7 @@ import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
 import type {MockApi} from '@/tests/helpers/api.js'
 
-import {GitHubRestApi} from '@/common/github/api/paginate.js'
+import {GitHubRestApi, PageCountMax} from '@/common/github/api/paginate.js'
 import {GitHubContext} from '@/common/github/context.js'
 import {CommonInputs} from '@/common/inputs.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.github.com/deployments.json' with {type: 'json'}
@@ -28,6 +28,10 @@ const listDeployments = Effect.gen(function* () {
     environment: undefined
   })
 })
+
+/** The URL of page `number` of the test listing. */
+const page = (number: number) =>
+  `https://api.github.com${MOCK_GITHUB_PATH_DEPLOYMENTS}?ref=feature&per_page=1&page=${number}`
 
 describe(GitHubRestApi, () => {
   let mockApi: MockApi
@@ -74,6 +78,43 @@ describe(GitHubRestApi, () => {
 
       expect(yield* listDeployments).toStrictEqual(RESPONSE_DEPLOYMENTS)
     }).pipe(Effect.provide(RestApiLayer))
+  )
+
+  it.effect('fails once PageCountMax pages still link on to a next', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // Two pages are fetched; the second still links on, so the third is
+      // never requested — an interceptor for it would be left pending.
+      mockApi.interceptGithubRest(
+        {
+          path: MOCK_GITHUB_PATH_DEPLOYMENTS,
+          query: {ref: 'feature', per_page: 1}
+        },
+        [RESPONSE_DEPLOYMENTS[0]],
+        200,
+        {link: `<${page(2)}>; rel="next"`}
+      )
+      mockApi.interceptGithubRest(
+        {
+          path: MOCK_GITHUB_PATH_DEPLOYMENTS,
+          query: {ref: 'feature', per_page: 1, page: 2}
+        },
+        [RESPONSE_DEPLOYMENTS[1]],
+        200,
+        {link: `<${page(3)}>; rel="next"`}
+      )
+
+      const error = yield* Effect.flip(listDeployments)
+
+      expect(error).toMatchObject({
+        _tag: 'GitHubApiError',
+        message: `GitHub API listing ${MOCK_GITHUB_PATH_DEPLOYMENTS} still had pages after 2; narrow the query`
+      })
+    }).pipe(
+      Effect.provide(Layer.succeed(PageCountMax, 2)),
+      Effect.provide(RestApiLayer)
+    )
   )
 
   it.effect('lists from GITHUB_API_URL', () => {

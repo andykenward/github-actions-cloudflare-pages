@@ -5,21 +5,49 @@ import {errorMessage} from '@/common/errors.js'
 import {FetchError} from '../types.js'
 
 /**
- * Renders one Cloudflare error with its chain beneath it, indented by depth.
+ * The most errors of one chain that are rendered. Cloudflare's chains are a
+ * few deep; the bound is for a response that isn't, since `error_chain` is
+ * external data of unbounded depth.
+ */
+const ERROR_CHAIN_NODE_COUNT_MAX = 64
+
+const errorHead = (error: FetchError): string =>
+  error.code ? `${error.message} [code: ${error.code}]` : error.message
+
+type ChainNode = {error: FetchError; depth: number; isFirstSibling: boolean}
+
+/**
+ * Renders one Cloudflare error with its chain beneath it, indented by depth,
+ * walking the chain with an explicit stack rather than recursing into it.
+ * Siblings after the first are separated by a blank line.
  * Source: https://github.com/cloudflare/workers-sdk/blob/55703e52da35b15f5c11f9e3936cc5b1ad5836dc/packages/wrangler/src/cfetch/index.ts#L108-L120
  */
-const renderError = (error: FetchError, level = 0): string => {
-  const chainedMessages =
-    error.error_chain
-      ?.map(
-        chainedError =>
-          `\n${'  '.repeat(level)}- ${renderError(chainedError, level + 1)}`
-      )
-      .join('\n') ?? ''
-  return (
-    (error.code ? `${error.message} [code: ${error.code}]` : error.message) +
-    chainedMessages
-  )
+const renderError = (root: FetchError): string => {
+  let rendered = errorHead(root)
+  const stack: Array<ChainNode> = []
+  const pushChain = (error: FetchError, depth: number): void => {
+    const chain = error.error_chain ?? []
+    // Pushed in reverse, so the first sibling is rendered first.
+    for (let index = chain.length - 1; index >= 0; index--) {
+      const chained = chain[index]
+      if (chained !== undefined) {
+        stack.push({error: chained, depth, isFirstSibling: index === 0})
+      }
+    }
+  }
+  pushChain(root, 1)
+
+  let count = 1
+  for (let node = stack.pop(); node !== undefined; node = stack.pop()) {
+    if (count >= ERROR_CHAIN_NODE_COUNT_MAX) {
+      return `${rendered}\n- … (more errors omitted)`
+    }
+    count++
+    const separator = node.isFirstSibling ? '\n' : '\n\n'
+    rendered += `${separator}${'  '.repeat(node.depth - 1)}- ${errorHead(node.error)}`
+    pushChain(node.error, node.depth + 1)
+  }
+  return rendered
 }
 
 const failed = (url: string): string =>
