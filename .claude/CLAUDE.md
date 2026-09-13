@@ -62,15 +62,16 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 
 These load automatically when you read a matching file. If one hasn't loaded — e.g. in a subagent, or before you've opened a matching file — read it directly.
 
-| Rule                                         | Loads for                                                                                       | Covers                                                                               |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [graphql.md](rules/graphql.md)               | `src/**/*.graphql`, `bin/**/*.graphql`, `graphql.config.ts`, `__generated__/gql/`               | Writing operations, codegen, mocks                                                   |
-| [effect.md](rules/effect.md)                 | `src/**/*.ts`, `__tests__/**/*.ts`                                                              | Services and layers, entry points, errors, inputs, secrets, polling, summaries, lint |
-| [action-runtime.md](rules/action-runtime.md) | `src/**`, `action.yml`, `delete/action.yml`, `input-keys.ts`, `bin/codegen/cloudflare-pages.ts` | Deploy/delete flow, GitHub and Cloudflare clients, adding inputs and Pages endpoints |
-| [testing.md](rules/testing.md)               | `__tests__/**`, `**/__mocks__/**`, vitest config                                                | Helpers, Effect tests, mocks, wrangler, snapshots                                    |
-| [tooling.md](rules/tooling.md)               | `package.json`, TS/lint/format/bundler config, `bin/**`, `.claude/` config, `.devcontainer/**`  | Dependencies, TypeScript 6 + 7, `@effect/tsgo`, scripts, bundling, hooks, debugging  |
-| [workflows.md](rules/workflows.md)           | `.github/**`                                                                                    | CI, release, Dependabot, workflow hygiene, signed bot commits                        |
-| [repos.md](rules/repos.md)                   | `repos/**`, the configs that exclude it, `sync-effect.yml`                                      | Vendored-source exclusions and the snapshot sync                                     |
-| [docs.md](rules/docs.md)                     | READMEs, `CONTRIBUTING.md`, `action.yml`, workflow templates, `skills/**`, `.claude/**/*.md`    | User and contributor docs, Markdown gotchas, maintaining these instructions          |
+| Rule                                         | Loads for                                                                                       | Covers                                                                                     |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [graphql.md](rules/graphql.md)               | `src/**/*.graphql`, `bin/**/*.graphql`, `graphql.config.ts`, `__generated__/gql/`               | Writing operations, codegen, mocks                                                         |
+| [effect.md](rules/effect.md)                 | `src/**/*.ts`, `__tests__/**/*.ts`                                                              | Services and layers, entry points, errors, inputs, secrets, polling, summaries, lint       |
+| [action-runtime.md](rules/action-runtime.md) | `src/**`, `action.yml`, `delete/action.yml`, `input-keys.ts`, `bin/codegen/cloudflare-pages.ts` | Deploy/delete flow, GitHub and Cloudflare clients, adding inputs and Pages endpoints       |
+| [testing.md](rules/testing.md)               | `__tests__/**`, `**/__mocks__/**`, vitest config                                                | Helpers, Effect tests, mocks, wrangler, snapshots                                          |
+| [tooling.md](rules/tooling.md)               | `package.json`, TS/lint/format/bundler config, `bin/**`, `.claude/` config, `.devcontainer/**`  | Dependencies, TypeScript 6 + 7, `@effect/tsgo`, scripts, bundling, hooks, debugging        |
+| [workflows.md](rules/workflows.md)           | `.github/**`                                                                                    | CI, release, Dependabot, workflow hygiene, signed bot commits                              |
+| [repos.md](rules/repos.md)                   | `repos/**`, the configs that exclude it, `sync-effect.yml`                                      | Vendored-source exclusions and the snapshot sync                                           |
+| [tiger-style.md](rules/tiger-style.md)       | `src/**/*.ts`, `bin/**/*.ts`, `__tests__/**/*.ts`, `.oxlintrc.json`                             | Function size, bounds, assertions, explicit errors, naming, and the lint rules behind them |
+| [docs.md](rules/docs.md)                     | READMEs, `CONTRIBUTING.md`, `action.yml`, workflow templates, `skills/**`, `.claude/**/*.md`    | User and contributor docs, Markdown gotchas, maintaining these instructions                |
 
 Record new learnings where they apply: session-wide rules here, path-specific ones in the matching rule.
