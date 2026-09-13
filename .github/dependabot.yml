@@ -78,17 +78,3 @@ updates:
       changesets:
         patterns:
           - '@changesets/*'
-  # The vendored repositories under `repos/` are snapshots of upstream: their
-  # lockfiles are never installed here, so a vulnerable package in them is
-  # upstream's to fix, and a PR bumping it would only make the snapshot drift
-  # from its tag. `exclude-paths` above stops version updates only; security
-  # updates come from alerts on the dependency graph, which still reads those
-  # lockfiles, and honor `ignore` — so ignore everything in that directory.
-  - package-ecosystem: npm
-    directories:
-      - '/repos/*'
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 0
-    ignore:
-      - dependency-name: '*'
