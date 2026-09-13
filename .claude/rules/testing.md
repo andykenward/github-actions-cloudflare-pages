@@ -22,7 +22,7 @@ paths:
 - Cloudflare's real responses (checked live 2026-09-11) differ from its OpenAPI schema — trust them: an `ad_hoc` deployment has `source: null` (the schema requires it); `8000007` (project) and `8000009` (deployment) not-found come with HTTP 404, `10000` (token lacks the permission) with 403, and an invalid token with 400 / `9106`. DELETE returns 200 with a `result: null` envelope, never 204. `project.response.json` is a live recording. `CloudflareApiTestLayer` (`__tests__/helpers/layers.ts`) provides `CloudflareApi` alone. Both interceptors require `authorization: Bearer mock-cloudflare-api-token`, so every Cloudflare test also checks the client's auth middleware.
 - Mock the one REST call (`GitHubRestApi.paginate`) with `interceptGithubRest({path, query, headers}, body, status?, responseHeaders?)`; a `link` response header with `rel="next"` makes it fetch another page. undici matches `query` exactly.
 - Entry-point tests (`__tests__/{deploy,delete}/index.test.ts`) keep `vi.mock` / `vi.hoisted` in the test file (hoisting) and share `runEntryPoint` and `testRunOutcomes` (`__tests__/helpers/entry-point.ts`).
-- Fixtures: `__generated__/payloads/` (generated) and `__generated__/responses/` (hand-maintained — add to it freely).
+- Fixtures: `__generated__/payloads/` (generated) and `__generated__/responses/` (hand-maintained — add to it freely). A payload shape no generated example has (e.g. `workflow_dispatch` without `ref`) goes in `__fixtures__/payloads/` and is pointed at by stubbing `GITHUB_EVENT_PATH` after `stubTestEnvVars()`.
 
 ## Effect tests
 

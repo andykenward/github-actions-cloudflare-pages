@@ -10,7 +10,7 @@ import {errorMessage} from '../errors.js'
 import {raise} from '../utils.js'
 import {getWorkflowEvent} from './workflow-event/workflow-event.js'
 
-interface Repo {
+export interface Repo {
   owner: string
   repo: string
   /**
@@ -52,88 +52,96 @@ interface GitHubContextShape {
   ref: string
 }
 
+const getGitHubContextRepo = (event: WorkflowEvent): Repo => {
+  const [owner, repo] = process.env.GITHUB_REPOSITORY?.split('/') ?? []
+
+  if (!owner || !repo) {
+    return raise(
+      "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
+    )
+  }
+
+  const node_id =
+    event.payload.repository?.node_id ||
+    raise('context.repo: no repo node_id in payload')
+
+  return {owner, repo, node_id}
+}
+
+/**
+ * For workflow_run, GitHub provides the source commit/branch in the payload
+ * (`workflow_run.head_sha` and `workflow_run.head_branch`).
+ *
+ * We intentionally prefer those values over environment variables so
+ * downstream deployment metadata and pull request comments point at the
+ * workflow run head commit.
+ *
+ * For other events, continue using the standard env var fallback logic.
+ *
+ * @see https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_run
+ * @see https://docs.github.com/en/actions/reference/variables-reference#default-environment-variables
+ */
+const getGitHubContextBranch = (event: WorkflowEvent): string => {
+  if (event.eventName === 'workflow_run') {
+    return event.payload.workflow_run.head_branch || raise('context: no branch')
+  }
+  return (
+    process.env.GITHUB_HEAD_REF ||
+    process.env.GITHUB_REF_NAME ||
+    raise('context: no branch')
+  )
+}
+
+const getGitHubContextSha = (event: WorkflowEvent): string => {
+  if (event.eventName === 'workflow_run') {
+    return event.payload.workflow_run.head_sha
+  }
+  return process.env.GITHUB_SHA
+}
+
+/**
+ * Keep ref aligned with branch for workflow_run so this action resolves
+ * a consistent source branch/commit pair for deployments and comments.
+ *
+ * @see https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_run
+ */
+const getGitHubContextRef = (event: WorkflowEvent): string => {
+  if (event.eventName === 'workflow_run') {
+    return (
+      event.payload.workflow_run.head_branch ??
+      raise('context: no head_branch in workflow_run event')
+    )
+  }
+  if (process.env.GITHUB_HEAD_REF) {
+    return process.env.GITHUB_HEAD_REF
+  }
+  // `push`: `refs/heads/feature-branch-1`. `pull_request`: the head's short
+  // name, `andykenward/issue18`.
+  if (event.payload.ref) {
+    return event.payload.ref
+  }
+  if (event.eventName === 'pull_request') {
+    return event.payload.pull_request.head.ref || raise('context: no ref')
+  }
+  return raise('context: no ref')
+}
+
 const getGitHubContext = (): GitHubContextShape => {
   const event = getWorkflowEvent()
-
-  const repo = ((): Repo => {
-    const [owner, repo] = process.env.GITHUB_REPOSITORY?.split('/') ?? []
-
-    if (!owner || !repo) {
-      return raise(
-        "context.repo: requires a GITHUB_REPOSITORY environment variable like 'owner/repo'"
-      )
-    }
-
-    const node_id =
-      event.payload.repository?.node_id ||
-      raise('context.repo: no repo node_id in payload')
-
-    return {owner, repo, node_id}
-  })()
-
-  /**
-   * For workflow_run, GitHub provides the source commit/branch in the payload
-   * (`workflow_run.head_sha` and `workflow_run.head_branch`).
-   *
-   * We intentionally prefer those values over environment variables so
-   * downstream deployment metadata and pull request comments point at the
-   * workflow run head commit.
-   *
-   * For other events, continue using the standard env var fallback logic.
-   *
-   * @see https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_run
-   * @see https://docs.github.com/en/actions/reference/variables-reference#default-environment-variables
-   */
-  const branch =
-    (event.eventName === 'workflow_run'
-      ? event.payload.workflow_run.head_branch
-      : process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME) ||
-    raise('context: no branch')
-
-  const sha =
-    event.eventName === 'workflow_run'
-      ? event.payload.workflow_run.head_sha
-      : process.env.GITHUB_SHA
 
   // Set on every runner; the fallback is for running the built action locally.
   const graphqlEndpoint =
     process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/graphql'
   const apiUrl = process.env.GITHUB_API_URL || 'https://api.github.com'
 
-  const ref = ((): GitHubContextShape['ref'] => {
-    /**
-     * Keep ref aligned with branch for workflow_run so this action resolves
-     * a consistent source branch/commit pair for deployments and comments.
-     *
-     * @see https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_run
-     */
-    if (event.eventName === 'workflow_run') {
-      return (
-        event.payload.workflow_run.head_branch ??
-        raise('context: no head_branch in workflow_run event')
-      )
-    }
-
-    return (
-      process.env.GITHUB_HEAD_REF ||
-      // `push`: `refs/heads/feature-branch-1`. `pull_request`: the head's
-      // short name, `andykenward/issue18`.
-      event.payload.ref ||
-      (event.eventName === 'pull_request'
-        ? event.payload.pull_request.head.ref
-        : undefined) ||
-      raise('context: no ref')
-    )
-  })()
-
   const context = {
     event,
-    repo,
-    branch,
-    sha,
+    repo: getGitHubContextRepo(event),
+    branch: getGitHubContextBranch(event),
+    sha: getGitHubContextSha(event),
     graphqlEndpoint,
     apiUrl,
-    ref
+    ref: getGitHubContextRef(event)
   }
 
   if (isDebug()) {

@@ -93,6 +93,72 @@ const outputDirectory = Effect.acquireRelease(
     )
 )
 
+/** The `npx` arguments for `wrangler pages deploy`. */
+const wranglerPagesDeployArguments = ({
+  wranglerVersion,
+  directory,
+  projectName,
+  branch,
+  commitHash
+}: {
+  wranglerVersion: string
+  directory: string
+  projectName: string
+  branch: string
+  commitHash: string
+}): ReadonlyArray<string> => [
+  `wrangler@${wranglerVersion}`,
+  'pages',
+  'deploy',
+  directory,
+  '--project-name',
+  projectName,
+  '--branch',
+  branch,
+  '--commit-dirty=true',
+  '--commit-hash',
+  commitHash
+]
+
+/**
+ * The child's environment. The credentials are scoped to the wrangler child
+ * process rather than assigned onto the global `process.env`, which left the
+ * Cloudflare API token in plaintext in this process for everything downstream
+ * to read.
+ */
+const wranglerPagesDeployEnvironment = (
+  apiToken: Redacted.Redacted<string>,
+  accountId: string,
+  outputFile: string
+): NodeJS.ProcessEnv => ({
+  ...process.env,
+  [CLOUDFLARE_API_TOKEN]: secret(apiToken),
+  [CLOUDFLARE_ACCOUNT_ID]: accountId,
+  [WRANGLER_OUTPUT_FILE_PATH]: outputFile
+})
+
+/**
+ * The deployment id from wrangler's output file, or `undefined` when wrangler
+ * wrote none (a version too old to write the file).
+ */
+const wranglerPagesDeployOutput = Effect.fn('wranglerPagesDeployOutput')(
+  function* (outputFile: string) {
+    const output = yield* Effect.tryPromise(() =>
+      readFile(outputFile, 'utf8')
+    ).pipe(Effect.orElseSucceed(() => ''))
+
+    const deploymentId = deploymentIdFrom(output)
+
+    if (deploymentId === undefined) {
+      debug(
+        `${ERROR_KEY} wrangler reported no deployment id; finding the deployment by commit hash`
+      )
+    }
+
+    return deploymentId
+  }
+)
+
 /**
  * Runs `wrangler pages deploy`, returning its stdout and the id of the
  * deployment it created. The id comes from wrangler's output file; it is
@@ -126,32 +192,15 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
     try: signal =>
       execFileAsync(
         'npx',
-        [
-          `wrangler@${wranglerVersion}`,
-          'pages',
-          'deploy',
+        wranglerPagesDeployArguments({
+          wranglerVersion,
           directory,
-          '--project-name',
           projectName,
-          '--branch',
           branch,
-          '--commit-dirty=true',
-          '--commit-hash',
           commitHash
-        ],
+        }),
         {
-          /**
-           * The credentials are scoped to the wrangler child process rather
-           * than assigned onto the global `process.env`, which left the
-           * Cloudflare API token in plaintext in this process for
-           * everything downstream to read.
-           */
-          env: {
-            ...process.env,
-            [CLOUDFLARE_API_TOKEN]: secret(apiToken),
-            [CLOUDFLARE_ACCOUNT_ID]: accountId,
-            [WRANGLER_OUTPUT_FILE_PATH]: outputFile
-          },
+          env: wranglerPagesDeployEnvironment(apiToken, accountId, outputFile),
           cwd: workingDirectory,
           /** Interrupting the deploy (e.g. a failed check) kills wrangler. */
           signal
@@ -160,17 +209,7 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
     catch: WranglerError.from
   })
 
-  const output = yield* Effect.tryPromise(() =>
-    readFile(outputFile, 'utf8')
-  ).pipe(Effect.orElseSucceed(() => ''))
-
-  const deploymentId = deploymentIdFrom(output)
-
-  if (deploymentId === undefined) {
-    debug(
-      `${ERROR_KEY} wrangler reported no deployment id; finding the deployment by commit hash`
-    )
-  }
+  const deploymentId = yield* wranglerPagesDeployOutput(outputFile)
 
   return {stdout, deploymentId}
 }, Effect.scoped)

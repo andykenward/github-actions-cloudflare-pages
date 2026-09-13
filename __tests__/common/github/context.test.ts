@@ -126,6 +126,25 @@ describe(GitHubContext, () => {
     })
   )
 
+  it.effect('fails when no ref can be found', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // `workflow_dispatch` on a runner sets `GITHUB_HEAD_REF` only for pull
+      // request heads; this payload has no `ref` either.
+      stubTestEnvVars('workflow_dispatch')
+      vi.stubEnv('GITHUB_HEAD_REF', '')
+      vi.stubEnv(
+        'GITHUB_EVENT_PATH',
+        '__fixtures__/payloads/workflow_dispatch.without-ref.payload.json'
+      )
+
+      const error = yield* Effect.flip(context)
+
+      expect(error.message).toBe('context: no ref')
+    })
+  )
+
   it.effect('returns context for `workflow_run`', () =>
     Effect.gen(function* () {
       expect.assertions(7)
