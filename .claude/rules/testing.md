@@ -41,6 +41,7 @@ paths:
 
 ## Wrangler and polling
 
+- To prove a `CloudflareApi` request aborts on interrupt, pass a request that records its `signal` and settles only on abort, `Effect.forkChild` it, `Fiber.interrupt`, then assert `signal.aborted` (`__tests__/common/cloudflare/api/fetch-result.test.ts`) — no undici interceptor needed.
 - Never execute wrangler — mock `execFileAsync`. It receives the effect's `AbortSignal` as `options.signal`, so a mock that settles only on abort stands in for a long upload (`__tests__/deploy/main.test.ts`).
 - A mock that only resolves exercises the commit-hash fallback. To exercise polling by id, have it first append a `pages-deploy-detailed` line to `options.env.WRANGLER_OUTPUT_FILE_PATH` (`wranglerReporting` in `__tests__/helpers/wrangler.ts`).
 - Poll without delay by passing a zero `pollInterval`: as the `statusOptions` field of `createCloudflareDeployment`'s argument, or as the second argument of `statusCloudflareDeployment(target, options)`.

@@ -17,5 +17,17 @@ describe('endpoints', () => {
         '"https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/123"'
       )
     })
+
+    test('encodes each segment', () => {
+      expect.assertions(1)
+
+      expect(
+        getCloudflareLogEndpoint({
+          id: '1#2',
+          accountId: 'acc ount',
+          projectName: 'a?b'
+        })
+      ).toBe('https://dash.cloudflare.com/acc%20ount/pages/view/a%3Fb/1%232')
+    })
   })
 })

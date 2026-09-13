@@ -1,8 +1,7 @@
 import {error, info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 
-import {CloudflareApi, CloudflareApiError} from '../api/client.js'
-import {ParseError} from '../api/parse-error.js'
+import {CloudflareApi} from '../api/client.js'
 
 /**
  * Cloudflare's "deployment does not exist" code. Treated as success: the
@@ -26,14 +25,14 @@ export const deleteCloudflareDeployment = Effect.fn(
     accountId,
     projectName
   }: {
-    /** deploymentIdentifier */
+    /** The Cloudflare deployment id. */
     id: string
     accountId: string
     projectName: string
   }) {
     const cloudflare = yield* CloudflareApi
 
-    const success = yield* cloudflare.success(client =>
+    yield* cloudflare.success((client, signal) =>
       client.DELETE(
         '/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}',
         {
@@ -44,17 +43,11 @@ export const deleteCloudflareDeployment = Effect.fn(
               deployment_id: id
             },
             query: {force: true}
-          }
+          },
+          signal
         }
       )
     )
-
-    if (!success) {
-      return yield* new CloudflareApiError({
-        message: 'Cloudflare Delete Deployment: fail',
-        cause: undefined
-      })
-    }
 
     info(`Cloudflare Deployment Deleted: ${id}`)
     return true
@@ -62,14 +55,13 @@ export const deleteCloudflareDeployment = Effect.fn(
   (effect, {id}) =>
     Effect.catch(effect, failure => {
       if (
-        failure.cause instanceof ParseError &&
-        failure.cause.code === DEPLOYMENT_NOT_FOUND_CODE
+        failure.reason._tag === 'ApiErrors' &&
+        failure.reason.code === DEPLOYMENT_NOT_FOUND_CODE
       ) {
         warning(`Cloudflare Deployment might have been deleted already: ${id}`)
         return Effect.succeed(true)
       }
-      // Include the reason: previously only the id was logged, so a failed
-      // delete gave no indication of why.
+      // Include the reason, so a failed delete says why.
       error(`Cloudflare Error deleting deployment: ${id} - ${failure.message}`)
       return Effect.succeed(false)
     })

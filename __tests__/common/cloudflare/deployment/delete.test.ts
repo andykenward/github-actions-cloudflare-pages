@@ -101,7 +101,7 @@ describe('deleteCloudflareDeployment', () => {
       title: 'the API reports failure without errors',
       response: {success: false, errors: [], result: null},
       status: 200,
-      reason: 'Cloudflare Delete Deployment: fail'
+      reason: REQUEST_FAILED
     }
   ])(
     'returns false and logs the reason when $title',
@@ -134,7 +134,7 @@ describe('deleteCloudflareDeployment', () => {
 
       expect(yield* deleteCloudflareDeployment(DEPLOYMENT)).toBe(false)
       expect(error).toHaveBeenCalledWith(
-        `Cloudflare Error deleting deployment: ${MOCK_DEPLOYMENT_ID} - Cloudflare Delete Deployment: fail`
+        `Cloudflare Error deleting deployment: ${MOCK_DEPLOYMENT_ID} - ${REQUEST_FAILED.slice(0, -1)}: 204 No Content`
       )
     }).pipe(Effect.provide(CloudflareApiTestLayer))
   )

@@ -22,7 +22,7 @@ export const getCloudflareDeployment = Effect.fn('getCloudflareDeployment')(
   }: CloudflareApiEndpoint & {deploymentId: string}) {
     const cloudflare = yield* CloudflareApi
 
-    return yield* cloudflare.result(client =>
+    return yield* cloudflare.result((client, signal) =>
       client.GET(
         '/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}',
         {
@@ -32,7 +32,8 @@ export const getCloudflareDeployment = Effect.fn('getCloudflareDeployment')(
               project_name: projectName,
               deployment_id: deploymentId
             }
-          }
+          },
+          signal
         }
       )
     )
@@ -55,10 +56,13 @@ export const findCloudflareLatestDeployment = Effect.fn(
   const {sha: commitHash} = yield* GitHubContext
   const cloudflare = yield* CloudflareApi
 
-  const deployments = yield* cloudflare.result(client =>
+  const deployments = yield* cloudflare.result((client, signal) =>
     client.GET(
       '/accounts/{account_id}/pages/projects/{project_name}/deployments',
-      {params: {path: {account_id: accountId, project_name: projectName}}}
+      {
+        params: {path: {account_id: accountId, project_name: projectName}},
+        signal
+      }
     )
   )
 
