@@ -3,6 +3,7 @@ import type {GraphQLError} from 'graphql'
 import * as Context from 'effect/Context'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
+import * as Predicate from 'effect/Predicate'
 import * as Schema from 'effect/Schema'
 
 import type {TypedDocumentString} from '@/gql/graphql.js'
@@ -70,6 +71,12 @@ export class GitHubApiError extends Schema.TaggedError<GitHubApiError>()(
     new GitHubApiError({message: formatGraphqlErrors(errors), cause: errors})
 }
 
+/** An object whose `errors`, when present, is the array GraphQL specifies. */
+const isGraphqlResponse = (body: unknown): body is GraphqlResponse =>
+  Predicate.isObject(body) &&
+  !Array.isArray(body) &&
+  (!Predicate.hasProperty(body, 'errors') || Array.isArray(body.errors))
+
 const fetchGraphql = async <TData, TVariables extends Variables>(
   endpoint: string,
   token: string,
@@ -99,11 +106,19 @@ const fetchGraphql = async <TData, TVariables extends Variables>(
     )
   }
 
-  return (await response.json().catch(() => {
+  const body: unknown = await response.json().catch((error: unknown) => {
     throw new Error(
-      `GitHub API returned a non-JSON response (${response.status})`
+      `GitHub API returned a non-JSON response (${response.status})`,
+      {cause: error}
     )
-  })) as GraphqlResponse<TData>
+  })
+
+  if (!isGraphqlResponse(body)) {
+    throw new Error('GitHub API returned an unexpected response shape')
+  }
+  // The wire shape is checked above; `data`'s type is the document's
+  // compile-time contract, which is what the cast asserts.
+  return body as GraphqlResponse<TData>
 }
 
 /**

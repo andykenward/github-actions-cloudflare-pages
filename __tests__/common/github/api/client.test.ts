@@ -62,7 +62,7 @@ describe(GitHubApi, () => {
 
   it.effect('fails when a 2xx response is not JSON', () =>
     Effect.gen(function* () {
-      expect.assertions(1)
+      expect.assertions(2)
 
       // e.g. an HTML page from a proxy in front of GitHub Enterprise Server.
       mockApi.mockAgent
@@ -77,6 +77,26 @@ describe(GitHubApi, () => {
 
       expect(error.message).toBe(
         'GitHub API returned a non-JSON response (200)'
+      )
+      // oxlint-disable-next-line typescript/no-unsafe-assignment
+      expect(error.cause).toMatchObject({cause: expect.any(SyntaxError)})
+    }).pipe(Effect.provide(CommonLayer))
+  )
+
+  it.effect('fails when a 2xx JSON response is not an object', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      mockApi.mockAgent
+        .get('https://api.github.com')
+        .intercept({path: '/graphql', method: 'POST'})
+        .reply(200, [], {headers: {'content-type': 'application/json'}})
+
+      const github = yield* GitHubApi
+      const error = yield* Effect.flip(github.request({query: QUERY}))
+
+      expect(error.message).toBe(
+        'GitHub API returned an unexpected response shape'
       )
     }).pipe(Effect.provide(CommonLayer))
   )

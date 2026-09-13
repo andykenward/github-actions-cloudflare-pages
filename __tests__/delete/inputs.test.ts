@@ -59,7 +59,9 @@ describe(DeleteInputs, () => {
     },
     {value: '1.5', expected: 'Expected an integer'},
     // Previously accepted: `deployments.slice(-1)` kept only the oldest.
-    {value: '-1', expected: 'Expected a value greater than or equal to 0'}
+    {value: '-1', expected: 'Expected a value greater than or equal to 0'},
+    // More than one listing can hold.
+    {value: '10001', expected: 'Expected a value less than or equal to 10000'}
   ])('fails for a keep-latest of $value', ({value, expected}) =>
     Effect.gen(function* () {
       expect.assertions(1)

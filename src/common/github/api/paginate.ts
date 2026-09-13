@@ -49,9 +49,10 @@ const fetchPage = async (
     signal
   })
 
-  const body: unknown = await response.json().catch(() => {
+  const body: unknown = await response.json().catch((error: unknown) => {
     throw new Error(
-      `GitHub API returned a non-JSON response (${response.status})`
+      `GitHub API returned a non-JSON response (${response.status})`,
+      {cause: error}
     )
   })
 

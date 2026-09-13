@@ -1,4 +1,4 @@
-import {error, info, warning} from '@actions/core'
+import {info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 
 import {CloudflareApi} from '../api/client.js'
@@ -16,7 +16,11 @@ import {CloudflareApi} from '../api/client.js'
  */
 const DEPLOYMENT_NOT_FOUND_CODE = 8_000_009
 
-/** Succeeds with whether the deployment is gone; never fails. */
+/**
+ * Deletes the deployment. Succeeds once it is gone — including when Cloudflare
+ * says it never existed — and fails with `CloudflareApiError` otherwise; the
+ * caller decides what a failed delete means.
+ */
 export const deleteCloudflareDeployment = Effect.fn(
   'deleteCloudflareDeployment'
 )(
@@ -50,7 +54,6 @@ export const deleteCloudflareDeployment = Effect.fn(
     )
 
     info(`Cloudflare Deployment Deleted: ${id}`)
-    return true
   },
   (effect, {id}) =>
     Effect.catch(effect, failure => {
@@ -59,10 +62,8 @@ export const deleteCloudflareDeployment = Effect.fn(
         failure.reason.code === DEPLOYMENT_NOT_FOUND_CODE
       ) {
         warning(`Cloudflare Deployment might have been deleted already: ${id}`)
-        return Effect.succeed(true)
+        return Effect.void
       }
-      // Include the reason, so a failed delete says why.
-      error(`Cloudflare Error deleting deployment: ${id} - ${failure.message}`)
-      return Effect.succeed(false)
+      return Effect.fail(failure)
     })
 )

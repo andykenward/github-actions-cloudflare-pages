@@ -1,5 +1,6 @@
-import {info, warning} from '@actions/core'
+import {error, info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
+import * as Result from 'effect/Result'
 
 import {
   DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
@@ -30,9 +31,13 @@ export type BatchDeleteItem = {
   environmentUrl?: string
   commentId?: string
   error?: string
+  /** Deleted, but a follow-up mutation failed. */
+  warning?: string
 }
 
-type Outcome = {success: true} | {success: false; error: string}
+type Outcome =
+  | {success: true; warning?: string}
+  | {success: false; error: string}
 
 /** The summary row for `deployment`, with what its payload gave, if decoded. */
 const row = (
@@ -108,13 +113,14 @@ export const batchDelete: (
     const {commentId, url, cloudflare} = yield* getPayload(deployment.payload)
     const payload = {url, commentId}
 
-    /**
-     * Delete Cloudflare deployment
-     */
-    const deletedCloudflareDeployment =
-      yield* deleteCloudflareDeployment(cloudflare)
+    // Delete the Cloudflare deployment first; GitHub's record follows it.
+    const deleted = yield* Effect.result(deleteCloudflareDeployment(cloudflare))
 
-    if (!deletedCloudflareDeployment) {
+    if (Result.isFailure(deleted)) {
+      // Include the reason, so a failed delete says why.
+      error(
+        `Cloudflare Error deleting deployment: ${cloudflare.id} - ${deleted.failure.message}`
+      )
       return row(
         deployment,
         {success: false, error: 'Deleting Cloudflare deployment failed'},
@@ -122,10 +128,8 @@ export const batchDelete: (
       )
     }
 
-    /**
-     * On success of Cloudflare deployment, mark the GitHub deployment inactive
-     * and delete it (with its comment) — one request.
-     */
+    // Then mark the GitHub deployment inactive and delete it, with its
+    // comment, in one request.
     const {data, errors} = yield* batchDeleteGitHubRequest(deployment, {
       url,
       commentId,
@@ -156,12 +160,21 @@ export const batchDelete: (
       )
     }
 
+    info(`${PREFIX} GitHub Deployment Deleted: ${deployment.node_id}`)
+
     // The status was set; a later mutation (deleting the deployment or its
-    // comment) failed, which the row tolerates.
+    // comment) failed. The row succeeds but records it, so the summary says.
     if (errors) {
       warn('Error deleting GitHub deployment or its comment')
+      return row(
+        deployment,
+        {
+          success: true,
+          warning: `Deleting the GitHub deployment or its comment failed: ${formatGraphqlErrors(errors)}`
+        },
+        payload
+      )
     }
-    info(`${PREFIX} GitHub Deployment Deleted: ${deployment.node_id}`)
 
     return row(deployment, {success: true}, payload)
   },

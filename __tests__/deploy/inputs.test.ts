@@ -123,7 +123,12 @@ describe(DeployInputs, () => {
       },
       {value: '1.5', expected: 'Expected an integer'},
       {value: '0', expected: 'Expected a value greater than 0'},
-      {value: '-1', expected: 'Expected a value greater than 0'}
+      {value: '-1', expected: 'Expected a value greater than 0'},
+      // Larger than GraphQL's `Int`.
+      {
+        value: '2147483648',
+        expected: 'Expected a value less than or equal to 2147483647'
+      }
     ])('fails for $value', ({value, expected}) =>
       Effect.gen(function* () {
         expect.assertions(1)

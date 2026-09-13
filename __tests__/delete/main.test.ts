@@ -102,6 +102,25 @@ describe('delete', () => {
       )
     )
 
+    it.effect("shows a successful row's warning in the Error column", () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        vi.mocked(batchDelete).mockReturnValue(
+          Effect.succeed({...ROW, success: true, warning: 'comment kept'})
+        )
+
+        yield* run
+
+        expect(vi.mocked(summary.addTable).mock.calls[0]?.[0][1]?.at(-1)).toBe(
+          'comment kept'
+        )
+      }).pipe(
+        Effect.provide(listing([DEPLOYMENT])),
+        Effect.provide(DeleteLayer)
+      )
+    )
+
     it.effect('escapes the values it writes to the summary table', () =>
       Effect.gen(function* () {
         expect.assertions(1)
