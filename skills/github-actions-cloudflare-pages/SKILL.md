@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v4
       # Install dependencies and build the site here, e.g. `npm ci && npm run build`.
       - name: Deploy to Cloudflare Pages
-        uses: andykenward/github-actions-cloudflare-pages@46d86e1caa6b86365a41d335db65a6936a1beb39 #v3.5.0
+        uses: andykenward/github-actions-cloudflare-pages@6ef4e36d90efd24526eb81a38ae463c1169905ef #v3.6.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -96,7 +96,7 @@ jobs:
       deployments: write
       pull-requests: write
     steps:
-      - uses: andykenward/github-actions-cloudflare-pages/delete@46d86e1caa6b86365a41d335db65a6936a1beb39 #v3.5.0
+      - uses: andykenward/github-actions-cloudflare-pages/delete@6ef4e36d90efd24526eb81a38ae463c1169905ef #v3.6.0
         with:
           cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
