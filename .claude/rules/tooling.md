@@ -31,6 +31,7 @@ paths:
 
 - It patches binaries in place: `prepare` runs `effect-tsgo patch --typescript --oxlint` on every install, patching the platform `tsc` under `@typescript/native` and the `oxlint` / `oxlint-tsgolint` binaries. `effect-tsgo unpatch` reverses it.
 - Effect diagnostics come from `pnpm run lint`, not `tsc:check` — `tsconfig.json` sets the `@effect/language-service` plugin's `"diagnostics": false` so they aren't reported twice ([docs](https://effect.website/docs/v4/getting-started/devtools#oxlint)).
+- The TigerStyle rules (`max-lines-per-function`, `max-depth`, `curly`, `no-magic-numbers`, …) and their test and fixture overrides are explained in `tiger-style.md`. `.oxlintrc.json` is JSONC with comments, so edit it textually rather than through `JSON.parse`.
 - `.oxlintrc.json` adds `effecttsgo` to `plugins` and extends only the `correctness` + `antipattern` presets from `node_modules/@effect/tsgo/oxlint-presets/`; `effect-native`, `style` and `recommended` are excluded on purpose (~140 warnings on every `async` function, `process.env` read and `node:*` import). Preset rules are `warn` and `lint` has no `--max-warnings`, so they don't fail CI.
 - The `tsconfig.json` plugin name `@effect/language-service` isn't an installed package (`@effect/tsgo` provides it) — hence its `ignoreDependencies` entry in `knip.json`.
 - Standalone check: `pnpm exec effect-tsgo diagnostics --project tsconfig.json`.

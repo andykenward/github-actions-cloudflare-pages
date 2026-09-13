@@ -85,7 +85,9 @@ const setAt = (root: JsonObject, pointer: string, value: Json): void => {
   const segments = pointer.split('/').map(token => decodeToken(token))
   let cursor = root
   for (const segment of segments.slice(0, -1)) {
-    if (!isObject(cursor[segment])) cursor[segment] = {}
+    if (!isObject(cursor[segment])) {
+      cursor[segment] = {}
+    }
     cursor = cursor[segment] as JsonObject
   }
   cursor[segments.at(-1) as string] = value
@@ -108,14 +110,22 @@ const prunePaths = (paths: JsonObject): JsonObject => {
   const pruned: JsonObject = {}
   for (const [pathKey, pathItem] of Object.entries(paths)) {
     const rule = OPERATIONS.find(({pattern}) => pattern.test(pathKey))
-    if (!rule || !isObject(pathItem)) continue
+    if (!rule || !isObject(pathItem)) {
+      continue
+    }
 
     const kept: JsonObject = {}
-    if (pathItem['parameters']) kept['parameters'] = pathItem['parameters']
-    for (const method of rule.methods) {
-      if (pathItem[method]) kept[method] = pathItem[method]
+    if (pathItem['parameters']) {
+      kept['parameters'] = pathItem['parameters']
     }
-    if (Object.keys(kept).length > 0) pruned[pathKey] = kept
+    for (const method of rule.methods) {
+      if (pathItem[method]) {
+        kept[method] = pathItem[method]
+      }
+    }
+    if (Object.keys(kept).length > 0) {
+      pruned[pathKey] = kept
+    }
   }
   assert.ok(
     Object.keys(pruned).length > 0,
@@ -127,10 +137,14 @@ const prunePaths = (paths: JsonObject): JsonObject => {
 /** Transitively collect every `#/components/...` pointer reachable from `node`. */
 const collectRefs = (root: JsonObject, node: Json, used: Set<string>): void => {
   if (Array.isArray(node)) {
-    for (const item of node) collectRefs(root, item, used)
+    for (const item of node) {
+      collectRefs(root, item, used)
+    }
     return
   }
-  if (!isObject(node)) return
+  if (!isObject(node)) {
+    return
+  }
 
   for (const [key, value] of Object.entries(node)) {
     if (
@@ -175,7 +189,9 @@ const run = async (): Promise<void> => {
   const contents = `${banner}${astToString(ast)}`
 
   const DIR = '__generated__/types/cloudflare'
-  if (!existsSync(DIR)) await mkdir(DIR, {recursive: true})
+  if (!existsSync(DIR)) {
+    await mkdir(DIR, {recursive: true})
+  }
   const FILENAME = 'pages.ts'
 
   await writeFile(`${DIR}/${FILENAME}`, contents)

@@ -24,7 +24,9 @@ const BRANCH = 'main:'
 const API_URL = 'https://api.github.com/graphql'
 const TOKEN = process.env['GITHUB_TOKEN']
 
-if (!TOKEN) throw new Error('GITHUB_TOKEN environment variable not set')
+if (!TOKEN) {
+  throw new Error('GITHUB_TOKEN environment variable not set')
+}
 
 const request = async <T, V>(query: string, variables: V): Promise<T> => {
   return fetch(API_URL, {
@@ -85,9 +87,13 @@ const getWebhookExamples = async (folder: string) => {
  */
 const run = async (folder: string) => {
   await getWebhookExamples(folder).then(async json => {
-    if (!json) return
+    if (!json) {
+      return
+    }
     for (const data of json) {
-      if (data?.object?.__typename !== 'Blob' || !data.object.text) return
+      if (data?.object?.__typename !== 'Blob' || !data.object.text) {
+        return
+      }
 
       const PATH_WRITE = `__generated__/payloads/api.github.com/${folder}`
 

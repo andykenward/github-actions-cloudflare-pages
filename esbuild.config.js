@@ -15,7 +15,9 @@ const sideEffectFree = {
   setup(build) {
     build.onResolve({filter: /^(undici|tunnel)$/}, async args => {
       // Skip our own resolve call below.
-      if (args.pluginData) return
+      if (args.pluginData) {
+        return
+      }
       const result = await build.resolve(args.path, {
         kind: args.kind,
         resolveDir: args.resolveDir,

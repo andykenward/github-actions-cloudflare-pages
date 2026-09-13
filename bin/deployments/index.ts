@@ -6,8 +6,9 @@ const CLOUDFLARE_ACCOUNT_ID = process.env['CLOUDFLARE_ACCOUNT_ID']
 const CLOUDFLARE_PROJECT_NAME = process.env['CLOUDFLARE_PROJECT_NAME']
 const CLOUDFLARE_API_TOKEN = process.env['CLOUDFLARE_API_TOKEN']
 
-if (!CLOUDFLARE_API_TOKEN)
+if (!CLOUDFLARE_API_TOKEN) {
   throw new Error('CLOUDFLARE_API_TOKEN environment variable not set')
+}
 
 const getUrl = () => {
   const path = `deployments`

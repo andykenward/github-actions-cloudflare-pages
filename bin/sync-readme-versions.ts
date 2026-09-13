@@ -11,6 +11,9 @@ import {GetLatestReleaseDocument} from '@/gql/graphql.js'
 import packageJson from '../package.json' with {type: 'json'}
 
 const GITHUB_GRAPHQL_API = 'https://api.github.com/graphql'
+/** A full commit SHA is 40 hex characters; the short form shown in logs is 7. */
+const SHA_LENGTH = 40
+const SHA_SHORT_LENGTH = 7
 const TOKEN = process.env['GITHUB_TOKEN']
 
 /**
@@ -69,8 +72,8 @@ export async function getLatestRelease(): Promise<{
   assert.ok(tagName, 'No tagName in latest release')
   assert.ok(tagCommit, 'No tagCommit in latest release')
   assert.ok(
-    tagCommit.oid.length === 40,
-    `Expected full 40-char SHA, got: ${tagCommit.oid}`
+    tagCommit.oid.length === SHA_LENGTH,
+    `Expected full ${SHA_LENGTH}-char SHA, got: ${tagCommit.oid}`
   )
 
   return {sha: tagCommit.oid, version: tagName.replace(/^v/, '')}
@@ -89,14 +92,19 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     version = packageJson.version
     assert.ok(version, 'Unable to find version in package.json')
     sha = execSync('git rev-parse HEAD').toString().trim()
-    assert.ok(sha.length === 40, `Expected full 40-char SHA, got: ${sha}`)
+    assert.ok(
+      sha.length === SHA_LENGTH,
+      `Expected full ${SHA_LENGTH}-char SHA, got: ${sha}`
+    )
   } else {
     // workflow_dispatch or local run — HEAD may be ahead of the latest release
     // tag, so fetch the correct SHA and version from GitHub.
     ;({sha, version} = await getLatestRelease())
   }
 
-  process.stdout.write(`Syncing: ${version} @ ${sha.slice(0, 7)}\n`)
+  process.stdout.write(
+    `Syncing: ${version} @ ${sha.slice(0, SHA_SHORT_LENGTH)}\n`
+  )
 
   const root = path.resolve(import.meta.dirname, '..')
   const files = [
