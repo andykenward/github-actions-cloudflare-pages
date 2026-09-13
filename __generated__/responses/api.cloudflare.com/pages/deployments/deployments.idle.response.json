@@ -19,7 +19,7 @@
                 "type": "ad_hoc",
                 "metadata": {
                     "branch": "main",
-                    "commit_hash": "mock-github-sha",
+                    "commit_hash": "ffac537e6cbbf934b08745a378932722df287a53",
                     "commit_message": "chore(deps-dev): update eslint packages",
                     "commit_dirty": true
                 }

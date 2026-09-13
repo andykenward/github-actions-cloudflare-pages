@@ -1,5 +1,6 @@
 import type * as Redacted from 'effect/Redacted'
 
+import assert from 'node:assert/strict'
 import {mkdtemp, readFile, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
@@ -85,13 +86,16 @@ const decodeEntry = Schema.decodeUnknownOption(
 )
 
 /** The deployment id in wrangler's output file contents, if it wrote one. */
-export const deploymentIdFrom = (output: string): string | undefined =>
-  pipe(
+export const deploymentIdFrom = (output: string): string | undefined => {
+  const deploymentId = pipe(
     output.split(/\r?\n/),
     Arr.findFirst(line => decodeEntry(line)),
     Option.map(entry => entry.deployment_id),
     Option.getOrUndefined
   )
+  assert.ok(deploymentId === undefined || deploymentId.length > 0)
+  return deploymentId
+}
 
 /** A private directory for wrangler's output file, removed afterwards. */
 const outputDirectory = Effect.acquireRelease(
@@ -218,7 +222,12 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
   commitHash: string
   workingDirectory: string
 }) {
+  assert.ok(wranglerVersion.length > 0)
+  assert.ok(commitHash.length > 0)
+
   const outputFile = path.join(yield* outputDirectory, 'output.jsonl')
+  // The child resolves the path from its own `cwd`, so it must be absolute.
+  assert.ok(path.isAbsolute(outputFile))
   const wranglerTimeout = yield* WranglerTimeout
 
   /**

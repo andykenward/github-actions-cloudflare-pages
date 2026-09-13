@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+
 import * as Schema from 'effect/Schema'
 
 import {errorMessage} from '@/common/errors.js'
@@ -108,6 +110,11 @@ const reasonMessage = (
     }
     case 'RequestError': {
       return errorMessage(reason.cause)
+    }
+    default: {
+      return assert.fail(
+        `unknown Cloudflare error reason ${JSON.stringify(reason)}`
+      )
     }
   }
 }

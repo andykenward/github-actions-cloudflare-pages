@@ -79,8 +79,7 @@ describe('batchDelete', () => {
         deploymentId: 'DE_kwDOJn0nrM5U35aT',
         environment: 'preview',
         environmentUrl: ENVIRONMENT_URL,
-        logUrl:
-          'https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/mock-deployment-id',
+        logUrl: `https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/${MOCK_DEPLOYMENT_ID}`,
         state: DeploymentStatusState.Inactive,
         autoInactive: false
       },

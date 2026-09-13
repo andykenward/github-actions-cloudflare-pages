@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
@@ -40,6 +42,10 @@ export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
     commentId: string | undefined
     environment: Environment
   }) {
+    assert.ok(id.length > 0)
+    assert.ok(refId.length > 0)
+    assert.ok(URL.canParse(url))
+
     const {repo} = yield* GitHubContext
     const github = yield* GitHubApi
 
