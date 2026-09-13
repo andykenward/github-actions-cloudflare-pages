@@ -10,7 +10,7 @@ import {batchDelete} from '@/common/batch-delete.js'
 import {GitHubRestApi} from '@/common/github/api/paginate.js'
 import {DeleteLayer, run} from '@/delete/main.js'
 import {DEPLOYMENT} from '@/fixtures/github-deployment.js'
-import {INPUT_KEYS_KEEP_LATEST} from '@/input-keys'
+import {INPUT_KEY_KEEP_LATEST} from '@/input-keys'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 vi.mock(import('@actions/core'))
@@ -136,7 +136,7 @@ describe('delete', () => {
     )
 
     it.effect('keeps the newest keep-latest deployments', () => {
-      stubInputEnv(INPUT_KEYS_KEEP_LATEST, '1')
+      stubInputEnv(INPUT_KEY_KEEP_LATEST, '1')
 
       return Effect.gen(function* () {
         expect.assertions(2)
@@ -165,7 +165,7 @@ describe('delete', () => {
     it.effect(
       'deletes nothing when keep-latest covers every deployment',
       () => {
-        stubInputEnv(INPUT_KEYS_KEEP_LATEST, '2')
+        stubInputEnv(INPUT_KEY_KEEP_LATEST, '2')
 
         return Effect.gen(function* () {
           expect.assertions(2)

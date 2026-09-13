@@ -48,7 +48,7 @@ describe('deploy entry point', () => {
     const {setFailed} = await runEntryPoint(importEntryPoint)
 
     expect(setFailed).toHaveBeenCalledExactlyOnceWith(
-      'Directory not found: does-not-exist'
+      "Input 'working-directory' is invalid: Directory not found: does-not-exist"
     )
     expect(runStub).not.toHaveBeenCalled()
   })

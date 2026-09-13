@@ -92,6 +92,21 @@ describe(GitHubContext, () => {
     })
   )
 
+  it.effect('fails when no branch can be found', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // The delete action lists deployments by branch; without one GitHub
+      // would list the whole repository's.
+      vi.stubEnv('GITHUB_HEAD_REF', '')
+      vi.stubEnv('GITHUB_REF_NAME', '')
+
+      const error = yield* Effect.flip(context)
+
+      expect(error.message).toBe('context: no branch')
+    })
+  )
+
   it.effect('returns context for `workflow_run`', () =>
     Effect.gen(function* () {
       expect.assertions(6)

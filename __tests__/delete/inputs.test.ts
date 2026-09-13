@@ -1,10 +1,10 @@
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
-import {describe, expect} from 'vitest'
+import {beforeEach, describe, expect, vi} from 'vitest'
 
 import {errorMessage} from '@/common/errors.js'
 import {DeleteInputs} from '@/delete/inputs.js'
-import {INPUT_KEYS_KEEP_LATEST} from '@/input-keys'
+import {INPUT_KEY_GITHUB_ENVIRONMENT, INPUT_KEY_KEEP_LATEST} from '@/input-keys'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 /** Builds the layer when run, so env stubbed beforehand is picked up. */
@@ -13,34 +13,61 @@ const deleteInputs = Effect.gen(function* () {
 }).pipe(Effect.provide(DeleteInputs.layer))
 
 describe(DeleteInputs, () => {
-  it.effect('defaults keep-latest to 0 when not supplied', () =>
+  beforeEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it.effect('defaults keep-latest to 0 and github-environment to none', () =>
     Effect.gen(function* () {
       expect.assertions(1)
 
-      stubInputEnv(INPUT_KEYS_KEEP_LATEST, '')
-
-      expect(yield* deleteInputs).toStrictEqual({keepLatest: 0})
+      expect(yield* deleteInputs).toStrictEqual({
+        keepLatest: 0,
+        gitHubEnvironment: undefined
+      })
     })
   )
 
-  it.effect('parses keep-latest', () =>
+  it.effect('defaults keep-latest to 0 when empty', () =>
     Effect.gen(function* () {
       expect.assertions(1)
 
-      stubInputEnv(INPUT_KEYS_KEEP_LATEST, '3')
+      stubInputEnv(INPUT_KEY_KEEP_LATEST, '')
 
-      expect(yield* deleteInputs).toStrictEqual({keepLatest: 3})
+      expect((yield* deleteInputs).keepLatest).toBe(0)
     })
   )
 
-  it.effect('fails for a keep-latest that is not a number', () =>
+  it.effect('parses keep-latest and github-environment', () =>
     Effect.gen(function* () {
       expect.assertions(1)
 
-      stubInputEnv(INPUT_KEYS_KEEP_LATEST, 'abc')
+      stubInputEnv(INPUT_KEY_KEEP_LATEST, '3')
+      stubInputEnv(INPUT_KEY_GITHUB_ENVIRONMENT)
+
+      expect(yield* deleteInputs).toStrictEqual({
+        keepLatest: 3,
+        gitHubEnvironment: 'mock-github-environment'
+      })
+    })
+  )
+
+  it.effect.each([
+    {
+      value: 'abc',
+      expected: 'Expected a string representing a finite number'
+    },
+    {value: '1.5', expected: 'Expected an integer'},
+    // Previously accepted: `deployments.slice(-1)` kept only the oldest.
+    {value: '-1', expected: 'Expected a value greater than or equal to 0'}
+  ])('fails for a keep-latest of $value', ({value, expected}) =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      stubInputEnv(INPUT_KEY_KEEP_LATEST, value)
 
       expect(errorMessage(yield* Effect.flip(deleteInputs))).toBe(
-        "Input 'keep-latest' is invalid: Expected a string representing a finite number"
+        `Input 'keep-latest' is invalid: ${expected}`
       )
     })
   )

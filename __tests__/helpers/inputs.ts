@@ -1,6 +1,6 @@
 import {vi} from 'vitest'
 
-import {INPUT_KEYS_KEEP_LATEST, INPUT_KEYS_REQUIRED} from '@/input-keys'
+import {INPUT_KEY_KEEP_LATEST, INPUT_KEYS_REQUIRED} from '@/input-keys'
 
 const INPUT_KEY = `INPUT_`
 
@@ -18,7 +18,7 @@ export const stubInputEnv = (input: string, value?: string): void => {
  * they are parsed as something other than a free-form string.
  */
 const TYPED_INPUT_VALUES: Partial<Record<string, string>> = {
-  [INPUT_KEYS_KEEP_LATEST]: '0'
+  [INPUT_KEY_KEEP_LATEST]: '0'
 }
 
 /**

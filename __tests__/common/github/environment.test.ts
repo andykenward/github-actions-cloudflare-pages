@@ -10,9 +10,7 @@ import type {MockApi} from '@/tests/helpers/api.js'
 import {checkEnvironment} from '@/common/github/environment.js'
 import {CommonLayer} from '@/common/layer.js'
 import {GetEnvironmentAndRefDocument} from '@/gql/graphql.js'
-import {INPUT_KEY_GITHUB_ENVIRONMENT} from '@/input-keys'
 import {getMockApi} from '@/tests/helpers/api.js'
-import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
 vi.mock(import('@actions/core'))
 
@@ -49,27 +47,9 @@ describe('environment', () => {
     await mockApi.mockAgent.close()
   })
 
-  // An Effect value, not a function, so the title is a string.
+  // `Effect.fn` returns an anonymous function, so the title is a string.
   // oxlint-disable-next-line vitest/prefer-describe-function-title
   describe('checkEnvironment', () => {
-    it.effect(
-      'fails without a request when github-environment is unset',
-      () => {
-        // GitHub doesn't enforce `required: true` on action inputs.
-        stubInputEnv(INPUT_KEY_GITHUB_ENVIRONMENT, '')
-
-        return Effect.gen(function* () {
-          expect.assertions(1)
-
-          const failure = yield* Effect.flip(checkEnvironment)
-
-          expect(failure.message).toBe(
-            'GitHub Environment: Input required and not supplied: github-environment'
-          )
-        }).pipe(Effect.provide(CommonLayer))
-      }
-    )
-
     it.effect('success', () =>
       Effect.gen(function* () {
         expect.assertions(1)
@@ -86,7 +66,7 @@ describe('environment', () => {
           }
         })
 
-        const environment = yield* checkEnvironment
+        const environment = yield* checkEnvironment('mock-github-environment')
 
         expect(environment).toMatchInlineSnapshot(`
           {
@@ -176,7 +156,9 @@ describe('environment', () => {
 
           mockQueryGetEnvironment(...response)
 
-          const failure = yield* Effect.flip(checkEnvironment)
+          const failure = yield* Effect.flip(
+            checkEnvironment('mock-github-environment')
+          )
 
           expect(failure.message).toBe(expected)
           // The entry point's `reportFailure` fails the step once; calling it

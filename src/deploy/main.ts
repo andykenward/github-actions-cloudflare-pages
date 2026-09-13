@@ -42,7 +42,10 @@ export const run = Effect.gen(function* () {
     cloudflareProjectName,
     directory,
     workingDirectory,
-    branch
+    branch,
+    gitHubEnvironment,
+    prNumber,
+    wranglerVersion
   } = yield* DeployInputs
 
   const {event} = yield* GitHubContext
@@ -70,10 +73,11 @@ export const run = Effect.gen(function* () {
         projectName: cloudflareProjectName,
         directory,
         workingDirectory,
-        branch
+        branch,
+        wranglerVersion
       }),
-      checkEnvironment,
-      pullRequestToComment
+      checkEnvironment(gitHubEnvironment),
+      pullRequestToComment(prNumber)
     ],
     {concurrency: 'unbounded'}
   )

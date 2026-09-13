@@ -1,20 +1,55 @@
 import type * as Effect from 'effect/Effect'
 
+import {existsSync} from 'node:fs'
+import path from 'node:path'
+
 import * as Config from 'effect/Config'
 import * as Context from 'effect/Context'
+import {identity} from 'effect/Function'
 import * as Layer from 'effect/Layer'
+import * as Option from 'effect/Option'
+import * as Schema from 'effect/Schema'
+import * as SchemaTransformation from 'effect/SchemaTransformation'
 
 import {input, optionalInput, readInputs} from '@/common/config/provider.js'
 import {
   cloudflareAccountIdInput,
-  cloudflareProjectNameInput
+  cloudflareProjectNameInput,
+  wranglerVersionInput
 } from '@/common/inputs.js'
-import {checkWorkingDirectory} from '@/common/utils.js'
 import {
+  INPUT_KEY_BRANCH,
   INPUT_KEY_DIRECTORY,
-  INPUT_KEY_WORKING_DIRECTORY,
-  INPUT_KEY_BRANCH
+  INPUT_KEY_GITHUB_ENVIRONMENT,
+  INPUT_KEY_PR_NUMBER,
+  INPUT_KEY_WORKING_DIRECTORY
 } from '@/input-keys'
+
+/**
+ * A directory that exists, normalised. Blank means the current directory, so
+ * a whitespace-only input gets the default like an absent one. Failing as a
+ * schema check — rather than throwing inside `Config.map` — reports it as an
+ * invalid input instead of a defect.
+ */
+const WorkingDirectory = Schema.Trim.check(
+  Schema.makeFilter(
+    (directory: string) =>
+      directory === '' ||
+      existsSync(directory) ||
+      `Directory not found: ${directory}`
+  )
+).pipe(
+  Schema.decodeTo(
+    Schema.String,
+    SchemaTransformation.transform({
+      decode: (directory: string) => path.normalize(directory || '.'),
+      encode: identity
+    })
+  )
+)
+
+/** A pull request number: a positive whole number. */
+const PullRequestNumber = Schema.Int.check(Schema.isGreaterThan(0))
 
 const deployConfig = Config.all({
   /** Cloudflare Account Id */
@@ -23,12 +58,21 @@ const deployConfig = Config.all({
   cloudflareProjectName: cloudflareProjectNameInput,
   /** Directory of static files to upload */
   directory: input(INPUT_KEY_DIRECTORY),
-  workingDirectory: input(INPUT_KEY_WORKING_DIRECTORY).pipe(
-    Config.withDefault('.'),
-    Config.map(directory => checkWorkingDirectory(directory))
-  ),
+  workingDirectory: Config.schema(
+    WorkingDirectory,
+    INPUT_KEY_WORKING_DIRECTORY
+  ).pipe(Config.withDefault('.')),
   /** Branch name override for Cloudflare Pages; `undefined` means none. */
-  branch: optionalInput(INPUT_KEY_BRANCH)
+  branch: optionalInput(INPUT_KEY_BRANCH),
+  /** GitHub Environment to record the deployment under. */
+  gitHubEnvironment: input(INPUT_KEY_GITHUB_ENVIRONMENT),
+  /** Pull request to comment on; `undefined` means detect it from the event. */
+  prNumber: Config.schema(PullRequestNumber, INPUT_KEY_PR_NUMBER).pipe(
+    Config.option,
+    Config.map(number => Option.getOrUndefined(number))
+  ),
+  /** Wrangler version to install. */
+  wranglerVersion: wranglerVersionInput
 })
 
 /** Inputs only the deploy action uses. See `CommonInputs` on memoisation. */

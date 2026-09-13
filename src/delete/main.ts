@@ -60,9 +60,11 @@ export const DeleteLayer = Layer.mergeAll(
 
 /** See the note on `run` in `src/deploy/main.ts`. */
 export const run = Effect.gen(function* () {
-  let deployments = yield* getGitHubDeployments
+  const {keepLatest, gitHubEnvironment} = yield* DeleteInputs
 
-  const {keepLatest} = yield* DeleteInputs
+  let deployments = yield* getGitHubDeployments({
+    environment: gitHubEnvironment
+  })
 
   if (deployments.length > 0 && keepLatest) {
     info(`${PREFIX} Keeping latest ${keepLatest} deployments`)

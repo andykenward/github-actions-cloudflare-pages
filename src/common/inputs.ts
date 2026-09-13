@@ -10,8 +10,6 @@ import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
   INPUT_KEY_CLOUDFLARE_PROJECT_NAME,
-  INPUT_KEY_GITHUB_ENVIRONMENT,
-  INPUT_KEY_PR_NUMBER,
   INPUT_KEY_GITHUB_TOKEN,
   INPUT_KEY_WRANGLER_VERSION
 } from '@/input-keys'
@@ -28,23 +26,23 @@ export const cloudflareProjectNameInput = input(
   INPUT_KEY_CLOUDFLARE_PROJECT_NAME
 )
 
+/**
+ * Wrangler version the deploy action installs; a blank input gets the default
+ * too. Declared here, next to the default `bin/sync-versions.ts` maintains.
+ */
+export const wranglerVersionInput = optionalInput(
+  INPUT_KEY_WRANGLER_VERSION
+).pipe(Config.map(version => version ?? DEFAULT_WRANGLER_VERSION))
+
 const commonConfig = Config.all({
   /** Cloudflare API token */
   cloudflareApiToken: Config.redacted(INPUT_KEY_CLOUDFLARE_API_TOKEN),
   /** GitHub API Token */
-  gitHubApiToken: Config.redacted(INPUT_KEY_GITHUB_TOKEN),
-  /** GitHub Environment to use for deployment */
-  gitHubEnvironment: optionalInput(INPUT_KEY_GITHUB_ENVIRONMENT),
-  /** Pull request number to use for comment creation. */
-  prNumber: optionalInput(INPUT_KEY_PR_NUMBER),
-  /** Wrangler version to use; a blank input gets the default too. */
-  wranglerVersion: optionalInput(INPUT_KEY_WRANGLER_VERSION).pipe(
-    Config.map(version => version ?? DEFAULT_WRANGLER_VERSION)
-  )
+  gitHubApiToken: Config.redacted(INPUT_KEY_GITHUB_TOKEN)
 })
 
 /**
- * Inputs used by both actions.
+ * Inputs used by both actions: the two API tokens.
  *
  * `Effect.provide` builds a layer once per run and shares it with everything
  * that needs it, so the inputs are parsed once without a module-level cache —

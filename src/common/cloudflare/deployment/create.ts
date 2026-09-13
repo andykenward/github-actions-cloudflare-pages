@@ -38,6 +38,7 @@ export const createCloudflareDeployment = Effect.fn(
   directory,
   workingDirectory = '',
   branch: branchOverride,
+  wranglerVersion,
   statusOptions
 }: {
   accountId: string
@@ -45,23 +46,17 @@ export const createCloudflareDeployment = Effect.fn(
   directory: string
   workingDirectory?: string
   branch?: string
+  wranglerVersion: string
   /**
    * Poll tuning, forwarded to `statusCloudflareDeployment`. Tests use it to
    * poll without delay.
    */
   statusOptions?: StatusOptions
 }) {
-  const {cloudflareApiToken, wranglerVersion} = yield* CommonInputs
+  const {cloudflareApiToken} = yield* CommonInputs
   const {repo, branch: contextBranch, sha: commitHash} = yield* GitHubContext
 
   const branch = branchOverride ?? contextBranch
-
-  if (branch === undefined) {
-    return yield* new CreateDeploymentError({
-      message: `${ERROR_KEY} branch is undefined`,
-      cause: undefined
-    })
-  }
 
   const {stdout, deploymentId} = yield* wranglerPagesDeploy({
     wranglerVersion,

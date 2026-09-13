@@ -34,8 +34,8 @@ paths:
 
 - Always `vi.mock(import('@/...'))` with path aliases, to match vitest's aliases. `vi.mock(import('@actions/core'))` auto-loads the `__mocks__` file.
 - Manual mocks sit beside their source in `src/**/__mocks__/` and are picked up by a bare `vi.mock(import(...))`:
-  - `src/common/__mocks__/utils.ts` — the real module with only `execFileAsync` replaced by `vi.fn()`; working-directory validation still runs, so a stubbed `working-directory` must exist.
-  - `src/common/github/__mocks__/comment.ts` — an `Effect.succeed` value plus a `vi.fn` returning an Effect.
+  - `src/common/__mocks__/utils.ts` — the real module with only `execFileAsync` replaced by `vi.fn()`. `DeployInputs` still checks `working-directory` exists, so a stubbed one must.
+  - `src/common/github/__mocks__/comment.ts` — two `vi.fn`s returning Effects.
   - `src/common/github/deployment/__mocks__/create.ts` — a `vi.fn` returning an Effect.
 - Update a mock when the real export's signature changes. An export that is an Effect _value_ can't be auto-mocked (vitest would mock the Effect's own methods) — give it a manual mock, or stub the service it reads.
 

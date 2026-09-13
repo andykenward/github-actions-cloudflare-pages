@@ -5,13 +5,17 @@ import * as Exit from 'effect/Exit'
 import * as Redacted from 'effect/Redacted'
 import {beforeEach, describe, expect, vi} from 'vitest'
 
+import {readInputs} from '@/common/config/provider.js'
 import {errorMessage} from '@/common/errors.js'
-import {CommonInputs, PayloadV1Inputs} from '@/common/inputs.js'
+import {
+  CommonInputs,
+  PayloadV1Inputs,
+  wranglerVersionInput
+} from '@/common/inputs.js'
 import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
   INPUT_KEY_CLOUDFLARE_API_TOKEN,
   INPUT_KEY_CLOUDFLARE_PROJECT_NAME,
-  INPUT_KEY_GITHUB_ENVIRONMENT,
   INPUT_KEY_GITHUB_TOKEN,
   INPUT_KEY_WRANGLER_VERSION
 } from '@/input-keys'
@@ -67,14 +71,12 @@ describe(CommonInputs, () => {
     })
   )
 
-  it.effect('returns correct values', () =>
+  it.effect('returns the tokens', () =>
     Effect.gen(function* () {
-      expect.assertions(3)
+      expect.assertions(2)
 
       stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
       stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
-      stubInputEnv(INPUT_KEY_GITHUB_ENVIRONMENT)
-      stubInputEnv(INPUT_KEY_WRANGLER_VERSION)
 
       const inputs = yield* commonInputs
 
@@ -84,48 +86,42 @@ describe(CommonInputs, () => {
         'mock-cloudflare-api-token'
       )
       expect(Redacted.value(inputs.gitHubApiToken)).toBe('mock-github-token')
-      expect(inputs).toStrictEqual(
-        expect.objectContaining({
-          gitHubEnvironment: 'mock-github-environment',
-          prNumber: undefined,
-          wranglerVersion: 'mock-wrangler-version'
-        })
-      )
     })
   )
+})
 
-  it.effect(
-    `returns undefined for optional ${INPUT_KEY_GITHUB_ENVIRONMENT}`,
-    () =>
-      Effect.gen(function* () {
-        expect.assertions(1)
+// A `Config` value, not a function, so the title is a string.
+// oxlint-disable-next-line vitest/prefer-describe-function-title
+describe('wranglerVersionInput', () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs()
+  })
 
-        stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
-        stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
+  const wranglerVersion = readInputs(wranglerVersionInput)
 
-        expect(yield* commonInputs).toStrictEqual(
-          expect.objectContaining({
-            gitHubEnvironment: undefined,
-            prNumber: undefined,
-            wranglerVersion: packageJson.devDependencies.wrangler
-          })
-        )
-      })
-  )
-
-  it.effect(`uses the default for a blank ${INPUT_KEY_WRANGLER_VERSION}`, () =>
+  it.effect('returns the input', () =>
     Effect.gen(function* () {
       expect.assertions(1)
 
-      stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN)
-      stubInputEnv(INPUT_KEY_GITHUB_TOKEN)
-      // Trimmed to '', it would otherwise install `wrangler@`.
-      stubInputEnv(INPUT_KEY_WRANGLER_VERSION, '   ')
+      stubInputEnv(INPUT_KEY_WRANGLER_VERSION)
 
-      expect((yield* commonInputs).wranglerVersion).toBe(
-        packageJson.devDependencies.wrangler
-      )
+      expect(yield* wranglerVersion).toBe('mock-wrangler-version')
     })
+  )
+
+  it.effect.each([{value: ''}, {value: '   '}])(
+    'uses the default for a blank input $value',
+    ({value}) =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        // Trimmed to '', it would otherwise install `wrangler@`.
+        stubInputEnv(INPUT_KEY_WRANGLER_VERSION, value)
+
+        expect(yield* wranglerVersion).toBe(
+          packageJson.devDependencies.wrangler
+        )
+      })
   )
 })
 

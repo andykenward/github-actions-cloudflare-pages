@@ -15,6 +15,7 @@ paths:
 - Layers: `CommonLayer` (`src/common/layer.ts`) = inputs, context, both API clients. `DeployLayer` (`src/deploy/main.ts`) adds `DeployInputs`. `DeleteLayer` (`src/delete/main.ts`) adds `DeleteInputs`, `PayloadV1Inputs` and `GitHubRestApi`.
 - Memoise in the layer, not the module: `Effect.provide` builds each layer once per run and shares it by reference (`CommonInputs.layer` appears twice in `DeleteLayer` and is built once — a test asserts it). With no module-level caches, a failed build never leaks into the next test. Use `Effect.cached` only to defer layer work: `PayloadV1Inputs.cloudflare` parses the optional V1 fallback inputs on first use.
 - Export `run` as an `Effect` value that requires the services, so tests can provide their own layers.
+- `GitHubContext.branch` is required: the delete action lists deployments by it, and GitHub lists the whole repository's when `ref` is omitted.
 
 ## Entry points (`src/deploy/index.ts`, `src/delete/index.ts`)
 

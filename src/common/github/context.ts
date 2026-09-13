@@ -26,7 +26,7 @@ interface GitHubContextShape {
   /**
    * The branch or tag ref that triggered the workflow run.
    */
-  branch?: string
+  branch: string
   /**
    * The commit SHA that triggered the workflow. The value of this commit SHA
    * depends on the event that triggered the workflow.
@@ -80,9 +80,10 @@ const getGitHubContext = (): GitHubContextShape => {
    * @see https://docs.github.com/en/actions/reference/variables-reference#default-environment-variables
    */
   const branch =
-    event.eventName === 'workflow_run'
-      ? (event.payload.workflow_run.head_branch ?? undefined)
-      : process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME
+    (event.eventName === 'workflow_run'
+      ? event.payload.workflow_run.head_branch
+      : process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME) ||
+    raise('context: no branch')
 
   const sha =
     event.eventName === 'workflow_run'
@@ -145,7 +146,10 @@ class GitHubContextError extends Schema.TaggedError<GitHubContextError>()(
     message: Schema.String,
     cause: Schema.Defect()
   }
-) {}
+) {
+  static readonly from = (cause: unknown): GitHubContextError =>
+    new GitHubContextError({message: errorMessage(cause), cause})
+}
 
 /**
  * The workflow run: its event payload, repository, branch and commit, read
@@ -159,8 +163,7 @@ export class GitHubContext extends Context.Service<
     GitHubContext,
     Effect.try({
       try: () => GitHubContext.of(getGitHubContext()),
-      catch: cause =>
-        new GitHubContextError({message: errorMessage(cause), cause})
+      catch: GitHubContextError.from
     })
   )
 }

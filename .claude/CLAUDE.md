@@ -56,6 +56,7 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 - Effect **v4** (`effect/Schema`, `effect/Config`, `effect/Result`) — never v3 APIs.
 - Before writing Effect code, read `node_modules/effect/AGENTS.md` completely and follow its links.
 - Treat `repos/effect/` (the vendored Effect source) as the source of truth for idiomatic usage and APIs; prefer it over web search or recall.
+- `repos/effect/` can be a newer rc than the installed `effect` (e.g. `Config.mapEffect` there is `Config.mapOrFail` in `node_modules`); confirm an API exists in `node_modules/effect/dist/*.d.ts` before using it, or pick one present in both.
 
 ## Path-scoped rules
 

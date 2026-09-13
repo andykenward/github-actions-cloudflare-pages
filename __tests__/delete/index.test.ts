@@ -3,7 +3,7 @@ import {describe, expect, test, vi} from 'vitest'
 
 import type {StubbedRun} from '@/tests/helpers/entry-point.js'
 
-import {INPUT_KEYS_KEEP_LATEST} from '@/input-keys'
+import {INPUT_KEY_KEEP_LATEST} from '@/input-keys'
 import {runEntryPoint, testRunOutcomes} from '@/tests/helpers/entry-point.js'
 import {stubInputEnv} from '@/tests/helpers/inputs.js'
 
@@ -27,7 +27,7 @@ describe('delete entry point', () => {
   test('fails the step naming an invalid input, before run starts', async () => {
     expect.assertions(2)
 
-    stubInputEnv(INPUT_KEYS_KEEP_LATEST, 'abc')
+    stubInputEnv(INPUT_KEY_KEEP_LATEST, 'abc')
 
     const {setFailed} = await runEntryPoint(importEntryPoint)
 

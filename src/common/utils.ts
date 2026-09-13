@@ -1,7 +1,5 @@
 import {execFile} from 'node:child_process'
 import {randomUUID} from 'node:crypto'
-import {existsSync} from 'node:fs'
-import path from 'node:path'
 import {promisify} from 'node:util'
 
 import {info} from '@actions/core'
@@ -24,11 +22,3 @@ export const raise = (message: string): never => {
 }
 
 export const execFileAsync = promisify(execFile)
-
-export const checkWorkingDirectory = (directory = '.'): string => {
-  const p = path.normalize(directory)
-  if (existsSync(p)) {
-    return p
-  }
-  throw new Error(`Directory not found: ${directory}`)
-}
