@@ -18,7 +18,7 @@ import {getCloudflareDeploymentAlias} from './get.js'
 import {statusCloudflareDeployment} from './status.js'
 import {wranglerPagesDeploy} from './wrangler.js'
 
-const ERROR_KEY = `Create Deployment:`
+const PREFIX = `Create Deployment:`
 
 // oxlint-disable-next-line unicorn/throw-new-error
 class CreateDeploymentError extends Schema.TaggedError<CreateDeploymentError>()(
@@ -31,7 +31,7 @@ class CreateDeploymentError extends Schema.TaggedError<CreateDeploymentError>()(
   /** Prefixed, so a failed summary write is attributable in the annotation. */
   static readonly from = (cause: unknown): CreateDeploymentError =>
     new CreateDeploymentError({
-      message: `${ERROR_KEY} ${errorMessage(cause)}`,
+      message: `${PREFIX} ${errorMessage(cause)}`,
       cause
     })
 
@@ -44,7 +44,7 @@ class CreateDeploymentError extends Schema.TaggedError<CreateDeploymentError>()(
     const outcome = status === 'failure' ? 'failed' : 'was canceled'
     const logUrl = getCloudflareLogEndpoint({id: deployment.id, ...endpoint})
     return new CreateDeploymentError({
-      message: `${ERROR_KEY} the Cloudflare Pages build ${outcome}. Build log: ${logUrl}`
+      message: `${PREFIX} the Cloudflare Pages build ${outcome}. Build log: ${logUrl}`
     })
   }
 }

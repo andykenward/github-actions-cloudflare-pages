@@ -71,17 +71,17 @@ const buildEventNames = (webhooks: WebhooksOpenApi['webhooks']): string => {
  * generated.
  */
 const run = async () => {
-  const ts = buildEventNames(await readWebhooks())
+  const source = buildEventNames(await readWebhooks())
 
-  const DIR = '__generated__/types/github'
-  if (!existsSync(DIR)) {
-    await mkdir(DIR, {recursive: true})
+  const DIRECTORY = '__generated__/types/github'
+  if (!existsSync(DIRECTORY)) {
+    await mkdir(DIRECTORY, {recursive: true})
   }
   const FILENAME = 'workflow-events.ts'
 
-  await writeFile(`${DIR}/${FILENAME}`, ts)
+  await writeFile(`${DIRECTORY}/${FILENAME}`, source)
 
-  process.stdout.write(`${DIR}/${FILENAME} written${'\n'}`)
+  process.stdout.write(`${DIRECTORY}/${FILENAME} written${'\n'}`)
 }
 
 void run()

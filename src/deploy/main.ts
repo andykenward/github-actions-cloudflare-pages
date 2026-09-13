@@ -46,7 +46,7 @@ export const run = Effect.gen(function* () {
     workingDirectory,
     branch,
     gitHubEnvironment,
-    prNumber,
+    pullRequestNumber,
     wranglerVersion,
     wranglerCommentOutput
   } = yield* DeployInputs
@@ -80,7 +80,7 @@ export const run = Effect.gen(function* () {
         wranglerVersion
       }),
       checkEnvironment(gitHubEnvironment),
-      pullRequestToComment(prNumber)
+      pullRequestToComment(pullRequestNumber)
     ],
     {concurrency: 'unbounded'}
   )

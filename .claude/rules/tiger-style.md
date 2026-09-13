@@ -55,7 +55,7 @@ paths:
 
 - camelCase / PascalCase / `UPPER_SNAKE` as TypeScript does; not snake_case (see below). `unicorn/filename-case` governs file names.
 - No abbreviations: `response` not `res`, `pullRequestNumber` not `prNumber`, `directory` not `dir`. Exceptions: GitHub's own vocabulary (`sha`, `repo`, `ref`, `id`, `url`) and Effect's type parameters (`A`, `E`, `R`, `T`, `V` — the `id-length` exceptions).
-- Qualifiers last, by descending significance: `PollCountMax`, `failedCount`, `WRANGLER_VERSION_DEFAULT`, `ERROR_CHAIN_NODE_COUNT_MAX`. A field that mirrors an action input keeps the input's name (`keepLatest`).
+- Qualifiers last, by descending significance: `PollCountMax`, `failedCount`, `WRANGLER_VERSION_DEFAULT`, `ERROR_CHAIN_NODE_COUNT_MAX`. A field that mirrors an action input keeps the input's name (`keepLatest`). A name that is already subject-then-qualifier stays (`PollTimeout`, `PollInterval`), as does one that names a library option (`DELETE_CONCURRENCY` is Effect's `concurrency`). A module's message prefix is `PREFIX` everywhere.
 - Say which it is: an `index` is 0-based, a `count` is 1-based, a `size` is in bytes. Never mix them in one name.
 - A helper used by one caller is prefixed with the caller's name (`pollOnce` under `statusCloudflareDeployment` predates this rule; new helpers follow it).
 

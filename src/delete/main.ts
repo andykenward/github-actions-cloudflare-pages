@@ -96,25 +96,29 @@ export const DeleteLayer = Layer.mergeAll(
 export const run = Effect.gen(function* () {
   const {keepLatest, gitHubEnvironment} = yield* DeleteInputs
 
-  const listed = yield* getGitHubDeployments({environment: gitHubEnvironment})
+  const deploymentsListed = yield* getGitHubDeployments({
+    environment: gitHubEnvironment
+  })
 
-  if (listed.length > 0 && keepLatest) {
+  if (deploymentsListed.length > 0 && keepLatest) {
     info(`${PREFIX} Keeping latest ${keepLatest} deployments`)
   }
   // Listed newest first, so the first `keepLatest` are the ones to keep.
-  const remaining = keepLatest ? listed.slice(keepLatest) : listed
-  assert.ok(remaining.length <= listed.length)
+  const deploymentsRemaining = keepLatest
+    ? deploymentsListed.slice(keepLatest)
+    : deploymentsListed
+  assert.ok(deploymentsRemaining.length <= deploymentsListed.length)
 
-  if (remaining.length > DELETE_COUNT_MAX) {
+  if (deploymentsRemaining.length > DELETE_COUNT_MAX) {
     warning(
-      `${PREFIX} Deleting the oldest ${DELETE_COUNT_MAX} of ${remaining.length} deployments; re-run to delete the rest`
+      `${PREFIX} Deleting the oldest ${DELETE_COUNT_MAX} of ${deploymentsRemaining.length} deployments; re-run to delete the rest`
     )
   }
   // The oldest go first, so repeated runs converge on `keepLatest`.
-  const deployments = remaining.slice(-DELETE_COUNT_MAX)
-  assert.ok(deployments.length <= DELETE_COUNT_MAX)
+  const deploymentsToDelete = deploymentsRemaining.slice(-DELETE_COUNT_MAX)
+  assert.ok(deploymentsToDelete.length <= DELETE_COUNT_MAX)
 
-  if (deployments.length === 0) {
+  if (deploymentsToDelete.length === 0) {
     info(`${PREFIX} No deployments to delete`)
 
     yield* writeDeleteSummary(summary =>
@@ -126,26 +130,26 @@ export const run = Effect.gen(function* () {
   // `unicorn/no-array-for-each` matches on the name; this is Effect's
   // bounded-concurrency combinator, not `Array#forEach`.
   // oxlint-disable-next-line unicorn/no-array-for-each
-  const values = yield* Effect.forEach(
-    deployments,
+  const rows = yield* Effect.forEach(
+    deploymentsToDelete,
     deployment => batchDelete(deployment),
     {concurrency: DELETE_CONCURRENCY}
   )
 
-  assert.equal(values.length, deployments.length)
-  debug(`${PREFIX} Deleted deployments: ${JSON.stringify(values)}`)
+  assert.equal(rows.length, deploymentsToDelete.length)
+  debug(`${PREFIX} Deleted deployments: ${JSON.stringify(rows)}`)
 
-  yield* writeDeleteSummary(deletedSummary(values))
+  yield* writeDeleteSummary(deletedSummary(rows))
 
   /**
    * `batchDelete` reports per-deployment failures as rows rather than
    * failing, so the rest still get deleted. Fail the step once the summary is
    * written, so it still lists every row.
    */
-  const failed = values.filter(value => !value.success).length
-  if (failed > 0) {
+  const failedCount = rows.filter(row => !row.success).length
+  if (failedCount > 0) {
     return yield* new DeleteError({
-      message: `${PREFIX} ${failed} of ${values.length} deployments failed to delete; see the job summary for details`
+      message: `${PREFIX} ${failedCount} of ${rows.length} deployments failed to delete; see the job summary for details`
     })
   }
 })

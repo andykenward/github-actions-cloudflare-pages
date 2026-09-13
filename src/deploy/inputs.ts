@@ -79,7 +79,7 @@ const deployConfig = Config.all({
   /** GitHub Environment to record the deployment under. */
   gitHubEnvironment: input(INPUT_KEY_GITHUB_ENVIRONMENT),
   /** Pull request to comment on; `undefined` means detect it from the event. */
-  prNumber: Config.schema(PullRequestNumber, INPUT_KEY_PR_NUMBER).pipe(
+  pullRequestNumber: Config.schema(PullRequestNumber, INPUT_KEY_PR_NUMBER).pipe(
     Config.option,
     Config.map(number => Option.getOrUndefined(number))
   ),

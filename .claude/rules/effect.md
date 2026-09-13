@@ -32,7 +32,7 @@ paths:
 - Use `raise()` (`src/common/utils.ts`) only in plain synchronous code that an `Effect.try` wraps.
 - Log another tool's output (wrangler stdout) with `logVerbatim()`, not `info()` — `info` writes raw, so a `::` line would run as a workflow command.
 - Bounds on loops and schedules, assertions, and what may be tolerated are in `tiger-style.md`.
-- Prefix messages with a module-level `PREFIX` / `ERROR_KEY` (e.g. `delete -`, `GitHub Environment:`) so annotations are attributable.
+- Prefix messages with a module-level `PREFIX` (e.g. `delete -`, `GitHub Environment:`) so annotations are attributable.
 
 ## Inputs and secrets
 

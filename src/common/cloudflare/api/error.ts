@@ -52,7 +52,7 @@ const renderError = (root: FetchError): string => {
   return rendered
 }
 
-const failed = (url: string): string =>
+const requestFailedMessage = (url: string): string =>
   `A request to the Cloudflare API (${url}) failed`
 
 /**
@@ -98,15 +98,18 @@ const reasonMessage = (
     case 'ApiErrors': {
       // Cloudflare's reasons go in the message, which is what reaches the
       // step's failure annotation or the caller's log line.
-      return [`${failed(reason.url)}.`, ...reason.errors.map(renderError)]
+      return [
+        `${requestFailedMessage(reason.url)}.`,
+        ...reason.errors.map(renderError)
+      ]
         .join(' ')
         .trimEnd()
     }
     case 'HttpError': {
-      return `${failed(reason.url)}: ${reason.status} ${reason.statusText}`.trimEnd()
+      return `${requestFailedMessage(reason.url)}: ${reason.status} ${reason.statusText}`.trimEnd()
     }
     case 'MissingResult': {
-      return `${failed(reason.url)}: response missing 'result'`
+      return `${requestFailedMessage(reason.url)}: response missing 'result'`
     }
     case 'RequestError': {
       return errorMessage(reason.cause)

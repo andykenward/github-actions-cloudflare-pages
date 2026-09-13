@@ -32,13 +32,13 @@ export const getPayload = Effect.fn('getPayload')(function* (
   PayloadError | Effect.Error<PayloadV1Inputs['Service']['cloudflare']>,
   PayloadV1Inputs
 > {
-  const v2 = decodeV2(payload)
-  if (Option.isSome(v2)) {
-    return v2.value
+  const payloadV2 = decodeV2(payload)
+  if (Option.isSome(payloadV2)) {
+    return payloadV2.value
   }
 
-  const v1 = decodeV1(payload)
-  if (Option.isSome(v1)) {
+  const payloadV1 = decodeV1(payload)
+  if (Option.isSome(payloadV1)) {
     /**
      * To support old payloads we need to get the Cloudflare Account Id and Cloudflare Project Name.
      */
@@ -46,10 +46,10 @@ export const getPayload = Effect.fn('getPayload')(function* (
     const {accountId, projectName} = yield* cloudflare
 
     return {
-      url: v1.value.url,
-      commentId: v1.value.commentId,
+      url: payloadV1.value.url,
+      commentId: payloadV1.value.commentId,
       cloudflare: {
-        id: v1.value.cloudflareId,
+        id: payloadV1.value.cloudflareId,
         accountId,
         projectName
       }

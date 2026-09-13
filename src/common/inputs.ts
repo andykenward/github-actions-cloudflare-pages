@@ -18,7 +18,7 @@ import {
  * Kept in lockstep with `devDependencies.wrangler` by `bin/sync-versions.ts`,
  * which matches this declaration by regex — keep the shape of this line stable.
  */
-const DEFAULT_WRANGLER_VERSION = '4.113.0'
+const WRANGLER_VERSION_DEFAULT = '4.113.0'
 
 /** Required by the deploy action; the delete action needs them for V1 payloads. */
 export const cloudflareAccountIdConfig = input(INPUT_KEY_CLOUDFLARE_ACCOUNT_ID)
@@ -32,7 +32,7 @@ export const cloudflareProjectNameConfig = input(
  */
 export const wranglerVersionConfig = optionalInput(
   INPUT_KEY_WRANGLER_VERSION
-).pipe(Config.map(version => version ?? DEFAULT_WRANGLER_VERSION))
+).pipe(Config.map(version => version ?? WRANGLER_VERSION_DEFAULT))
 
 const commonConfig = Config.all({
   /** Cloudflare API token */

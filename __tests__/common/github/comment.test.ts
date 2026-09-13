@@ -25,15 +25,15 @@ vi.mock(import('@actions/core'))
 type Context = GitHubContext['Service']
 
 /**
- * Resolves the pull request — from `prNumber` when given, else the event —
+ * Resolves the pull request — from `pullRequestNumber` when given, else the event —
  * then comments on it, as the deploy does.
  */
 const comment = (
   deployment: PagesDeployment,
   output: string | undefined,
-  prNumber?: number
+  pullRequestNumber?: number
 ) =>
-  pullRequestToComment(prNumber).pipe(
+  pullRequestToComment(pullRequestNumber).pipe(
     Effect.flatMap(pullRequestId =>
       addComment(pullRequestId, deployment, output)
     )
