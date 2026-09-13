@@ -1,0 +1,2 @@
+# Runner image for act (pnpm run act:d). Avoids the interactive size prompt on first run.
+-P ubuntu-latest=catthehacker/ubuntu:act-latest

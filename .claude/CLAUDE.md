@@ -31,7 +31,7 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 | `pnpm run lint` / `lint:fix`   | oxlint, type-aware — also where Effect diagnostics come from                                                               |
 | `pnpm run format`              | oxfmt (`format:check` to verify)                                                                                           |
 | `pnpm run start`               | Run the built deploy action with `.env` loaded (see `.env.example`)                                                        |
-| `pnpm run act:d`               | Run the delete action locally with `act`                                                                                   |
+| `pnpm run act:d`               | Run `deploy-delete.yml` in Docker with `act` (needs `gh auth login`; event payload in `.github/act/`)                      |
 | `pnpm run sync:readme`         | Rewrite pinned `@<sha> #vX.Y.Z` refs in READMEs, workflow templates and the skill                                          |
 | `pnpm run deployments:delete`  | Delete **all preview** deployments of the `.env` project, bypassing GitHub; repeats until a pass deletes nothing           |
 | `pnpm changeset`               | Record a notable or breaking change for `CHANGELOG.md`                                                                     |

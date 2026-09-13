@@ -48,6 +48,7 @@ paths:
 
 ## Hooks and editor
 
+- act is a pinned dev container feature (`ghcr.io/dhoeric/features/act`). `.actrc` picks the runner image so act never prompts, and `.github/act/workflow_dispatch.json` is the event payload `pnpm run act:d` passes — the action reads `repository.node_id` and `ref` from it. Run act with a dummy `-s GITHUB_TOKEN` to exercise the plumbing without touching real deployments.
 - prek (`prek.toml`) formats and lints on commit. In CI, `.github/workflows/prek.yml` runs `prek run --all-files` on PRs and `main` (it replaced pre-commit.ci, which can't read `prek.toml`); keep its `prek-version` equal to the prek in `.devcontainer/Dockerfile`.
 - Changing formatter/linter behavior or script paths → update the `oxc-format-and-lint` hook in `prek.toml` and the usage header of `.claude/scripts/pre-commit-oxc.sh` together.
 - The Stop hook `.claude/scripts/stop-review-agents.sh` asks the agent to record session learnings when tracked files have uncommitted changes (untracked files alone don't trigger it).
