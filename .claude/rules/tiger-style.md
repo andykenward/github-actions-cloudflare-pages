@@ -80,12 +80,12 @@ paths:
 
 ## Lint mapping
 
-The rules that enforce the principles above, with their options and the overrides `.oxlintrc.json` carries for them.
+The rules that enforce the principles above, with their options and the overrides `.oxlintrc.json` carries for them. Tests are exempt from the length and nesting rules because `describe` → `it` → `Effect.gen` → mock callback is their structure, not logic; `vitest/max-nested-describe` still bounds them.
 
 | Rule                                             | Principle                     | Overrides                                       |
 | ------------------------------------------------ | ----------------------------- | ----------------------------------------------- |
 | `max-lines-per-function` 70, raw                 | Functions fit on a screen     | off in `__tests__/**` (`describe`/`it` nesting) |
-| `max-depth` 3, `max-nested-callbacks` 4          | Push conditionals up          |                                                 |
+| `max-depth` 3, `max-nested-callbacks` 4          | Push conditionals up          | `max-nested-callbacks` off in `__tests__/**`    |
 | `max-params` 4                                   | Fewer things in scope         |                                                 |
 | `no-nested-ternary`, `curly`, `no-else-return`   | Simple, explicit control flow |                                                 |
 | `no-magic-numbers`                               | Every bound is named          | off in `__tests__/**`, `__fixtures__/**`        |

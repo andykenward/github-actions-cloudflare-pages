@@ -26,13 +26,16 @@ export const PollInterval = Context.Reference<Duration.Duration>(
   {defaultValue: () => Duration.seconds(1)}
 )
 
+/** README and `action.yml` document the 10 minutes. */
+const POLL_TIMEOUT_MINUTES = 10
+
 /**
  * The ceiling on polling. Without one the action spun until the job timeout
- * killed it; README and `action.yml` document the 10 minutes.
+ * killed it.
  */
 export const PollTimeout = Context.Reference<Duration.Duration>(
   'github-actions-cloudflare-pages/common/cloudflare/deployment/status/PollTimeout',
-  {defaultValue: () => Duration.minutes(10)}
+  {defaultValue: () => Duration.minutes(POLL_TIMEOUT_MINUTES)}
 )
 
 type DeploymentStatus = Exclude<
