@@ -1,11 +1,11 @@
 import * as Arr from "../../Array.ts"
 import * as Equal from "../../Equal.ts"
-import { decodeUriFragment, formatUriFragmentToken, unescapeToken } from "../../JsonPointer.ts"
+import { escapeToken, unescapeToken } from "../../JsonPointer.ts"
 import type * as JsonSchema from "../../JsonSchema.ts"
 import { rewriteRefs } from "../../JsonSchema.ts"
 import * as RegEx from "../../RegExp.ts"
 import type * as Schema from "../../Schema.ts"
-import * as InternalAST from "../../SchemaAST.ts"
+import * as SchemaAST from "../../SchemaAST.ts"
 import type * as SchemaRepresentation from "../../SchemaRepresentation.ts"
 import { errorWithPath } from "../errors.ts"
 import * as InternalRecord from "../record.ts"
@@ -15,10 +15,6 @@ type Path = ReadonlyArray<string | number>
 type CheckRepresentationAnnotation = SchemaRepresentation.CheckRepresentationAnnotation<
   SchemaRepresentation.Representation
 >
-
-function formatDefinitionReference(key: string): string {
-  return `#/$defs/${formatUriFragmentToken(key)}`
-}
 
 const jsonSchemaAnnotationExcludedKeys = new Set([
   ...InternalAnnotations.annotationExcludedKeys,
@@ -41,9 +37,9 @@ function collectJsonSchemaAnnotations(
   else if (options?.generateDescriptions === true && typeof expected === "string") out.description = expected
 
   const defaultValue = annotations.default
-  if (InternalAST.isJson(defaultValue)) out.default = defaultValue
+  if (SchemaAST.isJson(defaultValue)) out.default = defaultValue
   const examples = annotations.examples
-  if (Array.isArray(examples) && InternalAST.isJson(examples)) out.examples = examples
+  if (Array.isArray(examples) && SchemaAST.isJson(examples)) out.examples = examples
   const readOnly = annotations.readOnly
   if (typeof readOnly === "boolean") out.readOnly = readOnly
   const writeOnly = annotations.writeOnly
@@ -55,7 +51,7 @@ function collectJsonSchemaAnnotations(
   const contentMediaType = annotations.contentMediaType
   if (typeof contentMediaType === "string") out.contentMediaType = contentMediaType
   const contentSchema = annotations.contentSchema
-  if (InternalAST.isJson(contentSchema)) out.contentSchema = contentSchema
+  if (SchemaAST.isJson(contentSchema)) out.contentSchema = contentSchema
 
   if (options?.includeAnnotationKey !== undefined) {
     for (const [key, value] of Object.entries(annotations)) {
@@ -65,7 +61,7 @@ function collectJsonSchemaAnnotations(
       ) {
         continue
       }
-      if (InternalAST.isJson(value)) InternalRecord.assignProperty(out, key, value)
+      if (SchemaAST.isJson(value)) InternalRecord.assignProperty(out, key, value)
     }
   }
 
@@ -106,10 +102,8 @@ function extractJsonSchemaNumberType(schema: JsonSchema.JsonSchema): {
 }
 
 function isJsonSchemaNumberEncoding(schema: JsonSchema.JsonSchema): boolean {
-  if (!Array.isArray(schema.anyOf) || schema.anyOf.length !== 2 || schema.anyOf[0]?.type !== "number") return false
-  const special = schema.anyOf[1]
-  return special?.type === "string" && Array.isArray(special.enum) && special.enum.length === 3 &&
-    special.enum.includes("NaN") && special.enum.includes("Infinity") && special.enum.includes("-Infinity")
+  return Array.isArray(schema.anyOf) && schema.anyOf.length === 4 && schema.anyOf[0]?.type === "number" &&
+    schema.anyOf.slice(1).every((member) => member.type === "string")
 }
 
 // Keep this allowlist closed: applicators and dependent keywords can change meaning when moved across schema objects.
@@ -178,6 +172,7 @@ function compileJsonSchema(
   const definitionStates = new Map<string, JsonSchema.JsonSchema | string | null>()
   const compiledRepresentations = new WeakMap<SchemaRepresentation.Representation, JsonSchema.JsonSchema>()
   const fallbackDefinitions = new Map<string, Array<string>>()
+  let hasAliases = false
   const referenceKeys = Object.keys(references)
   for (const key of referenceKeys) {
     compileDefinition(key, ["references", key])
@@ -214,6 +209,7 @@ function compileJsonSchema(
         if (candidates === undefined) fallbackDefinitions.set(fallback, [key])
         else candidates.push(key)
       } else {
+        hasAliases = true
         definitionStates.set(key, match)
         return match
       }
@@ -223,24 +219,12 @@ function compileJsonSchema(
   }
 
   function finalizeJsonSchema(schema: JsonSchema.JsonSchema): JsonSchema.JsonSchema {
-    return rewriteRefs(schema, ($ref) => {
-      const pointer = decodeUriFragment($ref)
-      if (pointer === undefined) {
-        if (/^#(?:\/|%2f)/i.test($ref)) {
-          throw new Error(`Invalid JSON Pointer URI fragment ${JSON.stringify($ref)}`)
-        }
-        return $ref
-      }
-      if (!pointer.startsWith("/$defs/")) return $ref
-      const separator = pointer.indexOf("/", 7)
-      const canonical = definitionStates.get(unescapeToken(pointer.slice(7, separator < 0 ? undefined : separator)))
-      if (typeof canonical !== "string") return $ref
-      // URI-encoded slashes separate pointer tokens; only ~1 represents a slash within a token.
-      return $ref.replace(
-        /^#(?:\/|%2f).*?(?:\/|%2f).*?(?=\/|%2f|$)/i,
-        formatDefinitionReference(canonical)
-      )
-    })
+    if (!hasAliases) return schema
+    return rewriteRefs(schema, ($ref) =>
+      $ref.replace(/^#\/\$defs\/([^/]*)/, (match, token) => {
+        const canonical = definitionStates.get(unescapeToken(token))
+        return typeof canonical === "string" ? `#/$defs/${escapeToken(canonical)}` : match
+      }))
   }
 
   function getIdentifierFallback(
@@ -299,7 +283,7 @@ function compileJsonSchema(
   ): JsonSchema.JsonSchema {
     if (representation._tag === "Reference") {
       const canonical = compileDefinition(representation.$ref, path)
-      return { $ref: formatDefinitionReference(canonical) }
+      return { $ref: `#/$defs/${escapeToken(canonical)}` }
     }
     const cached = compiledRepresentations.get(representation)
     if (cached !== undefined) return cached
@@ -337,11 +321,8 @@ function compileJsonSchema(
       case "BigInt":
         return { type: "string", allOf: [{ pattern: "^-?\\d+$" }] }
       case "Symbol":
-        return { type: "string", allOf: [{ pattern: "^Symbol\\(([\\s\\S]*)\\)$" }] }
       case "UniqueSymbol":
-        return globalThis.Symbol.keyFor(representation.symbol) === undefined
-          ? { not: {} }
-          : { type: "string", enum: [globalThis.String(representation.symbol)] }
+        return { type: "string", allOf: [{ pattern: "^Symbol\\((.*)\\)$" }] }
       case "Declaration": {
         return {}
       }
@@ -355,7 +336,9 @@ function compileJsonSchema(
         return {
           anyOf: [
             { type: "number" },
-            { type: "string", enum: ["NaN", "Infinity", "-Infinity"] }
+            { type: "string", enum: ["NaN"] },
+            { type: "string", enum: ["Infinity"] },
+            { type: "string", enum: ["-Infinity"] }
           ]
         }
       case "Boolean":
@@ -367,15 +350,11 @@ function compileJsonSchema(
           : { type: typeof literal, enum: [literal] }
       }
       case "Enum": {
-        const types = representation.enums.map(([title, literal], index) => {
-          if (typeof literal === "number" && !globalThis.Number.isFinite(literal)) {
-            throw errorWithPath(
-              `Invalid numeric enum value ${globalThis.String(literal)}`,
-              [...path, "enums", index, 1]
-            )
-          }
-          return { type: typeof literal, enum: [literal], title }
-        })
+        const types = representation.enums.map(([title, literal]) =>
+          typeof literal === "number" && !globalThis.Number.isFinite(literal)
+            ? { type: "string", enum: [globalThis.String(literal)], title }
+            : { type: typeof literal, enum: [literal], title }
+        )
         return types.length === 0 ? { not: {} } : { anyOf: types }
       }
       case "TemplateLiteral":
@@ -409,7 +388,7 @@ function compileJsonSchema(
       }
       case "Objects": {
         if (representation.propertySignatures.length === 0 && representation.indexSignatures.length === 0) {
-          return { not: { type: "null" } }
+          return { anyOf: [{ type: "object" }, { type: "array" }] }
         }
         const out: JsonSchema.JsonSchema = { type: "object" }
         const properties: Record<string, JsonSchema.JsonSchema> = {}
@@ -437,28 +416,21 @@ function compileJsonSchema(
         if (representation.propertySignatures.length > 0) out.properties = properties
         if (required.length > 0) out.required = required
         const patternProperties: Record<string, JsonSchema.JsonSchema | false> = {}
-        const additionalPropertySchemas: Array<JsonSchema.JsonSchema | false> = []
-        const indexValueSchemas: Array<JsonSchema.JsonSchema | false> = []
-        let hasUnrepresentableIndexPattern = false
+        const additionalProperties: Array<JsonSchema.JsonSchema | false> = []
         for (let index = 0; index < representation.indexSignatures.length; index++) {
           const signature = representation.indexSignatures[index]
           let type: JsonSchema.JsonSchema | false = recur(
             signature.type,
             [...path, "indexSignatures", index, "type"]
           )
-          if (Equal.equals(type, { not: {} })) type = false
-          indexValueSchemas.push(type)
+          if (Object.keys(type).length === 1 && "not" in type) type = false
           const patterns = getParameterPatterns(
             signature.parameter,
             [...path, "indexSignatures", index, "parameter"],
             new Set()
           )
-          if (patterns === undefined) {
-            hasUnrepresentableIndexPattern = true
-            continue
-          }
           if (patterns.length === 0) {
-            additionalPropertySchemas.push(type)
+            additionalProperties.push(type)
           } else {
             for (const pattern of patterns) {
               const previous = patternProperties[pattern]
@@ -478,36 +450,16 @@ function compileJsonSchema(
         if (hasPatternProperties) {
           out.patternProperties = patternProperties
         }
-        if (hasUnrepresentableIndexPattern && options?.onExcessProperty === "error") {
-          const propertyNames: Array<JsonSchema.JsonSchema> = []
-          if (representation.propertySignatures.length > 0) {
-            propertyNames.push({ enum: Object.keys(properties) })
-          }
-          for (let index = 0; index < representation.indexSignatures.length; index++) {
-            propertyNames.push(
-              recur(
-                representation.indexSignatures[index].parameter,
-                [...path, "indexSignatures", index, "parameter"]
-              )
-            )
-          }
-          out.propertyNames = propertyNames.length === 1 ? propertyNames[0] : { anyOf: propertyNames }
-          out.additionalProperties = indexValueSchemas.length === 1
-            ? indexValueSchemas[0]
-            : { anyOf: indexValueSchemas }
-          if (additionalPropertySchemas.length > 0) {
-            out.allOf = additionalPropertySchemas.map((type) => ({ type: "object", additionalProperties: type }))
-          }
-        } else if (additionalPropertySchemas.length === 0) {
-          out.additionalProperties = hasUnrepresentableIndexPattern || options?.onExcessProperty !== "error"
+        if (representation.indexSignatures.length === 0) {
+          out.additionalProperties = options?.additionalProperties ?? false
         } else if (
-          additionalPropertySchemas.length === 1 &&
+          additionalProperties.length === 1 &&
           representation.propertySignatures.length === 0 &&
           !hasPatternProperties
         ) {
-          out.additionalProperties = additionalPropertySchemas[0]
-        } else if (additionalPropertySchemas.length > 0) {
-          out.allOf = additionalPropertySchemas.map((type) => ({ type: "object", additionalProperties: type }))
+          out.additionalProperties = additionalProperties[0]
+        } else if (additionalProperties.length > 0) {
+          out.allOf = additionalProperties.map((type) => ({ type: "object", additionalProperties: type }))
         }
         if (
           typeof out.additionalProperties === "object" &&
@@ -521,12 +473,11 @@ function compileJsonSchema(
       case "Union": {
         const types = representation.types.map((type, index) => recur(type, [...path, "types", index]))
         if (types.length === 0) return { not: {} }
-        const mode = representation.options?.mode ?? "anyOf"
-        if (mode === "anyOf" && types.length > 1) {
+        if (representation.mode === "anyOf" && types.length > 1) {
           const compacted = compactEnums(types)
           if (compacted !== undefined) return compacted
         }
-        return mode === "anyOf" ? { anyOf: types } : { oneOf: types }
+        return representation.mode === "anyOf" ? { anyOf: types } : { oneOf: types }
       }
     }
   }
@@ -535,47 +486,25 @@ function compileJsonSchema(
     parameter: SchemaRepresentation.Representation,
     path: Path,
     seenReferences: ReadonlySet<string>
-  ): ReadonlyArray<string> | undefined {
+  ): ReadonlyArray<string> {
     switch (parameter._tag) {
       case "Reference": {
         if (!Object.hasOwn(references, parameter.$ref)) {
           throw errorWithPath(`Invalid reference ${parameter.$ref}`, [...path, "$ref"])
         }
         compileDefinition(parameter.$ref, path)
-        if (seenReferences.has(parameter.$ref)) return undefined
+        if (seenReferences.has(parameter.$ref)) return []
         const next = new Set(seenReferences).add(parameter.$ref)
         return getParameterPatterns(references[parameter.$ref], ["references", parameter.$ref], next)
       }
-      case "String": {
-        if (parameter.checks.length === 0) return []
-        if (
-          parameter.checks.length !== 1 ||
-          parameter.checks[0]._tag !== "Filter" ||
-          parameter.checks[0].annotations?.toJsonSchema === undefined
-        ) {
-          return undefined
-        }
-        const schema = recur(parameter, path)
-        return schema.type === "string" && typeof schema.pattern === "string" &&
-            hasOnlyKeywords(schema, "|type|pattern|title|description|default|examples|readOnly|writeOnly|")
-          ? [schema.pattern]
-          : undefined
-      }
+      case "String":
+        return collectPatterns(recur(parameter, path))
       case "TemplateLiteral":
-        return parameter.checks.length === 0 ? [`^${parameter.parts.map(getPartPattern).join("")}$`] : undefined
-      case "Union": {
-        if (parameter.types.length === 0 || parameter.checks.length > 0 || parameter.options?.mode === "oneOf") {
-          return undefined
-        }
-        const patterns: Array<string> = []
-        for (let index = 0; index < parameter.types.length; index++) {
-          const memberPatterns = getParameterPatterns(parameter.types[index], [...path, "types", index], seenReferences)
-          if (memberPatterns === undefined) return undefined
-          if (memberPatterns.length === 0) return []
-          patterns.push(...memberPatterns)
-        }
-        return patterns
-      }
+        return [`^${parameter.parts.map(getPartPattern).join("")}$`]
+      case "Union":
+        return parameter.types.flatMap((type, index) =>
+          getParameterPatterns(type, [...path, "types", index], seenReferences)
+        )
       default:
         throw errorWithPath("Invalid schema representation document", path)
     }
@@ -599,12 +528,25 @@ function compactEnums(
     }
     if (sharedType === undefined) sharedType = schema.type
     else if (schema.type !== sharedType) return undefined
-    for (const value of schema.enum) {
-      if (values.includes(value)) return undefined
-      values.push(value)
-    }
+    values.push(...schema.enum)
   }
   return { type: sharedType, enum: values }
+}
+
+function collectPatterns(schema: JsonSchema.JsonSchema): ReadonlyArray<string> {
+  const patterns: Array<string> = []
+  if (typeof schema.pattern === "string") patterns.push(schema.pattern)
+  for (const key of ["allOf", "anyOf", "oneOf"] as const) {
+    const members = schema[key]
+    if (Array.isArray(members)) {
+      for (const member of members) {
+        if (typeof member === "object" && member !== null && !Array.isArray(member)) {
+          patterns.push(...collectPatterns(member))
+        }
+      }
+    }
+  }
+  return patterns
 }
 
 function getPartPattern(part: SchemaRepresentation.Representation): string {
@@ -612,13 +554,13 @@ function getPartPattern(part: SchemaRepresentation.Representation): string {
     case "Literal":
       return RegEx.escape(globalThis.String(part.literal))
     case "String":
-      return InternalAST.STRING_PATTERN
+      return SchemaAST.STRING_PATTERN
     case "Number":
-      return InternalAST.FINITE_PATTERN
+      return SchemaAST.FINITE_PATTERN
     case "TemplateLiteral":
       return part.parts.map(getPartPattern).join("")
     case "Union":
-      return `(?:${part.types.map(getPartPattern).join("|")})`
+      return part.types.map(getPartPattern).join("|")
     default:
       throw errorWithPath("Invalid schema representation document", [])
   }

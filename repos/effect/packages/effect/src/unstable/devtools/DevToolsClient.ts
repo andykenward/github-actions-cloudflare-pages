@@ -177,17 +177,6 @@ export const make: Effect.Effect<
  */
 export const layer: Layer.Layer<DevToolsClient, never, Socket.Socket> = Layer.effect(DevToolsClient, make)
 
-const spanSnapshot = (span: Tracer.Span): DevToolsSchema.Span => ({
-  _tag: "Span",
-  spanId: span.spanId,
-  traceId: span.traceId,
-  name: span.name,
-  sampled: span.sampled,
-  attributes: new Map(span.attributes),
-  status: span.status,
-  parent: span.parent
-})
-
 const makeTracerEffect = Effect.gen(function*() {
   const client = yield* DevToolsClient
   const currentTracer = yield* Effect.tracer
@@ -195,7 +184,8 @@ const makeTracerEffect = Effect.gen(function*() {
   return Tracer.make({
     span(options) {
       const span = currentTracer.span(options)
-      client.sendUnsafe(spanSnapshot(span))
+      // the span is mutated in place, so send a snapshot of its current state
+      client.sendUnsafe({ ...span })
       const oldEvent = span.event
       span.event = function(this: Tracer.Span, name, startTime, attributes) {
         client.sendUnsafe({
@@ -212,7 +202,7 @@ const makeTracerEffect = Effect.gen(function*() {
       const oldEnd = span.end
       span.end = function(this: Tracer.Span, endTime, exit) {
         oldEnd.call(this, endTime, exit)
-        client.sendUnsafe(spanSnapshot(span))
+        client.sendUnsafe({ ...span })
       }
 
       return span

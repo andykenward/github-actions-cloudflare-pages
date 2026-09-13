@@ -27,7 +27,7 @@ import type { Covariant, NoInfer, NotFunction } from "./Types.ts"
 import type * as Unify from "./Unify.ts"
 import type * as Gen from "./Utils.ts"
 
-const TypeId = "~effect/Result"
+const TypeId = "~effect/data/Result"
 
 /**
  * A value that is either `Success<A, E>` or `Failure<A, E>`.

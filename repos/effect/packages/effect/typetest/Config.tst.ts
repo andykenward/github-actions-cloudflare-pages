@@ -3,7 +3,7 @@ import { describe, expect, it } from "tstyche"
 
 describe("Config", () => {
   it("literals", () => {
-    const c = Config.Literals(["a", "b"])
+    const c = Config.literals(["a", "b"])
 
     expect(c).type.toBe<Config.Config<"a" | "b">>()
     expect<Config.Success<typeof c>>().type.toBe<"a" | "b">()
@@ -30,25 +30,19 @@ describe("Config", () => {
   })
 
   it("Record", () => {
-    const c = Config.Record(Schema.String, Schema.FiniteFromString)
+    const c = Config.schema(Config.Record(Schema.String, Schema.FiniteFromString))
 
     expect(c).type.toBe<Config.Config<{ readonly [x: string]: number }>>()
-
-    const withPath = Config.Record(Schema.String, Schema.FiniteFromString, "values", { separator: ";" })
-    expect(withPath).type.toBe<Config.Config<{ readonly [x: string]: number }>>()
   })
 
   it("Array", () => {
-    const c = Config.Array(Schema.FiniteFromString)
+    const c = Config.schema(Config.Array(Schema.FiniteFromString))
 
     expect(c).type.toBe<Config.Config<ReadonlyArray<number>>>()
-
-    const withPath = Config.Array(Schema.FiniteFromString, "values", { separator: ";" })
-    expect(withPath).type.toBe<Config.Config<ReadonlyArray<number>>>()
   })
 
   it("parse", () => {
-    const config = Config.String("a")
+    const config = Config.string("a")
     const provider = ConfigProvider.fromUnknown({ a: "value" })
 
     config.parse(provider)

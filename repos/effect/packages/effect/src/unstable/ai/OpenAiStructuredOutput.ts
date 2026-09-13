@@ -63,10 +63,7 @@ export function toCodecOpenAI<T, E, RD, RE>(
 } {
   const codec = InternalStructuredOutput.toCodec(schema)
   const document = InternalStructuredOutput.resolveTopLevelReference(
-    Schema.toJsonSchemaDocument(codec, {
-      generateDescriptions: true,
-      onExcessProperty: "error"
-    })
+    Schema.toJsonSchemaDocument(codec, { generateDescriptions: true })
   )
   const jsonSchema = rewriteOpenAI(document.schema)
   if (jsonSchema.type !== "object" || jsonSchema.anyOf !== undefined) {

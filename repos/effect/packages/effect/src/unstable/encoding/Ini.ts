@@ -82,8 +82,6 @@ const unquote = (input: string | undefined): string => {
 /**
  * Parses an INI document into a null-prototype record.
  *
- * **Details**
- *
  * Section names separated by dots become nested records, repeated keys ending
  * in `[]` become arrays, and the scalar values `true`, `false`, and `null` are
  * decoded. Other scalar values remain strings.

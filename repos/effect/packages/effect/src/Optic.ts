@@ -12,7 +12,6 @@
  * @since 4.0.0
  */
 
-import * as Arr from "./Array.ts"
 import { dual, identity } from "./Function.ts"
 import * as InternalRecord from "./internal/record.ts"
 import * as Option from "./Option.ts"
@@ -1002,11 +1001,8 @@ class OptionalImpl<S, A> implements Optional<S, A> {
           (a, s) => {
             const copy = cloneShallow(s)
             if (a === undefined) {
-              if (
-                Array.isArray(copy) &&
-                (typeof key === "number" || (typeof key === "string" && Arr.isCanonicalArrayIndex(key)))
-              ) {
-                copy.splice(Number(key), 1)
+              if (Array.isArray(copy) && typeof key === "number") {
+                copy.splice(key, 1)
               } else {
                 delete copy[key]
               }
@@ -1062,10 +1058,10 @@ class OptionalImpl<S, A> implements Optional<S, A> {
     )
   }
   pick(keys: any) {
-    return this.compose(makeLens(Struct.pick(keys), (p, a) => ({ ...Struct.omit(a, keys), ...p })))
+    return this.compose(makeLens(Struct.pick(keys), (p, a) => ({ ...a, ...p })))
   }
   omit(keys: any) {
-    return this.compose(makeLens(Struct.omit(keys), (o, a) => ({ ...Struct.pick(a, keys), ...o })))
+    return this.compose(makeLens(Struct.omit(keys), (o, a) => ({ ...a, ...o })))
   }
   notUndefined(): any {
     return this.refine(Predicate.isNotUndefined, { expected: "a value other than `undefined`" })

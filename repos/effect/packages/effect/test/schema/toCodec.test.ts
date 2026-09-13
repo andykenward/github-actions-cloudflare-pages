@@ -510,26 +510,6 @@ describe("Serializers", () => {
 
         const decoding = asserts.decoding()
         await decoding.succeed("Symbol(a)", Symbol.for("a"))
-        await decoding.fail("Symbol(b)", `Expected "Symbol(a)"`)
-      })
-
-      it("Symbol with a multiline registry key", async () => {
-        const symbol = Symbol.for("a\nb")
-        const asserts = new TestSchema.Asserts(Schema.toCodecJson(Schema.Symbol))
-
-        await asserts.encoding().succeed(symbol, "Symbol(a\nb)")
-        await asserts.decoding().succeed("Symbol(a\nb)", symbol)
-      })
-
-      it("local UniqueSymbol", async () => {
-        const symbol = Symbol("a")
-        const asserts = new TestSchema.Asserts(Schema.toCodecJson(Schema.UniqueSymbol(symbol)))
-
-        const encoding = asserts.encoding()
-        await encoding.fail(symbol, "cannot serialize to string, Symbol is not registered")
-
-        const decoding = asserts.decoding()
-        await decoding.fail("Symbol(a)", "Expected never")
       })
 
       it("BigInt", async () => {
@@ -2073,7 +2053,7 @@ Expected "Infinity" | "-Infinity" | "NaN"`
 
         const decoding = asserts.decoding()
         await decoding.succeed("Symbol(a)", Symbol.for("a"))
-        await decoding.fail("a", `Expected "Symbol(a)"`)
+        await decoding.fail("a", `Expected a string representing a symbol`)
       })
 
       it("BigInt", async () => {
@@ -2877,7 +2857,7 @@ Expected "Infinity" | "-Infinity" | "NaN"`
     async function assertXmlFailure<T, E, RD>(schema: Schema.Codec<T, E, RD>, value: T, message: string) {
       const serializer = Schema.toEncoderXml(Schema.toCodecStringTree(schema))
       const r = await serializer(value).pipe(
-        Effect.mapError(formatIssue),
+        Effect.mapError((err) => formatIssue(err.issue)),
         Effect.result,
         Effect.runPromise
       )

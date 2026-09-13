@@ -447,10 +447,7 @@ export const get: {
           MutableHashMap.remove(self.map, key)
         }
       })
-      const exit = entry.fiber.pollUnsafe()
-      if (exit === undefined || !effect.exitHasInterrupts(exit)) {
-        MutableHashMap.set(self.map, key, entry)
-      }
+      MutableHashMap.set(self.map, key, entry)
       if (Number.isFinite(self.capacity)) {
         checkCapacity(self)
       }
@@ -1044,10 +1041,6 @@ export const invalidateWhen: {
       return oentry.await().pipe(
         effect.map((value) => {
           if (f(value)) {
-            const current = MutableHashMap.get(self.map, key)
-            if (Option.isNone(current) || current.value !== oentry) {
-              return false
-            }
             MutableHashMap.remove(self.map, key)
             return true
           }
@@ -1172,18 +1165,12 @@ export const refresh: {
       }
       entry.fiber.addObserver((exit) => {
         if (effect.exitHasInterrupts(exit)) {
-          const current = MutableHashMap.get(self.map, key)
-          if (Option.isSome(current) && current.value === entry) {
-            MutableHashMap.remove(self.map, key)
-          }
+          if (!existing) MutableHashMap.remove(self.map, key)
           return
         }
         const ttl = self.timeToLive(exit, key)
         if (Duration.isZero(ttl)) {
-          const current = MutableHashMap.get(self.map, key)
-          if (existing || (Option.isSome(current) && current.value === entry)) {
-            MutableHashMap.remove(self.map, key)
-          }
+          MutableHashMap.remove(self.map, key)
           return effect.void
         }
         entry.expiresAt = Duration.isFinite(ttl)
@@ -1191,7 +1178,6 @@ export const refresh: {
           : undefined
         if (existing) {
           MutableHashMap.set(self.map, key, entry)
-          checkCapacity(self)
         }
       })
       return entry.await()

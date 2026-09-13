@@ -293,7 +293,8 @@ describe("fromJsonSchemaDocument", () => {
                   "value": 1
                 }
               }
-            ]
+            ],
+            "mode": "anyOf"
           },
           "references": {}
         }
@@ -324,7 +325,8 @@ describe("fromJsonSchemaDocument", () => {
                   "value": 1
                 }
               }
-            ]
+            ],
+            "mode": "anyOf"
           },
           "references": {}
         }
@@ -351,7 +353,8 @@ describe("fromJsonSchemaDocument", () => {
                 "_tag": "Null",
                 "checks": []
               }
-            ]
+            ],
+            "mode": "anyOf"
           },
           "references": {}
         }
@@ -395,9 +398,11 @@ describe("fromJsonSchemaDocument", () => {
                     "value": 2
                   }
                 }
-              ]
+              ],
+              "mode": "anyOf"
             }
-          ]
+          ],
+          "mode": "anyOf"
         },
         "references": {}
       }
@@ -492,8 +497,11 @@ describe("fromJsonSchemaDocument", () => {
                         },
                         "annotations": {
                           "expected": "a finite number",
-                          "arbitraryConstraint": {
-                            "number": "finite"
+                          "arbitrary": {
+                            "constraint": {
+                              "noInfinity": true,
+                              "noNaN": true
+                            }
                           }
                         },
                         "aborted": false
@@ -537,7 +545,8 @@ describe("fromJsonSchemaDocument", () => {
                 }
               ]
             }
-          ]
+          ],
+          "mode": "anyOf"
         },
         "references": {}
       }
@@ -580,10 +589,11 @@ describe("fromJsonSchemaDocument", () => {
                     "value": 2
                   }
                 }
-              ]
+              ],
+              "mode": "anyOf"
             }
           ],
-          "options": { "mode": "oneOf" }
+          "mode": "oneOf"
         },
         "references": {}
       }
@@ -678,8 +688,11 @@ describe("fromJsonSchemaDocument", () => {
                         },
                         "annotations": {
                           "expected": "a finite number",
-                          "arbitraryConstraint": {
-                            "number": "finite"
+                          "arbitrary": {
+                            "constraint": {
+                              "noInfinity": true,
+                              "noNaN": true
+                            }
                           }
                         },
                         "aborted": false
@@ -724,7 +737,7 @@ describe("fromJsonSchemaDocument", () => {
               ]
             }
           ],
-          "options": { "mode": "oneOf" }
+          "mode": "oneOf"
         },
         "references": {}
       }
@@ -779,8 +792,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -810,8 +825,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at most 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "maxLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "maxLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -841,13 +858,12 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a string matching the RegExp a*",
-                    "arbitraryConstraint": {
-                      "patterns": [
-                        {
-                          "source": "a*",
-                          "flags": ""
-                        }
-                      ]
+                    "arbitrary": {
+                      "constraint": {
+                        "patterns": [
+                          "a*"
+                        ]
+                      }
                     }
                   },
                   "aborted": false
@@ -887,8 +903,11 @@ describe("fromJsonSchemaDocument", () => {
                 },
                 "annotations": {
                   "expected": "a finite number",
-                  "arbitraryConstraint": {
-                    "number": "finite"
+                  "arbitrary": {
+                    "constraint": {
+                      "noInfinity": true,
+                      "noNaN": true
+                    }
                   }
                 },
                 "aborted": false
@@ -916,8 +935,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -957,8 +979,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -998,8 +1023,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -1039,8 +1067,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -1080,8 +1111,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -1124,8 +1158,10 @@ describe("fromJsonSchemaDocument", () => {
                 },
                 "annotations": {
                   "expected": "an integer",
-                  "arbitraryConstraint": {
-                    "number": "integer"
+                  "arbitrary": {
+                    "constraint": {
+                      "integer": true
+                    }
                   }
                 },
                 "aborted": false
@@ -1153,8 +1189,10 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "an integer",
-                    "arbitraryConstraint": {
-                      "number": "integer"
+                    "arbitrary": {
+                      "constraint": {
+                        "integer": true
+                      }
                     }
                   },
                   "aborted": false
@@ -1194,8 +1232,10 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "an integer",
-                    "arbitraryConstraint": {
-                      "number": "integer"
+                    "arbitrary": {
+                      "constraint": {
+                        "integer": true
+                      }
                     }
                   },
                   "aborted": false
@@ -1235,8 +1275,10 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "an integer",
-                    "arbitraryConstraint": {
-                      "number": "integer"
+                    "arbitrary": {
+                      "constraint": {
+                        "integer": true
+                      }
                     }
                   },
                   "aborted": false
@@ -1276,8 +1318,10 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "an integer",
-                    "arbitraryConstraint": {
-                      "number": "integer"
+                    "arbitrary": {
+                      "constraint": {
+                        "integer": true
+                      }
                     }
                   },
                   "aborted": false
@@ -1317,8 +1361,10 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "an integer",
-                    "arbitraryConstraint": {
-                      "number": "integer"
+                    "arbitrary": {
+                      "constraint": {
+                        "integer": true
+                      }
                     }
                   },
                   "aborted": false
@@ -1438,8 +1484,10 @@ describe("fromJsonSchemaDocument", () => {
                 "annotations": {
                   "expected": "a value with a length of at most 1",
                   "~structural": true,
-                  "arbitraryConstraint": {
-                    "maxLength": 1
+                  "arbitrary": {
+                    "constraint": {
+                      "maxLength": 1
+                    }
                   }
                 },
                 "aborted": false
@@ -1466,8 +1514,11 @@ describe("fromJsonSchemaDocument", () => {
                       },
                       "annotations": {
                         "expected": "a finite number",
-                        "arbitraryConstraint": {
-                          "number": "finite"
+                        "arbitrary": {
+                          "constraint": {
+                            "noInfinity": true,
+                            "noNaN": true
+                          }
                         }
                       },
                       "aborted": false
@@ -1520,8 +1571,10 @@ describe("fromJsonSchemaDocument", () => {
                 "annotations": {
                   "expected": "a value with a length of at most 2",
                   "~structural": true,
-                  "arbitraryConstraint": {
-                    "maxLength": 2
+                  "arbitrary": {
+                    "constraint": {
+                      "maxLength": 2
+                    }
                   }
                 },
                 "aborted": false
@@ -1680,8 +1733,11 @@ describe("fromJsonSchemaDocument", () => {
                     },
                     "annotations": {
                       "expected": "a finite number",
-                      "arbitraryConstraint": {
-                        "number": "finite"
+                      "arbitrary": {
+                        "constraint": {
+                          "noInfinity": true,
+                          "noNaN": true
+                        }
                       }
                     },
                     "aborted": false
@@ -1714,8 +1770,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -1760,8 +1818,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at most 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "maxLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "maxLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -1802,7 +1862,12 @@ describe("fromJsonSchemaDocument", () => {
                     "payload": null
                   },
                   "annotations": {
-                    "expected": "an array with unique items"
+                    "expected": "an array with unique items",
+                    "arbitrary": {
+                      "constraint": {
+                        "unique": true
+                      }
+                    }
                   },
                   "aborted": false
                 }
@@ -2043,8 +2108,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with at least 1 entry",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minProperties": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -2095,8 +2162,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with at most 1 entry",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "maxProperties": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "maxLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -2163,13 +2232,12 @@ describe("fromJsonSchemaDocument", () => {
                             },
                             "annotations": {
                               "expected": "a string matching the RegExp ^[A-Z]",
-                              "arbitraryConstraint": {
-                                "patterns": [
-                                  {
-                                    "source": "^[A-Z]",
-                                    "flags": ""
-                                  }
-                                ]
+                              "arbitrary": {
+                                "constraint": {
+                                  "patterns": [
+                                    "^[A-Z]"
+                                  ]
+                                }
                               }
                             },
                             "aborted": false
@@ -2304,13 +2372,12 @@ describe("fromJsonSchemaDocument", () => {
                             },
                             "annotations": {
                               "expected": "a string matching the RegExp ^[A-Z]",
-                              "arbitraryConstraint": {
-                                "patterns": [
-                                  {
-                                    "source": "^[A-Z]",
-                                    "flags": ""
-                                  }
-                                ]
+                              "arbitrary": {
+                                "constraint": {
+                                  "patterns": [
+                                    "^[A-Z]"
+                                  ]
+                                }
                               }
                             },
                             "aborted": false
@@ -2345,8 +2412,10 @@ describe("fromJsonSchemaDocument", () => {
                             "annotations": {
                               "expected": "a value with a length of at least 2",
                               "~structural": true,
-                              "arbitraryConstraint": {
-                                "minLength": 2
+                              "arbitrary": {
+                                "constraint": {
+                                  "minLength": 2
+                                }
                               }
                             },
                             "aborted": false
@@ -2409,7 +2478,8 @@ describe("fromJsonSchemaDocument", () => {
               "_tag": "Null",
               "checks": []
             }
-          ]
+          ],
+          "mode": "anyOf"
         },
         "references": {}
       }
@@ -2437,7 +2507,8 @@ describe("fromJsonSchemaDocument", () => {
               "_tag": "Null",
               "checks": []
             }
-          ]
+          ],
+          "mode": "anyOf"
         },
         "references": {}
       }
@@ -3040,8 +3111,10 @@ describe("fromJsonSchemaDocument", () => {
               "annotations": {
                 "expected": "a value with a length of at least 1",
                 "~structural": true,
-                "arbitraryConstraint": {
-                  "minLength": 1
+                "arbitrary": {
+                  "constraint": {
+                    "minLength": 1
+                  }
                 }
               },
               "aborted": false
@@ -3057,8 +3130,10 @@ describe("fromJsonSchemaDocument", () => {
               "annotations": {
                 "expected": "a value with a length of at most 2",
                 "~structural": true,
-                "arbitraryConstraint": {
-                  "maxLength": 2
+                "arbitrary": {
+                  "constraint": {
+                    "maxLength": 2
+                  }
                 }
               },
               "aborted": false
@@ -3091,8 +3166,10 @@ describe("fromJsonSchemaDocument", () => {
               "annotations": {
                 "expected": "a value with a length of at least 1",
                 "~structural": true,
-                "arbitraryConstraint": {
-                  "minLength": 1
+                "arbitrary": {
+                  "constraint": {
+                    "minLength": 1
+                  }
                 }
               },
               "aborted": false
@@ -3108,8 +3185,10 @@ describe("fromJsonSchemaDocument", () => {
               "annotations": {
                 "expected": "a value with a length of at most 2",
                 "~structural": true,
-                "arbitraryConstraint": {
-                  "maxLength": 2
+                "arbitrary": {
+                  "constraint": {
+                    "maxLength": 2
+                  }
                 }
               },
               "aborted": false
@@ -3366,8 +3445,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -3404,8 +3485,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     },
                     "description": "b"
                   },
@@ -3447,8 +3530,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -3513,8 +3598,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     },
                     "description": "b"
                   },
@@ -3553,8 +3640,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at most 2",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "maxLength": 2
+                    "arbitrary": {
+                      "constraint": {
+                        "maxLength": 2
+                      }
                     }
                   },
                   "aborted": false
@@ -3570,8 +3659,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -3613,8 +3704,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at most 2",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "maxLength": 2
+                    "arbitrary": {
+                      "constraint": {
+                        "maxLength": 2
+                      }
                     }
                   },
                   "aborted": false
@@ -3630,8 +3723,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -3673,8 +3768,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at most 2",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "maxLength": 2
+                    "arbitrary": {
+                      "constraint": {
+                        "maxLength": 2
+                      }
                     }
                   },
                   "aborted": false
@@ -3690,8 +3787,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     },
                     "description": "b"
                   },
@@ -3729,8 +3828,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -3746,8 +3847,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at most 2",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "maxLength": 2
+                    "arbitrary": {
+                      "constraint": {
+                        "maxLength": 2
+                      }
                     }
                   },
                   "aborted": false
@@ -3790,8 +3893,10 @@ describe("fromJsonSchemaDocument", () => {
                       "annotations": {
                         "expected": "a value with a length of at least 1",
                         "~structural": true,
-                        "arbitraryConstraint": {
-                          "minLength": 1
+                        "arbitrary": {
+                          "constraint": {
+                            "minLength": 1
+                          }
                         }
                       },
                       "aborted": false
@@ -3807,8 +3912,10 @@ describe("fromJsonSchemaDocument", () => {
                       "annotations": {
                         "expected": "a value with a length of at most 2",
                         "~structural": true,
-                        "arbitraryConstraint": {
-                          "maxLength": 2
+                        "arbitrary": {
+                          "constraint": {
+                            "maxLength": 2
+                          }
                         }
                       },
                       "aborted": false
@@ -3847,8 +3954,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -3864,8 +3973,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at most 2",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "maxLength": 2
+                    "arbitrary": {
+                      "constraint": {
+                        "maxLength": 2
+                      }
                     },
                     "description": "c"
                   },
@@ -3909,8 +4020,10 @@ describe("fromJsonSchemaDocument", () => {
                       "annotations": {
                         "expected": "a value with a length of at least 1",
                         "~structural": true,
-                        "arbitraryConstraint": {
-                          "minLength": 1
+                        "arbitrary": {
+                          "constraint": {
+                            "minLength": 1
+                          }
                         }
                       },
                       "aborted": false
@@ -3926,8 +4039,10 @@ describe("fromJsonSchemaDocument", () => {
                       "annotations": {
                         "expected": "a value with a length of at most 2",
                         "~structural": true,
-                        "arbitraryConstraint": {
-                          "maxLength": 2
+                        "arbitrary": {
+                          "constraint": {
+                            "maxLength": 2
+                          }
                         },
                         "description": "c"
                       },
@@ -4022,7 +4137,8 @@ describe("fromJsonSchemaDocument", () => {
                     "value": "b"
                   }
                 }
-              ]
+              ],
+              "mode": "anyOf"
             },
             "references": {}
           }
@@ -4078,8 +4194,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4113,8 +4232,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4127,8 +4249,10 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "an integer",
-                    "arbitraryConstraint": {
-                      "number": "integer"
+                    "arbitrary": {
+                      "constraint": {
+                        "integer": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4163,8 +4287,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4177,8 +4304,10 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "an integer",
-                    "arbitraryConstraint": {
-                      "number": "integer"
+                    "arbitrary": {
+                      "constraint": {
+                        "integer": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4238,8 +4367,10 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "an integer",
-                    "arbitraryConstraint": {
-                      "number": "integer"
+                    "arbitrary": {
+                      "constraint": {
+                        "integer": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4252,8 +4383,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4287,8 +4421,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4358,8 +4495,11 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "a finite number",
-                    "arbitraryConstraint": {
-                      "number": "finite"
+                    "arbitrary": {
+                      "constraint": {
+                        "noInfinity": true,
+                        "noNaN": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4406,8 +4546,10 @@ describe("fromJsonSchemaDocument", () => {
                   },
                   "annotations": {
                     "expected": "an integer",
-                    "arbitraryConstraint": {
-                      "number": "integer"
+                    "arbitrary": {
+                      "constraint": {
+                        "integer": true
+                      }
                     }
                   },
                   "aborted": false
@@ -4499,7 +4641,8 @@ describe("fromJsonSchemaDocument", () => {
                     "value": 2
                   }
                 }
-              ]
+              ],
+              "mode": "anyOf"
             },
             "references": {}
           }
@@ -4639,7 +4782,12 @@ describe("fromJsonSchemaDocument", () => {
                     "payload": null
                   },
                   "annotations": {
-                    "expected": "an array with unique items"
+                    "expected": "an array with unique items",
+                    "arbitrary": {
+                      "constraint": {
+                        "unique": true
+                      }
+                    }
                   },
                   "aborted": false
                 }
@@ -4929,8 +5077,10 @@ describe("fromJsonSchemaDocument", () => {
                   "annotations": {
                     "expected": "a value with a length of at least 1",
                     "~structural": true,
-                    "arbitraryConstraint": {
-                      "minLength": 1
+                    "arbitrary": {
+                      "constraint": {
+                        "minLength": 1
+                      }
                     }
                   },
                   "aborted": false
@@ -5113,8 +5263,10 @@ describe("fromJsonSchemaDocument", () => {
                 "annotations": {
                   "expected": "a value with a length of at least 1",
                   "~structural": true,
-                  "arbitraryConstraint": {
-                    "minLength": 1
+                  "arbitrary": {
+                    "constraint": {
+                      "minLength": 1
+                    }
                   }
                 },
                 "aborted": false

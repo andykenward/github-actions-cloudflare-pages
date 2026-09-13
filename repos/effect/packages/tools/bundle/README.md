@@ -12,9 +12,13 @@ Do not scan `scratchpad/` or `packages/tools/bundle/fixtures/` for this workflow
 Only measure files that the user explicitly names, or files you create
 specifically for the current investigation.
 
-Use the default cleanup mode. Pass `--keep-base` only when repeated measurements
-are explicitly requested or clearly necessary, then clean up after the final
-run.
+Before running a comparison, ask the user which mode they want:
+
+- default cleanup mode for a single check or one-off investigation;
+- keep-base mode for many repeated measurements, followed by explicit cleanup at
+  the end.
+
+Use cleanup mode unless the user says they expect to run multiple trials.
 
 If the user asks what a generated bundle is made of, use the bundle composition
 workflow instead of the size comparison workflow.
@@ -170,12 +174,10 @@ fixture directory.
 If the user only asks for the current bundled size, use:
 
 ```sh
-pnpm build
 pnpm --dir packages/tools/bundle report ../../../scratchpad/my-fixture.ts
 ```
 
-Run the build immediately before the report because the direct CLI resolves
-Effect packages from `dist`. This does not compare against a base ref.
+This does not compare against a base ref.
 
 ### Fixture Guidance
 

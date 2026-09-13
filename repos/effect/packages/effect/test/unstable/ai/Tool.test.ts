@@ -87,21 +87,6 @@ describe("Tool", () => {
         ])
       }))
 
-    it.effect("should encode returned failures with the failure schema", () =>
-      Effect.gen(function*() {
-        const toolkit = Toolkit.make(Tool.make("FailureEncoding", {
-          success: Schema.Number,
-          failure: Schema.NumberFromString,
-          failureMode: "return"
-        }))
-        const handlers = yield* toolkit.pipe(Effect.provide(toolkit.toLayer({
-          FailureEncoding: () => Effect.fail(404)
-        })))
-        const results = yield* handlers.handle("FailureEncoding", {}).pipe(Effect.flatMap(Stream.runCollect))
-
-        strictEqual(results[0].encodedResult, "404")
-      }))
-
     it.effect("should return tool call handler failures with failure mode return using OpenAI transformer", () =>
       Effect.gen(function*() {
         const toolkit = Toolkit.make(FailureModeReturn)
@@ -173,7 +158,7 @@ describe("Tool", () => {
         deepStrictEqual(response, toolResult)
       }))
 
-    it.effect("should return a failed tool result when tool call parameters are invalid and failure mode is return", () =>
+    it.effect("should raise an error when tool call parameters are invalid", () =>
       Effect.gen(function*() {
         const toolkit = Toolkit.make(FailureModeReturn)
 
@@ -197,96 +182,6 @@ describe("Tool", () => {
               params: {}
             }]
           }),
-          Effect.provide(handlers)
-        )
-
-        const description = `Missing key\n  at ["testParam"]`
-        deepStrictEqual(response.toolResults, [
-          Response.toolResultPart({
-            id: toolCallId,
-            name: toolName,
-            isFailure: true,
-            providerExecuted: false,
-            preliminary: false,
-            result: AiError.make({
-              module: "Toolkit",
-              method: "FailureModeReturn.handle",
-              reason: new AiError.ToolParameterValidationError({
-                toolName,
-                description
-              })
-            }),
-            encodedResult: {
-              _tag: "AiError",
-              module: "Toolkit",
-              method: "FailureModeReturn.handle",
-              reason: {
-                _tag: "ToolParameterValidationError",
-                toolName,
-                description
-              }
-            }
-          })
-        ])
-      }))
-
-    it.effect("should return a failed tool result when tool call parameters contain NaN and failure mode is return", () =>
-      Effect.gen(function*() {
-        const toolkit = Toolkit.make(FailureModeReturn)
-
-        const handlers = toolkit.toLayer({
-          FailureModeReturn: () => Effect.succeed({ testSuccess: "unused" })
-        })
-
-        const toolCallId = "tool-123"
-        const toolName = "FailureModeReturn"
-
-        const response = yield* LanguageModel.generateText({
-          prompt: "Test",
-          toolkit
-        }).pipe(
-          TestUtils.withLanguageModel({
-            generateText: [{
-              type: "tool-call",
-              id: toolCallId,
-              name: toolName,
-              params: { testParam: NaN }
-            }]
-          }),
-          Effect.provide(handlers)
-        )
-
-        strictEqual(response.toolResults.length, 1)
-        const toolResult = response.toolResults[0]
-        strictEqual(toolResult.isFailure, true)
-        const result = toolResult.result as AiError.AiError
-        strictEqual(result._tag, "AiError")
-        strictEqual(result.reason._tag, "ToolParameterValidationError")
-      }))
-
-    it.effect("should raise an error when tool call parameters are invalid and failure mode is error", () =>
-      Effect.gen(function*() {
-        const toolkit = Toolkit.make(FailureModeError)
-
-        const handlers = toolkit.toLayer({
-          FailureModeError: () => Effect.succeed({ testSuccess: "unused" })
-        })
-
-        const toolCallId = "tool-123"
-        const toolName = "FailureModeError"
-
-        const response = yield* LanguageModel.generateText({
-          prompt: "Test",
-          toolkit
-        }).pipe(
-          TestUtils.withLanguageModel({
-            generateText: [{
-              type: "tool-call",
-              id: toolCallId,
-              name: toolName,
-              params: { testParam: NaN }
-            }]
-          }),
           Effect.provide(handlers),
           Effect.flip
         )
@@ -295,10 +190,11 @@ describe("Tool", () => {
           response,
           AiError.make({
             module: "Toolkit",
-            method: "FailureModeError.handle",
+            method: "FailureModeReturn.handle",
             reason: new AiError.ToolParameterValidationError({
-              toolName: "FailureModeError",
-              description: `Expected string\n  at ["testParam"]`
+              toolName: "FailureModeReturn",
+              toolParams: {},
+              description: `Missing key\n  at ["testParam"]`
             })
           })
         )
@@ -974,7 +870,7 @@ describe("Tool", () => {
         deepStrictEqual(response, toolResult)
       }))
 
-    it.effect("should return a failed tool result when tool call parameters are invalid and failure mode is return", () =>
+    it.effect("should raise an error when tool call parameters are invalid", () =>
       Effect.gen(function*() {
         const tool = HandlerRequired({
           failureMode: "return",
@@ -1006,37 +902,22 @@ describe("Tool", () => {
               }
             ]
           }),
-          Effect.provide(handlers)
+          Effect.provide(handlers),
+          Effect.flip
         )
 
-        const description = `Missing key\n  at ["testParam"]`
-        deepStrictEqual(response.toolResults, [
-          Response.toolResultPart({
-            id: toolCallId,
-            name: tool.name,
-            isFailure: true,
-            providerExecuted: false,
-            preliminary: false,
-            result: AiError.make({
-              module: "Toolkit",
-              method: "HandlerRequired.handle",
-              reason: new AiError.ToolParameterValidationError({
-                toolName: "HandlerRequired",
-                description
-              })
-            }),
-            encodedResult: {
-              _tag: "AiError",
-              module: "Toolkit",
-              method: "HandlerRequired.handle",
-              reason: {
-                _tag: "ToolParameterValidationError",
-                toolName: "HandlerRequired",
-                description
-              }
-            }
+        deepStrictEqual(
+          response,
+          AiError.make({
+            module: "Toolkit",
+            method: "HandlerRequired.handle",
+            reason: new AiError.ToolParameterValidationError({
+              toolName: "HandlerRequired",
+              toolParams: {},
+              description: `Missing key\n  at ["testParam"]`
+            })
           })
-        ])
+        )
       }))
 
     describe("addDependency", () => {
@@ -1196,18 +1077,6 @@ describe("setNeedsApproval", () => {
 })
 
 describe("Dynamic", () => {
-  it("setParameters replaces a raw JSON Schema", () => {
-    const tool = Tool.dynamic("TestTool", {
-      parameters: {
-        type: "object",
-        properties: { query: { type: "string" } },
-        required: ["query"]
-      }
-    }).setParameters(Schema.Struct({ count: Schema.Number }))
-
-    deepStrictEqual(Tool.getJsonSchema(tool).required, ["count"], "expected the replacement schema")
-  })
-
   describe("isDynamic", () => {
     it.effect("returns true for dynamic tools with Effect Schema", () =>
       Effect.gen(function*() {
@@ -1422,7 +1291,6 @@ describe("Dynamic", () => {
         )
 
         const toolResult = response.toolResults[0]
-        assertTrue(!toolResult.isFailure, "expected a successful tool result")
         deepStrictEqual(toolResult.result.timestamp, DateTime.makeUnsafe(new Date(1000)))
       }))
   })

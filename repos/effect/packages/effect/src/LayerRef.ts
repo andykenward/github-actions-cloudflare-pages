@@ -349,13 +349,11 @@ export const Service = <Self>() =>
   [Preload] extends [true] ? E : never,
   Deps[number]
 > => {
+  const Err = globalThis.Error as any
   const limit = getStackTraceLimit()
-  let creationError: Error | undefined
-  if (limit !== 0) {
-    setStackTraceLimit(2)
-    creationError = new globalThis.Error()
-    setStackTraceLimit(limit)
-  }
+  setStackTraceLimit(2)
+  const creationError = new Err()
+  setStackTraceLimit(limit)
 
   function TagClass() {}
   const TagClass_ = TagClass as any as Mutable<TagClass<Self, Id, any, any, any, any, any>>
@@ -363,7 +361,7 @@ export const Service = <Self>() =>
   TagClass.key = id
   Object.defineProperty(TagClass, "stack", {
     get() {
-      return creationError?.stack
+      return creationError.stack
     }
   })
 

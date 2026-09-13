@@ -113,7 +113,7 @@ const assertUniqueViolation = (reason: SqlError.SqlErrorReason, constraint: stri
   }
 }
 
-describe("MssqlClient SqlError classification", { concurrent: false }, () => {
+describe("MssqlClient SqlError classification", () => {
   it.effect("maps representative error numbers to reasons", () =>
     Effect.gen(function*() {
       const cases = [

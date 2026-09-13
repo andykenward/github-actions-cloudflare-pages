@@ -332,10 +332,10 @@ export const setUnsafe: {
     fiber.interruptUnsafe(internalFiberId)
     return
   } else if (self.state.fiber !== undefined) {
-    if (self.state.fiber === fiber) {
-      return
-    } else if (options?.onlyIfMissing === true) {
+    if (options?.onlyIfMissing === true) {
       fiber.interruptUnsafe(internalFiberId)
+      return
+    } else if (self.state.fiber === fiber) {
       return
     }
     self.state.fiber.interruptUnsafe(internalFiberId)

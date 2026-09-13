@@ -892,7 +892,7 @@ export const suite = (
           }))
       })
 
-      describe("process supervision", { concurrent: false }, () => {
+      describe.sequential("process supervision", () => {
         const countMatchingProcesses = (pattern: string) =>
           Effect.gen(function*() {
             const handle = yield* ChildProcess.make("bash", [

@@ -29,7 +29,7 @@ import * as HttpBody from "../http/HttpBody.ts"
 import * as HttpClient from "../http/HttpClient.ts"
 import * as HttpClientError from "../http/HttpClientError.ts"
 import * as HttpClientRequest from "../http/HttpClientRequest.ts"
-import type * as HttpClientResponse from "../http/HttpClientResponse.ts"
+import * as HttpClientResponse from "../http/HttpClientResponse.ts"
 import * as HttpMethod from "../http/HttpMethod.ts"
 import * as UrlParams from "../http/UrlParams.ts"
 import * as HttpApi from "./HttpApi.ts"
@@ -164,9 +164,8 @@ export declare namespace Client {
 
   /**
    * The typed function generated for an endpoint, accepting the endpoint request
-   * shape, including optional per-call SSE decoding options. The returned effect's success,
-   * error, and service channels reflect the endpoint schemas, middleware, and
-   * selected response mode.
+   * shape and returning an effect whose success, error, and service channels reflect
+   * the endpoint schemas, middleware, and selected response mode.
    *
    * @category models
    * @since 4.0.0
@@ -331,7 +330,11 @@ export const makeClient = <ApiId extends string, Groups extends HttpApiGroup.Con
       onEndpoint(onEndpointOptions) {
         const { group, endpoint, errors, successes } = onEndpointOptions
         const makeUrl = compilePath(endpoint.path)
-        const decodeMap: Record<number | "orElse", ResponseDecoder> = { orElse: statusOrElse }
+        const decodeMap: Record<
+          number | "orElse",
+          (response: HttpClientResponse.HttpClientResponse) => Effect.Effect<unknown, unknown, unknown>
+        > = { orElse: statusOrElse }
+        const decodeResponse = HttpClientResponse.matchStatus(decodeMap)
         const errorAlternatives = new Map<number, Array<ResponseAlternative>>()
         for (const [status, schemas] of errors.entries()) {
           const grouped = groupSchemasByContentType(schemas)
@@ -401,7 +404,6 @@ export const makeClient = <ApiId extends string, Groups extends HttpApiGroup.Con
             readonly payload: unknown
             readonly headers: Record<string, string> | undefined
             readonly responseMode?: HttpApiEndpoint.ClientResponseMode
-            readonly sseOptions?: Sse.DecodeOptions | undefined
           } | undefined
         ) {
           let httpRequest = HttpClientRequest.make(endpoint.method)(endpoint.path)
@@ -453,10 +455,9 @@ export const makeClient = <ApiId extends string, Groups extends HttpApiGroup.Con
             return response
           }
 
-          const decoded = (decodeMap[response.status] ?? decodeMap.orElse)(response, request?.sseOptions)
           const value = yield* (options.transformResponse === undefined
-            ? decoded
-            : options.transformResponse(decoded))
+            ? decodeResponse(response)
+            : options.transformResponse(decodeResponse(response)))
 
           return request?.responseMode === "decoded-and-response" ? [value, response] : value
         })
@@ -686,20 +687,9 @@ export const urlBuilder = <Api extends HttpApi.Constraint>(api: Api, options?: {
         const queryInput = request?.query === undefined
           ? undefined
           : (encodeQuery === undefined ? request.query : encodeQuery(request.query)) as UrlParams.Input
-        const urlParams = queryInput === undefined ? UrlParams.empty : UrlParams.fromInput(queryInput)
-        if (options?.baseUrl === undefined) {
-          const query = UrlParams.toString(urlParams)
-          return query === "" ? path : `${path}?${query}`
-        }
-        const url = new URL(
-          HttpClientRequest.prependUrl(HttpClientRequest.get(path), options.baseUrl.toString()).url
-        )
-        for (const [key, value] of urlParams.params) {
-          if (value !== undefined) {
-            url.searchParams.append(key, value)
-          }
-        }
-        return url.toString()
+        const query = queryInput === undefined ? "" : UrlParams.toString(UrlParams.fromInput(queryInput))
+        const url = query === "" ? path : `${path}?${query}`
+        return options?.baseUrl === undefined ? url : new URL(url, options.baseUrl.toString()).toString()
       }
       InternalRecord.assignProperty(
         group.topLevel ? builder : builder[group.identifier],
@@ -777,10 +767,7 @@ function toCodecArrayBufferWithHeaders(schema: Schema.Constraint): Schema.Top {
   )
 }
 
-type ResponseDecoder = (
-  response: HttpClientResponse.HttpClientResponse,
-  sseOptions?: Sse.DecodeOptions
-) => Effect.Effect<unknown, unknown, unknown>
+type ResponseDecoder = (response: HttpClientResponse.HttpClientResponse) => Effect.Effect<unknown, unknown, unknown>
 
 interface ResponseAlternative {
   readonly contentType: string
@@ -807,12 +794,12 @@ function makeResponseDecoder(alternatives: ReadonlyArray<ResponseAlternative>): 
   if (alternatives.length === 1 && first !== undefined) {
     return first.decode
   }
-  return (response, sseOptions) => {
+  return (response) => {
     const contentType = MediaType.normalize(response.headers["content-type"] ?? "")
     const alternative = alternatives.find((alternative) => alternative.contentType === contentType)
     return alternative === undefined
       ? failUnsupportedContentType(response, contentType, alternatives)
-      : alternative.decode(response, sseOptions)
+      : alternative.decode(response)
   }
 }
 
@@ -884,21 +871,21 @@ function streamToResponse(successSchema: StreamSuccessSchema) {
       declaration: streamSchema,
       decoder: makeSseDecoder(streamSchema)
     }
-  const toStream: ResponseDecoder = (response, sseOptions) =>
+  const toStream = (response: HttpClientResponse.HttpClientResponse) =>
     Effect.map(Effect.context<never>(), (context) =>
       Stream.provideContext(
         sse === undefined ?
           response.stream :
-          decodeSseStream(response.stream, sse.declaration, sse.decoder(sseOptions)),
+          decodeSseStream(response.stream, sse.declaration, sse.decoder),
         context as Context.Context<unknown>
       ))
   if (!isWithHeaders) return toStream
 
   const decodeHeaders = Schema.decodeUnknownEffect(successSchema.headers)
-  return (response: HttpClientResponse.HttpClientResponse, sseOptions?: Sse.DecodeOptions) =>
+  return (response: HttpClientResponse.HttpClientResponse) =>
     Effect.flatMap(
       decodeHeaders(response.headers),
-      (headers) => Effect.map(toStream(response, sseOptions), (body) => HttpApiSchema.withHeaders({ body, headers }))
+      (headers) => Effect.map(toStream(response), (body) => HttpApiSchema.withHeaders({ body, headers }))
     )
 }
 
@@ -912,14 +899,13 @@ function makeSseDecoder(
     }),
     declaration.events
   ])
-  const defaultDecoder = Sse.decodeSchema(Event)
-  return (options?: Sse.DecodeOptions) => options === undefined ? defaultDecoder : Sse.decodeSchema(Event, options)
+  return Sse.decodeSchema(Event)
 }
 
 function decodeSseStream(
   stream: Stream.Stream<Uint8Array, HttpClientError.HttpClientError>,
   declaration: HttpApiSchema.StreamSse<Sse.EventCodec, Schema.Constraint, unknown>,
-  decoder: ReturnType<ReturnType<typeof makeSseDecoder>>
+  decoder: ReturnType<typeof makeSseDecoder>
 ): Stream.Stream<unknown, unknown, unknown> {
   const events = Stream.transformPull(
     stream.pipe(
@@ -1037,13 +1023,7 @@ function fromArrayBuffer(schema: Schema.Constraint): Schema.Top {
         : UnknownFromArrayBuffer
     }
     case "FormUrlEncoded":
-      return StringFromArrayBuffer.pipe(Schema.decodeTo(
-        Schema.RecordFromUrlParams,
-        SchemaTransformation.transform({
-          decode: (text) => UrlParams.fromInput(new URLSearchParams(text)),
-          encode: UrlParams.toString
-        })
-      ))
+      return StringFromArrayBuffer.pipe(Schema.decodeTo(UrlParams.schemaRecord))
     case "Uint8Array":
       return Uint8ArrayFromArrayBuffer
     case "Text":
@@ -1084,7 +1064,7 @@ function getEncodePayloadSchemaFromBody(
   const encoding = HttpApiSchema.getPayloadEncoding(ast, method)
   const out = $HttpBody.pipe(Schema.decodeTo(
     schema,
-    SchemaTransformation.transformEffect<unknown, HttpBody.HttpBody>({
+    SchemaTransformation.transformOrFail<unknown, HttpBody.HttpBody>({
       decode(input, options) {
         return Effect.fail(
           new SchemaIssue.Forbidden({ message: "Encode only schema" }, input, options)

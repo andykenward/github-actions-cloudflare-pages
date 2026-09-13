@@ -201,14 +201,8 @@ describe("RpcClient", () => {
         })
       })
       const socket = Socket.make({
-        reader: Effect.succeed({
-          pull: Deferred.await(requestSent).pipe(Effect.andThen(Effect.fail(socketError))),
-          upgrade: Socket.SocketUpgradeError.unsupported
-        }),
-        writer: Effect.succeed({
-          write: () => Effect.asVoid(Deferred.succeed(requestSent, void 0)),
-          writeAll: () => Effect.asVoid(Deferred.succeed(requestSent, void 0))
-        })
+        runRaw: () => Deferred.await(requestSent).pipe(Effect.andThen(Effect.fail(socketError))),
+        writer: Effect.succeed(() => Deferred.succeed(requestSent, void 0))
       })
       const protocol = yield* RpcClient.makeProtocolSocket({
         retryTransientErrors: true,
@@ -247,14 +241,8 @@ describe("RpcClient", () => {
         })
       })
       const socket = Socket.make({
-        reader: Effect.succeed({
-          pull: Deferred.await(requestSent).pipe(Effect.andThen(Effect.fail(socketError))),
-          upgrade: Socket.SocketUpgradeError.unsupported
-        }),
-        writer: Effect.succeed({
-          write: () => Effect.asVoid(Deferred.succeed(requestSent, void 0)),
-          writeAll: () => Effect.asVoid(Deferred.succeed(requestSent, void 0))
-        })
+        runRaw: () => Deferred.await(requestSent).pipe(Effect.andThen(Effect.fail(socketError))),
+        writer: Effect.succeed(() => Deferred.succeed(requestSent, void 0))
       })
       const protocol = yield* RpcClient.makeProtocolSocket({
         retryTransientErrors: true,
@@ -291,17 +279,12 @@ describe("RpcClient", () => {
         })
       })
       const socket = Socket.make({
-        reader: Effect.succeed({
-          pull: Deferred.await(requestSent).pipe(
+        runRaw: () =>
+          Deferred.await(requestSent).pipe(
             Effect.tap(() => Effect.sync(() => attempts++)),
             Effect.andThen(Effect.fail(socketError))
           ),
-          upgrade: Socket.SocketUpgradeError.unsupported
-        }),
-        writer: Effect.succeed({
-          write: () => Effect.asVoid(Deferred.succeed(requestSent, void 0)),
-          writeAll: () => Effect.asVoid(Deferred.succeed(requestSent, void 0))
-        })
+        writer: Effect.succeed(() => Deferred.succeed(requestSent, void 0))
       })
       const protocol = yield* RpcClient.makeProtocolSocket({
         retryTransientErrors: true,

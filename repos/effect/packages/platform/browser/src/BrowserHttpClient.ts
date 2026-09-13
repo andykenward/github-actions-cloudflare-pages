@@ -147,7 +147,7 @@ const makeXmlHttpRequest = HttpClient.make(
           const onChange = () => {
             if (!sent && xhr.readyState >= 2) {
               sent = true
-              resume(Effect.succeed(new ClientResponseImpl(request, xhr, url.href)))
+              resume(Effect.succeed(new ClientResponseImpl(request, xhr)))
             }
           }
           xhr.onreadystatechange = onChange
@@ -260,13 +260,6 @@ abstract class IncomingMessageImpl<E> extends Inspectable.Class implements HttpI
     if (this._textEffect) {
       return this._textEffect
     }
-    if (this.source.responseType === "arraybuffer") {
-      return this._textEffect = this.arrayBuffer.pipe(
-        Effect.map((buffer) => new TextDecoder().decode(buffer)),
-        Effect.cached,
-        Effect.runSync
-      )
-    }
     return this._textEffect = Effect.callback<string, E>((resume) => {
       if (this.source.readyState === 4) {
         resume(Effect.succeed(this.source.responseText))
@@ -310,9 +303,6 @@ abstract class IncomingMessageImpl<E> extends Inspectable.Class implements HttpI
   }
 
   get stream(): Stream.Stream<Uint8Array, E> {
-    if (this.source.responseType === "arraybuffer") {
-      return Stream.fromEffect(Effect.map(this.arrayBuffer, (buffer) => new Uint8Array(buffer)))
-    }
     return Stream.callback<Uint8Array, E>((queue) => {
       let offset = 0
       const onReadyStateChange = () => {
@@ -387,12 +377,10 @@ class ClientResponseImpl extends IncomingMessageImpl<HttpClientError.HttpClientE
 {
   readonly [HttpClientResponse.TypeId]: typeof HttpClientResponse.TypeId
   readonly request: HttpClientRequest.HttpClientRequest
-  private readonly requestUrl: string
 
   constructor(
     request: HttpClientRequest.HttpClientRequest,
-    source: globalThis.XMLHttpRequest,
-    requestUrl: string
+    source: globalThis.XMLHttpRequest
   ) {
     super(source, (cause) =>
       new HttpClientError.HttpClientError({
@@ -403,16 +391,11 @@ class ClientResponseImpl extends IncomingMessageImpl<HttpClientError.HttpClientE
         })
       }))
     this.request = request
-    this.requestUrl = requestUrl
     this[HttpClientResponse.TypeId] = HttpClientResponse.TypeId
   }
 
   get status() {
     return this.source.status
-  }
-
-  get url() {
-    return (this.source.responseURL || this.requestUrl).split("#")[0]
   }
 
   get formData(): Effect.Effect<FormData, HttpClientError.HttpClientError> {

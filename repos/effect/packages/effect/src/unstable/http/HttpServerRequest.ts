@@ -33,7 +33,6 @@ import * as HttpClientRequest from "./HttpClientRequest.ts"
 import * as HttpIncomingMessage from "./HttpIncomingMessage.ts"
 import { hasBody, type HttpMethod } from "./HttpMethod.ts"
 import { HttpServerError, type RequestError, RequestParseError } from "./HttpServerError.ts"
-import * as bodyInternal from "./internal/httpBody.ts"
 import * as Multipart from "./Multipart.ts"
 import * as UrlParams from "./UrlParams.ts"
 
@@ -351,7 +350,7 @@ export const schemaBodyFormJson = <A, RD>(
 ) => {
   const parseMultipart = Multipart.schemaJson(schema, options)
   return (field: string) => {
-    const parseUrlParams = Schema.JsonFromUrlParamsField(field, options).pipe(
+    const parseUrlParams = UrlParams.schemaJsonField(field, options).pipe(
       Schema.decodeTo(schema),
       Schema.decodeEffect
     )
@@ -424,23 +423,18 @@ export const fromWeb = (request: globalThis.Request): HttpServerRequest =>
  * @category converting
  * @since 4.0.0
  */
-export const toClientRequest = (request: HttpServerRequest): HttpClientRequest.HttpClientRequest => {
-  const body = toClientBody(request)
-  const headers = body._tag !== "Empty" && body.contentLength === undefined
-    ? Headers.remove(request.headers, "content-length")
-    : request.headers
-  return HttpClientRequest.setUrl(
+export const toClientRequest = (request: HttpServerRequest): HttpClientRequest.HttpClientRequest =>
+  HttpClientRequest.setUrl(
     HttpClientRequest.makeWith(
       request.method,
       "",
       UrlParams.empty,
       Option.none(),
-      headers,
-      body
+      request.headers,
+      toClientBody(request)
     ),
     Option.getOrElse(toURL(request), () => request.url)
   )
-}
 
 const toClientBody = (request: HttpServerRequest): HttpBody.HttpBody => {
   if (!hasBody(request.method)) {
@@ -451,9 +445,17 @@ const toClientBody = (request: HttpServerRequest): HttpBody.HttpBody => {
     ? HttpBody.stream(
       request.stream,
       request.headers["content-type"],
-      bodyInternal.parseContentLength(request.headers["content-length"])
+      parseContentLength(request.headers["content-length"])
     )
     : HttpBody.formData(formData)
+}
+
+const parseContentLength = (contentLength: string | undefined): number | undefined => {
+  if (contentLength === undefined) {
+    return undefined
+  }
+  const parsed = Number.parseInt(contentLength, 10)
+  return Number.isNaN(parsed) ? undefined : parsed
 }
 
 const removeHost = (url: string) => {
@@ -840,11 +842,7 @@ class ClientRequestImpl extends Inspectable.Class implements HttpServerRequest {
   }
 
   get arrayBuffer(): Effect.Effect<ArrayBuffer, HttpServerError> {
-    return Effect.map(
-      this.bytes,
-      // Copy this view because Buffer views may share a larger ArrayBuffer.
-      (bytes) => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
-    )
+    return Effect.map(this.bytes, (bytes) => bytes.slice().buffer)
   }
 
   get upgrade(): Effect.Effect<Socket.Socket, HttpServerError> {

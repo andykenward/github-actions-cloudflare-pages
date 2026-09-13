@@ -21,18 +21,18 @@ import * as SpecFetcher from "./SpecFetcher.ts"
 // Flags
 // =============================================================================
 
-const providerFlag = Flag.String("provider").pipe(
+const providerFlag = Flag.string("provider").pipe(
   Flag.withAlias("p"),
   Flag.withDescription("Generate for specific provider only"),
   Flag.optional
 )
 
-const skipLintFlag = Flag.Boolean("skip-lint").pipe(
+const skipLintFlag = Flag.boolean("skip-lint").pipe(
   Flag.withDescription("Skip Oxlint step"),
   Flag.withDefault(false)
 )
 
-const skipFormatFlag = Flag.Boolean("skip-format").pipe(
+const skipFormatFlag = Flag.boolean("skip-format").pipe(
   Flag.withDescription("Skip Dprint step"),
   Flag.withDefault(false)
 )

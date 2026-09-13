@@ -50,7 +50,6 @@ import * as Request from "effect/unstable/http/HttpServerRequest"
 import { HttpServerRequest } from "effect/unstable/http/HttpServerRequest"
 import type { HttpServerResponse } from "effect/unstable/http/HttpServerResponse"
 import type * as Multipart from "effect/unstable/http/Multipart"
-import * as NetAddress from "effect/unstable/net/NetAddress"
 import * as Socket from "effect/unstable/socket/Socket"
 import * as Http from "node:http"
 import type * as Net from "node:net"
@@ -132,12 +131,6 @@ export const make = Effect.fnUntraced(function*(
   })
 
   const address = server.address()!
-  const effectAddress = typeof address === "string"
-    ? Effect.succeed(NetAddress.unixPathAddress(address))
-    : Effect.fromResult(NetAddress.inetAddressFromIpString(address.address, address.port)).pipe(
-      Effect.mapError((cause) => new ServeError({ cause }))
-    )
-  const boundAddress = yield* effectAddress
 
   const wss = yield* Effect.acquireRelease(
     Effect.sync(() => new NodeWS.WebSocketServer({ ...options.websocket, noServer: true })),
@@ -151,7 +144,16 @@ export const make = Effect.fnUntraced(function*(
   )
 
   return HttpServer.make({
-    address: boundAddress,
+    address: typeof address === "string" ?
+      {
+        _tag: "UnixAddress",
+        path: address
+      } :
+      {
+        _tag: "TcpAddress",
+        hostname: address.address === "::" ? "0.0.0.0" : address.address,
+        port: address.port
+      },
     serve: Effect.fnUntraced(function*(httpApp, middleware) {
       const serveScope = yield* Effect.scope
       const scope = Scope.forkUnsafe(serveScope, "parallel")
@@ -206,13 +208,11 @@ export const makeHandler = <
     ) {
       const context = Context.add(services, HttpServerRequest, new ServerRequestImpl(nodeRequest, nodeResponse))
       const fiber = Fiber.runIn(Effect.runForkWith(context as Context.Context<any>)(handled), options.scope)
-      if (fiber.pollUnsafe() === undefined) {
-        nodeResponse.on("close", () => {
-          if (!nodeResponse.writableEnded) {
-            fiber.interruptUnsafe(parent.id, ClientAbort.annotation)
-          }
-        })
-      }
+      nodeResponse.on("close", () => {
+        if (!nodeResponse.writableEnded) {
+          fiber.interruptUnsafe(parent.id, ClientAbort.annotation)
+        }
+      })
     })
   })
 }
@@ -249,22 +249,14 @@ export const makeUpgradeHandler = <
       socket: Duplex,
       head: Buffer
     ) {
-      let upgraded = false
       let nodeResponse_: Http.ServerResponse | undefined = undefined
       const nodeResponse = () => {
         if (nodeResponse_ === undefined) {
           nodeResponse_ = new Http.ServerResponse(nodeRequest)
-          if (upgraded) {
-            // the connection now carries WebSocket frames, so end the response
-            // before a socket is assigned to it to make handleResponse skip the
-            // write (writableEnded check)
-            nodeResponse_.end()
-          } else {
-            nodeResponse_.assignSocket(socket as any)
-            nodeResponse_.on("finish", () => {
-              socket.end()
-            })
-          }
+          nodeResponse_.assignSocket(socket as any)
+          nodeResponse_.on("finish", () => {
+            socket.end()
+          })
         }
         return nodeResponse_
       }
@@ -272,10 +264,9 @@ export const makeUpgradeHandler = <
         lazyWss,
         (wss) =>
           Effect.acquireRelease(
-            Effect.callback<NodeWS.WebSocket>((resume) =>
+            Effect.callback<globalThis.WebSocket>((resume) =>
               wss.handleUpgrade(nodeRequest, socket, head, (ws) => {
-                upgraded = true
-                resume(Effect.succeed(ws))
+                resume(Effect.succeed(ws as any))
               })
             ),
             (ws) => Effect.sync(() => ws.close())
@@ -535,7 +526,7 @@ const handleResponse = (
   }
 
   if (request.method === "HEAD") {
-    nodeResponse.writeHead(response.status, response.statusText, headers)
+    nodeResponse.writeHead(response.status, headers)
     return Effect.andThen(
       cancelResponseBody(response.body),
       Effect.callback<void>((resume) => {
@@ -554,12 +545,12 @@ const handleResponse = (
   const body = response.body
   switch (body._tag) {
     case "Empty": {
-      nodeResponse.writeHead(response.status, response.statusText, headers)
+      nodeResponse.writeHead(response.status, headers)
       nodeResponse.end()
       return Effect.void
     }
     case "Raw": {
-      nodeResponse.writeHead(response.status, response.statusText, headers)
+      nodeResponse.writeHead(response.status, headers)
       if (
         typeof body.body === "object" && body.body !== null && "pipe" in body.body &&
         typeof body.body.pipe === "function"
@@ -585,21 +576,20 @@ const handleResponse = (
       })
     }
     case "Uint8Array": {
-      nodeResponse.writeHead(response.status, response.statusText, headers)
+      nodeResponse.writeHead(response.status, headers)
       // If the body is less than 1MB, we skip the callback
-      if (body.contentLength < 1024 * 1024) {
-        // Writing text directly lets Node flush headers and body together.
-        nodeResponse.end(body.text ?? body.body)
+      if (body.body.length < 1024 * 1024) {
+        nodeResponse.end(body.body)
         return Effect.void
       }
       return Effect.callback<void>((resume) => {
-        nodeResponse.end(body.text ?? body.body, () => resume(Effect.void))
+        nodeResponse.end(body.body, () => resume(Effect.void))
       })
     }
     case "FormData": {
       return Effect.suspend(() => {
         const r = new globalThis.Response(body.formData)
-        nodeResponse.writeHead(response.status, response.statusText, {
+        nodeResponse.writeHead(response.status, {
           ...headers,
           ...Object.fromEntries(r.headers)
         })
@@ -628,7 +618,7 @@ const handleResponse = (
       })
     }
     case "Stream": {
-      nodeResponse.writeHead(response.status, response.statusText, headers)
+      nodeResponse.writeHead(response.status, headers)
       const drainLatch = Latch.makeUnsafe()
       nodeResponse.on("drain", () => drainLatch.openUnsafe())
       return body.stream.pipe(
@@ -665,7 +655,7 @@ const handleCause = (
   Effect.flatMap(causeResponse(originalCause), ([response, cause]) => {
     const headersSent = nodeResponse.headersSent
     if (!headersSent) {
-      nodeResponse.writeHead(response.status, response.statusText)
+      nodeResponse.writeHead(response.status)
     }
     if (!nodeResponse.writableEnded) {
       nodeResponse.end()

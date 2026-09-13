@@ -104,7 +104,7 @@ export const make: Effect.Effect<Tracer.Tracer, never, OtelTracer> = Effect.map(
         )
       },
       context(primitive, fiber) {
-        const currentSpan = fiber.cache.span
+        const currentSpan = fiber.currentSpan
 
         if (currentSpan === undefined) {
           return primitive["~effect/Effect/evaluate"](fiber)
@@ -380,7 +380,7 @@ export const withSpanContext: {
 // Internals
 // =============================================================================
 
-const OtelSpanTypeId = "~@effect/opentelemetry/OtelTracer/OtelSpan"
+const OtelSpanTypeId = "~@effect/opentelemetry/Tracer/OtelSpan"
 
 const kindMap = {
   "internal": Otel.SpanKind.INTERNAL,

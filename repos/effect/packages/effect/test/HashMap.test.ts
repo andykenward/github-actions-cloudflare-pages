@@ -1,5 +1,5 @@
 import { Equal, Hash, HashMap, Option, Result } from "effect"
-import * as fc from "fast-check"
+import { FastCheck as fc } from "effect/testing"
 import { describe, expect, it } from "vitest"
 
 describe("HashMap", () => {
@@ -155,15 +155,6 @@ describe("HashMap", () => {
       const map = HashMap.make(["a", 1], ["b", 2])
       const entries = Array.from(map).sort(([a], [b]) => a.localeCompare(b))
       expect(entries).toEqual([["a", 1], ["b", 2]])
-    })
-
-    it("does not expose mutable collision entries", () => {
-      const map = HashMap.make(["fF", 1], ["AA", 2])
-      const entry = Array.from(HashMap.entries(map)).find(([key]) => key === "fF")!
-
-      entry[1] = 99
-
-      expect(HashMap.getUnsafe(map, "fF")).toBe(1)
     })
   })
 

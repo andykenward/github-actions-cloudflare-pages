@@ -249,9 +249,7 @@ export const appendElements: {
 
 type Evolver<T> = { readonly [I in keyof T]?: ((a: T[I]) => unknown) | undefined }
 
-type EvolveElement<A, F> = F extends (...a: any) => infer R ? R : A
-
-type Evolved<T, E> = { [I in keyof T]: I extends keyof E ? EvolveElement<T[I], E[I]> : T[I] }
+type Evolved<T, E> = { [I in keyof T]: I extends keyof E ? (E[I] extends (...a: any) => infer R ? R : T[I]) : T[I] }
 
 /**
  * Transforms elements of a tuple by providing an array of transform functions.

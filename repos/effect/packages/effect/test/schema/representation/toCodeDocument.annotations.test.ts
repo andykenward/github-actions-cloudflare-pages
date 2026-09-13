@@ -26,18 +26,18 @@ const NumberRepresentation: SchemaRepresentation.Representation = {
 const EmptyUnionRepresentation: SchemaRepresentation.Representation = {
   _tag: "Union",
   types: [],
-  options: { mode: "anyOf" },
+  mode: "anyOf",
   checks: []
 }
 
 describe("SchemaRepresentation.toCodeDocument annotations", () => {
-  it("preserves explicit options on an empty union", () => {
+  it("compiles an empty union as Never", () => {
     assert.deepStrictEqual(
       SchemaRepresentation.toCodeDocument({
         representations: [EmptyUnionRepresentation],
         references: {}
       }).codes,
-      [{ runtime: `Schema.Union([], { mode: "anyOf" })`, Type: "never" }]
+      [{ runtime: "Schema.Never", Type: "never" }]
     )
   })
 
@@ -319,7 +319,7 @@ describe("SchemaRepresentation.toCodeDocument annotations", () => {
       },
       {
         runtime: `Schema.TupleWithRest(Schema.Tuple([Schema.optionalKey(Schema.String)]), [Schema.Number])`,
-        Type: `readonly [(string)?, ...Array<number>]`
+        Type: `readonly [string?, ...Array<number>]`
       },
       {
         runtime: `Schema.Struct({ 1: Schema.Boolean })`,
@@ -455,7 +455,7 @@ describe("SchemaRepresentation.toCodeDocument annotations", () => {
           checks: [{ _tag: "FilterGroup", checks: [filter] }]
         },
         E: { _tag: "TemplateLiteral", parts: [reference("D")], checks: [] },
-        F: { _tag: "Union", types: [reference("E"), reference("A")], options: { mode: "anyOf" }, checks: [] },
+        F: { _tag: "Union", types: [reference("E"), reference("A")], mode: "anyOf", checks: [] },
         G: {
           _tag: "Arrays",
           elements: [{ type: reference("F"), isOptional: false }],
@@ -527,46 +527,18 @@ describe("SchemaRepresentation.toCodeDocument annotations", () => {
     assert.strictEqual(output.codes[0].Type, `{ readonly [x: string]: number, readonly [x: symbol]: boolean }`)
   })
 
-  it("preserves explicit options on a single-literal Union", () => {
+  it("generates a single-literal Union as Literal", () => {
     const output = SchemaRepresentation.toCodeDocument({
       representations: [{
         _tag: "Union",
         types: [{ _tag: "Literal", literal: "a", checks: [] }],
-        options: { mode: "anyOf" },
+        mode: "anyOf",
         checks: []
       }],
       references: {}
     })
 
-    assert.deepStrictEqual(output.codes[0], {
-      runtime: `Schema.Union([Schema.Literal("a")], { mode: "anyOf" })`,
-      Type: `"a"`
-    })
-  })
-
-  it("preserves optional Union option properties", () => {
-    const output = SchemaRepresentation.toCodeDocument({
-      representations: [
-        {
-          _tag: "Union",
-          types: [StringRepresentation],
-          options: {},
-          checks: []
-        },
-        {
-          _tag: "Union",
-          types: [NumberRepresentation],
-          options: { mode: undefined },
-          checks: []
-        }
-      ],
-      references: {}
-    })
-
-    assert.deepStrictEqual(output.codes, [
-      { runtime: "Schema.Union([Schema.String], {})", Type: "string" },
-      { runtime: `Schema.Union([Schema.Number], { mode: undefined })`, Type: "number" }
-    ])
+    assert.deepStrictEqual(output.codes[0], { runtime: `Schema.Literal("a")`, Type: `"a"` })
   })
 
   it("emits every member of a mutually recursive reference cycle", () => {

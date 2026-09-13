@@ -216,9 +216,7 @@ export const makePlatform = <W>() =>
                   },
                   deferred: fiberSet.deferred as any
                 })
-                // Fail fast if the worker dies before signalling readiness,
-                // and allow interruption while waiting for the handshake.
-                yield* restore(Effect.raceFirst(ready.await, FiberSet.join(fiberSet)))
+                yield* ready.await
                 currentPort = port
                 if (buffer.length > 0) {
                   for (const [message, transfers] of buffer) {

@@ -18,7 +18,6 @@ import * as HttpRouter from "../http/HttpRouter.ts"
 import type * as HttpServer from "../http/HttpServer.ts"
 import type { HttpServerRequest } from "../http/HttpServerRequest.ts"
 import type { HttpServerResponse } from "../http/HttpServerResponse.ts"
-import * as NetAddress from "../net/NetAddress.ts"
 import * as RpcClient from "../rpc/RpcClient.ts"
 import * as RpcSerialization from "../rpc/RpcSerialization.ts"
 import * as RpcServer from "../rpc/RpcServer.ts"
@@ -57,15 +56,12 @@ export const layerClientProtocolHttp = (options: {
       const serialization = yield* RpcSerialization.RpcSerialization
       const client = yield* HttpClient.HttpClient
       const https = options.https ?? false
-      const path = options.path.startsWith("/") ? options.path : `/${options.path}`
       return {
         codecFor: serialization.codecFor,
         make: (address) => {
           const clientWithUrl = HttpClient.mapRequest(
             client,
-            HttpClientRequest.prependUrl(
-              `http${https ? "s" : ""}://${NetAddress.formatUrlHostString(address.host)}:${address.port}${path}`
-            )
+            HttpClientRequest.prependUrl(`http${https ? "s" : ""}://${address.host}:${address.port}/${options.path}`)
           )
           return RpcClient.makeProtocolHttp(clientWithUrl).pipe(
             Effect.provideService(RpcSerialization.RpcSerialization, serialization)
@@ -111,13 +107,12 @@ export const layerClientProtocolWebsocket = (options: {
     Effect.gen(function*() {
       const serialization = yield* RpcSerialization.RpcSerialization
       const https = options.https ?? false
-      const path = options.path.startsWith("/") ? options.path : `/${options.path}`
       const constructor = yield* Socket.WebSocketConstructor
       return {
         codecFor: serialization.codecFor,
         make: Effect.fnUntraced(function*(address) {
           const socket = yield* Socket.makeWebSocket(
-            `ws${https ? "s" : ""}://${NetAddress.formatUrlHostString(address.host)}:${address.port}${path}`
+            `ws${https ? "s" : ""}://${address.host}:${address.port}/${options.path}`
           ).pipe(
             Effect.provideService(Socket.WebSocketConstructor, constructor)
           )

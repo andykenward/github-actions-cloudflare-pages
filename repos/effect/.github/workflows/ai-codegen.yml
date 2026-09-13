@@ -15,7 +15,7 @@ jobs:
   codegen:
     name: AI Codegen
     if: github.repository_owner == 'Effect-Ts'
-    runs-on: namespace-profile-linux-small
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write

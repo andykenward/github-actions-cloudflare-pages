@@ -46,35 +46,26 @@ export interface Parser<A = Uint8Array | null> {
   readField: FieldReader<A> | undefined
 
   /**
-   * Decodes a chunk and returns every complete message. A partial message is
-   * retained for the next call. Parse and field-reader errors are terminal and
-   * discard messages decoded earlier in the same call.
+   * Feeds the next chunk of socket bytes and returns every message that is now
+   * complete. A partial trailing message is retained until the bytes that
+   * finish it arrive. A thrown parse or field-reader error is terminal and the
+   * parser cannot be reused afterward; any messages decoded earlier in the
+   * failing push are discarded.
    *
-   * **Details**
-   *
-   * `DataRow`, `CopyData`, and `Unknown` payloads are views into an internal
-   * buffer. Copy a payload that must outlive the current row, otherwise its
-   * entire buffer remains in memory.
+   * Byte fields on the returned messages - `DataRow` values, `CopyData` and
+   * `Unknown` payloads - are views into an internal buffer that the parser
+   * never rewrites, so they stay valid for as long as they are held. They are
+   * meant to be consumed before the next `push`: holding one keeps its whole
+   * buffer alive, so copy it if it has to outlive the row.
    */
   readonly push: (chunk: Uint8Array) => ReadonlyArray<BackendMessage<A>>
-
-  /**
-   * Decodes a chunk and passes each complete message to `onMessage`
-   * immediately. This lets a `RowDescription` update `readField` before a
-   * `DataRow` later in the same chunk is decoded. The failure and
-   * buffer-lifetime rules match `push`, except messages
-   * delivered before a failure are not discarded.
-   */
-  readonly pushEach: (chunk: Uint8Array, onMessage: (message: BackendMessage<A>) => void) => void
 }
 
 /**
  * Creates a `Parser`.
  *
- * **Details**
- *
- * Special pre-startup replies have no type byte. Use `decodeSslResponse` for
- * those replies.
+ * Special pre-startup replies have no type byte and are not handled here; use
+ * `decodeSslResponse` for those.
  *
  * @category constructors
  * @since 4.0.0
@@ -123,21 +114,15 @@ export const makeParser = <A = Uint8Array | null>(options?: {
     end += chunk.length
   }
 
-  const parser: Parser<A> = {
+  return {
     readField: options?.readField,
     push(chunk) {
-      const messages: Array<BackendMessage<A>> = []
-      parser.pushEach(chunk, (message) => {
-        messages.push(message)
-      })
-      return messages
-    },
-    pushEach(chunk, onMessage) {
       if (failed) {
         throw new ParseError({ message: "Parser cannot be reused after a failure" })
       }
       try {
         append(chunk)
+        const messages: Array<BackendMessage<A>> = []
         while (end - start >= 5) {
           const length = (buffer[start + 1] << 24) | (buffer[start + 2] << 16) | (buffer[start + 3] << 8) |
             buffer[start + 4]
@@ -156,23 +141,23 @@ export const makeParser = <A = Uint8Array | null>(options?: {
           start = limit
           if (type === BackendType.DataRow) {
             // `buffer` always starts at byte 0 of `store`, so offsets index both.
-            onMessage(decodeDataRow<A>(buffer, store, 0, body, limit, parser.readField))
+            messages.push(decodeDataRow<A>(buffer, store, 0, body, limit, this.readField))
           } else {
             reader.reset(buffer, body, limit)
             const message = decodeBackend(type, reader)
             if (reader.offset !== limit) {
               throw new ParseError({ message: `Message has ${limit - reader.offset} trailing byte(s)` })
             }
-            onMessage(message as BackendMessage<A>)
+            messages.push(message as BackendMessage<A>)
           }
         }
+        return messages
       } catch (error) {
         failed = true
         throw error
       }
     }
   }
-  return parser
 }
 
 // -----------------------------------------------------------------------------
@@ -193,8 +178,9 @@ export interface Parse {
 }
 
 /**
- * Binds parameter values to a prepared statement and creates a portal.
- * Parameters and results use the binary format.
+ * Binds parameter values to a prepared statement, creating a portal.
+ *
+ * Parameters and results always use the binary format code.
  *
  * @category models
  * @since 4.0.0
@@ -728,12 +714,6 @@ const encodeParseUnsafe = (options: Omit<Parse, "_tag">): Uint8Array => {
   return end()
 }
 
-/**
- * Encodes a `Parse` message.
- *
- * @category encoding
- * @since 4.0.0
- */
 export const encodeParse = (options: Omit<Parse, "_tag">): Result.Result<Uint8Array, EncodeError> =>
   encodeResult(() => encodeParseUnsafe(options))
 
@@ -801,19 +781,15 @@ const encodeBindUnsafe = (options: Omit<Bind, "_tag">): Uint8Array => {
   return end()
 }
 
-/**
- * Encodes a `Bind` message.
- *
- * @category encoding
- * @since 4.0.0
- */
 export const encodeBind = (options: Omit<Bind, "_tag">): Result.Result<Uint8Array, EncodeError> =>
   encodeResult(() => encodeBindUnsafe(options))
 
 /**
- * A sink for writing parameter bytes into a `Bind` frame. The frame reserves
- * and backfills each parameter length. `PgTypes.writeParameter` supports
- * OID-typed values.
+ * Where a value writes its wire bytes. `Bind` frames a parameter by leaving
+ * room for its length, letting the sink fill in the body, and backfilling the
+ * length from what was written, so a value never needs an array of its own.
+ *
+ * `PgTypes.writeParameter` is the implementation for OID-typed values.
  *
  * @category models
  * @since 4.0.0
@@ -840,31 +816,24 @@ export interface ValueSink {
   readonly endLength: (token: number) => void
 }
 
-const valueWriterUnsafe = Symbol.for("@effect/sql-pg/PgProtocol/ValueWriter/unsafe")
-
 /**
- * Creates a `Bind` encoder that writes parameters directly into the frame.
- *
- * **Details**
- *
- * `textFormat` identifies parameters encoded as text. All other parameters
- * use the binary format.
- *
- * **Example** (Encoding a `Bind` message)
+ * Builds a `Bind` encoder that writes parameters straight into the frame,
+ * skipping the array per parameter that `encodeBind` has to copy from.
  *
  * ```ts
  * import { PgProtocol, PgTypes } from "@effect/sql-pg"
  *
- * const encodeBind = PgProtocol.makeBindEncoder(PgTypes.writeParameter, PgTypes.isTextFormat)
+ * const encodeBind = PgProtocol.makeBindEncoder(PgTypes.writeParameter)
  * const frame = encodeBind({ portal: "", statement: "s1", parameters: [PgTypes.int4(1)] })
  * ```
  *
  * @category encoding
  * @since 4.0.0
  */
+const valueWriterUnsafe = Symbol.for("@effect/sql-pg/PgProtocol/ValueWriter/unsafe")
+
 export const makeBindEncoder = <A, E = never>(
-  writeParameter: (sink: ValueSink, value: A) => Result.Result<void, E>,
-  textFormat?: (value: A) => boolean
+  writeParameter: (sink: ValueSink, value: A) => Result.Result<void, E>
 ) =>
 (options: {
   readonly portal: string
@@ -877,32 +846,16 @@ export const makeBindEncoder = <A, E = never>(
     writer.cString(options.statement)
     const parameters = options.parameters
     const count = requireInt16Count(parameters.length, "Bind parameter")
-    let textCount = 0
-    if (textFormat !== undefined) {
-      for (let index = 0; index < count; index++) {
-        if (textFormat(parameters[index])) textCount++
-      }
-    }
-    if (textCount === 0 || textCount === count) {
-      // One format code covering every parameter: binary, or all-text.
-      const code = textCount === 0 ? 1 : 0
-      writer.reserve(6)
-      const header = writer.bytes
-      const headerOffset = writer.offset
-      header[headerOffset] = 0
-      header[headerOffset + 1] = 1
-      header[headerOffset + 2] = 0
-      header[headerOffset + 3] = code
-      header[headerOffset + 4] = count >>> 8
-      header[headerOffset + 5] = count
-      writer.offset = headerOffset + 6
-    } else {
-      writer.int16(count)
-      for (let index = 0; index < count; index++) {
-        writer.int16(textFormat!(parameters[index]) ? 0 : 1)
-      }
-      writer.int16(count)
-    }
+    writer.reserve(6)
+    const header = writer.bytes
+    const headerOffset = writer.offset
+    header[headerOffset] = 0
+    header[headerOffset + 1] = 1
+    header[headerOffset + 2] = 0
+    header[headerOffset + 3] = 1
+    header[headerOffset + 4] = count >>> 8
+    header[headerOffset + 5] = count
+    writer.offset = headerOffset + 6
     const writeUnsafe = (writeParameter as any)[valueWriterUnsafe] as
       | ((sink: ValueSink, value: A) => void)
       | undefined
@@ -1338,13 +1291,17 @@ export interface DataRow<out A = Uint8Array | null> {
 }
 
 /**
- * Reads one `DataRow` field from the parser buffer.
+ * Reads one `DataRow` field out of the parser's buffer, for a parser given a
+ * `readField`. `size` is -1 for SQL NULL, and `column` is the field's position
+ * in the row.
  *
- * **Details**
+ * The bytes are the parser's buffer rather than a view of the field, so they
+ * are only the field's for `offset` to `offset + size`, and reading outside
+ * that reads the rest of the stream. `PgTypes.makeFieldReader` is the
+ * implementation for OID-typed columns.
  *
- * `size` is `-1` for SQL `NULL`, and `column` is the field index. Only bytes
- * from `offset` through `offset + size` belong to the field. A thrown error
- * permanently fails the parser.
+ * A reader runs inside the stateful parser. If it throws, that failure is
+ * terminal just like a `ParseError`.
  *
  * @category models
  * @since 4.0.0

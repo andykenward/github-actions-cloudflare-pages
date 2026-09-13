@@ -35,17 +35,6 @@ export class PgContainer extends Context.Service<PgContainer>()("test/PgContaine
     })
   ).pipe(Layer.provide(this.layer))
 
-  static layerMakeClientAcquireForStream = Layer.unwrap(
-    Effect.gen(function*() {
-      const container = yield* PgContainer
-      return PgClient.layerFrom(PgClient.makeClient({
-        url: Redacted.make(container.getConnectionUri()),
-        applicationName: "side-default",
-        acquireForStream: true
-      }))
-    })
-  ).pipe(Layer.provide(this.layer))
-
   static layerClientWithTransforms = Layer.unwrap(
     Effect.gen(function*() {
       const container = yield* PgContainer
@@ -57,13 +46,12 @@ export class PgContainer extends Context.Service<PgContainer>()("test/PgContaine
     })
   ).pipe(Layer.provide(this.layer))
 
-  static layerClientForListen = Layer.unwrap(
+  static layerClientSingleConnection = Layer.unwrap(
     Effect.gen(function*() {
       const container = yield* PgContainer
       return PgClient.layer({
         url: Redacted.make(container.getConnectionUri()),
-        maxConnections: 2,
-        multiplex: true
+        maxConnections: 1
       })
     })
   ).pipe(Layer.provide(this.layer))

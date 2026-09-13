@@ -13,7 +13,7 @@ import { hasProperty } from "../Predicate.ts"
 import * as HashMap from "./hashMap.ts"
 
 /** @internal */
-export const HashSetTypeId = "~effect/HashSet"
+export const HashSetTypeId = "~effect/collections/HashSet"
 
 /** @internal */
 export type HashSetTypeId = typeof HashSetTypeId

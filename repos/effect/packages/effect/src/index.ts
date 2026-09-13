@@ -59,11 +59,6 @@ export * as Brand from "./Brand.ts"
 /**
  * @since 4.0.0
  */
-export * as ByteSize from "./ByteSize.ts"
-
-/**
- * @since 4.0.0
- */
 export * as Cache from "./Cache.ts"
 
 /**

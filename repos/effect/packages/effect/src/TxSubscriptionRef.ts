@@ -22,7 +22,7 @@ import * as TxPubSub from "./TxPubSub.ts"
 import * as TxQueue from "./TxQueue.ts"
 import * as TxRef from "./TxRef.ts"
 
-const TypeId = "~effect/TxSubscriptionRef"
+const TypeId = "~effect/transactions/TxSubscriptionRef"
 
 /**
  * A TxSubscriptionRef is a transactional reference that allows subscribing to all

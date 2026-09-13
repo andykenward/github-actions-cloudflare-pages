@@ -11,11 +11,10 @@
  */
 import * as Context from "./Context.ts"
 import * as Effect from "./Effect.ts"
-import * as random from "./internal/random.ts"
 import * as Uuid from "./internal/uuid.ts"
 import * as PlatformError from "./PlatformError.ts"
 
-const TypeId = "~effect/Crypto"
+const TypeId = "~effect/platform/Crypto"
 
 /**
  * Digest algorithms supported by the platform `Crypto` service.
@@ -252,7 +251,7 @@ export const make = (
     random: Effect.sync(() => nextDoubleUnsafe()),
     randomBoolean: Effect.sync(() => nextDoubleUnsafe() > 0.5),
     randomInt: Effect.sync(() => nextIntUnsafe()),
-    randomBetween: (min, max) => Effect.sync(() => random.nextBetween(min, max, nextDoubleUnsafe())),
+    randomBetween: (min, max) => Effect.sync(() => nextDoubleUnsafe() * (max - min) + min),
     randomIntBetween(min, max, options) {
       const extra = options?.halfOpen === true ? 0 : 1
       return Effect.sync(() => {

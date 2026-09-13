@@ -10,10 +10,10 @@
  *
  * @since 4.0.0
  */
-import type * as ByteSize from "../../ByteSize.ts"
 import * as Context from "../../Context.ts"
 import * as Effect from "../../Effect.ts"
 import * as ErrorReporter from "../../ErrorReporter.ts"
+import type * as FileSystem from "../../FileSystem.ts"
 import { dual } from "../../Function.ts"
 import * as Inspectable from "../../Inspectable.ts"
 import { PipeInspectableProto } from "../../internal/core.ts"
@@ -34,7 +34,6 @@ import * as HttpClientRequest from "./HttpClientRequest.ts"
 import * as HttpClientResponse from "./HttpClientResponse.ts"
 import * as HttpIncomingMessage from "./HttpIncomingMessage.ts"
 import type { HttpPlatform } from "./HttpPlatform.ts"
-import * as headersInternal from "./internal/headers.ts"
 import * as bodyInternal from "./internal/httpBody.ts"
 import * as Template from "./Template.ts"
 import * as UrlParams from "./UrlParams.ts"
@@ -486,9 +485,9 @@ export const file = (
   path: string,
   options?:
     | (Options & {
-      readonly bytesToRead?: ByteSize.Input | undefined
-      readonly chunkSize?: number | undefined
-      readonly offset?: ByteSize.Input | undefined
+      readonly bytesToRead?: FileSystem.SizeInput | undefined
+      readonly chunkSize?: FileSystem.SizeInput | undefined
+      readonly offset?: FileSystem.SizeInput | undefined
     })
     | undefined
 ): Effect.Effect<HttpServerResponse, PlatformError, HttpPlatform> =>
@@ -509,9 +508,9 @@ export const fileWeb = (
   file: Body.HttpBody.FileLike,
   options?:
     | (Options.WithContent & {
-      readonly bytesToRead?: number | undefined
-      readonly chunkSize?: number | undefined
-      readonly offset?: number | undefined
+      readonly bytesToRead?: FileSystem.SizeInput | undefined
+      readonly chunkSize?: FileSystem.SizeInput | undefined
+      readonly offset?: FileSystem.SizeInput | undefined
     })
     | undefined
 ): Effect.Effect<HttpServerResponse, never, HttpPlatform> =>
@@ -532,7 +531,10 @@ export const setHeader: {
 } = dual(
   3,
   (self: HttpServerResponse, key: string, value: string): HttpServerResponse =>
-    makeResponse(self, Headers.set(self.headers, key, value))
+    makeResponse({
+      ...self,
+      headers: Headers.set(self.headers, key, value)
+    }, true)
 )
 
 /**
@@ -565,7 +567,10 @@ export const setHeaders: {
 } = dual(
   2,
   (self: HttpServerResponse, input: Headers.Input): HttpServerResponse =>
-    makeResponse(self, Headers.setAll(self.headers, input))
+    makeResponse({
+      ...self,
+      headers: Headers.setAll(self.headers, input)
+    }, true)
 )
 
 /**
@@ -928,7 +933,7 @@ export const setBody: {
 } = dual(
   2,
   (self: HttpServerResponse, body: Body.HttpBody): HttpServerResponse =>
-    makeResponse({ ...self, body }, bodyInternal.updateHeaders(self.headers, body))
+    makeResponse({ ...self, headers: bodyInternal.updateHeaders(self.headers, body), body })
 )
 
 /**
@@ -1007,13 +1012,7 @@ export const toWeb = (
         headers
       })
     }
-    case "Uint8Array": {
-      return new Response(body.text ?? body.body as any, {
-        status: response.status,
-        statusText: response.statusText!,
-        headers
-      })
-    }
+    case "Uint8Array":
     case "Raw": {
       if (body.body instanceof Response) {
         for (const [key, value] of headers as any) {
@@ -1051,8 +1050,12 @@ export const toWeb = (
 }
 
 /**
- * Wraps an `HttpServerResponse` as an `HttpClientResponse`, using the optional
- * request for metadata and decode errors. Without a request, `url` is empty.
+ * Wraps an `HttpServerResponse` as an `HttpClientResponse`.
+ *
+ * **Details**
+ *
+ * An optional request can be supplied for client-response metadata and decode
+ * errors.
  *
  * @category converting
  * @since 4.0.0
@@ -1096,14 +1099,6 @@ class ServerHttpClientResponse extends Inspectable.Class implements HttpClientRe
 
   get status(): number {
     return this.response.status
-  }
-
-  get url(): string {
-    if (this.request === HttpClientRequest.empty) return ""
-    const url = HttpClientRequest.toUrl(this.request)
-    if (Option.isNone(url)) return ""
-    url.value.hash = ""
-    return url.value.href
   }
 
   private cachedHeaders?: Headers.Headers
@@ -1250,11 +1245,7 @@ class ServerHttpClientResponse extends Inspectable.Class implements HttpClientRe
   }
 
   get arrayBuffer(): Effect.Effect<ArrayBuffer, HttpClientError.HttpClientError> {
-    return Effect.map(
-      this.bytes,
-      // Copy this view because Buffer views may share a larger ArrayBuffer.
-      (bytes) => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
-    )
+    return Effect.map(this.bytes, (bytes) => bytes.slice().buffer)
   }
 
   private decodeError(cause: unknown): HttpClientError.HttpClientError {
@@ -1301,7 +1292,7 @@ export const fromClientResponse = (
     body: Body.stream(
       Stream.catchIf(response.stream, isEmptyBodyError, () => Stream.empty),
       Option.getOrUndefined(Headers.get(headers, "content-type")),
-      bodyInternal.parseContentLength(headers["content-length"])
+      getContentLength(headers)
     )
   })
 }
@@ -1313,6 +1304,15 @@ const isEmptyBodyError = (
   error: HttpClientError.HttpClientError
 ): error is HttpClientError.HttpClientError =>
   HttpClientError.isHttpClientError(error) && error.reason._tag === "EmptyBodyError"
+
+const getContentLength = (headers: Headers.Headers): number | undefined => {
+  const contentLength = Option.getOrUndefined(Headers.get(headers, "content-length"))
+  if (contentLength === undefined) {
+    return undefined
+  }
+  const parsed = Number(contentLength)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined
+}
 
 const Proto: Omit<
   HttpServerResponse,
@@ -1339,10 +1339,7 @@ const makeResponse = (options: {
   readonly headers?: Headers.Headers | undefined
   readonly cookies?: Cookies.Cookies | undefined
   readonly body?: Body.HttpBody | undefined
-}, ownedHeaders?: Headers.Headers) => {
-  // ownedHeaders is a freshly created map that nothing else references, so it
-  // can be completed in place instead of copied. It supersedes options.headers,
-  // and explicit content headers in it take precedence over body-derived ones.
+}, preferHeaders = false) => {
   const self = Object.create(Proto) as Mutable<HttpServerResponse>
   self.status = options.status
   self.statusText = options.statusText
@@ -1352,21 +1349,16 @@ const makeResponse = (options: {
     self.body._tag !== "Empty" &&
     (self.body.contentType || self.body.contentLength !== undefined)
   ) {
-    const owned = ownedHeaders !== undefined
-    const newHeaders = owned
-      ? ownedHeaders as any
-      : options.headers === undefined || options.headers === Headers.empty
-      ? headersInternal.emptyMutableUnsafe() as any
-      : Headers.fromRecordUnsafe({ ...options.headers }) as any
-    if (self.body.contentType && (!owned || newHeaders["content-type"] === undefined)) {
+    const newHeaders = Headers.fromRecordUnsafe({ ...options.headers }) as any
+    if (self.body.contentType && (!preferHeaders || newHeaders["content-type"] === undefined)) {
       newHeaders["content-type"] = self.body.contentType
     }
-    if (self.body.contentLength !== undefined && (!owned || newHeaders["content-length"] === undefined)) {
+    if (self.body.contentLength !== undefined && (!preferHeaders || newHeaders["content-length"] === undefined)) {
       newHeaders["content-length"] = self.body.contentLength.toString()
     }
     self.headers = newHeaders
   } else {
-    self.headers = ownedHeaders ?? options.headers ?? Headers.empty
+    self.headers = options.headers ?? Headers.empty
   }
   return self
 }
@@ -1401,8 +1393,7 @@ export const fromWeb = (response: Response): HttpServerResponse => {
           evaluate: () => response.body!,
           onError: (e) => e
         }),
-        contentType ?? undefined,
-        bodyInternal.parseContentLength(response.headers.get("content-length"))
+        contentType ?? undefined
       )
     )
   }

@@ -4,29 +4,29 @@ import * as Command from "effect/unstable/cli/Command"
 import * as Flag from "effect/unstable/cli/Flag"
 import { ApiDiff, type ApiDiffOptions } from "./ApiDiff.ts"
 
-const baseRef = Flag.String("base-ref").pipe(
+const baseRef = Flag.string("base-ref").pipe(
   Flag.withDescription("Explicit base Git ref"),
   Flag.withDefault("v3")
 )
 
-const headRef = Flag.String("head-ref").pipe(
+const headRef = Flag.string("head-ref").pipe(
   Flag.withDescription("Explicit head Git ref"),
   Flag.withDefault("main")
 )
 
-const output = Flag.String("output").pipe(
+const output = Flag.string("output").pipe(
   Flag.withMetavar("DIRECTORY"),
   Flag.withDescription("Report output directory"),
   Flag.optional
 )
 
-const writeDoc = Flag.String("write-doc").pipe(
+const writeDoc = Flag.string("write-doc").pipe(
   Flag.withMetavar("FILE"),
   Flag.withDescription("Write the annotation-driven migration reference"),
   Flag.optional
 )
 
-const check = Flag.Boolean("check").pipe(
+const check = Flag.boolean("check").pipe(
   Flag.withDescription("List APIs without migration annotations and fail if any remain"),
   Flag.withDefault(false)
 )

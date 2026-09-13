@@ -458,9 +458,7 @@ export class HttpApiSchemaError extends Data.TaggedClass("HttpApiSchemaError")<{
     kind: HttpApiSchemaError["kind"],
     effect: Effect.Effect<A, Schema.SchemaError, R>
   ): Effect.Effect<A, HttpApiSchemaError, R> {
-    // Decoders return completed Exit values for synchronous results, so map
-    // eagerly and skip the error wrapper when nothing remains to run.
-    return Effect.mapErrorEager(effect, (error) => new HttpApiSchemaError({ kind, cause: error }))
+    return Effect.mapError(effect, (error) => new HttpApiSchemaError({ kind, cause: error }))
   }
 
   readonly name = "HttpApiSchemaError"

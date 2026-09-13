@@ -167,7 +167,6 @@ export const make: (
     readonly label: string
     readonly exportInterval: Duration.Input
     readonly maxBatchSize: number | "disabled"
-    readonly exportEmpty?: boolean | undefined
     readonly body: (data: Array<any>) => readonly [body: HttpBody, onSuccess: Effect.Effect<void>]
     readonly shutdownTimeout: Duration.Input
   }
@@ -202,11 +201,13 @@ export const make: (
     } else if (disabledUntil !== undefined) {
       disabledUntil = undefined
     }
-    if (buffer.length === 0 && (options.maxBatchSize !== "disabled" || options.exportEmpty !== true)) {
-      return Effect.void
-    }
     const items = buffer
-    buffer = []
+    if (options.maxBatchSize !== "disabled") {
+      if (buffer.length === 0) {
+        return Effect.void
+      }
+      buffer = []
+    }
     const [body, onSuccess] = options.body(items)
     return client.execute(
       HttpClientRequest.setBody(request, body)

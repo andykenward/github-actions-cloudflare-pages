@@ -246,7 +246,7 @@ export const makeResolvers = <
         S["insert"]["Type"],
         S["Type"],
         ResultLengthMismatch | SqlError,
-        S["DecodingServices"] | S["insert"]["EncodingServices"]
+        S["insert"]["EncodingServices"]
       >
     >
     readonly insertVoid: RequestResolver.RequestResolver<

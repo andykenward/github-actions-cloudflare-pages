@@ -1,5 +1,5 @@
 import { describe, it } from "@effect/vitest"
-import { ByteSize, Effect, ErrorReporter, FileSystem, identity, Path, Schema, Stream, Unify } from "effect"
+import { Effect, ErrorReporter, FileSystem, identity, Path, Schema, Stream, Unify } from "effect"
 import {
   HttpClientRequest,
   HttpIncomingMessage,
@@ -20,14 +20,13 @@ describe("Multipart", () => {
       deepStrictEqual(decoded, { value: "revived" })
     }))
 
-  it.effect("parses fields and streams file content as stream parts", () =>
+  it.effect("parses fields and streams file content", () =>
     Effect.gen(function*() {
       const data = new globalThis.FormData()
       data.append("foo", "bar")
       data.append("test", "ing")
       data.append("file", new globalThis.File(["A".repeat(1024 * 1024)], "foo.txt", { type: "text/plain" }))
       const response = new Response(data)
-      const streamed: Array<Multipart.Part> = []
 
       const parts = yield* Stream.fromReadableStream({
         evaluate: () => response.body!,
@@ -35,7 +34,6 @@ describe("Multipart", () => {
       }).pipe(
         Stream.pipeThroughChannel(Multipart.makeChannel(Object.fromEntries(response.headers))),
         Stream.mapEffect((part) => {
-          streamed.push(part)
           return Unify.unify(
             part._tag === "File" ?
               Effect.zip(
@@ -53,10 +51,6 @@ describe("Multipart", () => {
         ["test", "ing"],
         ["foo.txt", "A".repeat(1024 * 1024)]
       ])
-      deepStrictEqual(
-        streamed.map((part) => [Multipart.isPart(part), Multipart.isStreamPart(part)]),
-        [[true, true], [true, true], [true, true]]
-      )
     }))
 
   it.effect("collects file content across pulls and a split trailing boundary", () =>
@@ -85,41 +79,6 @@ describe("Multipart", () => {
       )
 
       deepStrictEqual(contents, [encoder.encode("abcdef")])
-    }))
-
-  it.effect("parses a field after a file when the body is split across chunks", () =>
-    Effect.gen(function*() {
-      const boundary = "----testboundary"
-      const encoder = new TextEncoder()
-      const body = encoder.encode(
-        `--${boundary}\r\n` +
-          `Content-Disposition: form-data; name="file"; filename="file.txt"\r\n` +
-          `Content-Type: text/plain\r\n\r\n` +
-          "file contents\r\n" +
-          `--${boundary}\r\n` +
-          `Content-Disposition: form-data; name="description"\r\n\r\n` +
-          "test file\r\n" +
-          `--${boundary}--\r\n`
-      )
-      const chunks = [body.subarray(0, 64), body.subarray(64, 128), body.subarray(128)]
-
-      const parts = yield* Stream.fromArray(chunks).pipe(
-        Stream.rechunk(1),
-        Stream.pipeThroughChannel(
-          Multipart.makeChannel({ "content-type": `multipart/form-data; boundary=${boundary}` })
-        ),
-        Stream.mapEffect((part) =>
-          part._tag === "File"
-            ? part.contentEffect.pipe(Effect.map((content) => [part.key, new TextDecoder().decode(content)] as const))
-            : Effect.succeed([part.key, part.value] as const)
-        ),
-        Stream.runCollect
-      )
-
-      deepStrictEqual(parts, [
-        ["file", "file contents"],
-        ["description", "test file"]
-      ])
     }))
 
   it.effect("parses non-Latin-1 filenames", () =>
@@ -195,7 +154,7 @@ describe("Multipart", () => {
           return Stream.runDrain(part.content)
         }),
         Stream.runDrain,
-        Effect.provideService(Multipart.MaxFileSize, ByteSize.bytes(256)),
+        Effect.provideService(Multipart.MaxFileSize, 256),
         Effect.flip
       )
 
@@ -231,7 +190,7 @@ describe("Multipart", () => {
           return Stream.runDrain(part.content)
         }),
         Stream.runDrain,
-        Effect.provideService(HttpIncomingMessage.MaxBodySize, ByteSize.bytes(256)),
+        Effect.provideService(HttpIncomingMessage.MaxBodySize, FileSystem.Size(256)),
         Effect.flip
       )
 
@@ -277,8 +236,8 @@ describe("Multipart", () => {
     description: string
     options: {
       readonly maxParts?: number
-      readonly maxFieldSize?: ByteSize.Input
-      readonly maxPartSize?: ByteSize.Input
+      readonly maxFieldSize?: number
+      readonly maxPartSize?: number
     }
     limit: "MaxParts" | "MaxFieldSize" | "MaxPartSize"
     expectedFields: Array<string>
@@ -291,13 +250,13 @@ describe("Multipart", () => {
     },
     {
       description: "maxFieldSize",
-      options: { maxFieldSize: "1 B" },
+      options: { maxFieldSize: 1 },
       limit: "MaxFieldSize",
       expectedFields: []
     },
     {
       description: "maxPartSize",
-      options: { maxPartSize: ByteSize.bytes(1) },
+      options: { maxPartSize: 1 },
       limit: "MaxPartSize",
       expectedFields: []
     }
@@ -336,9 +295,6 @@ describe("Multipart", () => {
     let done = false
     const parser = MultipartParser.make({
       headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
-      maxTotalSize: Infinity,
-      maxPartSize: Infinity,
-      maxFieldSize: Infinity,
       onField(info, value) {
         fields.push([info.name, decoder.decode(value)])
       },
@@ -361,7 +317,7 @@ describe("Multipart", () => {
     deepStrictEqual(errors, [])
   })
 
-  it.effect("returns distinct persisted file paths as non-stream parts", () =>
+  it.effect("returns distinct persisted file paths for files with the same client filename", () =>
     Effect.gen(function*() {
       const formData = new FormData()
       formData.append("first", new File(["one"], "same.txt"))
@@ -384,9 +340,6 @@ describe("Multipart", () => {
       )
       const first = (persisted.first as Array<Multipart.PersistedFile>)[0]
       const second = (persisted.second as Array<Multipart.PersistedFile>)[0]
-      strictEqual(Multipart.isPersistedFile(first), true)
-      strictEqual(Multipart.isPart(first), true)
-      strictEqual(Multipart.isStreamPart(first), false)
       strictEqual(first.path, "/tmp/audit/same.txt")
       notStrictEqual(first.path, second.path)
       deepStrictEqual(writes, [first.path, second.path])
@@ -435,7 +388,7 @@ describe("Multipart", () => {
             }
           },
           "required": ["key", "name", "contentType", "path"],
-          "additionalProperties": true
+          "additionalProperties": false
         },
         definitions: {}
       })

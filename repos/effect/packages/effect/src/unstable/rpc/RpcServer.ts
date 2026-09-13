@@ -126,8 +126,7 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
 
   type Client = {
     readonly id: number
-    // lazily created: only streaming requests with client acks use latches
-    latches: Map<RequestId, Latch.Latch> | undefined
+    readonly latches: Map<RequestId, Latch.Latch>
     readonly fibers: Map<RequestId, Fiber.Fiber<unknown, any>>
     readonly serverClient: Rpc.ServerClient
     ended: boolean
@@ -176,7 +175,7 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
         if (!client) {
           client = {
             id: clientId,
-            latches: undefined,
+            latches: new Map(),
             fibers: new Map(),
             ended: false,
             serverClient: new Rpc.ServerClient(clientId)
@@ -191,7 +190,7 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
             return handleRequest(requestFiber, client, message, opts)
           }
           case "Ack": {
-            const latch = client.latches?.get(message.requestId)
+            const latch = client.latches.get(message.requestId)
             return latch ? latch.open : Effect.void
           }
           case "Interrupt": {
@@ -348,9 +347,10 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
     if (!isFork && concurrencySemaphore) {
       effect = concurrencySemaphore.withPermit(effect)
     }
-    const runFork = Effect.runForkWith(
-      Context.add(handlerContext(entry, requestFiber.context), Scope.Scope, scope)
-    )
+    const context = new Map(entry.context.mapUnsafe)
+    requestFiber.context.mapUnsafe.forEach((value, key) => context.set(key, value))
+    context.set(Scope.Scope.key, scope)
+    const runFork = Effect.runForkWith(Context.makeUnsafe(context))
     const fiber = trackFiber(
       runFork(
         effect,
@@ -385,7 +385,7 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
         )
       }
       client.fibers.delete(request.id)
-      client.latches?.delete(request.id)
+      client.latches.delete(request.id)
       if (client.ended && client.fibers.size === 0) {
         trackFiber(runFork(endClient(client)))
       }
@@ -400,14 +400,10 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
       | Stream.Stream<any, any>
       | Effect.Effect<Queue.Dequeue<any, any>, any, Scope.Scope>
   ) => {
-    let latch: Latch.Latch | undefined
-    if (supportsAck) {
-      client.latches ??= new Map()
-      latch = client.latches.get(request.id)
-      if (!latch) {
-        latch = Latch.makeUnsafe(false)
-        client.latches.set(request.id, latch)
-      }
+    let latch = client.latches.get(request.id)
+    if (supportsAck && !latch) {
+      latch = Latch.makeUnsafe(false)
+      client.latches.set(request.id, latch)
     }
     if (Effect.isEffect(stream)) {
       return stream.pipe(
@@ -464,32 +460,6 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
     disconnect
   })
 })
-
-// Merging the handler entry services with the request fiber services costs
-// O(services), so the merged context is cached per (entry, fiber context)
-// pair. Request fibers on persistent connections keep one context across
-// requests, leaving a single O(1) overlay per request for the request scope.
-const handlerContextCache = new WeakMap<
-  Rpc.Handler<any>,
-  WeakMap<Context.Context<never>, Context.Context<never>>
->()
-
-const handlerContext = (
-  entry: Rpc.Handler<any>,
-  fiberContext: Context.Context<never>
-): Context.Context<never> => {
-  let cache = handlerContextCache.get(entry)
-  if (cache === undefined) {
-    cache = new WeakMap()
-    handlerContextCache.set(entry, cache)
-  }
-  let merged = cache.get(fiberContext)
-  if (merged === undefined) {
-    merged = Context.merge(entry.context, fiberContext)
-    cache.set(fiberContext, merged)
-  }
-  return merged
-}
 
 const applyMiddleware = <A, E, R>(
   context: Context.Context<never>,
@@ -574,9 +544,10 @@ export const make: <Rpcs extends Rpc.Any>(
           return handleEncode(
             client,
             response.requestId,
-            schemas,
-            schemas.encodeChunk(response.values),
-            "Chunk"
+            schemas.encodeDefect,
+            schemas.collector,
+            Effect.provideContext(schemas.encodeChunk(response.values), schemas.context),
+            (values) => ({ _tag: "Chunk", requestId: response.requestId, values })
           )
         }
         case "Exit": {
@@ -586,9 +557,10 @@ export const make: <Rpcs extends Rpc.Any>(
           return handleEncode(
             client,
             response.requestId,
-            schemas,
-            schemas.encodeExit(response.exit),
-            "Exit"
+            schemas.encodeDefect,
+            schemas.collector,
+            Effect.provideContext(schemas.encodeExit(response.exit), schemas.context),
+            (exit) => ({ _tag: "Exit", requestId: response.requestId, exit })
           )
         }
         case "Defect": {
@@ -655,43 +627,25 @@ export const make: <Rpcs extends Rpc.Any>(
   }
   const clients = new Map<number, Client>()
 
-  const responseEnvelope = (
-    requestId: RequestId,
-    tag: "Chunk" | "Exit",
-    value: unknown
-  ): FromServerEncoded =>
-    tag === "Chunk"
-      ? { _tag: "Chunk", requestId, values: value as NonEmptyReadonlyArray<unknown> }
-      : { _tag: "Exit", requestId, exit: value as ResponseExitEncoded["exit"] }
-
-  const handleEncode = (
+  const handleEncode = <A, R>(
     client: Client,
     requestId: RequestId,
-    schemas: Schemas,
-    effect: Effect.Effect<unknown, Schema.SchemaError>,
-    tag: "Chunk" | "Exit"
-  ) => {
-    const collector = schemas.collector
-    // The schema encoders evaluate eagerly, so an encode that needs no
-    // services is already a resolved success and can skip the effect wrappers.
-    const write = Exit.isExit(effect) && Exit.isSuccess(effect)
-      ? send(client.id, responseEnvelope(requestId, tag, effect.value), collector && collector.clearUnsafe())
-      : Effect.flatMap(
-        Effect.provideContext(
-          collector ? Effect.provideService(effect, Transferable.Collector, collector) : effect,
-          schemas.context
-        ),
-        (value) => send(client.id, responseEnvelope(requestId, tag, value), collector && collector.clearUnsafe())
-      )
-    return Effect.catchCause(write, (cause) => {
-      client.schemas.delete(requestId)
-      const defect = Cause.squash(Cause.map(cause, (e) => SchemaIssue.defaultFormatter(e.issue)))
-      return Effect.andThen(
-        sendRequestDefect(client, requestId, schemas.encodeDefect, defect),
-        server.write(client.id, { _tag: "Interrupt", requestId, interruptors: [] })
-      )
-    })
-  }
+    encodeDefect: (u: unknown) => Effect.Effect<unknown, Schema.SchemaError>,
+    collector: Transferable.Collector["Service"] | undefined,
+    effect: Effect.Effect<A, Schema.SchemaError, R>,
+    onSuccess: (a: A) => FromServerEncoded
+  ) =>
+    (collector ? Effect.provideService(effect, Transferable.Collector, collector) : effect).pipe(
+      Effect.flatMap((a) => send(client.id, onSuccess(a), collector && collector.clearUnsafe())),
+      Effect.catchCause((cause) => {
+        client.schemas.delete(requestId)
+        const defect = Cause.squash(Cause.map(cause, (e) => SchemaIssue.defaultFormatter(e.issue)))
+        return Effect.andThen(
+          sendRequestDefect(client, requestId, encodeDefect, defect),
+          server.write(client.id, { _tag: "Interrupt", requestId, interruptors: [] })
+        )
+      })
+    )
 
   const sendRequestDefect = (
     client: Client,
@@ -725,31 +679,6 @@ export const make: <Rpcs extends Rpc.Any>(
         })
     )
 
-  const writeDecodedRequest = (
-    client: Client,
-    requestId: RequestId,
-    schemas: Schemas,
-    request: RequestEncoded,
-    payload: unknown
-  ) => {
-    client.schemas.set(
-      requestId,
-      supportsTransferables
-        ? {
-          ...schemas,
-          collector: Transferable.makeCollectorUnsafe()
-        }
-        : schemas
-    )
-    // the envelope is owned by this protocol loop, so it is decoded in place
-    // instead of copied for every request
-    const decoded = request as Types.Mutable<RequestEncoded>
-    decoded.id = requestId
-    decoded.payload = payload
-    decoded.headers = Headers.fromInput(request.headers) as any
-    return server.write(client.id, decoded as any)
-  }
-
   // main server loop
   return yield* run((clientId, request) => {
     let client = clients.get(clientId)
@@ -780,19 +709,28 @@ export const make: <Rpcs extends Rpc.Any>(
           return sendRequestDefect(client, requestId, (defect) => Effect.succeed(defect), `Unknown request tag: ${tag}`)
         }
         const schemas = getSchemas(rpc as any)
-        const decoded = schemas.decode(request.payload)
-        // The schema decoders evaluate eagerly, so a decode that needs no
-        // services is already a resolved success and can skip the effect
-        // wrappers.
-        if (Exit.isExit(decoded) && Exit.isSuccess(decoded)) {
-          return writeDecodedRequest(client, requestId, schemas, request, decoded.value)
-        }
         return Effect.matchEffect(
-          Effect.provideContext(decoded, schemas.context),
+          Effect.provideContext(schemas.decode(request.payload), schemas.context),
           {
             onFailure: (error) =>
               sendRequestDefect(client, requestId, schemas.encodeDefect, SchemaIssue.defaultFormatter(error.issue)),
-            onSuccess: (payload) => writeDecodedRequest(client, requestId, schemas, request, payload)
+            onSuccess: (payload) => {
+              client.schemas.set(
+                requestId,
+                supportsTransferables
+                  ? {
+                    ...schemas,
+                    collector: Transferable.makeCollectorUnsafe()
+                  }
+                  : schemas
+              )
+              return server.write(clientId, {
+                ...request,
+                id: requestId,
+                payload,
+                headers: Headers.fromInput(request.headers)
+              } as any)
+            }
           }
         )
       }
@@ -803,9 +741,10 @@ export const make: <Rpcs extends Rpc.Any>(
         return server.write(clientId, request)
       }
       case "Ack": {
-        // the branded `RequestId` shares the runtime representation of the
-        // encoded id, so the message can be forwarded as-is
-        return server.write(clientId, request as FromClient<Rpcs>)
+        return server.write(clientId, {
+          ...request,
+          requestId: RequestId(request.requestId)
+        })
       }
       case "Interrupt": {
         return server.write(clientId, {
@@ -945,7 +884,7 @@ export const makeProtocolSocketServer = Effect.gen(function*() {
   const server = yield* SocketServer.SocketServer
   const { onSocket, protocol } = yield* makeSocketProtocol
   yield* Effect.forkScoped(
-    server.run((socket) => Effect.scoped(onSocket(socket)))
+    server.run(Effect.fnUntraced(onSocket, Effect.scoped))
   )
   return protocol
 })
@@ -1154,9 +1093,7 @@ export const makeProtocolWithHttpEffect: (
 
     if (!includesFraming) {
       const responses = yield* Queue.collect(queue)
-      // Notification-only batches encode without a response body.
-      const encoded = parser.encode(responses)
-      return HttpServerResponse.text(encoded === undefined ? "" : encoded as string, {
+      return HttpServerResponse.text(parser.encode(responses) as string, {
         contentType: serialization.contentType
       })
     }
@@ -1497,7 +1434,17 @@ const makeSocketProtocol: Effect.Effect<
     readonly onSocket: (
       socket: Socket.Socket,
       headers?: ReadonlyArray<[string, string]>
-    ) => Effect.Effect<void, never, Scope.Scope>
+    ) => Generator<
+      | Effect.Effect<void, never, never>
+      | Effect.Effect<Scope.Scope, never, Scope.Scope>
+      | Effect.Effect<
+        (chunk: Uint8Array | string | Socket.CloseEvent) => Effect.Effect<void, Socket.SocketError>,
+        never,
+        Scope.Scope
+      >,
+      void,
+      any
+    >
   },
   never,
   RpcSerialization.RpcSerialization
@@ -1514,7 +1461,7 @@ const makeSocketProtocol: Effect.Effect<
 
   let writeRequest!: (clientId: number, message: FromClientEncoded) => Effect.Effect<void>
 
-  const onSocket = Effect.fnUntraced(function*(socket: Socket.Socket, headers?: ReadonlyArray<[string, string]>) {
+  const onSocket = function*(socket: Socket.Socket, headers?: ReadonlyArray<[string, string]>) {
     const scope = yield* Effect.scope
     const parser = serialization.makeUnsafe()
     const id = clientId++
@@ -1524,24 +1471,24 @@ const makeSocketProtocol: Effect.Effect<
       return Queue.offer(disconnects, id)
     })
 
-    const writer = yield* socket.writer
+    const writeRaw = yield* socket.writer
     const write = (response: FromServerEncoded) => {
       try {
         const encoded = parser.encode(response)
         if (encoded === undefined) {
           return Effect.void
         }
-        return Effect.orDie(writer.write(encoded))
+        return Effect.orDie(writeRaw(encoded))
       } catch (cause) {
         return Effect.orDie(
-          writer.write(parser.encode(ResponseDefectEncoded(encodeDefectUnsafe(cause)))!)
+          writeRaw(parser.encode(ResponseDefectEncoded(encodeDefectUnsafe(cause)))!)
         )
       }
     }
     clients.set(id, { write })
     clientIds.add(id)
 
-    const processData = (data: Uint8Array | string): Effect.Effect<void, Socket.SocketError> => {
+    yield* socket.runRaw((data) => {
       try {
         const decoded = parser.decode(data) as ReadonlyArray<FromClientEncoded>
         if (decoded.length === 0) return Effect.void
@@ -1559,25 +1506,15 @@ const makeSocketProtocol: Effect.Effect<
         })
       } catch (cause) {
         if (Predicate.isTagged(cause, "MaxBufferSizeExceeded")) {
-          return writer.write(new Socket.CloseEvent(1009, String(cause)))
+          return writeRaw(new Socket.CloseEvent(1009, String(cause)))
         }
-        return writer.write(parser.encode(ResponseDefectEncoded(encodeDefectUnsafe(cause)))!)
-      }
-    }
-
-    yield* Effect.gen(function*() {
-      const { pull } = yield* socket.reader
-      while (true) {
-        const frames = yield* pull
-        for (let i = 0; i < frames.length; i++) {
-          yield* processData(frames[i])
-        }
+        return writeRaw(parser.encode(ResponseDefectEncoded(encodeDefectUnsafe(cause)))!)
       }
     }).pipe(
       Effect.catchReason("SocketError", "SocketCloseError", (_) => Effect.void),
       Effect.orDie
     )
-  })
+  }
 
   const protocol = yield* Protocol.make((writeRequest_) => {
     writeRequest = writeRequest_

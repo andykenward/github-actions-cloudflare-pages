@@ -12,7 +12,6 @@
 import type { NonEmptyArray } from "./Array.ts"
 import * as Equal from "./Equal.ts"
 import { dual } from "./Function.ts"
-import * as Count from "./internal/count.ts"
 import * as InternalRecord from "./internal/record.ts"
 import type { Option } from "./Option.ts"
 import * as O from "./Option.ts"
@@ -28,9 +27,9 @@ import type { NoInfer } from "./Types.ts"
  *
  * **Details**
  *
- * The function is called with each index starting from `0`. If a length is
- * provided, it is rounded down and normalized to at least `1`, with `NaN`
- * treated as `1`. If no length is specified, the iterable is infinite.
+ * The function is called with each index starting from `0`. If no length is
+ * specified, the iterable is infinite. This is useful for generating
+ * sequences, patterns, or any indexed data.
  *
  * **Example** (Generating values by index)
  *
@@ -57,7 +56,7 @@ import type { NoInfer } from "./Types.ts"
 export const makeBy = <A>(f: (i: number) => A, options?: {
   readonly length?: number
 }): Iterable<A> => {
-  const max = options?.length !== undefined ? Count.normalizeNonEmpty(options.length) : Infinity
+  const max = options?.length !== undefined ? Math.max(1, Math.floor(options.length)) : Infinity
   return {
     [Symbol.iterator]() {
       let i = 0
@@ -107,8 +106,7 @@ export const range = (start: number, end?: number): Iterable<number> => {
  *
  * **Details**
  *
- * `n` is rounded down and normalized to an integer greater than or equal to
- * `1`. `NaN` is treated as `1`.
+ * `n` is normalized to an integer greater than or equal to `1`.
  *
  * **Example** (Repeating a value)
  *
@@ -136,8 +134,7 @@ export const replicate: {
  *
  * **Details**
  *
- * The result is lazy. `n` is rounded down and normalized to at least `1`, with
- * `NaN` treated as `1`. Each repetition obtains a new iterator from `self`.
+ * The result is lazy. Each repetition obtains a new iterator from `self`.
  *
  * @see {@link forever} for repeating without an upper bound
  * @see {@link replicate} for repeating a single value
@@ -536,8 +533,7 @@ export const headUnsafe = <A>(self: Iterable<A>): A => {
  *
  * **Details**
  *
- * `n` is rounded down and normalized to a non-negative integer. `NaN` is
- * treated as `0`.
+ * `n` is normalized to a non-negative integer.
  *
  * **Example** (Taking from the start)
  *
@@ -568,24 +564,21 @@ export const headUnsafe = <A>(self: Iterable<A>): A => {
 export const take: {
   (n: number): <A>(self: Iterable<A>) => Iterable<A>
   <A>(self: Iterable<A>, n: number): Iterable<A>
-} = dual(2, <A>(self: Iterable<A>, n: number): Iterable<A> => {
-  const count = Count.normalize(n)
-  return {
-    [Symbol.iterator]() {
-      let i = 0
-      const iterator = self[Symbol.iterator]()
-      return {
-        next() {
-          if (i < count) {
-            i++
-            return iterator.next()
-          }
-          return { done: true, value: undefined }
+} = dual(2, <A>(self: Iterable<A>, n: number): Iterable<A> => ({
+  [Symbol.iterator]() {
+    let i = 0
+    const iterator = self[Symbol.iterator]()
+    return {
+      next() {
+        if (i < n) {
+          i++
+          return iterator.next()
         }
+        return { done: true, value: undefined }
       }
     }
   }
-})
+}))
 
 /**
  * Takes the longest initial `Iterable` prefix for which all elements satisfy the
@@ -648,8 +641,7 @@ export const takeWhile: {
  *
  * **Details**
  *
- * `n` is rounded down and normalized to a non-negative integer. `NaN` is
- * treated as `0`.
+ * `n` is normalized to a non-negative integer.
  *
  * **Example** (Dropping from the start)
  *
@@ -679,27 +671,24 @@ export const takeWhile: {
 export const drop: {
   (n: number): <A>(self: Iterable<A>) => Iterable<A>
   <A>(self: Iterable<A>, n: number): Iterable<A>
-} = dual(2, <A>(self: Iterable<A>, n: number): Iterable<A> => {
-  const count = Count.normalize(n)
-  return {
-    [Symbol.iterator]() {
-      const iterator = self[Symbol.iterator]()
-      let i = 0
-      return {
-        next() {
-          while (i < count) {
-            const result = iterator.next()
-            if (result.done) {
-              return { done: true, value: undefined }
-            }
-            i++
+} = dual(2, <A>(self: Iterable<A>, n: number): Iterable<A> => ({
+  [Symbol.iterator]() {
+    const iterator = self[Symbol.iterator]()
+    let i = 0
+    return {
+      next() {
+        while (i < n) {
+          const result = iterator.next()
+          if (result.done) {
+            return { done: true, value: undefined }
           }
-          return iterator.next()
+          i++
         }
+        return iterator.next()
       }
     }
   }
-})
+}))
 
 /**
  * Returns the first element that satisfies the specified
@@ -1104,8 +1093,6 @@ export const contains: {
 /**
  * Splits an `Iterable` into length-`n` pieces. The last piece will be shorter if `n` does not evenly divide the length of
  * the `Iterable`.
- * `n` is rounded down and normalized to at least `1`; `NaN` and non-positive
- * values therefore produce singleton pieces.
  *
  * **Example** (Chunking an iterable)
  *
@@ -1143,7 +1130,7 @@ export const chunksOf: {
   (n: number): <A>(self: Iterable<A>) => Iterable<Array<A>>
   <A>(self: Iterable<A>, n: number): Iterable<Array<A>>
 } = dual(2, <A>(self: Iterable<A>, n: number): Iterable<Array<A>> => {
-  const safeN = Count.normalizeNonEmpty(n)
+  const safeN = Math.max(1, Math.floor(n))
   return ({
     [Symbol.iterator]() {
       let iterator: Iterator<A> | undefined = self[Symbol.iterator]()

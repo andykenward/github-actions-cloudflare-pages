@@ -9,7 +9,7 @@
  *
  * @since 4.0.0
  */
-import type { RedisClient, RedisOptions } from "bun"
+import { RedisClient, type RedisOptions } from "bun"
 import * as Config from "effect/Config"
 import * as Context from "effect/Context"
 import * as Deferred from "effect/Deferred"
@@ -35,7 +35,6 @@ const make = Effect.fnUntraced(function*(
     readonly url?: string
   } & RedisOptions
 ) {
-  const { RedisClient } = yield* Effect.promise(() => import("bun"))
   const scope = yield* Effect.scope
   yield* Scope.addFinalizer(scope, Effect.sync(() => client.close()))
   const client = new RedisClient(options?.url, options)

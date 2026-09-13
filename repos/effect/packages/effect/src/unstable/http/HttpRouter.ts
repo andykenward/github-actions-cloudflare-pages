@@ -13,7 +13,6 @@ import * as Arr from "../../Array.ts"
 import * as Context from "../../Context.ts"
 import * as Effect from "../../Effect.ts"
 import { compose, dual, identity } from "../../Function.ts"
-import { fiberEnterInterruptibleUnsafe } from "../../internal/effect.ts"
 import * as Layer from "../../Layer.ts"
 import * as Option from "../../Option.ts"
 import type { ReadonlyRecord } from "../../Record.ts"
@@ -164,10 +163,9 @@ export const make = Effect.gen(function*() {
   return HttpRouter.of({
     [TypeId]: TypeId,
     prefixed(this: HttpRouter, prefix: string) {
-      prefix = removeTrailingSlash(prefix as PathInput)
       return HttpRouter.of({
         ...this,
-        prefixed: (newPrefix: string) => this.prefixed(prefixPath(newPrefix, prefix)),
+        prefixed: (newPrefix: string) => this.prefixed(prefixPath(prefix, newPrefix)),
         addAll: (routes) => addAll(routes.map(prefixRoute(prefix))) as any,
         add: (method, path, handler, options) =>
           addAll([
@@ -220,22 +218,19 @@ export const make = Effect.gen(function*() {
           params: result.params
         })
 
-        if (fiber.getRef(Tracer.Tracer) !== Tracer.nativeTracer) {
-          const span = Context.getOrUndefined(context, Tracer.ParentSpan)
-          if (span !== undefined && span._tag === "Span" && span.sampled) {
-            span.attribute("http.route", route.path)
-          }
+        const span = Context.getOrUndefined(context, Tracer.ParentSpan)
+        if (span && span._tag === "Span") {
+          span.attribute("http.route", route.path)
         }
-        // The enclosing request restores the fiber context on exit.
-        fiber.setContext(context)
-        if (!route.uninterruptible) {
-          const interrupted = fiberEnterInterruptibleUnsafe(fiber)
-          if (interrupted !== undefined) return interrupted
-        }
-        return route.handler as Effect.Effect<
-          HttpServerResponse.HttpServerResponse,
-          unknown
-        >
+        return Effect.updateContext(
+          (route.uninterruptible ?
+            route.handler :
+            Effect.interruptible(route.handler)) as Effect.Effect<
+              HttpServerResponse.HttpServerResponse,
+              unknown
+            >,
+          () => context
+        )
       })
       if (middleware.size === 0) return handler
       for (const fn of Arr.reverse(middleware)) {
@@ -298,9 +293,7 @@ export const params: Effect.Effect<
   ReadonlyRecord<string, string | undefined>,
   never,
   RouteContext
-> = Effect.withFiberSucceed((fiber) =>
-  Context.getUnsafe(fiber.context as Context.Context<RouteContext>, RouteContext).params
-)
+> = Effect.map(RouteContext, (_) => _.params)
 
 /**
  * Decodes a schema from the current request and its JSON body.
@@ -752,7 +745,7 @@ export const prefixRoute: {
     ...self,
     path: prefixPath(self.path, prefix) as PathInput,
     prefix: Option.match(self.prefix, {
-      onNone: () => removeTrailingSlash(prefix as PathInput),
+      onNone: () => prefix as string,
       onSome: (existingPrefix) => prefixPath(existingPrefix, prefix) as string
     })
   }))
@@ -1288,11 +1281,7 @@ export const serve = <A, E, R, HE, HR = Request.Only<"Requires", R> | Request.On
  *
  * The result contains a `handler` function that converts Web `Request` values to
  * Web `Response` values and a `dispose` function for releasing the layer
- * resources. The layer is built immediately, so the cost is paid when the
- * handler is created rather than on the first request. A layer that performs
- * asynchronous work while building may still be in progress when the first
- * request arrives, in which case that request waits for the build to finish.
- * If the build fails, every request rejects with the build error.
+ * resources.
  *
  * @category converting
  * @since 4.0.0

@@ -230,12 +230,12 @@ export const make = (
       )
     })
 
-    const client: SqliteClient = Object.assign(
+    return Object.assign(
       (yield* Client.make({
         acquirer,
         compiler,
         transactionAcquirer,
-        beginTransaction: options.readonly === true ? "BEGIN" : "BEGIN IMMEDIATE",
+        beginTransaction: "BEGIN IMMEDIATE",
         spanAttributes: [
           ...(options.spanAttributes ? Object.entries(options.spanAttributes) : []),
           [ATTR_DB_SYSTEM_NAME, "sqlite"]
@@ -245,15 +245,10 @@ export const make = (
       {
         [TypeId]: TypeId as TypeId,
         config: options,
-        export: Effect.withFiber((fiber) =>
-          Context.getOption(fiber.context, client.transactionService)._tag === "Some"
-            ? connection.export
-            : Effect.flatMap(acquirer, (_) => _.export)
-        ),
+        export: Effect.flatMap(acquirer, (_) => _.export),
         loadExtension: (path: string) => Effect.flatMap(acquirer, (_) => _.loadExtension(path))
       }
     )
-    return client
   })
 
 /**

@@ -21,7 +21,7 @@ import type * as Sink from "../../Sink.ts"
 import type * as Stream from "../../Stream.ts"
 import { type ChildProcessHandle, ChildProcessSpawner } from "./ChildProcessSpawner.ts"
 
-const TypeId = "~effect/process/ChildProcess"
+const TypeId = "~effect/unstable/process/ChildProcess"
 
 /**
  * A command that can be built using `make`, combined using `pipeTo`, and executed using `exec` or `spawn`.
@@ -247,12 +247,8 @@ export interface KillOptions {
   /**
    * The duration of time to wait after the child process has been terminated
    * before forcefully killing the child process by sending it the `"SIGKILL"`
-   * signal. Defaults to `undefined`, so `"SIGKILL"` is never sent.
-   *
-   * **Details**
-   *
-   * The spawner decides whether to terminate descendants and how long to wait.
-   * See its platform module documentation, such as `NodeChildProcessSpawner`.
+   * signal. Defaults to `undefined`, which means that no timeout will be
+   * enforced by default.
    */
   readonly forceKillAfter?: Duration.Input | undefined
 }
@@ -439,8 +435,6 @@ export interface CommandOptions extends KillOptions {
   /**
    * If set to `true`, prevents the child process's console or GUI window from
    * becoming visible on Windows.
-   *
-   * **Details**
    *
    * Defaults to `true` unless `detached` is set to `true`. This option has no
    * effect on non-Windows platforms.
@@ -1022,13 +1016,8 @@ const splitByWhitespaces = (template: string, rawTemplate: string): {
         rawIndex += 1
       } else if (nextRawCharacter === "u" && rawTemplate[rawIndex + 2] === "{") {
         // Handle variable-length unicode escape sequences (i.e. `\u{1F600}`) by:
-        // - Advancing the template index an extra code unit for astral code points
         // - Advancing the raw template index past the unicode escape sequence
-        const end = rawTemplate.indexOf("}", rawIndex + 3)
-        if (parseInt(rawTemplate.slice(rawIndex + 3, end), 16) > 0xffff) {
-          templateIndex += 1
-        }
-        rawIndex = end
+        rawIndex = rawTemplate.indexOf("}", rawIndex + 3)
       } else {
         // Advance raw template index past fixed-length escape sequences:
         // - \n    → 2 chars (backslash + n)

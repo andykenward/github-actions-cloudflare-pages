@@ -33,7 +33,18 @@ import type * as Response from "./Response.ts"
 import type * as Tool from "./Tool.ts"
 
 /**
- * Service key for stateful AI conversations.
+ * Service tag for stateful AI conversation sessions.
+ *
+ * **When to use**
+ *
+ * Use to access or provide conversational AI sessions through the Effect
+ * context.
+ *
+ * **Details**
+ *
+ * This tag provides access to chat functionality throughout your application,
+ * enabling persistent conversational AI interactions with full context
+ * management.
  *
  * **Example** (Accessing the Chat service)
  *
@@ -71,35 +82,26 @@ import type * as Tool from "./Tool.ts"
  * @category services
  * @since 4.0.0
  */
-export const Chat: Context.Service<Chat, Chat> = Context.Service("effect/ai/Chat")
+export class Chat extends Context.Service<Chat, Service>()(
+  "effect/ai/Chat"
+) {}
 
 /**
- * Brand type for `Chat`.
+ * Represents the interface that the `Chat` service provides.
  *
- * @category type IDs
- * @since 4.0.0
- */
-export type TypeId = "~effect/ai/Chat"
-
-/**
- * Brand for `Chat` implementations.
+ * **When to use**
  *
- * @category type IDs
- * @since 4.0.0
- */
-export const TypeId: TypeId = "~effect/ai/Chat"
-
-/**
- * Chat session with history, export, and generation operations.
+ * Use as the service contract for code that receives or constructs a stateful
+ * chat session and needs history, export, text generation, streaming, and
+ * structured-output operations.
  *
+ * @see {@link Chat} for the context tag that provides this service
  * @see {@link Persisted} for the persistence-backed extension
  *
  * @category models
  * @since 4.0.0
  */
-export interface Chat {
-  readonly [TypeId]: TypeId
-
+export interface Service {
   /**
    * Reference to the chat history.
    *
@@ -238,7 +240,7 @@ export interface Chat {
         readonly toolkit: LanguageModel.ToolkitInput<Tools>
       }
     ): Effect.Effect<
-      LanguageModel.GenerateTextResponse<Tools, LanguageModel.ExtractToolParametersMode<Options>>,
+      LanguageModel.GenerateTextResponse<Tools, LanguageModel.ExtractEncodedToolParameters<Options>>,
       LanguageModel.ExtractError<Options>,
       LanguageModel.LanguageModel | LanguageModel.ExtractServices<Options>
     >
@@ -253,7 +255,7 @@ export interface Chat {
     ): Effect.Effect<
       LanguageModel.GenerateTextResponse<
         LanguageModel.ExtractTools<Options>,
-        LanguageModel.ExtractToolParametersMode<Options>
+        LanguageModel.ExtractEncodedToolParameters<Options>
       >,
       LanguageModel.ExtractError<Options>,
       LanguageModel.LanguageModel | LanguageModel.ExtractServices<Options>
@@ -320,7 +322,7 @@ export interface Chat {
         readonly toolkit: LanguageModel.ToolkitInput<Tools>
       }
     ): Stream.Stream<
-      Response.StreamPart<Tools, LanguageModel.ExtractToolParametersMode<Options>>,
+      Response.StreamPart<Tools, LanguageModel.ExtractEncodedToolParameters<Options>>,
       LanguageModel.ExtractError<Options>,
       LanguageModel.LanguageModel | LanguageModel.ExtractServices<Options>
     >
@@ -335,7 +337,7 @@ export interface Chat {
     ): Stream.Stream<
       Response.StreamPart<
         LanguageModel.ExtractTools<Options>,
-        LanguageModel.ExtractToolParametersMode<Options>
+        LanguageModel.ExtractEncodedToolParameters<Options>
       >,
       LanguageModel.ExtractError<Options>,
       LanguageModel.LanguageModel | LanguageModel.ExtractServices<Options>
@@ -397,7 +399,7 @@ export interface Chat {
     LanguageModel.GenerateObjectResponse<
       LanguageModel.ExtractTools<Options>,
       ObjectSchema["Type"],
-      LanguageModel.ExtractToolParametersMode<Options>
+      LanguageModel.ExtractEncodedToolParameters<Options>
     >,
     LanguageModel.ExtractError<Options>,
     LanguageModel.ExtractServices<Options> | ObjectSchema["DecodingServices"] | LanguageModel.LanguageModel
@@ -417,7 +419,6 @@ const makeUnsafe = (history: Ref.Ref<Prompt.Prompt>) => {
   const semaphore = Semaphore.makeUnsafe(1)
 
   return Chat.of({
-    [TypeId]: TypeId,
     history,
     export: Ref.get(history).pipe(
       Effect.flatMap(encodeHistory),
@@ -454,7 +455,7 @@ const makeUnsafe = (history: Ref.Ref<Prompt.Prompt>) => {
       },
       semaphore.withPermits(1),
       (effect) => Effect.withSpan(effect, "Chat.generateText", { captureStackTrace: false })
-    ) as Chat["generateText"],
+    ) as Service["generateText"],
     streamText: Effect.fnUntraced(
       function*(options) {
         let parts = Chunk.empty<Response.AnyPart>()
@@ -486,7 +487,7 @@ const makeUnsafe = (history: Ref.Ref<Prompt.Prompt>) => {
         )
       },
       Stream.unwrap
-    ) as Chat["streamText"],
+    ) as Service["streamText"],
     generateObject: Effect.fnUntraced(
       function*(options) {
         const newPrompt = Prompt.make(options.prompt)
@@ -538,7 +539,7 @@ const makeUnsafe = (history: Ref.Ref<Prompt.Prompt>) => {
  * @category constructors
  * @since 4.0.0
  */
-export const empty: Effect.Effect<Chat> = Effect.sync(() => makeUnsafe(Ref.makeUnsafe(Prompt.empty)))
+export const empty: Effect.Effect<Service> = Effect.sync(() => makeUnsafe(Ref.makeUnsafe(Prompt.empty)))
 
 /**
  * Creates a new Chat service from an initial prompt.
@@ -654,7 +655,7 @@ export const fromPrompt = (prompt: Prompt.RawInput) =>
  * @since 4.0.0
  */
 export const fromExport = (data: unknown): Effect.Effect<
-  Chat,
+  Service,
   Schema.SchemaError
 > => Effect.flatMap(decodeHistory(data), fromPrompt)
 
@@ -688,7 +689,7 @@ export const fromExport = (data: unknown): Effect.Effect<
  * @since 4.0.0
  */
 export const fromJson = (data: string): Effect.Effect<
-  Chat,
+  Service,
   Schema.SchemaError
 > => Effect.flatMap(decodeHistoryJson(data), fromPrompt)
 
@@ -778,7 +779,7 @@ export declare namespace Persistence {
  * @category models
  * @since 4.0.0
  */
-export interface Persisted extends Chat {
+export interface Persisted extends Service {
   /**
    * The identifier for the chat in the backing persistence store.
    */
@@ -815,7 +816,7 @@ export const makePersisted = Effect.fnUntraced(function*(options: {
   const store = yield* persistence.make(options.storeId)
 
   const toPersisted = Effect.fnUntraced(
-    function*(chatId: string, chat: Chat, ttl: Duration.Input | undefined) {
+    function*(chatId: string, chat: Service, ttl: Duration.Input | undefined) {
       const idGenerator = yield* Effect.serviceOption(IdGenerator.IdGenerator).pipe(
         Effect.map(Option.getOrElse(() => IdGenerator.defaultIdGenerator))
       )
@@ -864,7 +865,7 @@ export const makePersisted = Effect.fnUntraced(function*(options: {
           return yield* chat.generateText(options).pipe(
             Effect.ensuring(Effect.orDie(saveChat(history)))
           )
-        }) as Chat["generateText"],
+        }) as Service["generateText"],
         generateObject: Effect.fnUntraced(function*(options) {
           const history = yield* Ref.get(chat.history)
           return yield* chat.generateObject(options).pipe(
@@ -877,7 +878,7 @@ export const makePersisted = Effect.fnUntraced(function*(options: {
             Stream.ensuring(Effect.orDie(saveChat(history)))
           )
           return stream
-        }, Stream.unwrap) as Chat["streamText"]
+        }, Stream.unwrap) as Service["streamText"]
       }
 
       return persisted

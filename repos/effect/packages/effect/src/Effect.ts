@@ -40,7 +40,7 @@ import { CurrentLogAnnotations, CurrentLogSpans } from "./References.ts"
 import type * as Request from "./Request.ts"
 import type { RequestResolver } from "./RequestResolver.ts"
 import type * as Result from "./Result.ts"
-import type { Metadata as ScheduleMetadata, Schedule } from "./Schedule.ts"
+import type { Schedule } from "./Schedule.ts"
 import type { Scheduler } from "./Scheduler.ts"
 import type { Scope } from "./Scope.ts"
 import type {
@@ -331,8 +331,13 @@ export declare namespace All {
           ] ? Mode extends true ? Result.Result<_A, _E> : _A
             : never
         },
-      Mode extends true ? never : Error<ObjectValues<T>>,
-      Services<ObjectValues<T>>
+      Mode extends true ? never
+        : keyof T extends never ? never
+        : T[keyof T] extends Effect<infer _A, infer _E, infer _R> ? _E
+        : never,
+      keyof T extends never ? never
+        : T[keyof T] extends Effect<infer _A, infer _E, infer _R> ? _R
+        : never
     >
     : never
 
@@ -372,8 +377,6 @@ export declare namespace All {
     : [Arg] extends [Iterable<EffectAny>] ? ReturnIterable<Arg, IsDiscard<O>, IsResult<O>>
     : [Arg] extends [Record<string, EffectAny>] ? ReturnObject<Arg, IsDiscard<O>, IsResult<O>>
     : never
-
-  type ObjectValues<T> = T extends unknown ? T[keyof T] : never
 }
 
 /**
@@ -963,12 +966,11 @@ export const promise: <A>(
  * @category constructors
  * @since 2.0.0
  */
-export const tryPromise: {
-  <A>(options: (signal: AbortSignal) => PromiseLike<A>): Effect<A, Cause.UnknownError>
-  <A, E>(
-    options: { readonly try: (signal: AbortSignal) => PromiseLike<A>; readonly catch: (error: unknown) => E }
-  ): Effect<A, E>
-} = internal.tryPromise
+export const tryPromise: <A, E = Cause.UnknownError>(
+  options:
+    | { readonly try: (signal: AbortSignal) => PromiseLike<A>; readonly catch: (error: unknown) => E }
+    | ((signal: AbortSignal) => PromiseLike<A>)
+) => Effect<A, E> = internal.tryPromise
 
 /**
  * Creates an `Effect` that always succeeds with a given value.
@@ -1633,13 +1635,12 @@ export const failCauseSync: <E>(
  */
 export const die: (defect: unknown) => Effect<never> = internal.die
 
-const try_: {
-  <A>(options: LazyArg<A>): Effect<A, Cause.UnknownError>
-  <A, E>(options: {
+const try_: <A, E = Cause.UnknownError>(
+  options: {
     readonly try: LazyArg<A>
     readonly catch: (error: unknown) => E
-  }): Effect<A, E>
-} = internal.try
+  } | LazyArg<A>
+) => Effect<A, E> = internal.try
 
 export {
   /**
@@ -1775,26 +1776,6 @@ export const yieldNowWith: (priority?: number) => Effect<void> = internal.yieldN
 export const withFiber: <A, E = never, R = never>(
   evaluate: (fiber: Fiber<unknown, unknown>) => Effect<A, E, R>
 ) => Effect<A, E, R> = core.withFiber
-
-/**
- * Accesses the current fiber to compute a successful value.
- *
- * **Example** (Computing a value from the current fiber)
- *
- * ```ts import.meta.vitest
- * import { Effect } from "effect"
- *
- * const program = Effect.withFiberSucceed((fiber) => typeof fiber.id)
- *
- * Effect.runSync(program) // => "number"
- * ```
- *
- * @category constructors
- * @since 4.0.0
- */
-export const withFiberSucceed: <A, R = never>(
-  evaluate: (fiber: Fiber<unknown, unknown>) => A
-) => Effect<A, never, R> = core.withFiberSucceed
 
 // -----------------------------------------------------------------------------
 // Conversions
@@ -3941,7 +3922,7 @@ export const tapCauseFilter: {
  * @since 2.0.0
  */
 export const tapDefect: {
-  <B, E2, R2>(f: (defect: unknown) => Effect<B, E2, R2>): <A, E, R>(self: Effect<A, E, R>) => Effect<A, E | E2, R | R2>
+  <E, B, E2, R2>(f: (defect: unknown) => Effect<B, E2, R2>): <A, R>(self: Effect<A, E, R>) => Effect<A, E | E2, R | R2>
   <A, E, R, B, E2, R2>(self: Effect<A, E, R>, f: (defect: unknown) => Effect<B, E2, R2>): Effect<A, E | E2, R | R2>
 } = internal.tapDefect
 
@@ -4418,8 +4399,8 @@ export const withErrorReporting: <
 >(
   effectOrOptions: Arg,
   options?: { readonly defectsOnly?: boolean | undefined } | undefined
-) => [Arg] extends [Effect<infer A, infer E, infer R>] ? Effect<A, E, R>
-  : <A, E, R>(self: Effect<A, E, R>) => Effect<A, E, R> = internal.withErrorReporting
+) => [Arg] extends [Effect<infer _A, infer _E, infer _R>] ? Arg : <A, E, R>(self: Effect<A, E, R>) => Effect<A, E, R> =
+  internal.withErrorReporting
 
 // -----------------------------------------------------------------------------
 // Fallback
@@ -4608,8 +4589,21 @@ export const timeoutOption: {
 } = internal.timeoutOption
 
 /**
- * Applies a timeout to an effect, lazily evaluating `orElse` after interrupting
- * the source if the timeout is reached.
+ * Applies a timeout to an effect, with a fallback effect executed if the timeout is reached.
+ *
+ * **When to use**
+ *
+ * Use when a timeout of an `Effect` should switch to a fallback effect.
+ *
+ * **Details**
+ *
+ * The fallback effect is created lazily by `orElse` and may introduce its own
+ * success, failure, and requirement types.
+ *
+ * **Gotchas**
+ *
+ * If the timeout wins, the source effect is interrupted before the fallback is
+ * run.
  *
  * **Example** (Falling back on timeout)
  *
@@ -6954,8 +6948,6 @@ export const onExitPrimitive: <A, E, R, XE = never, XR = never>(
  * Ensures that a cleanup function runs whether this effect succeeds, fails, or
  * is interrupted.
  *
- * **Details**
- *
  * If both the effect and the cleanup function fail, the two causes are merged.
  *
  * **Example** (Observing every exit)
@@ -7667,10 +7659,10 @@ export const repeat: {
  * const program = Effect.repeatOrElse(
  *   task,
  *   Schedule.recurs(3),
- *   (error, previous) =>
+ *   (error, attempts) =>
  *     Effect.sync(() => { output.push(
  *       `Final failure: ${error}, after ${
- *         Option.isSome(previous) ? previous.value.attempt : 0
+ *         Option.getOrElse(attempts, () => 0)
  *       } attempts`
  *     ) }).pipe(Effect.map(() => 0))
  * )
@@ -7685,12 +7677,12 @@ export const repeat: {
 export const repeatOrElse: {
   <R2, A, B, E, E2, E3, R3>(
     schedule: Schedule<B, A, E2, R2>,
-    orElse: (error: E | E2, option: Option<ScheduleMetadata<B, A>>) => Effect<B, E3, R3>
+    orElse: (error: E | E2, option: Option<B>) => Effect<B, E3, R3>
   ): <R>(self: Effect<A, E, R>) => Effect<B, E3, R | R2 | R3>
   <A, E, R, R2, B, E2, E3, R3>(
     self: Effect<A, E, R>,
     schedule: Schedule<B, A, E2, R2>,
-    orElse: (error: E | E2, option: Option<ScheduleMetadata<B, A>>) => Effect<B, E3, R3>
+    orElse: (error: E | E2, option: Option<B>) => Effect<B, E3, R3>
   ): Effect<B, E3, R | R2 | R3>
 } = internalSchedule.repeatOrElse
 
@@ -14084,10 +14076,14 @@ export const withLogSpan = dual<
 // -----------------------------------------------------------------------------
 
 /**
- * Updates a metric after each effect execution, optionally mapping its `Exit` to
- * the metric's input.
+ * Updates the `Metric` every time the `Effect` is executed.
  *
- * **Example** (Counting executions)
+ * **Details**
+ *
+ * Also accepts an optional function which can be used to map the `Exit` value
+ * of the `Effect` into a valid `Input` for the `Metric`.
+ *
+ * **Example** (Incrementing a metric for each execution)
  *
  * ```ts import.meta.vitest
  * import { Effect, Metric } from "effect"
@@ -14104,11 +14100,12 @@ export const withLogSpan = dual<
  * Effect.runSync(Metric.value(counter)).count // => 1
  * ```
  *
- * **Example** (Mapping exits)
+ * **Example** (Mapping exits before updating a metric)
  *
  * ```ts import.meta.vitest
  * import { Effect, Exit, Metric } from "effect"
  *
+ * // Track different exit types with custom mapping
  * const exitTracker = Metric.frequency("exit_types", {
  *   description: "Tracks success/failure/defect counts"
  * })
@@ -14133,7 +14130,7 @@ export const track: {
   <Input, State, E, A>(
     metric: Metric.Metric<Input, State>,
     f: (exit: Exit.Exit<A, E>) => Input
-  ): <E2 extends E, R>(self: Effect<A, E2, R>) => Effect<A, E2, R>
+  ): <E, R>(self: Effect<A, E, R>) => Effect<A, E, R>
   <State, E, A>(
     metric: Metric.Metric<Exit.Exit<NoInfer<A>, NoInfer<E>>, State>
   ): <R>(self: Effect<A, E, R>) => Effect<A, E, R>
@@ -14940,9 +14937,6 @@ export declare namespace Effectify {
     : never
 }
 
-type EffectifyArgs<F extends (...args: Array<any>) => any> = Parameters<F> extends [...infer Args, any] ? Args
-  : Parameters<F>
-
 /**
  * Converts an error-first callback API into a function that returns an
  * `Effect`.
@@ -14999,12 +14993,12 @@ export const effectify: {
   <F extends (...args: Array<any>) => any>(fn: F): Effectify.Effectify<F, Effectify.EffectifyError<F>>
   <F extends (...args: Array<any>) => any, E>(
     fn: F,
-    onError: (error: Effectify.EffectifyError<F>, args: EffectifyArgs<F>) => E
+    onError: (error: Effectify.EffectifyError<F>, args: Parameters<F>) => E
   ): Effectify.Effectify<F, E>
   <F extends (...args: Array<any>) => any, E, E2>(
     fn: F,
-    onError: (error: Effectify.EffectifyError<F>, args: EffectifyArgs<F>) => E,
-    onSyncError: (error: unknown, args: EffectifyArgs<F>) => E2
+    onError: (error: Effectify.EffectifyError<F>, args: Parameters<F>) => E,
+    onSyncError: (error: unknown, args: Parameters<F>) => E2
   ): Effectify.Effectify<F, E | E2>
 } =
   (<A>(fn: Function, onError?: (e: any, args: any) => any, onSyncError?: (e: any, args: any) => any) =>

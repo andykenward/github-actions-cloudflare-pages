@@ -368,7 +368,6 @@ export function alwaysEqual<A>(): Order<A> {
  *
  * Applies orders in iteration order and short-circuits on the first non-zero
  * result. It returns `0` only if all orders return `0`.
- * The collection is materialized when the order is created, so it must be finite.
  *
  * **Example** (Combining multiple Orders)
  *
@@ -398,10 +397,9 @@ export function alwaysEqual<A>(): Order<A> {
  * @since 2.0.0
  */
 export function combineAll<A>(collection: Iterable<Order<A>>): Order<A> {
-  const orders = Array.from(collection)
   return make((a1, a2) => {
     let out: Ordering = 0
-    for (const O of orders) {
+    for (const O of collection) {
       out = O(a1, a2)
       if (out !== 0) {
         return out

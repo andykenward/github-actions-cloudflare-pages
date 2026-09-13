@@ -47,16 +47,10 @@ export const runMain: {
       readonly teardown?: Teardown | undefined
     }
   ): void
-} = makeRunMain(({ fiber, teardown }) => {
-  function onPageHide(event: PageTransitionEvent) {
+} = makeRunMain(({ fiber }) => {
+  globalThis.addEventListener("pagehide", (event) => {
     if (!event.persisted) {
       fiber.interruptUnsafe(fiber.id)
     }
-  }
-
-  globalThis.addEventListener("pagehide", onPageHide)
-  fiber.addObserver((exit) => {
-    globalThis.removeEventListener("pagehide", onPageHide)
-    teardown(exit, () => {})
   })
 })

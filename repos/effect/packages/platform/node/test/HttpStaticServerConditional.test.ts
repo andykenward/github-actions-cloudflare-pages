@@ -1,5 +1,4 @@
 import { assert, describe, it } from "@effect/vitest"
-import * as ByteSize from "effect/ByteSize"
 import * as Effect from "effect/Effect"
 import * as FileSystem from "effect/FileSystem"
 import * as Layer from "effect/Layer"
@@ -51,7 +50,7 @@ const fileInfo: FileSystem.File.Info = {
   uid: Option.none(),
   gid: Option.none(),
   rdev: Option.none(),
-  size: ByteSize.bytes(fileBody.length),
+  size: FileSystem.Size(fileBody.length),
   blksize: Option.none(),
   blocks: Option.none()
 }

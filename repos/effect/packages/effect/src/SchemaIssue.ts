@@ -148,16 +148,7 @@ export type Issue =
   | Composite
   | AnyOf
 
-interface IssueNode {
-  readonly [TypeId]: typeof TypeId
-  /**
-   * The input reported by the schema parser, when input reporting is enabled
-   * and the issue is associated with a present value.
-   */
-  readonly input?: unknown
-}
-
-class IssueNodeImpl implements IssueNode {
+class Base {
   readonly [TypeId] = TypeId
   /**
    * The input reported by the schema parser, when input reporting is enabled
@@ -211,43 +202,7 @@ class IssueNodeImpl implements IssueNode {
  * @category models
  * @since 4.0.0
  */
-export interface Filter extends IssueNode {
-  readonly _tag: "Filter"
-  /**
-   * The filter that failed.
-   */
-  readonly filter: SchemaAST.Filter<unknown>
-  /**
-   * The issue that occurred.
-   */
-  readonly issue: Issue
-}
-
-/**
- * Constructs a schema issue for a failed refinement check.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const Filter: new(
-  /**
-   * The filter that failed.
-   */
-  filter: SchemaAST.Filter<any>,
-  /**
-   * The issue that occurred.
-   */
-  issue: Issue,
-  /**
-   * The present input associated with the issue. It is retained only when
-   * `options.reportInput` is `true`.
-   */
-  input?: unknown,
-  /**
-   * The effective parse options controlling input retention.
-   */
-  options?: SchemaAST.ParseOptions
-) => Filter = class extends IssueNodeImpl {
+export class Filter extends Base {
   readonly _tag = "Filter"
   /**
    * The filter that failed.
@@ -302,30 +257,7 @@ export const Filter: new(
  * @category models
  * @since 4.0.0
  */
-export interface Encoding extends IssueNode {
-  readonly _tag: "Encoding"
-  /**
-   * The schema that caused the issue.
-   */
-  readonly ast: SchemaAST.AST
-  /**
-   * The issue that occurred.
-   */
-  readonly issue: Issue
-}
-
-/**
- * Constructs a schema issue for a failed transformation.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const Encoding: new(
-  ast: SchemaAST.AST,
-  issue: Issue,
-  input?: unknown,
-  options?: SchemaAST.ParseOptions
-) => Encoding = class extends IssueNodeImpl {
+export class Encoding extends Base {
   readonly _tag = "Encoding"
   /**
    * The schema that caused the issue.
@@ -379,27 +311,9 @@ export const Encoding: new(
  * @see {@link Composite} — groups multiple issues under one schema node
  *
  * @category models
- * @since 4.0.0
+ * @since 3.10.0
  */
-export interface Pointer extends IssueNode {
-  readonly _tag: "Pointer"
-  /**
-   * The path to the location in the input that caused the issue.
-   */
-  readonly path: ReadonlyArray<PropertyKey>
-  /**
-   * The issue that occurred.
-   */
-  readonly issue: Issue
-}
-
-/**
- * Constructs a schema issue that points to a nested location.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const Pointer: new(path: ReadonlyArray<PropertyKey>, issue: Issue) => Pointer = class extends IssueNodeImpl {
+export class Pointer extends Base {
   readonly _tag = "Pointer"
   /**
    * The path to the location in the input that caused the issue.
@@ -443,23 +357,7 @@ export const Pointer: new(path: ReadonlyArray<PropertyKey>, issue: Issue) => Poi
  * @category models
  * @since 4.0.0
  */
-export interface MissingKey extends IssueNode {
-  readonly _tag: "MissingKey"
-  /**
-   * The metadata for the issue.
-   */
-  readonly annotations: Schema.Annotations.Key<unknown> | undefined
-}
-
-/**
- * Constructs a schema issue for a missing key or tuple index.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const MissingKey: new(annotations: Schema.Annotations.Key<unknown> | undefined) => MissingKey = class
-  extends IssueNodeImpl
-{
+export class MissingKey extends Base {
   readonly _tag = "MissingKey"
   /**
    * The metadata for the issue.
@@ -499,25 +397,7 @@ export const MissingKey: new(annotations: Schema.Annotations.Key<unknown> | unde
  * @category models
  * @since 4.0.0
  */
-export interface UnexpectedKey extends IssueNode {
-  readonly _tag: "UnexpectedKey"
-  /**
-   * The schema that caused the issue.
-   */
-  readonly ast: SchemaAST.AST
-}
-
-/**
- * Constructs a schema issue for an unexpected key or tuple index.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const UnexpectedKey: new(
-  ast: SchemaAST.AST,
-  input?: unknown,
-  options?: SchemaAST.ParseOptions
-) => UnexpectedKey = class extends IssueNodeImpl {
+export class UnexpectedKey extends Base {
   readonly _tag = "UnexpectedKey"
   /**
    * The schema that caused the issue.
@@ -560,32 +440,9 @@ export const UnexpectedKey: new(
  * @see {@link Pointer} — adds path context to individual issues
  *
  * @category models
- * @since 4.0.0
+ * @since 3.10.0
  */
-export interface Composite extends IssueNode {
-  readonly _tag: "Composite"
-  /**
-   * The schema that caused the issue.
-   */
-  readonly ast: SchemaAST.AST
-  /**
-   * The issues that occurred.
-   */
-  readonly issues: readonly [Issue, ...Array<Issue>]
-}
-
-/**
- * Constructs a schema issue that groups multiple child issues.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const Composite: new(
-  ast: SchemaAST.AST,
-  issues: readonly [Issue, ...Array<Issue>],
-  input?: unknown,
-  options?: SchemaAST.ParseOptions
-) => Composite = class extends IssueNodeImpl {
+export class Composite extends Base {
   readonly _tag = "Composite"
   /**
    * The schema that caused the issue.
@@ -651,25 +508,7 @@ export const Composite: new(
  * @category models
  * @since 4.0.0
  */
-export interface InvalidType extends IssueNode {
-  readonly _tag: "InvalidType"
-  /**
-   * The schema that caused the issue.
-   */
-  readonly ast: SchemaAST.AST
-}
-
-/**
- * Constructs a schema issue for an input with an invalid runtime type.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const InvalidType: new(
-  ast: SchemaAST.AST,
-  input?: unknown,
-  options?: SchemaAST.ParseOptions
-) => InvalidType = class extends IssueNodeImpl {
+export class InvalidType extends Base {
   readonly _tag = "InvalidType"
   /**
    * The schema that caused the issue.
@@ -730,25 +569,7 @@ export const InvalidType: new(
  * @category models
  * @since 4.0.0
  */
-export interface InvalidValue extends IssueNode {
-  readonly _tag: "InvalidValue"
-  /**
-   * The metadata for the issue.
-   */
-  readonly annotations: Schema.Annotations.Issue | undefined
-}
-
-/**
- * Constructs a schema issue for a value that violates a constraint.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const InvalidValue: new(
-  annotations?: Schema.Annotations.Issue | undefined,
-  input?: unknown,
-  options?: SchemaAST.ParseOptions
-) => InvalidValue = class extends IssueNodeImpl {
+export class InvalidValue extends Base {
   readonly _tag = "InvalidValue"
   /**
    * The metadata for the issue.
@@ -820,27 +641,9 @@ export function makeCompositeAtKey(
  * @see {@link InvalidValue} — for value-constraint failures (not operation failures)
  *
  * @category models
- * @since 4.0.0
+ * @since 3.10.0
  */
-export interface Forbidden extends IssueNode {
-  readonly _tag: "Forbidden"
-  /**
-   * The metadata for the issue.
-   */
-  readonly annotations: Schema.Annotations.Issue | undefined
-}
-
-/**
- * Constructs a schema issue for a forbidden parsing operation.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const Forbidden: new(
-  annotations: Schema.Annotations.Issue | undefined,
-  input?: unknown,
-  options?: SchemaAST.ParseOptions
-) => Forbidden = class extends IssueNodeImpl {
+export class Forbidden extends Base {
   readonly _tag = "Forbidden"
   /**
    * The metadata for the issue.
@@ -892,30 +695,7 @@ export const Forbidden: new(
  * @category models
  * @since 4.0.0
  */
-export interface AnyOf extends IssueNode {
-  readonly _tag: "AnyOf"
-  /**
-   * The schema that caused the issue.
-   */
-  readonly ast: SchemaAST.Union
-  /**
-   * The issues that occurred.
-   */
-  readonly issues: ReadonlyArray<Issue>
-}
-
-/**
- * Constructs a schema issue for a value that matches no union member.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const AnyOf: new(
-  ast: SchemaAST.Union,
-  issues: ReadonlyArray<Issue>,
-  input?: unknown,
-  options?: SchemaAST.ParseOptions
-) => AnyOf = class extends IssueNodeImpl {
+export class AnyOf extends Base {
   readonly _tag = "AnyOf"
   /**
    * The schema that caused the issue.
@@ -974,30 +754,7 @@ export const AnyOf: new(
  * @category models
  * @since 4.0.0
  */
-export interface OneOf extends IssueNode {
-  readonly _tag: "OneOf"
-  /**
-   * The schema that caused the issue.
-   */
-  readonly ast: SchemaAST.Union
-  /**
-   * The schemas that were successful.
-   */
-  readonly successes: ReadonlyArray<SchemaAST.AST>
-}
-
-/**
- * Constructs a schema issue for a value that matches multiple union members.
- *
- * @category constructors
- * @since 4.0.0
- */
-export const OneOf: new(
-  ast: SchemaAST.Union,
-  successes: ReadonlyArray<SchemaAST.AST>,
-  input?: unknown,
-  options?: SchemaAST.ParseOptions
-) => OneOf = class extends IssueNodeImpl {
+export class OneOf extends Base {
   readonly _tag = "OneOf"
   /**
    * The schema that caused the issue.
@@ -1193,7 +950,6 @@ export const defaultLeafHook: LeafHook = (issue): string => {
  *
  * - Returns `string` to override the message, or `undefined` to fall back to
  *   the default formatting.
- *
  * @see {@link defaultCheckHook} — the built-in implementation
  * @see {@link Filter} — the issue type this hook formats
  *
