@@ -33,4 +33,4 @@ paths:
 
 - Groups bump coupled packages together (`effect` + `@effect/vitest`; `vitest` + `@vitest/coverage-v8`; `@effect/tsgo` + `oxlint` + `oxlint-tsgolint`).
 - `undici` majors are ignored on purpose — see the tooling rule.
-- `exclude-paths: ['repos/**']` stops version updates for the vendored source. It doesn't affect alerts: the dependency graph still reads `repos/effect/pnpm-lock.yaml`.
+- `exclude-paths: ['repos/**']` stops version updates for the vendored source. It doesn't affect alerts (the dependency graph still reads `repos/effect/pnpm-lock.yaml`) nor the security-update PRs they raise; the separate `/repos/*` npm entry with `ignore: dependency-name: '*'` stops those, because `ignore` applies to security updates and `exclude-paths` doesn't (options reference, 2026-09-13). The alerts themselves still show under Security.
