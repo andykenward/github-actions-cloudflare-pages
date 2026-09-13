@@ -149,9 +149,6 @@ importers:
       '@octokit/openapi-webhooks':
         specifier: 12.1.0
         version: 12.1.0
-      '@octokit/openapi-webhooks-types':
-        specifier: 12.1.0
-        version: 12.1.0
       '@total-typescript/ts-reset':
         specifier: 0.6.1
         version: 0.6.1
@@ -1328,9 +1325,6 @@ packages:
 
   '@octokit/openapi-types@29.0.1':
     resolution: {integrity: sha512-9qWOMFNxxLokERcms42rU0PTLqQmVs7g5E41TI4mCOxmpFayD1rfC7XxOL55cG9MBZLFlC31BrR37myMKardwg==}
-
-  '@octokit/openapi-webhooks-types@12.1.0':
-    resolution: {integrity: sha512-WiuzhOsiOvb7W3Pvmhf8d2C6qaLHXrWiLBP4nJ/4kydu+wpagV5Fkz9RfQwV2afYzv3PB+3xYgp4mAdNGjDprA==}
 
   '@octokit/openapi-webhooks@12.1.0':
     resolution: {integrity: sha512-Z5eDsLCUNbx1zHpZb1LNQirADqdMTvWJQ/deahi0ws+tWWnwHXB+Pr4jfmM9OrETS9Y5iW8ZRu1fdbudObhLrg==}
@@ -4732,8 +4726,6 @@ snapshots:
   '@octokit/openapi-types@28.0.0': {}
 
   '@octokit/openapi-types@29.0.1': {}
-
-  '@octokit/openapi-webhooks-types@12.1.0': {}
 
   '@octokit/openapi-webhooks@12.1.0': {}
 

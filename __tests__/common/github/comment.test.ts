@@ -5,7 +5,6 @@ import * as Layer from 'effect/Layer'
 import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
-import type {WorkflowEventExtract} from '@/common/github/workflow-event/types.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
 import {GitHubApi} from '@/common/github/api/client.js'
@@ -225,7 +224,7 @@ describe('addComment', () => {
                   ]
                 }
               }
-            } as Readonly<WorkflowEventExtract<'workflow_run'>>,
+            },
             sha: '3484a3fb816e0859fd6e1cea078d76385ff50625'
           })
         )
@@ -255,7 +254,7 @@ describe('addComment', () => {
                     pull_requests: []
                   }
                 }
-              } as unknown as Readonly<WorkflowEventExtract<'workflow_run'>>
+              }
             })
           )
         )
@@ -299,7 +298,7 @@ describe('addComment', () => {
                     ]
                   }
                 }
-              } as unknown as Readonly<WorkflowEventExtract<'workflow_run'>>
+              }
             })
           )
         )
@@ -362,7 +361,7 @@ describe('addComment', () => {
             event: {
               eventName: 'workflow_dispatch',
               payload: {}
-            } as Readonly<WorkflowEventExtract<'workflow_dispatch'>>,
+            },
             ref: 'refs/heads/feature-branch'
           })
         )
@@ -444,7 +443,7 @@ describe('addComment', () => {
       event: {
         eventName: 'workflow_dispatch',
         payload: {}
-      } as Readonly<WorkflowEventExtract<'workflow_dispatch'>>,
+      },
       branch: 'feature-branch',
       ref: 'refs/heads/feature-branch'
     })
@@ -553,7 +552,7 @@ describe('addComment', () => {
             event: {
               eventName,
               payload: {}
-            } as Readonly<WorkflowEventExtract<typeof eventName>>
+            }
           })
         )
       )

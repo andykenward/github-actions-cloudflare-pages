@@ -124,13 +124,7 @@ export const pullRequestToComment = Effect.fn('pullRequestToComment')(
           return
         }
 
-        const nodeId = payload.pull_request.node_id
-        if (!nodeId) {
-          return yield* new CommentError({
-            message: 'No pull request node id found for pull_request event'
-          })
-        }
-        return nodeId
+        return payload.pull_request.node_id
       }
       default: {
         return

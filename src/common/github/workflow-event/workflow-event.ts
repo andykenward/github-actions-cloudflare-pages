@@ -1,25 +1,25 @@
 import {existsSync, readFileSync} from 'node:fs'
 
 import {debug, isDebug} from '@actions/core'
-import * as Option from 'effect/Option'
+import * as Result from 'effect/Result'
 import * as Schema from 'effect/Schema'
 
 import {parseJson} from '@/common/json.js'
 import {EVENT_NAMES} from '@/types/github/workflow-events.js'
 
-import type {WorkflowEventExtract, WorkflowEventPayload} from './types.js'
+import {WorkflowEvent} from './types.js'
 
-const decodeEventName = Schema.decodeUnknownOption(Schema.Literals(EVENT_NAMES))
+const isEventName = Schema.is(Schema.Literals(EVENT_NAMES))
+
+const decodeEvent = Schema.decodeUnknownResult(WorkflowEvent)
 
 /**
  * Loads the file from the runner that contains the full event webhook payload.
- *
- * The payload is *not* schema-validated: its shape is the union of every
- * generated webhook type, which is far too large to restate by hand. Only the
- * JSON parse is guarded, so a truncated or malformed file reports itself rather
- * than surfacing as an opaque `SyntaxError`.
+ * Only the JSON parse is guarded here, so a truncated or malformed file
+ * reports itself rather than surfacing as an opaque `SyntaxError`; the shape
+ * is checked by `getWorkflowEvent`.
  */
-const readEventPayloadFile = (): unknown => {
+const readEventPayloadFile = (): {path: string; payload: unknown} => {
   const path = process.env.GITHUB_EVENT_PATH
 
   // The runner always writes the file. Without it every later payload read
@@ -32,38 +32,41 @@ const readEventPayloadFile = (): unknown => {
     throw new Error(`GITHUB_EVENT_PATH ${path} does not exist`)
   }
 
-  const parsed = parseJson(readFileSync(path, {encoding: 'utf8'}))
+  const payload = parseJson(readFileSync(path, {encoding: 'utf8'}))
 
-  if (parsed === undefined) {
+  if (payload === undefined) {
     throw new Error(`GITHUB_EVENT_PATH ${path} is not valid JSON`)
   }
 
-  return parsed
+  return {path, payload}
 }
 
-export const getWorkflowEvent = () => {
-  const eventName = Option.getOrUndefined(
-    decodeEventName(process.env.GITHUB_EVENT_NAME)
-  )
+/**
+ * The event that triggered the run, decoded with `WorkflowEvent`: an unknown
+ * `GITHUB_EVENT_NAME`, or a payload without a field the action reads for that
+ * event, throws naming it.
+ */
+export const getWorkflowEvent = (): WorkflowEvent => {
+  const eventName = process.env.GITHUB_EVENT_NAME
 
-  if (eventName === undefined) {
+  if (!isEventName(eventName)) {
+    throw new Error(`eventName ${eventName} is not supported`)
+  }
+
+  const {path, payload} = readEventPayloadFile()
+
+  const event = decodeEvent({eventName, payload})
+
+  if (Result.isFailure(event)) {
     throw new Error(
-      `eventName ${process.env.GITHUB_EVENT_NAME} is not supported`
+      `GITHUB_EVENT_PATH ${path} is not a ${eventName} payload: ${event.failure.message}`
     )
   }
 
-  /** Assume that the payload matches the eventName */
-  const payload = readEventPayloadFile() as WorkflowEventPayload<
-    typeof eventName
-  >
-
   if (isDebug()) {
     debug(`eventName: ${eventName}`)
-    debug(`payload: ${JSON.stringify(payload)}`)
+    debug(`payload: ${JSON.stringify(event.success.payload)}`)
   }
 
-  return {
-    eventName,
-    payload
-  } as Readonly<WorkflowEventExtract<typeof eventName>>
+  return event.success
 }
