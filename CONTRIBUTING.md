@@ -4,7 +4,7 @@ Thanks for helping out! This covers setting up the repository, what a pull reque
 
 ## Setup
 
-The quickest route is the [dev container](.devcontainer/devcontainer.json): it provides Node, pnpm and [prek], then runs `pnpm install && prek install` for you.
+The quickest route is the [dev container](.devcontainer/devcontainer.json): it provides Node, pnpm, [prek] and [act], then runs `pnpm install && prek install` for you.
 
 To set up by hand, install the Node and pnpm versions from [package.json](package.json) (`engines` and `packageManager`), then run:
 
@@ -17,17 +17,18 @@ pnpm refuses package versions published less than 7 days ago (`minimumReleaseAge
 
 ## Commands
 
-| Command                        | What it does                                                                                              |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `pnpm run all`                 | Every check: version sync, knip, codegen, type-check, format, lint, test and build                        |
-| `pnpm run test` / `test:watch` | Run the tests once / in watch mode                                                                        |
-| `pnpm run test:coverage`       | Run the tests with V8 coverage of `src/`; the HTML report lands in `.cache/coverage/`                     |
-| `pnpm run lint`                | Lint, including the Effect diagnostics                                                                    |
-| `pnpm run format`              | Format with oxfmt                                                                                         |
-| `pnpm run build`               | Bundle the actions into `dist/`                                                                           |
-| `pnpm run codegen`             | Regenerate the GraphQL types after editing a `.graphql` file                                              |
-| `pnpm run start`               | Run the built deploy action locally, with inputs from a `.env` file based on [.env.example](.env.example) |
-| `pnpm changeset`               | Describe your change for the changelog                                                                    |
+| Command                        | What it does                                                                                               |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `pnpm run all`                 | Every check: version sync, knip, codegen, type-check, format, lint, test and build                         |
+| `pnpm run test` / `test:watch` | Run the tests once / in watch mode                                                                         |
+| `pnpm run test:coverage`       | Run the tests with V8 coverage of `src/`; the HTML report lands in `.cache/coverage/`                      |
+| `pnpm run lint`                | Lint, including the Effect diagnostics                                                                     |
+| `pnpm run format`              | Format with oxfmt                                                                                          |
+| `pnpm run build`               | Bundle the actions into `dist/`                                                                            |
+| `pnpm run codegen`             | Regenerate the GraphQL types after editing a `.graphql` file                                               |
+| `pnpm run start`               | Run the built deploy action locally, with inputs from a `.env` file based on [.env.example](.env.example)  |
+| `pnpm run act:d`               | Run the delete workflow in Docker with [act], using the Cloudflare secrets from `.env` and your `gh` login |
+| `pnpm changeset`               | Describe your change for the changelog                                                                     |
 
 ## Pull requests
 
@@ -63,4 +64,5 @@ Instructions for coding agents live in [.claude/CLAUDE.md](.claude/CLAUDE.md), w
 
 [Effect]: https://effect.website/
 [prek]: https://prek.j178.dev
+[act]: https://github.com/nektos/act
 [signed commits]: https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification

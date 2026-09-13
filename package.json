@@ -18,7 +18,7 @@
   "type": "module",
   "exports": "./dist/deploy/index.js",
   "scripts": {
-    "act:d": "act -j delete --secret-file .env",
+    "act:d": "act workflow_dispatch -j deploy-delete -e .github/act/workflow_dispatch.json --secret-file .env -s GITHUB_TOKEN=\"$(gh auth token)\"",
     "all": "node bin/sync-versions.ts && pnpm run knip && pnpm run codegen && pnpm run codegen:events && pnpm run codegen:cloudflare && pnpm run tsc:check && pnpm run format && pnpm run lint && pnpm run test && pnpm run build",
     "build": "rm -rf ./dist/* && node ./esbuild.config.js",
     "changeset": "changeset",
