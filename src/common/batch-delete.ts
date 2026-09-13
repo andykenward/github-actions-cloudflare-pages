@@ -23,7 +23,7 @@ import {getPayload} from './github/deployment/payload.js'
  */
 export const PREFIX = `delete -`
 
-type BatchDeleteItem = {
+export type BatchDeleteItem = {
   deploymentId: string
   success: boolean
   environment: string
@@ -45,6 +45,52 @@ const row = (
   ...(payload && {environmentUrl: payload.url, commentId: payload.commentId}),
   ...outcome
 })
+
+/**
+ * One GraphQL request that marks the GitHub deployment inactive and deletes
+ * it — with its comment when the payload recorded one. Errors are returned,
+ * not thrown, so the caller can tell which mutation failed.
+ */
+const batchDeleteGitHubRequest = Effect.fn('batchDeleteGitHubRequest')(
+  function* (
+    deployment: GitHubDeployment,
+    {
+      url,
+      commentId,
+      cloudflare
+    }: {
+      url: string
+      commentId: string | undefined
+      cloudflare: {id: string; accountId: string; projectName: string}
+    }
+  ) {
+    const github = yield* GitHubApi
+
+    const variables = {
+      status: deploymentStatusInput({
+        deploymentId: deployment.node_id,
+        environment: deployment.environment,
+        url,
+        cloudflare,
+        state: DeploymentStatusState.Inactive
+      }),
+      deployment: {id: deployment.node_id}
+    }
+
+    if (commentId) {
+      return yield* github.request({
+        query: DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
+        variables: {...variables, comment: {id: commentId}},
+        options: {errorThrows: false}
+      })
+    }
+    return yield* github.request({
+      query: DeactivateAndDeleteGitHubDeploymentDocument,
+      variables,
+      options: {errorThrows: false}
+    })
+  }
+)
 
 /**
  * Deletes one deployment from Cloudflare and GitHub. Never fails: a failure
@@ -80,30 +126,11 @@ export const batchDelete: (
      * On success of Cloudflare deployment, mark the GitHub deployment inactive
      * and delete it (with its comment) — one request.
      */
-    const github = yield* GitHubApi
-
-    const variables = {
-      status: deploymentStatusInput({
-        deploymentId: deployment.node_id,
-        environment: deployment.environment,
-        url,
-        cloudflare,
-        state: DeploymentStatusState.Inactive
-      }),
-      deployment: {id: deployment.node_id}
-    }
-
-    const {data, errors} = commentId
-      ? yield* github.request({
-          query: DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
-          variables: {...variables, comment: {id: commentId}},
-          options: {errorThrows: false}
-        })
-      : yield* github.request({
-          query: DeactivateAndDeleteGitHubDeploymentDocument,
-          variables,
-          options: {errorThrows: false}
-        })
+    const {data, errors} = yield* batchDeleteGitHubRequest(deployment, {
+      url,
+      commentId,
+      cloudflare
+    })
 
     const warn = (what: string): void => {
       warning(`${PREFIX} ${what}: ${formatGraphqlErrors(errors ?? [])}`)

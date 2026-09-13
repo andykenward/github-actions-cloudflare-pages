@@ -4,6 +4,7 @@ import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
+import type {WorkflowEvent} from '@/common/github/workflow-event/types.js'
 
 import {getCloudflareDeploymentAlias} from '@/common/cloudflare/deployment/get.js'
 import {
@@ -53,6 +54,71 @@ const pullRequestNodeId = Effect.fn('pullRequestNodeId')(function* (
   return nodeId
 })
 
+/** The first open pull request headed by the context branch. */
+const pullRequestToCommentWorkflowDispatch = Effect.fn(
+  'pullRequestToCommentWorkflowDispatch'
+)(function* () {
+  const {repo, branch} = yield* GitHubContext
+  const github = yield* GitHubApi
+
+  const pullRequest = yield* github.request({
+    query: GetOpenPullRequestByBranchDocument,
+    variables: {
+      owner: repo.owner,
+      repo: repo.repo,
+      headRefName: branch
+    }
+  })
+
+  const nodeId = pullRequest.data?.repository?.pullRequests.nodes?.[0]?.id
+  if (!nodeId) {
+    return yield* new CommentError({
+      message: 'No pull request node id found for workflow_dispatch event'
+    })
+  }
+  return nodeId
+})
+
+type WorkflowRunPayload = Extract<
+  WorkflowEvent,
+  {eventName: 'workflow_run'}
+>['payload']
+
+/**
+ * The single pull request in the `workflow_run` payload whose head matches
+ * the run's branch and sha.
+ */
+const pullRequestToCommentWorkflowRun = Effect.fn(
+  'pullRequestToCommentWorkflowRun'
+)(function* (payload: WorkflowRunPayload) {
+  const {head_branch, head_sha} = payload.workflow_run
+  const [match, ...rest] = payload.workflow_run.pull_requests.filter(
+    pullRequest =>
+      pullRequest !== null &&
+      pullRequest.head.ref === head_branch &&
+      pullRequest.head.sha === head_sha
+  )
+
+  if (!match) {
+    return yield* new CommentError({
+      message:
+        'No pull request found in workflow_run event matching head branch and sha'
+    })
+  }
+
+  if (rest.length > 0) {
+    return yield* new CommentError({
+      message:
+        'Multiple pull requests found in workflow_run event matching head branch and sha'
+    })
+  }
+
+  return yield* pullRequestNodeId(
+    match.number,
+    'No pull request node id found for workflow_run event'
+  )
+})
+
 /**
  * The pull request to comment on — `prNumber` when the input is set, else
  * detected from the event — or `undefined` when there is none. It does not
@@ -60,8 +126,7 @@ const pullRequestNodeId = Effect.fn('pullRequestNodeId')(function* (
  */
 export const pullRequestToComment = Effect.fn('pullRequestToComment')(
   function* (prNumber: number | undefined) {
-    const {repo, branch, event} = yield* GitHubContext
-    const github = yield* GitHubApi
+    const {event} = yield* GitHubContext
 
     if (prNumber !== undefined) {
       return yield* pullRequestNodeId(
@@ -74,50 +139,10 @@ export const pullRequestToComment = Effect.fn('pullRequestToComment')(
 
     switch (eventName) {
       case 'workflow_dispatch': {
-        const pullRequest = yield* github.request({
-          query: GetOpenPullRequestByBranchDocument,
-          variables: {
-            owner: repo.owner,
-            repo: repo.repo,
-            headRefName: branch
-          }
-        })
-
-        const nodeId = pullRequest.data?.repository?.pullRequests.nodes?.[0]?.id
-        if (!nodeId) {
-          return yield* new CommentError({
-            message: 'No pull request node id found for workflow_dispatch event'
-          })
-        }
-        return nodeId
+        return yield* pullRequestToCommentWorkflowDispatch()
       }
       case 'workflow_run': {
-        const {head_branch, head_sha} = payload.workflow_run
-        const [match, ...rest] = payload.workflow_run.pull_requests.filter(
-          pullRequest =>
-            pullRequest !== null &&
-            pullRequest.head.ref === head_branch &&
-            pullRequest.head.sha === head_sha
-        )
-
-        if (!match) {
-          return yield* new CommentError({
-            message:
-              'No pull request found in workflow_run event matching head branch and sha'
-          })
-        }
-
-        if (rest.length > 0) {
-          return yield* new CommentError({
-            message:
-              'Multiple pull requests found in workflow_run event matching head branch and sha'
-          })
-        }
-
-        return yield* pullRequestNodeId(
-          match.number,
-          'No pull request node id found for workflow_run event'
-        )
+        return yield* pullRequestToCommentWorkflowRun(payload)
       }
       case 'pull_request': {
         if (payload.action === 'closed') {

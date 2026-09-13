@@ -3,6 +3,7 @@ import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 
+import type {BatchDeleteItem} from '@/common/batch-delete.js'
 import type {Summary} from '@/common/summary.js'
 
 import {batchDelete, PREFIX} from '@/common/batch-delete.js'
@@ -43,6 +44,34 @@ const writeDeleteSummary = (build: (summary: Summary) => Summary) =>
     summary => build(summary.addHeading(HEADING).addBreak()),
     DeleteError.from
   )
+
+/** The summary table of every deletion attempted, one row each. */
+const deletedSummary =
+  (rows: ReadonlyArray<BatchDeleteItem>) =>
+  (summary: Summary): Summary =>
+    summary
+      .addHeading('Deleted Deployments')
+      .addBreak()
+      .addTable([
+        headerRow(
+          'GitHub Deployment Id',
+          'Success',
+          'Environment',
+          'Environment Url',
+          'Comment Id',
+          'Error'
+        ),
+        ...rows.map(value => [
+          escapeHtml(value.deploymentId),
+          value.success ? '✅' : '❌',
+          escapeHtml(value.environment),
+          value.environmentUrl
+            ? link(value.environmentUrl, code(value.environmentUrl))
+            : '',
+          escapeHtml(value.commentId ?? ''),
+          escapeHtml(value.error ?? '')
+        ])
+      ])
 
 /**
  * Every service `run` needs, built from the action inputs and runner env.
@@ -86,31 +115,7 @@ export const run = Effect.gen(function* () {
 
   debug(`${PREFIX} Deleted deployments: ${JSON.stringify(values)}`)
 
-  yield* writeDeleteSummary(summary =>
-    summary
-      .addHeading('Deleted Deployments')
-      .addBreak()
-      .addTable([
-        headerRow(
-          'GitHub Deployment Id',
-          'Success',
-          'Environment',
-          'Environment Url',
-          'Comment Id',
-          'Error'
-        ),
-        ...values.map(value => [
-          escapeHtml(value.deploymentId),
-          value.success ? '✅' : '❌',
-          escapeHtml(value.environment),
-          value.environmentUrl
-            ? link(value.environmentUrl, code(value.environmentUrl))
-            : '',
-          escapeHtml(value.commentId ?? ''),
-          escapeHtml(value.error ?? '')
-        ])
-      ])
-  )
+  yield* writeDeleteSummary(deletedSummary(values))
 
   /**
    * `batchDelete` reports per-deployment failures as rows rather than
