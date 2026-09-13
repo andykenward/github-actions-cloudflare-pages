@@ -65,7 +65,7 @@ export const e2eSuite = <E>(
       Effect.gen(function*() {
         const client = yield* UsersClient
         const users: Array<User> = []
-        const fiber = yield* client.StreamUsers({ id: "1" }).pipe(
+        yield* client.StreamUsers({ id: "1" }).pipe(
           Stream.take(5),
           Stream.runForEach((user) =>
             Effect.sync(() => {
@@ -75,7 +75,7 @@ export const e2eSuite = <E>(
           Effect.forkChild
         )
 
-        yield* Fiber.join(fiber)
+        yield* Effect.sleep(2000)
         assert.lengthOf(users, 5)
 
         // test interrupts

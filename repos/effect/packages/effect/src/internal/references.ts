@@ -20,7 +20,6 @@ export const CurrentStackFrame = Context.Reference<StackFrame | undefined>("effe
 
 /** @internal */
 export const TracerEnabled = Context.Reference<boolean>("effect/References/TracerEnabled", {
-  fiberCached: true,
   defaultValue: constTrue
 })
 

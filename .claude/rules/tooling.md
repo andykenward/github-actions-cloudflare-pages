@@ -36,6 +36,7 @@ paths:
 - The `tsconfig.json` plugin name `@effect/language-service` isn't an installed package (`@effect/tsgo` provides it) — hence its `ignoreDependencies` entry in `knip.json`.
 - Standalone check: `pnpm exec effect-tsgo diagnostics --project tsconfig.json`.
 - `unicorn/numeric-separators-style` rejects `1_000` (groups only from five digits) and `unicorn/no-array-reverse` wants `toReversed()`.
+- `no-magic-numbers` (`enforceConst`) also flags the factors of a computed constant (`const X = 8 * 1024 * 1024`) — write the literal (`8_388_608`) and say what it is in the comment (`bin/sync-effect.ts`).
 - To see which rules an oxlint version has (name, category, type-aware), use `oxlint --rules --format=json`; plain `--rules` prints nothing when piped.
 
 ## Scripts

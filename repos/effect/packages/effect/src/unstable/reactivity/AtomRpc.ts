@@ -73,7 +73,7 @@ export interface AtomRpcClient<Self, Id extends string, Rpcs extends Rpc.Any> ex
         readonly headers?: Headers.Input | undefined
       },
       _Success["Type"],
-      _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]
+      _Error["Type"] | RpcClientError | _Middleware["error"]["Type"]
     >
     : never
 
@@ -94,19 +94,18 @@ export interface AtomRpcClient<Self, Id extends string, Rpcs extends Rpc.Any> ex
     infer _Payload,
     infer _Success,
     infer _Error,
-    infer _Middleware,
-    infer _Requires
+    infer _Middleware
   > ? [_Success] extends [RpcSchema.Stream<infer _A, infer _E>] ? Atom.Writable<
         Atom.PullResult<
           _A["Type"],
-          _E["Type"] | _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]
+          _E["Type"] | _Error["Type"] | RpcClientError | _Middleware["error"]["Type"]
         >,
         void
       >
     : Atom.Atom<
       AsyncResult.AsyncResult<
         _Success["Type"],
-        _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]
+        _Error["Type"] | RpcClientError | _Middleware["error"]["Type"]
       >
     >
     : never
@@ -276,7 +275,7 @@ export const Service = <Self>() =>
         ? Headers.fromInput(options.headers)
         : undefined,
       reactivityKeys: options?.reactivityKeys,
-      timeToLive: options?.timeToLive !== undefined
+      timeToLive: options?.timeToLive
         ? Duration.fromInputUnsafe(options.timeToLive)
         : undefined,
       serializationKey: options?.serializationKey

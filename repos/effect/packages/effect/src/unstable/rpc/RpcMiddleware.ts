@@ -292,13 +292,11 @@ export const Service = <
     readonly requiredForClient?: boolean | undefined
   }
 ) => {
+  const Err = globalThis.Error as any
   const limit = getStackTraceLimit()
-  let creationError: globalThis.Error | undefined
-  if (limit !== 0) {
-    setStackTraceLimit(2)
-    creationError = new globalThis.Error()
-    setStackTraceLimit(limit)
-  }
+  setStackTraceLimit(2)
+  const creationError = new Err()
+  setStackTraceLimit(limit)
 
   function ServiceClass() {}
   const ServiceClass_ = ServiceClass as any as Mutable<AnyService>
@@ -306,7 +304,7 @@ export const Service = <
   ServiceClass.key = id
   Object.defineProperty(ServiceClass, "stack", {
     get() {
-      return creationError?.stack
+      return creationError.stack
     }
   })
   ServiceClass_[TypeId] = TypeId

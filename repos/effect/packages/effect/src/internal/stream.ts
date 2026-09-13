@@ -12,25 +12,17 @@ const streamVariance = {
   _A: identity
 }
 
-const Stream: {
-  new<A extends Arr.NonEmptyReadonlyArray<any>, E, R>(
-    channel: Channel.Channel<A, E, void, unknown, unknown, unknown, R>
-  ): Stream<A extends Arr.NonEmptyReadonlyArray<infer A> ? A : never, E, R>
-} = function<A extends Arr.NonEmptyReadonlyArray<any>, E, R>(
-  this: any,
-  channel: Channel.Channel<A, E, void, unknown, unknown, unknown, R>
-) {
-  this.channel = channel
-} as any
-
-Stream.prototype = {
+const StreamProto = {
   [TypeId]: streamVariance,
   pipe() {
     return pipeArguments(this, arguments)
   }
 }
-
 /** @internal */
 export const fromChannel = <A extends Arr.NonEmptyReadonlyArray<any>, E, R>(
   channel: Channel.Channel<A, E, void, unknown, unknown, unknown, R>
-): Stream<A extends Arr.NonEmptyReadonlyArray<infer A> ? A : never, E, R> => new Stream(channel)
+): Stream<A extends Arr.NonEmptyReadonlyArray<infer A> ? A : never, E, R> => {
+  const self = Object.create(StreamProto)
+  self.channel = channel
+  return self
+}

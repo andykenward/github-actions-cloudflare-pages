@@ -14,9 +14,8 @@
  * @since 2.0.0
  */
 type TupleOf_<T, N extends number, R extends Array<unknown>> = `${N}` extends `-${number}` ? never
-  : `${N}` extends `${bigint}` ? R["length"] extends N ? R
-    : TupleOf_<T, N, [T, ...R]>
-  : Array<T>
+  : R["length"] extends N ? R
+  : TupleOf_<T, N, [T, ...R]>
 
 /**
  * Constructs a tuple type with exactly `N` elements of type `T`.
@@ -28,9 +27,8 @@ type TupleOf_<T, N extends number, R extends Array<unknown>> = `${N}` extends `-
  *
  * **Details**
  *
- * - If `N` is a non-negative integer literal, produces a tuple of that exact length.
+ * - If `N` is a literal number, produces a tuple of that exact length.
  * - If `N` is the general `number` type (non-literal), degrades to `Array<T>`.
- * - Positive non-integer literals degrade to `Array<T>`.
  * - Negative numbers produce `never`.
  *
  * **Example** (Checking fixed-length tuples)
@@ -496,42 +494,31 @@ export type Mutable<T> = {
   -readonly [P in keyof T]: T[P]
 }
 
-type DeepMutableIsOpaque<T> = Extract<keyof T, symbol> extends never
-  ? Extract<T[keyof T], Function> extends never ? false : true
-  : true
-
 /**
- * Recursively removes `readonly` from plain objects, arrays, tuples, `Map`,
- * and `Set` while preserving opaque objects.
+ * Recursively removes `readonly` from all properties, including nested
+ * objects, arrays, `Map`, and `Set`.
  *
  * **When to use**
  *
- * Use when you need a fully mutable version of deeply readonly structural
- * data.
+ * Use when you need a fully mutable version of a deeply readonly type.
  *
  * **Details**
  *
- * Recursion stops at primitives, functions, objects with methods, and objects
- * with symbol-keyed properties. This preserves built-in objects and Effect
- * data types while still transforming their surrounding arrays and records.
+ * Recursion stops at primitives (`string`, `number`, `boolean`, `bigint`,
+ * `symbol`) and functions.
  *
  * **Example** (Converting deeply to mutable types)
  *
  * ```ts import.meta.vitest
- * import { DateTime, type Types } from "effect"
+ * import type { Types } from "effect"
  *
  * type Deep = Types.DeepMutable<{
  *   readonly a: string
  *   readonly b: ReadonlyArray<{ readonly c: number }>
- *   readonly createdAt: DateTime.DateTime
  * }>
- * // { a: string; b: Array<{ c: number }>; createdAt: DateTime.DateTime }
+ * // { a: string; b: Array<{ c: number }> }
  *
- * const witness: Deep = {
- *   a: "value",
- *   b: [{ c: 1 }],
- *   createdAt: DateTime.makeUnsafe(0)
- * }
+ * const witness: Deep = { a: "value", b: [{ c: 1 }] }
  * witness.b[0].c = 2
  * ```
  *
@@ -542,9 +529,7 @@ type DeepMutableIsOpaque<T> = Extract<keyof T, symbol> extends never
  */
 export type DeepMutable<T> = T extends ReadonlyMap<infer K, infer V> ? Map<DeepMutable<K>, DeepMutable<V>>
   : T extends ReadonlySet<infer V> ? Set<DeepMutable<V>>
-  : T extends ReadonlyArray<unknown> ? { -readonly [K in keyof T]: DeepMutable<T[K]> }
   : T extends string | number | boolean | bigint | symbol | Function ? T
-  : DeepMutableIsOpaque<T> extends true ? T
   : { -readonly [K in keyof T]: DeepMutable<T[K]> }
 
 /**
@@ -1180,22 +1165,14 @@ export type ExcludeReason<E, K extends string> = E extends { readonly reason: in
   ? Exclude<R, { readonly _tag: K }>
   : never
 
-type RequiredKeysFrom_<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? never : K }[keyof T]
-
-type IsIndexKey_<K> = string extends K ? true : number extends K ? true : symbol extends K ? true : false
-
-type WithoutIndexSignature_<T> = {
-  [K in keyof T as IsIndexKey_<K> extends true ? never : K]: T[K]
-}
-
 /**
- * Extracts the keys of required properties from a type.
+ * Extracts the required keys from a type.
+ *
+ * **When to use**
+ *
+ * Use to derive the keys whose properties must be present on an object type.
  *
  * @category utility types
  * @since 4.0.0
  */
-export type RequiredKeys<T> = RequiredKeysFrom_<
-  [T] extends [ReadonlyArray<unknown>] ? T
-    : IsIndexKey_<keyof T> extends true ? WithoutIndexSignature_<T>
-    : T
->
+export type RequiredKeys<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? never : K }[keyof T]

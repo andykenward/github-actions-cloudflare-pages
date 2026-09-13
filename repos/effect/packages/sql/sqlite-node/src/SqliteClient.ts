@@ -151,16 +151,14 @@ export const make = (
         db.exec("PRAGMA journal_mode = WAL")
       }
 
-      const prepare = (sql: string) =>
-        Effect.try({
-          try: () => db.prepare(sql),
-          catch: (cause) => new SqlError({ reason: classifyError(cause, "Failed to prepare statement", "prepare") })
-        })
-
       const prepareCache = yield* Cache.make({
         capacity: options.prepareCacheSize ?? 200,
         timeToLive: options.prepareCacheTTL ?? Duration.minutes(10),
-        lookup: prepare
+        lookup: (sql: string) =>
+          Effect.try({
+            try: () => db.prepare(sql),
+            catch: (cause) => new SqlError({ reason: classifyError(cause, "Failed to prepare statement", "prepare") })
+          })
       })
 
       const runStatement = (
@@ -248,7 +246,7 @@ export const make = (
       const runValuesUnprepared = (
         sql: string,
         params: ReadonlyArray<unknown>
-      ) => Effect.flatMap(prepare(sql), (statement) => runStatementValuesUnprepared(statement, params))
+      ) => runStatementValuesUnprepared(db.prepare(sql), params)
 
       return identity<SqliteConnection>({
         execute(sql, params, transformRows) {
@@ -266,7 +264,7 @@ export const make = (
           return runValuesUnprepared(sql, params)
         },
         executeUnprepared(sql, params, transformRows) {
-          const effect = Effect.flatMap(prepare(sql), (statement) => runStatement(statement, params ?? [], false))
+          const effect = runStatement(db.prepare(sql), params ?? [], false)
           return transformRows ? Effect.map(effect, transformRows) : effect
         },
         executeStream(_sql, _params) {
@@ -322,7 +320,7 @@ export const make = (
         acquirer,
         compiler,
         transactionAcquirer,
-        beginTransaction: options.readonly === true ? "BEGIN" : "BEGIN IMMEDIATE",
+        beginTransaction: "BEGIN IMMEDIATE",
         spanAttributes: [
           ...(options.spanAttributes ? Object.entries(options.spanAttributes) : []),
           [ATTR_DB_SYSTEM_NAME, "sqlite"]

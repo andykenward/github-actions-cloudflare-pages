@@ -588,10 +588,6 @@ export const invalidateWhen: {
               if (self.state._tag === "Closed") {
                 return effect.succeed(false)
               } else if (f(value)) {
-                const current = MutableHashMap.get(self.state.map, key)
-                if (Option.isNone(current) || current.value !== entry) {
-                  return effect.succeed(false)
-                }
                 MutableHashMap.remove(self.state.map, key)
                 return effect.as(Scope.close(entry.scope, effect.exitVoid), true)
               }
@@ -644,7 +640,7 @@ export const refresh: {
         MutableHashMap.set(self.state.map, key, entry)
         yield* checkCapacity(fiber, self.state.map, self.capacity)
       }
-      const exit = yield* effect.exit(effect.suspend(() => restore(Scope.provide(self.lookup(key), scope))))
+      const exit = yield* effect.exit(restore(Scope.provide(self.lookup(key), scope)))
       Deferred.doneUnsafe(deferred, exit)
       // @ts-ignore async gap
       if (self.state._tag === "Closed") {
@@ -660,7 +656,6 @@ export const refresh: {
       if (!newEntry) {
         const oentry = MutableHashMap.get(self.state.map, key)
         MutableHashMap.set(self.state.map, key, entry)
-        yield* checkCapacity(fiber, self.state.map, self.capacity)
         if (Option.isSome(oentry)) {
           yield* Scope.close(oentry.value.scope, effect.exitVoid)
         }
@@ -697,13 +692,11 @@ const invalidateAllImpl = <Key, A, E>(
   parent: Fiber.Fiber<unknown, unknown>,
   map: MutableHashMap.MutableHashMap<Key, Entry<A, E>>
 ): Effect.Effect<void> => {
-  // Detach the batch before finalizers can reenter the cache.
-  const entries = Array.from(MutableHashMap.values(map))
-  MutableHashMap.clear(map)
   const fibers = Arr.empty<Fiber.Fiber<unknown, unknown>>()
-  for (const entry of entries) {
+  for (const [, entry] of map) {
     fibers.push(effect.forkUnsafe(parent as any, Scope.close(entry.scope, effect.exitVoid), true, true))
   }
+  MutableHashMap.clear(map)
   return effect.fiberAwaitAll(fibers)
 }
 

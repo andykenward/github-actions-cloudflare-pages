@@ -30,10 +30,8 @@ import * as internal from "./FindMyWay/internal/router.ts"
  */
 
 /**
- * Configuration for router path matching.
- *
- * @category models
  * @since 4.0.0
+ * @category models
  */
 export interface RouterConfig {
   readonly ignoreTrailingSlash: boolean
@@ -43,18 +41,14 @@ export interface RouterConfig {
 }
 
 /**
- * Route path accepted by the router.
- *
- * @category models
  * @since 4.0.0
+ * @category models
  */
 export type PathInput = `/${string}` | "*"
 
 /**
- * Mutable router used to register and resolve route handlers.
- *
- * @category models
  * @since 4.0.0
+ * @category models
  */
 export interface Router<A> {
   readonly on: (method: string | Iterable<string>, path: PathInput, handler: A) => void
@@ -64,10 +58,8 @@ export interface Router<A> {
 }
 
 /**
- * Result of a successful route lookup.
- *
- * @category models
  * @since 4.0.0
+ * @category models
  */
 export interface FindResult<A> {
   readonly handler: A
@@ -76,9 +68,7 @@ export interface FindResult<A> {
 }
 
 /**
- * Creates an empty mutable router.
- *
- * @category constructors
  * @since 4.0.0
+ * @category constructors
  */
 export const make: <A>(options?: Partial<RouterConfig>) => Router<A> = internal.make

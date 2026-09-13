@@ -16,28 +16,11 @@ export class D1Miniflare extends Context.Service<
       Effect.try({
         try: () =>
           new Miniflare({
-            workers: [{
-              config: {
-                name: "test",
-                type: "worker",
-                compatibilityDate: "2026-08-30",
-                manifest: {
-                  mainModule: "index.mjs",
-                  modules: {
-                    "index.mjs": {
-                      type: "esm",
-                      contents: "export default {}"
-                    }
-                  }
-                },
-                env: {
-                  DB: {
-                    type: "d1",
-                    id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  }
-                }
-              }
-            }]
+            modules: true,
+            d1Databases: {
+              DB: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            },
+            script: ""
           }),
         catch: (cause) => new MiniflareError({ cause })
       }),

@@ -20,7 +20,7 @@ import type { Pipeable } from "./Pipeable.ts"
 import { pipeArguments } from "./Pipeable.ts"
 import { hasProperty } from "./Predicate.ts"
 
-const TypeId = "~effect/MutableHashMap"
+const TypeId = "~effect/collections/MutableHashMap"
 
 /**
  * A mutable hash map that stores key-value pairs and supports both referential

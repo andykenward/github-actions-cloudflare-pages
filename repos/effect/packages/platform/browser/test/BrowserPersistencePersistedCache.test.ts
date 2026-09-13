@@ -21,7 +21,7 @@ afterAll(() => {
   Reflect.set(globalThis, "indexedDB", previousIndexedDb)
 })
 
-describe("BrowserPersistence / PersistedCache", { concurrent: false }, () => {
+describe.sequential("BrowserPersistence / PersistedCache", () => {
   PersistedCacheTest.suite(
     "browser-indexeddb",
     BrowserPersistence.layerIndexedDb({ database })

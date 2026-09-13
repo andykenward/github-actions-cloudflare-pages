@@ -22,59 +22,48 @@ import * as Scope from "../../Scope.ts"
 import * as Stream from "../../Stream.ts"
 
 /**
- * Brand type for `Reactivity`.
+ * Service for key-based reactive invalidation.
  *
- * @category type IDs
- * @since 4.0.0
- */
-export type TypeId = "~effect/reactivity/Reactivity"
-
-/**
- * Brand for `Reactivity` implementations.
+ * **When to use**
  *
- * @category type IDs
- * @since 4.0.0
- */
-export const TypeId: TypeId = "~effect/reactivity/Reactivity"
-
-/**
- * Registers handlers and reruns queries when their keys are invalidated.
+ * Use to provide the invalidation service that refreshes queries, streams, and
+ * atoms when application keys change.
  *
- * @category models
- * @since 4.0.0
- */
-export interface Reactivity {
-  readonly [TypeId]: TypeId
-  readonly invalidateUnsafe: (keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>) => void
-  readonly registerUnsafe: (
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>,
-    handler: () => void
-  ) => () => void
-  readonly invalidate: (
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
-  ) => Effect.Effect<void>
-  readonly mutation: <A, E, R>(
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>,
-    effect: Effect.Effect<A, E, R>
-  ) => Effect.Effect<A, E, R>
-  readonly query: <A, E, R>(
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>,
-    effect: Effect.Effect<A, E, R>
-  ) => Effect.Effect<Queue.Dequeue<A, E>, never, R | Scope.Scope>
-  readonly stream: <A, E, R>(
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>,
-    effect: Effect.Effect<A, E, R>
-  ) => Stream.Stream<A, E, Exclude<R, Scope.Scope>>
-  readonly withBatch: <A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>
-}
-
-/**
- * Service key for reactive invalidation.
+ * **Details**
+ *
+ * The service can register handlers for keys, invalidate those keys, wrap
+ * mutations so successful effects invalidate keys, and turn query effects into
+ * queues or streams that rerun when keys are invalidated.
  *
  * @category services
  * @since 4.0.0
  */
-export const Reactivity: Context.Service<Reactivity, Reactivity> = Context.Service("effect/reactivity/Reactivity")
+export class Reactivity extends Context.Service<
+  Reactivity,
+  {
+    readonly invalidateUnsafe: (keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>) => void
+    readonly registerUnsafe: (
+      keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>,
+      handler: () => void
+    ) => () => void
+    readonly invalidate: (
+      keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
+    ) => Effect.Effect<void>
+    readonly mutation: <A, E, R>(
+      keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>,
+      effect: Effect.Effect<A, E, R>
+    ) => Effect.Effect<A, E, R>
+    readonly query: <A, E, R>(
+      keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>,
+      effect: Effect.Effect<A, E, R>
+    ) => Effect.Effect<Queue.Dequeue<A, E>, never, R | Scope.Scope>
+    readonly stream: <A, E, R>(
+      keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>,
+      effect: Effect.Effect<A, E, R>
+    ) => Stream.Stream<A, E, Exclude<R, Scope.Scope>>
+    readonly withBatch: <A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>
+  }
+>()("effect/reactivity/Reactivity") {}
 
 /**
  * Creates an in-memory `Reactivity` service.
@@ -134,8 +123,7 @@ export const make = Effect.sync(() => {
     })
     return () => {
       for (let i = 0; i < resolvedKeys.length; i++) {
-        const set = handlers.get(resolvedKeys[i])
-        if (set === undefined) continue
+        const set = handlers.get(resolvedKeys[i])!
         set.delete(handler)
         if (set.size === 0) {
           handlers.delete(resolvedKeys[i])
@@ -213,7 +201,6 @@ export const make = Effect.sync(() => {
     })
 
   return Reactivity.of({
-    [TypeId]: TypeId,
     mutation,
     query,
     stream,

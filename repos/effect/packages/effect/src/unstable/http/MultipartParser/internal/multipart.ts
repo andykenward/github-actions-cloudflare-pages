@@ -1,4 +1,3 @@
-import * as ByteSize from "../../../../ByteSize.ts"
 import type { Config, MultipartError, PartInfo } from "../../MultipartParser.ts"
 import * as CT from "./contentType.ts"
 import * as HP from "./headers.ts"
@@ -42,9 +41,6 @@ function parseBoundary(headers: Record<string, string>) {
 
 function noopOnChunk(_chunk: Uint8Array | null) {}
 
-const toLimit = (input: ByteSize.Input): number =>
-  input === Infinity ? Infinity : Number(ByteSize.fromInputUnsafe(input))
-
 export function make({
   headers,
   onFile: onPart,
@@ -53,13 +49,10 @@ export function make({
   onDone,
   isFile = defaultIsFile,
   maxParts = Infinity,
-  maxTotalSize: maxTotalSizeInput = Infinity,
-  maxPartSize: maxPartSizeInput = Infinity,
-  maxFieldSize: maxFieldSizeInput = 1024 * 1024
+  maxTotalSize = Infinity,
+  maxPartSize = Infinity,
+  maxFieldSize = 1024 * 1024
 }: Config) {
-  const maxTotalSize = toLimit(maxTotalSizeInput)
-  const maxPartSize = toLimit(maxPartSizeInput)
-  const maxFieldSize = toLimit(maxFieldSizeInput)
   const boundary = parseBoundary(headers)
   if (boundary === undefined) {
     onError({ _tag: "InvalidBoundary" })

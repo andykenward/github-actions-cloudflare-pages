@@ -16,6 +16,7 @@ paths:
 ## Commits made by workflows
 
 - The `Main` and `Branches` rulesets enforce `required_signatures` — `Branches` covers every branch. Use `sign-commits: true` on `peter-evans/create-pull-request` and push with a GitHub App token (as `update.yml` does), so the PRs also trigger CI.
+- `sign-commits: true` rebuilds the commit through the REST API, one `git/blobs` request per changed file at one per second (Octokit's throttling plugin) — fine for a handful of files, hopeless for thousands. That is why `repos/effect` is synced by hand (`pnpm run sync:effect`, see the repos rule) and not by a workflow.
 - `git commit-tree` doesn't sign unless given `-S`, and `git subtree` can't pass it — so subtree commits are always unsigned.
 
 ## What runs
@@ -27,7 +28,6 @@ paths:
 - `codeql.yml` runs CodeQL as advanced setup, because default setup can't exclude `repos/` (`.github/codeql/codeql-config.yml` `paths-ignore`).
 - **Release** (`release.yml`): after `test` passes on `main`, changesets/action opens the "Version Packages" PR; merging it runs `pnpm release` (`pnpm run all && changeset publish`). The package is private, so "publish" means a git tag + GitHub release. A `v*` tag triggers `sync-readme-versions.yml`, which PRs the new pinned SHA into the READMEs and `.github/workflow-templates/`.
 - `update.yml` (weekly) opens PRs refreshing webhook payloads, generated types and the GitHub GraphQL schema.
-- `sync-effect.yml` opens a PR re-snapshotting `repos/effect` when `dependencies.effect` changes on `main` — see the repos rule.
 
 ## Dependabot (`.github/dependabot.yml`)
 

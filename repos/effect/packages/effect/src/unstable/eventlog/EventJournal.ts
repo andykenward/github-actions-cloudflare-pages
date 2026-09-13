@@ -25,7 +25,7 @@ import * as PubSub from "../../PubSub.ts"
 import * as Schema from "../../Schema.ts"
 import type { Scope } from "../../Scope.ts"
 import * as Semaphore from "../../Semaphore.ts"
-import * as SchemaBinary from "../encoding/SchemaBinary.ts"
+import * as Msgpack from "../encoding/Msgpack.ts"
 import type { StoreId } from "./EventLogMessage.ts"
 
 /**
@@ -272,8 +272,8 @@ export const entryIdMillis = (entryId: EntryId): number => {
  *
  * **Details**
  *
- * An entry records its ID, event tag, primary key, and SchemaBinary-encoded
- * payload, with helpers for array SchemaBinary encoding and creation timestamps.
+ * An entry records its ID, event tag, primary key, and MessagePack-encoded
+ * payload, with helpers for array MessagePack encoding and creation timestamps.
  *
  * @category schemas
  * @since 4.0.0
@@ -285,25 +285,25 @@ export class Entry extends Schema.Class<Entry>("effect/eventlog/EventJournal/Ent
   payload: Schema.Uint8Array
 }) {
   /**
-   * SchemaBinary codec for arrays of committed event journal entries.
+   * MessagePack schema for arrays of committed event journal entries.
    *
    * @since 4.0.0
    */
-  static arraySchemaBinary = Schema.Array(SchemaBinary.toCodec(Entry))
+  static arrayMsgpack = Schema.Array(Msgpack.schema(Entry))
 
   /**
-   * Encodes arrays of committed entries with the SchemaBinary entry codec.
+   * Encodes arrays of committed entries with the MessagePack entry schema.
    *
    * @since 4.0.0
    */
-  static encodeArray = Schema.encodeUnknownEffect(Entry.arraySchemaBinary)
+  static encodeArray = Schema.encodeUnknownEffect(Entry.arrayMsgpack)
 
   /**
-   * Decodes arrays of committed entries with the SchemaBinary entry codec.
+   * Decodes arrays of committed entries with the MessagePack entry schema.
    *
    * @since 4.0.0
    */
-  static decodeArray = Schema.decodeUnknownEffect(Entry.arraySchemaBinary)
+  static decodeArray = Schema.decodeUnknownEffect(Entry.arrayMsgpack)
 
   /**
    * Ordering for committed entries by their event journal entry id.

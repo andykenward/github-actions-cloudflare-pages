@@ -15,12 +15,12 @@
  * ```ts
  * // User declares:
  * const config = {
- *   verbose: Flag.Boolean("verbose").pipe(Flag.withDefault(false)),
+ *   verbose: Flag.boolean("verbose").pipe(Flag.withDefault(false)),
  *   server: {
- *     host: Flag.String("host"),
- *     port: Flag.Int("port")
+ *     host: Flag.string("host"),
+ *     port: Flag.integer("port")
  *   },
- *   files: Argument.String("files").pipe(Argument.variadic)
+ *   files: Argument.string("files").pipe(Argument.variadic)
  * }
  *
  * // Becomes Config.Internal:

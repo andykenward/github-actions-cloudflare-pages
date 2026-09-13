@@ -1,5 +1,4 @@
 import * as Node from "@effect/platform-node/NodeMultipartParser"
-import * as ByteSize from "effect/ByteSize"
 import * as Multipart from "effect/unstable/http/MultipartParser"
 import { assert, describe, expectTypeOf, test } from "vitest"
 
@@ -168,7 +167,7 @@ const cases: ReadonlyArray<MultipartCase> = [
     ],
     boundary: "----WebKitFormBoundaryTB2MiQ36fnSJlrhY",
     config: {
-      maxPartSize: ByteSize.bytes(100)
+      maxPartSize: 100
     },
     expected: [
       ["field", "first", "A".repeat(32), "text/plain"],
@@ -210,7 +209,7 @@ const cases: ReadonlyArray<MultipartCase> = [
     ],
     boundary: "---------------------------paZqsnEHRufoShdX6fh0lUhXBP4k",
     config: {
-      maxFieldSize: ByteSize.bytes(5)
+      maxFieldSize: 5
     },
     expected: [],
     errors: ["ReachedLimit"],
@@ -229,7 +228,7 @@ const cases: ReadonlyArray<MultipartCase> = [
     ],
     boundary: "---------------------------paZqsnEHRufoShdX6fh0lUhXBP4k",
     config: {
-      maxPartSize: ByteSize.bytes(13)
+      maxPartSize: 13
     },
     expected: [],
     errors: ["ReachedLimit"],
@@ -701,7 +700,7 @@ describe("node api", () => {
       headers: {
         "content-type": "multipart/form-data; boundary=boundary"
       },
-      maxPartSize: ByteSize.bytes(100)
+      maxPartSize: 100
     })
     let file: Node.FileStream | undefined
     parser.on("file", (part) => {
@@ -826,8 +825,7 @@ describe("node async-iterable api", () => {
   })
 })
 
-// Synchronous parsing can starve the async suites.
-describe("random data", { concurrent: false }, () => {
+describe("random data", () => {
   test("smoke test", () => {
     const boundary = "------WebKitFormBoundaryTB2MiQ36fnSJlrhY--"
     let seed = 0x9e3779b9

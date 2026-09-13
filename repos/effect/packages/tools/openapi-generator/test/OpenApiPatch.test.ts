@@ -92,10 +92,9 @@ describe("OpenApiPatch", () => {
             "fixtures/patches/valid-patch.yaml"
           )
           const result = yield* OpenApiPatch.parsePatchInput(filePath)
-          assert.deepStrictEqual(result, [
-            { op: "replace", path: "/info/title", value: "YAML Patched Title" },
-            { op: "add", path: "/info/x-yaml-patch", value: true }
-          ])
+          assert.strictEqual(result.length, 2)
+          assert.strictEqual(result[0].op, "replace")
+          assert.strictEqual(result[1].op, "add")
         }).pipe(Effect.provide(testLayer)))
 
       it.effect("parses multiple operations from JSON file", () =>

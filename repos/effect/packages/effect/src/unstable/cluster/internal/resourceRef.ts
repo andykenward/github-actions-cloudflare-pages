@@ -5,8 +5,7 @@ import * as Latch from "../../../Latch.ts"
 import * as MutableRef from "../../../MutableRef.ts"
 import * as Option from "../../../Option.ts"
 import * as Scope from "../../../Scope.ts"
-import type { EntityAddress } from "../EntityAddress.ts"
-import { acquireEntity, releaseEntity } from "./interruptors.ts"
+import { internalInterruptors } from "./interruptors.ts"
 
 /** @internal */
 export type State<A, E> = {
@@ -28,8 +27,7 @@ export type State<A, E> = {
 export class ResourceRef<A, E = never> {
   static from = Effect.fnUntraced(function*<A, E>(
     parentScope: Scope.Scope,
-    acquire: (scope: Scope.Scope) => Effect.Effect<A, E>,
-    teardownAddress?: EntityAddress
+    acquire: (scope: Scope.Scope) => Effect.Effect<A, E>
   ) {
     const state = MutableRef.make<State<A, E>>({ _tag: "Closed" })
 
@@ -48,20 +46,17 @@ export class ResourceRef<A, E = never> {
     const value = yield* acquire(scope)
     MutableRef.set(state, { _tag: "Acquired", scope, value })
 
-    return new ResourceRef(state, acquire, teardownAddress)
+    return new ResourceRef(state, acquire)
   })
 
   readonly state: MutableRef.MutableRef<State<A, E>>
   readonly acquire: (scope: Scope.Scope) => Effect.Effect<A, E>
-  readonly teardownAddress: EntityAddress | undefined
   constructor(
     state: MutableRef.MutableRef<State<A, E>>,
-    acquire: (scope: Scope.Scope) => Effect.Effect<A, E>,
-    teardownAddress?: EntityAddress
+    acquire: (scope: Scope.Scope) => Effect.Effect<A, E>
   ) {
     this.state = state
     this.acquire = acquire
-    this.teardownAddress = teardownAddress
   }
 
   latch = Latch.makeUnsafe(true)
@@ -82,12 +77,9 @@ export class ResourceRef<A, E = never> {
     const scope = Scope.makeUnsafe()
     this.latch.closeUnsafe()
     MutableRef.set(this.state, { _tag: "Acquiring", scope })
-    const teardownAddress = this.teardownAddress
-    return Effect.suspend(() => {
-      const close = Scope.close(prevScope, Exit.void)
-      if (!teardownAddress) return close
-      acquireEntity(teardownAddress)
-      return Effect.ensuring(close, Effect.sync(() => releaseEntity(teardownAddress)))
+    return Effect.withFiber((fiber) => {
+      internalInterruptors.add(fiber.id)
+      return Scope.close(prevScope, Exit.void)
     }).pipe(
       Effect.andThen(this.acquire(scope)),
       Effect.flatMap((value) => {

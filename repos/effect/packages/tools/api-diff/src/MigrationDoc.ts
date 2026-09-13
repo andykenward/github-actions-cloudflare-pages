@@ -30,16 +30,8 @@ const displayApiId = (id: string): string => {
   return `${module}.${id.slice(separator + 1)}`
 }
 
-const backtickDelimiter = (value: string, minimum: number): string => {
-  let length = minimum
-  for (const match of value.matchAll(/`+/g)) {
-    length = Math.max(length, match[0].length + 1)
-  }
-  return "`".repeat(length)
-}
-
 const codeSpan = (value: string): string => {
-  const delimiter = backtickDelimiter(value, 1)
+  const delimiter = "`".repeat(Math.max(1, ...(value.match(/`+/g)?.map((run) => run.length + 1) ?? [])))
   const content = value.startsWith("`") || value.endsWith("`") ? ` ${value} ` : value
   return `${delimiter}${content}${delimiter}`
 }
@@ -95,7 +87,7 @@ interface MigrationEntry {
 
 const importMapReplacements = (importMapSections: string): ReadonlyMap<string, ReadonlyArray<string>> => {
   const replacements = new Map<string, Array<string>>()
-  for (const line of importMapSections.split(/\r?\n/)) {
+  for (const line of importMapSections.split("\n")) {
     const match = /^(\S+) -> (\S+)(?: \(barrel: [^)]+\))?$/.exec(line)
     if (match === null) {
       continue
@@ -234,23 +226,20 @@ const renderDetailedEntry = (
   entry: MigrationEntry,
   annotation: MigrationAnnotation,
   example: string
-): ReadonlyArray<string> => {
-  const fence = backtickDelimiter(example, 3)
-  return [
-    `#### ${codeSpan(displayApiId(entry.id))}`,
-    "",
-    `**Replacement:** ${codeSpan(annotation.replacement)}`,
-    "",
-    escapeAnnotationText(annotation.note),
-    "",
-    "**Example**",
-    "",
-    `${fence}ts`,
-    example,
-    fence,
-    ""
-  ]
-}
+): ReadonlyArray<string> => [
+  `#### ${codeSpan(displayApiId(entry.id))}`,
+  "",
+  `**Replacement:** ${codeSpan(annotation.replacement)}`,
+  "",
+  escapeAnnotationText(annotation.note),
+  "",
+  "**Example**",
+  "",
+  "```ts",
+  example,
+  "```",
+  ""
+]
 
 const renderCompactEntry = (
   entry: MigrationEntry,

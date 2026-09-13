@@ -1609,15 +1609,7 @@ export const CurrentMetricAttributes = Context.Reference<Metric.AttributeSet>(Cu
   defaultValue: () => ({})
 })
 
-const MetricRegistryKey = "effect/Metric/MetricRegistry"
-
-/**
- * The registry used to store metric metadata and hooks.
- *
- * @category services
- * @since 4.0.0
- */
-export type MetricRegistry = Map<string, Metric.Metadata<any, any>>
+const MetricRegistryKey = "~effect/observability/Metric/MetricRegistryKey"
 
 /**
  * Context reference for the metric registry in the current context.
@@ -1645,12 +1637,12 @@ export type MetricRegistry = Map<string, Metric.Metadata<any, any>>
  * @category services
  * @since 4.0.0
  */
-export const MetricRegistry: Context.Reference<MetricRegistry> = Context.Reference<MetricRegistry>(
+export const MetricRegistry = Context.Reference<Map<string, Metric.Metadata<any, any>>>(
   MetricRegistryKey,
   { defaultValue: () => new Map() }
 )
 
-const TypeId = "~effect/Metric"
+const TypeId = "~effect/observability/Metric"
 
 abstract class Metric$<in Input, out State> implements Metric<Input, State> {
   readonly [TypeId] = TypeId
@@ -1660,7 +1652,8 @@ abstract class Metric$<in Input, out State> implements Metric<Input, State> {
   declare readonly Input: Contravariant<Input>
   declare readonly State: Covariant<State>
 
-  readonly #metadata = new WeakMap<MetricRegistry, Metric.Metadata<Input, State>>()
+  readonly #metadataCache = new WeakMap<Metric.Attributes, Metric.Metadata<Input, State>>()
+  #metadata: Metric.Metadata<Input, State> | undefined
 
   readonly id: string
   readonly description: string | undefined
@@ -1692,15 +1685,20 @@ abstract class Metric$<in Input, out State> implements Metric<Input, State> {
 
   hook(context: Context.Context<never>): Metric.Hooks<Input, State> {
     const extraAttributes = Context.get(context, CurrentMetricAttributes)
-    if (Object.keys(extraAttributes).length > 0) {
-      return this.getOrCreate(context, mergeAttributes(this.attributes, extraAttributes)).hooks
+    if (Object.keys(extraAttributes).length === 0) {
+      if (Predicate.isNotUndefined(this.#metadata)) {
+        return this.#metadata.hooks
+      }
+      this.#metadata = this.getOrCreate(context, this.attributes)
+      return this.#metadata.hooks
     }
-    const registry = Context.get(context, MetricRegistry)
-    let metadata = this.#metadata.get(registry)
-    if (Predicate.isUndefined(metadata)) {
-      metadata = this.getOrCreate(context, this.attributes)
-      this.#metadata.set(registry, metadata)
+    const mergedAttributes = mergeAttributes(this.attributes, extraAttributes)
+    let metadata = this.#metadataCache.get(mergedAttributes)
+    if (Predicate.isNotUndefined(metadata)) {
+      return metadata.hooks
     }
+    metadata = this.getOrCreate(context, mergedAttributes)
+    this.#metadataCache.set(mergedAttributes, metadata)
     return metadata.hooks
   }
 
@@ -3237,13 +3235,14 @@ const fiberFailures = counter("child_fiber_failures", {
  * ```ts import.meta.vitest
  * import { Metric } from "effect"
  *
- * Metric.FiberRuntimeMetricsKey // => "effect/Metric/FiberRuntimeMetrics"
+ * Metric.FiberRuntimeMetricsKey // => "effect/observability/Metric/FiberRuntimeMetricsKey"
  * ```
  *
  * @category constants
  * @since 4.0.0
  */
-export const FiberRuntimeMetricsKey: "effect/Metric/FiberRuntimeMetrics" = InternalMetric.FiberRuntimeMetricsKey
+export const FiberRuntimeMetricsKey: "effect/observability/Metric/FiberRuntimeMetricsKey" =
+  InternalMetric.FiberRuntimeMetricsKey
 
 /**
  * Interface for the fiber runtime metrics service that tracks fiber lifecycle events.
@@ -3497,9 +3496,7 @@ function makeHooks<Input, State>(
 }
 
 function serializeAttributes(attributes: Metric.Attributes): string {
-  const entries = Array.isArray(attributes) ? [...attributes] : Object.entries(attributes)
-  entries.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)
-  return JSON.stringify(entries)
+  return JSON.stringify(Array.isArray(attributes) ? attributes : Object.entries(attributes))
 }
 
 function mergeAttributes(

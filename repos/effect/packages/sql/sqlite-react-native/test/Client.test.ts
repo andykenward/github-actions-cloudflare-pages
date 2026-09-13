@@ -7,8 +7,8 @@ const state = vi.hoisted(() => ({
   database: {
     close() {},
     execute: async () => ({ rowsAffected: 0, rows: [{ value: 1 }] }),
-    executeRaw: async () => ({ rowsAffected: 0, rawRows: [[1]], columnNames: ["value"] }),
-    executeRawSync: () => ({ rowsAffected: 0, rawRows: [[1]], columnNames: ["value"] }),
+    executeRaw: async () => [[1]],
+    executeRawSync: () => [[1]],
     executeSync: () => ({ rowsAffected: 0, rows: [{ value: 1 }] })
   }
 }))

@@ -26,7 +26,7 @@ import { pipeArguments } from "./Pipeable.ts"
 import { hasProperty, type Predicate } from "./Predicate.ts"
 import * as TxRef from "./TxRef.ts"
 
-const TypeId = "~effect/TxPriorityQueue"
+const TypeId = "~effect/transactions/TxPriorityQueue"
 
 /**
  * A transactional priority queue backed by a sorted `Chunk`.

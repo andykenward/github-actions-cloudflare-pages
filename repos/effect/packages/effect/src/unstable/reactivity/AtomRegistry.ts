@@ -793,9 +793,11 @@ class NodeImpl<A> {
     this.state = NodeState.removed
     this.listeners.clear()
 
-    if (this.lifetime !== undefined) {
-      this.disposeLifetime()
+    if (this.lifetime === undefined) {
+      return
     }
+
+    this.disposeLifetime()
 
     if (this.previousParents === undefined) {
       return

@@ -21,7 +21,6 @@
  * @since 4.0.0
  */
 import type { DurableObjectStorage, SqlStorage } from "@cloudflare/workers-types"
-import * as Cause from "effect/Cause"
 import * as Config from "effect/Config"
 import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
@@ -259,12 +258,6 @@ export const make = (
             const iterator = runIterator(sql, params)
             return Stream.fromIteratorSucceed(iterator, 128)
           }).pipe(
-            Stream.catchCauseFilter(Cause.findDefect, (defect) =>
-              Stream.fail(
-                new SqlError({
-                  reason: classifyError(defect, "Failed to execute statement", "execute")
-                })
-              )),
             transformRows
               ? Stream.mapArray((chunk) => transformRows(chunk) as any)
               : identity

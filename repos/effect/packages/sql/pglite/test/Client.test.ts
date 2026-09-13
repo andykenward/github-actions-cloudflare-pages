@@ -1,7 +1,7 @@
 import { PgliteClient } from "@effect/sql-pglite"
 import { assert, describe, layer } from "@effect/vitest"
 import * as Pglite from "@electric-sql/pglite"
-import { Effect, Exit, Layer, Queue, Scope } from "effect"
+import { Deferred, Effect, Layer } from "effect"
 import { SqlClient } from "effect/unstable/sql/SqlClient"
 
 const ClientLayer = PgliteClient.layer()
@@ -14,8 +14,7 @@ const Migrations = Layer.effectDiscard(
   })
 )
 
-// Avoid overlapping PGlite startup with SQL assertions in other tests.
-describe("PgliteClient", { concurrent: false }, () => {
+describe("PgliteClient", () => {
   layer(ClientLayer, { timeout: "30 seconds" })((it) => {
     it.effect("basic insert/select", () =>
       Effect.gen(function*() {
@@ -93,24 +92,14 @@ describe("PgliteClient", { concurrent: false }, () => {
     it.effect("listen + notify", () =>
       Effect.gen(function*() {
         const sql = yield* PgliteClient.PgliteClient
-        const notifications = yield* sql.listen("ch1")
-
+        const deferred = yield* Deferred.make<string>()
+        const unsub = yield* Effect.tryPromise({
+          try: () => sql.pglite.listen("ch1", (payload) => Effect.runFork(Deferred.succeed(deferred, payload))),
+          catch: (cause) => cause
+        })
         yield* sql.notify("ch1", "hello")
-        assert.strictEqual(yield* Queue.take(notifications), "hello")
-
-        yield* sql.notify("ch1", "")
-        assert.strictEqual(yield* Queue.take(notifications), "")
-      }), { timeout: 15_000 })
-
-    it.effect("listen shuts down with its scope", () =>
-      Effect.gen(function*() {
-        const sql = yield* PgliteClient.PgliteClient
-        const scope = yield* Scope.make()
-        const notifications = yield* sql.listen("ch1").pipe(Scope.provide(scope))
-
-        yield* Scope.close(scope, Exit.void)
-
-        assert.isTrue(Exit.hasInterrupts(yield* Queue.take(notifications).pipe(Effect.exit)))
+        assert.strictEqual(yield* Deferred.await(deferred), "hello")
+        yield* Effect.promise(() => unsub())
       }), { timeout: 15_000 })
 
     it.effect("provider extras", () =>
@@ -124,12 +113,7 @@ describe("PgliteClient", { concurrent: false }, () => {
   describe("fromClient", () => {
     layer(
       PgliteClient.layerFrom(Effect.gen(function*() {
-        const pg = yield* Effect.acquireRelease(
-          Effect.sync(() => new Pglite.PGlite()),
-          (pg) => Effect.promise(() => pg.close())
-        )
-        // Charge startup to the layer hook timeout, not the first query's test timeout.
-        yield* Effect.promise(() => pg.waitReady)
+        const pg = new Pglite.PGlite()
         return yield* PgliteClient.fromClient({ liveClient: pg })
       })),
       { timeout: "30 seconds" }

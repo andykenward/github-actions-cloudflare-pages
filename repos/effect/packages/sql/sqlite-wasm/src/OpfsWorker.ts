@@ -29,7 +29,7 @@ const classifyError = (cause: unknown, message: string, operation: string) =>
  * @since 4.0.0
  */
 export interface OpfsWorkerConfig {
-  readonly port: EventTarget & Pick<MessagePort, "postMessage" | "close"> & Partial<Pick<MessagePort, "start">>
+  readonly port: EventTarget & Pick<MessagePort, "postMessage" | "close">
   readonly dbName: string
 }
 
@@ -94,15 +94,13 @@ export const run = (
               const [id, sql, params] = message
               messageId = id
               const results: Array<any> = []
-              const columns: Array<Array<string>> = []
+              let columns: Array<string> | undefined
               for (const stmt of sqlite3.statements(db, sql)) {
-                let statementColumns: Array<string> | undefined
                 sqlite3.bind_collection(stmt, params as any)
                 while (sqlite3.step(stmt) === WaSqlite.SQLITE_ROW) {
-                  statementColumns = statementColumns ?? sqlite3.column_names(stmt)
+                  columns = columns ?? sqlite3.column_names(stmt)
                   const row = sqlite3.row(stmt)
                   results.push(row)
-                  columns.push(statementColumns)
                 }
               }
               options.port.postMessage([id, undefined, [columns, results]])
@@ -111,12 +109,10 @@ export const run = (
           }
         } catch (e: any) {
           const message = "message" in e ? e.message : String(e)
-          const error = typeof e.code === "number" ? { message, code: e.code } : message
-          options.port.postMessage([messageId!, error, undefined])
+          options.port.postMessage([messageId!, message, undefined])
         }
       }
       options.port.addEventListener("message", onMessage)
-      options.port.start?.()
       options.port.postMessage(["ready", undefined, undefined])
       return Effect.sync(() => {
         options.port.removeEventListener("message", onMessage)

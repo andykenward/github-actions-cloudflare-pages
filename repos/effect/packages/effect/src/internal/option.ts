@@ -10,7 +10,7 @@ import { hasProperty } from "../Predicate.ts"
 import { SingleShotGen } from "../Utils.ts"
 import { PipeInspectableProto } from "./core.ts"
 
-const TypeId = "~effect/Option"
+const TypeId = "~effect/data/Option"
 
 const CommonProto = {
   [TypeId]: {
@@ -91,10 +91,8 @@ export const isSome = <A>(fa: Option.Option<A>): fa is Option.Some<A> => fa._tag
 export const none: Option.Option<never> = Object.create(NoneProto)
 
 /** @internal */
-const SomeImpl = function(this: any, value: unknown) {
-  this.value = value
-} as unknown as { new<A>(value: A): Option.Option<A>; prototype: any }
-SomeImpl.prototype = SomeProto
-
-/** @internal */
-export const some = <A>(value: A): Option.Option<A> => new SomeImpl(value)
+export const some = <A>(value: A): Option.Option<A> => {
+  const a = Object.create(SomeProto)
+  a.value = value
+  return a
+}

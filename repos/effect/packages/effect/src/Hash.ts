@@ -28,7 +28,7 @@ import { hasProperty } from "./Predicate.ts"
  * @category symbols
  * @since 2.0.0
  */
-export const symbol = "~effect/Hash"
+export const symbol = "~effect/interfaces/Hash"
 
 /**
  * A type that represents an object that can be hashed.
@@ -106,6 +106,10 @@ export const hash: <A>(self: A) => number = <A>(self: A) => {
       return number(self)
     case "bigint":
       return string(self.toString(10))
+    case "boolean":
+      return string(String(self))
+    case "symbol":
+      return string(String(self))
     case "string":
       return string(self)
     case "undefined":
@@ -149,8 +153,9 @@ export const hash: <A>(self: A) => number = <A>(self: A) => {
       }
     }
     default:
-      // The remaining primitive types are boolean and symbol.
-      return string(String(self))
+      throw new Error(
+        `BUG: unhandled typeof ${typeof self} - please report an issue at https://github.com/Effect-TS/effect/issues`
+      )
   }
 }
 
@@ -313,8 +318,14 @@ export const isHash = (u: unknown): u is Hash => hasProperty(u, symbol)
  * @since 2.0.0
  */
 export const number = (n: number) => {
-  if (n !== n || n === Infinity || n === -Infinity) {
-    return string(String(n))
+  if (n !== n) {
+    return string("NaN")
+  }
+  if (n === Infinity) {
+    return string("Infinity")
+  }
+  if (n === -Infinity) {
+    return string("-Infinity")
   }
   let h = n | 0
   if (h !== n) {

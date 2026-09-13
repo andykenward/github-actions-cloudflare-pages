@@ -521,10 +521,7 @@ describe("OtlpMetrics", () => {
         // Second export should report current value 50 (not delta -50)
         const secondMetric = findMetric(requests[1], metricName)
         assert.strictEqual(secondMetric?.gauge?.dataPoints[0].asDouble, 50)
-      }).pipe(
-        Effect.provide(layer),
-        Effect.provideService(Metric.MetricRegistry, new Map())
-      ))
+      }).pipe(Effect.provide(layer)))
   })
 })
 

@@ -30,17 +30,17 @@ describe("Schema.toJsonSchemaDocument", () => {
               type: "object",
               properties: { value: { type: "string" } },
               required: ["value"],
-              additionalProperties: true
+              additionalProperties: false
             },
             second: {
               type: "object",
               properties: { value: { type: "string" } },
               required: ["value"],
-              additionalProperties: true
+              additionalProperties: false
             }
           },
           required: ["first", "second"],
-          additionalProperties: true
+          additionalProperties: false
         },
         definitions: {}
       }
@@ -140,7 +140,7 @@ describe("Schema.toJsonSchemaDocument", () => {
       count: Schema.FiniteFromString
     }).annotate({ description: "root" })
     const options: Schema.ToJsonSchemaOptions = {
-      onExcessProperty: "ignore",
+      additionalProperties: true,
       generateDescriptions: true,
       includeAnnotationKey: (key) => key === "x-consumer"
     }

@@ -1,7 +1,8 @@
 ---
 paths:
   - 'repos/**'
-  - '.github/workflows/sync-effect.yml'
+  - 'bin/sync-effect.ts'
+  - '__tests__/scripts/sync-effect.test.ts'
   - '.github/dependabot.yml'
   - '.github/workflows/zizmor.yml'
   - '.github/workflows/codeql.yml'
@@ -48,15 +49,8 @@ GraphQL codegen needs no entry — its `documents` globs only cover `src/` and `
 
 ## Keeping it current
 
-- On `main`, it is a copy of the `effect@<version>` release tag matching `dependencies.effect` in `package.json`, replaced in one ordinary commit. Other branches can drift until they merge, because the sync only runs on `main`.
-- `.github/workflows/sync-effect.yml` runs on `main` pushes that touch `package.json` or the workflow itself (and on dispatch). It compares `repos/effect/packages/effect/package.json` `version` with `dependencies.effect` and, if they differ, opens a signed PR replacing the snapshot. A merged Dependabot `effect` bump is therefore followed by a sync PR, which can be merged any way.
+- On `main`, it is a copy of the `effect@<version>` release tag matching `dependencies.effect` in `package.json`, replaced in one ordinary commit. Other branches can drift until they merge.
+- **Sync by hand** after an `effect` bump lands: on a branch with a clean tree, `pnpm run sync:effect` (`bin/sync-effect.ts`) fetches the tag, swaps the snapshot with `git rm` + `git read-tree --prefix`, and commits with your git, so the commit is signed as the rulesets require. It is a no-op when the versions already match, refuses `main` and a dirty tree, and fails on a missing tag before touching the tree. Push and open the PR yourself. `EFFECT_REPO` overrides the remote (the tests point it at a local `file://` repository).
+- There is no workflow for this on purpose (one was removed on 2026-09-13): a workflow can't push a signed commit — an App has no signing key — and rebuilding the snapshot through GitHub's API doesn't fit a job: `peter-evans/create-pull-request` with `sign-commits` uploads one blob per file at one per second (~1,300 files per bump, 10-minute timeout), and `createCommitOnBranch` refuses requests over ~8 MiB (12 MiB got HTTP 499), drops file modes and can't express a type change.
 - It is deliberately **not** a `git subtree`: `git subtree` finds its last squash by grepping commit messages for `git-subtree-dir:`, and GitHub's merge and squash messages quote every PR commit, so one merged pull poisons the lookup and later pulls conflict. `main` still carries such trailers from #866 — ignore them.
-- To sync by hand, from the repo root with a clean tree:
-
-  ```sh
-  tag="effect@$(jq -r .dependencies.effect package.json)"
-  git fetch --no-tags https://github.com/Effect-TS/effect.git "refs/tags/$tag"
-  git rm -rq --ignore-unmatch repos/effect && git read-tree --prefix=repos/effect/ -u FETCH_HEAD
-  ```
-
 - Keep this in step with the "Vendored Effect source" section of `CONTRIBUTING.md`.

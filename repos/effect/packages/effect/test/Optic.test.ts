@@ -351,13 +351,6 @@ describe("Optic", () => {
         deepStrictEqual(optic.modify(f)([1, 2]), [1, 3])
         deepStrictEqual(optic.modify(f)([1]), [1])
       })
-
-      it("string index", () => {
-        type S = readonly [number, number?, number?]
-        const optic = Optic.id<S>().optionalKey("1")
-
-        deepStrictEqual(optic.replace(undefined, [1, 2, 3]), [1, 3])
-      })
     })
 
     it("Array", () => {
@@ -488,13 +481,6 @@ Expected a value greater than 0`
 
       deepStrictEqual(optic.replace({ a: "a2", c: false }, { a: "a", b: 1, c: true }), { a: "a2", b: 1, c: false })
     })
-
-    it("deletes optional fields omitted from the replacement", () => {
-      type S = { readonly a?: string; readonly b: number }
-      const optic = Optic.id<S>().pick(["a"])
-
-      deepStrictEqual(optic.replace({}, { a: "a", b: 1 }), { b: 1 })
-    })
   })
 
   describe("omit", () => {
@@ -503,13 +489,6 @@ Expected a value greater than 0`
       const optic = Optic.id<S>().omit(["b"])
 
       deepStrictEqual(optic.replace({ a: "a2", c: false }, { a: "a", b: 1, c: true }), { a: "a2", b: 1, c: false })
-    })
-
-    it("deletes optional fields omitted from the replacement", () => {
-      type S = { readonly a?: string; readonly b: number }
-      const optic = Optic.id<S>().omit(["b"])
-
-      deepStrictEqual(optic.replace({}, { a: "a", b: 1 }), { b: 1 })
     })
   })
 

@@ -479,7 +479,14 @@ exports[`HttpApi > original tests > OpenAPI spec > fixture 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserErrorEncoded",
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/UserErrorEncoded",
+                    },
+                    {
+                      "$ref": "#/components/schemas/UserErrorEncoded",
+                    },
+                  ],
                 },
               },
             },

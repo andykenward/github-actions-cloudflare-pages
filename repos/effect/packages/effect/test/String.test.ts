@@ -441,13 +441,10 @@ describe("String", () => {
   describe("repeat", () => {
     it("repeats the string", () => {
       strictEqual(pipe("ab", S.repeat(3)), "ababab")
-      strictEqual(pipe("ab", S.repeat(1.5)), "ab")
     })
 
-    it("returns an empty string for non-positive or NaN counts", () => {
+    it("returns empty for 0 repeats", () => {
       strictEqual(pipe("ab", S.repeat(0)), "")
-      strictEqual(pipe("ab", S.repeat(-1)), "")
-      strictEqual(pipe("ab", S.repeat(Number.NaN)), "")
     })
   })
 
@@ -494,7 +491,6 @@ describe("String", () => {
   describe("takeLeft", () => {
     it("takes n characters from the start (data-first)", () => {
       strictEqual(S.takeLeft("Hello World", 5), "Hello")
-      strictEqual(S.takeLeft("abc", 1.5), "a")
     })
 
     it("takes n characters from the start (data-last)", () => {
@@ -505,17 +501,15 @@ describe("String", () => {
       strictEqual(S.takeLeft("abc", 10), "abc")
     })
 
-    it("returns an empty string for non-positive or NaN counts", () => {
+    it("returns empty string for n <= 0", () => {
       strictEqual(S.takeLeft("abc", 0), "")
       strictEqual(S.takeLeft("abc", -1), "")
-      strictEqual(S.takeLeft("abc", Number.NaN), "")
     })
   })
 
   describe("takeRight", () => {
     it("takes n characters from the end (data-first)", () => {
       strictEqual(S.takeRight("Hello World", 5), "World")
-      strictEqual(S.takeRight("abc", 1.5), "c")
     })
 
     it("takes n characters from the end (data-last)", () => {
@@ -526,10 +520,9 @@ describe("String", () => {
       strictEqual(S.takeRight("abc", 10), "abc")
     })
 
-    it("returns an empty string for non-positive or NaN counts", () => {
+    it("returns empty string for n <= 0", () => {
       strictEqual(S.takeRight("abc", 0), "")
       strictEqual(S.takeRight("abc", -1), "")
-      strictEqual(S.takeRight("abc", Number.NaN), "")
     })
   })
 

@@ -21,11 +21,11 @@ import * as InternalRecord from "../../internal/record.ts"
 import { hasProperty } from "../../Predicate.ts"
 import { TracerTimingEnabled } from "../../References.ts"
 import * as Stream from "../../Stream.ts"
-import * as Tracer from "../../Tracer.ts"
-import type { Acquirer, Borrower, Connection, Row } from "./SqlConnection.ts"
+import type * as Tracer from "../../Tracer.ts"
+import type { Acquirer, Connection, Row } from "./SqlConnection.ts"
 import type { SqlError } from "./SqlError.ts"
 
-const FragmentTypeId = "~effect/sql/Statement/Fragment"
+const FragmentTypeId = "~effect/sql/Fragment"
 
 /**
  * Composable SQL fragment represented as low-level segments that can be
@@ -104,17 +104,6 @@ export type Transformer = (
  */
 export const CurrentTransformer = Context.Reference<Transformer | undefined>("effect/sql/CurrentTransformer", {
   defaultValue: constUndefined
-})
-
-/**
- * Parents driver spans under `sql.execute` for every client in the current scope,
- * including acquisition and stream pulls. Defaults to `false`; ignored when tracing is disabled.
- *
- * @category services
- * @since 4.0.0
- */
-export const SpanPropagationEnabled = Context.Reference<boolean>("effect/sql/SpanPropagationEnabled", {
-  defaultValue: () => false
 })
 
 /**
@@ -267,7 +256,7 @@ const RecordInsertHelperProto = {
   returning(this: RecordInsertHelper, sql: string | Identifier | Fragment) {
     const self = Object.create(Object.getPrototypeOf(this))
     Object.assign(self, this, {
-      returningIdentifier: typeof sql === "string" || isFragment(sql) ? sql : fragment([sql])
+      returningIdentifier: sql
     })
     return self
   }
@@ -544,8 +533,7 @@ export const make = (
   acquirer: Acquirer,
   compiler: Compiler,
   spanAttributes: ReadonlyArray<readonly [string, unknown]>,
-  transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined,
-  borrower?: Borrower | undefined
+  transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined
 ): Constructor => {
   const cache = transformRows === undefined ? constructorCache.noTransforms : constructorCache.transforms
   if (cache.has(acquirer)) {
@@ -562,8 +550,7 @@ export const make = (
           strings as TemplateStringsArray,
           args,
           spanAttributes,
-          transformRows,
-          borrower
+          transformRows
         )
       }
 
@@ -579,8 +566,7 @@ export const make = (
           acquirer,
           compiler,
           spanAttributes,
-          transformRows,
-          borrower
+          transformRows
         )
       },
       literal(sql: string) {
@@ -635,8 +621,7 @@ export const statement = <A = Row>(
   strings: TemplateStringsArray,
   args: Array<any>,
   spanAttributes: ReadonlyArray<readonly [string, unknown]>,
-  transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined,
-  borrower?: Borrower | undefined
+  transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined
 ): Statement<A> => {
   const segments: Array<Segment> = strings[0].length > 0 ? [literal(strings[0])] : []
 
@@ -656,7 +641,7 @@ export const statement = <A = Row>(
     }
   }
 
-  return makeUnsafe(segments, acquirer, compiler, spanAttributes, transformRows, borrower)
+  return makeUnsafe(segments, acquirer, compiler, spanAttributes, transformRows)
 }
 
 /**
@@ -844,7 +829,7 @@ const CompilerProto = {
     withoutTransform = withoutTransform || this.disableTransforms
     const cache = withoutTransform ? this.statementCacheNoTransform : this.statementCache
     const cached = cache.get(statement)
-    if (cached !== undefined && placeholderOverride === undefined) {
+    if (cached !== undefined) {
       return cached
     }
 
@@ -1231,7 +1216,6 @@ interface StatementImpl<A> extends Statement<A> {
   readonly compiler: Compiler
   readonly spanAttributes: ReadonlyArray<readonly [string, unknown]>
   readonly transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined
-  readonly borrower: Borrower | undefined
 
   withConnection<XA, E>(
     operation: string,
@@ -1259,8 +1243,7 @@ const makeUnsafe = <A = Row>(
   acquirer: Acquirer,
   compiler: Compiler,
   spanAttributes: ReadonlyArray<readonly [string, unknown]>,
-  transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined,
-  borrower: Borrower | undefined
+  transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined
 ): StatementImpl<A> => {
   const self = Object.create(StatementProto)
   self.segments = segments
@@ -1268,14 +1251,13 @@ const makeUnsafe = <A = Row>(
   self.compiler = compiler
   self.spanAttributes = spanAttributes
   self.transformRows = transformRows
-  self.borrower = borrower
   return self
 }
 
 // TODO: figure out why these diagnostics are emitted
 const StatementProto: Omit<
   StatementImpl<any>,
-  "segments" | "acquirer" | "compiler" | "spanAttributes" | "transformRows" | "borrower"
+  "segments" | "acquirer" | "compiler" | "spanAttributes" | "transformRows"
 > = {
   [FragmentTypeId]: FragmentTypeId,
   withConnection<XA, E>(
@@ -1311,19 +1293,14 @@ const StatementProto: Omit<
     withoutTransform: boolean,
     span: Tracer.Span
   ): Effect.Effect<XA, E | SqlError> {
-    return withStatement(this, span, (statement, fiber) => {
+    return withStatement(this, span, (statement) => {
       const [sql, params] = statement.compile(withoutTransform)
       for (const [key, value] of this.spanAttributes) {
         span.attribute(key, value)
       }
       span.attribute(ATTR_DB_OPERATION_NAME, operation)
       span.attribute(ATTR_DB_QUERY_TEXT, sql)
-      const execute = this.borrower === undefined
-        ? Effect.scoped(Effect.flatMap(this.acquirer, (_) => f(_, sql, params)))
-        : this.borrower((connection: Connection) => f(connection, sql, params))
-      return fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled)
-        ? Effect.provideService(execute, Tracer.ParentSpan, span)
-        : execute
+      return Effect.scoped(Effect.flatMap(this.acquirer, (_) => f(_, sql, params)))
     })
   },
 
@@ -1348,17 +1325,14 @@ const StatementProto: Omit<
     return Stream.unwrap(Effect.flatMap(
       Effect.makeSpanScoped("sql.execute", { kind: "client" }),
       (span) =>
-        withStatement(self, span, (statement, fiber) => {
+        withStatement(self, span, (statement) => {
           const [sql, params] = statement.compile()
           for (const [key, value] of self.spanAttributes) {
             span.attribute(key, value)
           }
           span.attribute(ATTR_DB_OPERATION_NAME, "executeStream")
           span.attribute(ATTR_DB_QUERY_TEXT, sql)
-          const acquire = Effect.map(self.acquirer, (_) => _.executeStream(sql, params, self.transformRows))
-          return fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled)
-            ? Effect.succeed(Stream.provideService(Stream.unwrap(acquire), Tracer.ParentSpan, span))
-            : acquire
+          return Effect.map(self.acquirer, (_) => _.executeStream(sql, params, self.transformRows))
         })
     ))
   },
@@ -1426,21 +1400,21 @@ const StatementProto: Omit<
 const withStatement = <A, X, E, R>(
   self: StatementImpl<A>,
   span: Tracer.Span,
-  f: (statement: StatementImpl<A>, fiber: Fiber.Fiber<unknown, unknown>) => Effect.Effect<X, E, R>
+  f: (statement: StatementImpl<A>) => Effect.Effect<X, E, R>
 ) =>
   Effect.withFiber<X, E, R>((fiber) => {
     const transform = fiber.getRef(CurrentTransformer)
     if (transform === undefined) {
-      return f(self, fiber)
+      return f(self)
     }
     return Effect.flatMap(
       transform(
         self,
-        make(self.acquirer, self.compiler, self.spanAttributes, self.transformRows, self.borrower),
+        make(self.acquirer, self.compiler, self.spanAttributes, self.transformRows),
         fiber,
         span
       ) as Effect.Effect<StatementImpl<A>>,
-      (statement) => f(statement, fiber)
+      f
     )
   })
 

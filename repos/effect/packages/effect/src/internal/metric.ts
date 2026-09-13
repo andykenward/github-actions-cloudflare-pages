@@ -1,2 +1,2 @@
 /** @internal */
-export const FiberRuntimeMetricsKey = "effect/Metric/FiberRuntimeMetrics"
+export const FiberRuntimeMetricsKey = "effect/observability/Metric/FiberRuntimeMetricsKey"

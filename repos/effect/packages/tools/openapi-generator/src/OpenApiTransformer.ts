@@ -261,9 +261,6 @@ ${clientErrorSource(name)}`
     }
 
     const helpers: Array<string> = [commonSource]
-    if (requiresStreaming(requirements)) {
-      helpers.push(executeStreamRequestSource)
-    }
     if (requirements.eventStreamData) {
       helpers.push(sseRequestSource(importName))
     }
@@ -350,7 +347,7 @@ export const make = (
 
     const payloadVarName = "options.payload"
     if (operation.payloadFormData) {
-      pipeline.push(`HttpClientRequest.bodyFormDataRecord(${payloadVarName} as any)`)
+      pipeline.push(`HttpClientRequest.bodyFormData(${payloadVarName} as any)`)
     } else if (operation.payloadFormUrlEncoded) {
       pipeline.push(`HttpClientRequest.bodyUrlParams(${payloadVarName} as any)`)
     } else if (operation.payload) {
@@ -415,9 +412,7 @@ export const make = (
     }
 
     if (operation.payloadFormData) {
-      pipeline.push(`HttpClientRequest.bodyFormDataRecord(options.payload as any)`)
-    } else if (operation.payloadFormUrlEncoded) {
-      pipeline.push(`HttpClientRequest.bodyUrlParams(options.payload as any)`)
+      pipeline.push(`HttpClientRequest.bodyFormData(options.payload as any)`)
     } else if (operation.payload) {
       pipeline.push(`HttpClientRequest.bodyJsonUnsafe(options.payload)`)
     }
@@ -458,9 +453,7 @@ export const make = (
     }
 
     if (operation.payloadFormData) {
-      pipeline.push(`HttpClientRequest.bodyFormDataRecord(options.payload as any)`)
-    } else if (operation.payloadFormUrlEncoded) {
-      pipeline.push(`HttpClientRequest.bodyUrlParams(options.payload as any)`)
+      pipeline.push(`HttpClientRequest.bodyFormData(options.payload as any)`)
     } else if (operation.payload) {
       pipeline.push(`HttpClientRequest.bodyJsonUnsafe(options.payload)`)
     }
@@ -693,9 +686,6 @@ ${clientErrorSource(name)}`
     }
 
     const helpers: Array<string> = [commonSource]
-    if (requiresStreaming(requirements)) {
-      helpers.push(executeStreamRequestSource)
-    }
     if (requirements.eventStream) {
       helpers.push(sseRequestSourceTs)
     }
@@ -788,8 +778,6 @@ export const make = (
     const payloadAccessor = "options.payload"
     if (operation.payloadFormData) {
       pipeline.push(`HttpClientRequest.bodyFormDataRecord(${payloadAccessor} as any)`)
-    } else if (operation.payloadFormUrlEncoded) {
-      pipeline.push(`HttpClientRequest.bodyUrlParams(${payloadAccessor} as any)`)
     } else if (operation.payload) {
       pipeline.push(`HttpClientRequest.bodyJsonUnsafe(${payloadAccessor})`)
     }
@@ -852,8 +840,6 @@ export const make = (
 
     if (operation.payloadFormData) {
       pipeline.push(`HttpClientRequest.bodyFormDataRecord(options.payload as any)`)
-    } else if (operation.payloadFormUrlEncoded) {
-      pipeline.push(`HttpClientRequest.bodyUrlParams(options.payload as any)`)
     } else if (operation.payload) {
       pipeline.push(`HttpClientRequest.bodyJsonUnsafe(options.payload)`)
     }
@@ -895,8 +881,6 @@ export const make = (
 
     if (operation.payloadFormData) {
       pipeline.push(`HttpClientRequest.bodyFormDataRecord(options.payload as any)`)
-    } else if (operation.payloadFormUrlEncoded) {
-      pipeline.push(`HttpClientRequest.bodyUrlParams(options.payload as any)`)
     } else if (operation.payload) {
       pipeline.push(`HttpClientRequest.bodyJsonUnsafe(options.payload)`)
     }
@@ -1038,13 +1022,6 @@ const onRequestSource = (withResponseVariants: boolean) => {
   }`
 }
 
-const executeStreamRequestSource = `const executeStreamRequest = (request: HttpClientRequest.HttpClientRequest) =>
-    Effect.suspend(() =>
-      options.transformClient
-        ? Effect.flatMap(options.transformClient(httpClient), (client) => HttpClient.filterStatusOk(client).execute(request))
-        : HttpClient.filterStatusOk(httpClient).execute(request)
-    )`
-
 const sseRequestSource = (_importName: string) =>
   `const sseRequest = <
      Type,
@@ -1059,7 +1036,7 @@ const sseRequestSource = (_importName: string) =>
       HttpClientError.HttpClientError | SchemaError | Sse.Retry | Sse.SseError,
       DecodingServices
     > =>
-      executeStreamRequest(request).pipe(
+      HttpClient.filterStatusOk(httpClient).execute(request).pipe(
         Effect.map((response) => response.stream),
         Stream.unwrap,
         Stream.decodeText(),
@@ -1074,7 +1051,7 @@ const sseEventRequestSource = `const sseEventRequest = <S extends Sse.EventCodec
       HttpClientError.HttpClientError | SchemaError | Sse.Retry | Sse.SseError,
       S["DecodingServices"]
     > =>
-      executeStreamRequest(request).pipe(
+      HttpClient.filterStatusOk(httpClient).execute(request).pipe(
         Effect.map((response) => response.stream),
         Stream.unwrap,
         Stream.decodeText(),
@@ -1083,7 +1060,7 @@ const sseEventRequestSource = `const sseEventRequest = <S extends Sse.EventCodec
 
 const binaryRequestSource =
   `const binaryRequest = (request: HttpClientRequest.HttpClientRequest): Stream.Stream<Uint8Array, HttpClientError.HttpClientError> =>
-    executeStreamRequest(request).pipe(
+    HttpClient.filterStatusOk(httpClient).execute(request).pipe(
       Effect.map((response) => response.stream),
       Stream.unwrap
     )`
@@ -1091,7 +1068,7 @@ const binaryRequestSource =
 // Type-only mode helpers (no schema decoding)
 const sseRequestSourceTs =
   `const sseRequest = (request: HttpClientRequest.HttpClientRequest): Stream.Stream<unknown, HttpClientError.HttpClientError> =>
-    executeStreamRequest(request).pipe(
+    HttpClient.filterStatusOk(httpClient).execute(request).pipe(
       Effect.map((response) => response.stream),
       Stream.unwrap,
       Stream.decodeText(),
@@ -1102,7 +1079,7 @@ const sseRequestSourceTs =
 
 const binaryRequestSourceTs =
   `const binaryRequest = (request: HttpClientRequest.HttpClientRequest): Stream.Stream<Uint8Array, HttpClientError.HttpClientError> =>
-    executeStreamRequest(request).pipe(
+    HttpClient.filterStatusOk(httpClient).execute(request).pipe(
       Effect.map((response) => response.stream),
       Stream.unwrap
     )`

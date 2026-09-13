@@ -41,9 +41,9 @@ const valueAction = (type: Completions.FlagType): string => {
       return `:value:(${type.values.map(escapeZshChoice).join(" ")})`
     case "Path":
       return type.pathType === "directory" ? `:directory:_directories` : `:file:_files`
-    case "Int":
+    case "Integer":
       return `:integer:`
-    case "Finite":
+    case "Float":
       return `:float:`
     case "Date":
       return `:date:`

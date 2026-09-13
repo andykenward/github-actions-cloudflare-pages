@@ -27,26 +27,6 @@ describe("HttpApiClient", () => {
         assert.deepStrictEqual(first, [{ event: "first", data: "one" }])
       }))
 
-    it.effect("keeps per-call SSE decode options isolated", () =>
-      Effect.gen(function*() {
-        const client = yield* HttpApiClient.makeWith(StreamingApi, {
-          baseUrl: "http://test",
-          httpClient: clientFromResponse(() => new Response(textStream(["data: ", "hello\n\n"]), { status: 200 }))
-        })
-
-        const limitedStream = yield* client.test.events({ sseOptions: { maxEventSize: 4 } })
-        const defaultStream = yield* client.test.events({})
-        const [error, events] = yield* Effect.all([
-          limitedStream.pipe(Stream.runCollect, Effect.flip),
-          Stream.runCollect(defaultStream)
-        ], { concurrency: "unbounded" })
-
-        assert.instanceOf(error, Sse.SseError)
-        assert.instanceOf(error.reason, Sse.EventTooLarge)
-        assert.strictEqual(error.reason.maxEventSize, 4)
-        assert.deepStrictEqual(events, [{ event: "message", data: "hello" }])
-      }))
-
     it.effect("keeps StreamSse parser state isolated between responses", () =>
       Effect.gen(function*() {
         const bodies = [
@@ -224,7 +204,7 @@ describe("HttpApiClient", () => {
         }
       }))
 
-    it.effect("forwards SSE options through mixed WithHeaders content-type selection", () =>
+    it.effect("selects a WithHeaders stream from a mixed buffered success by content type", () =>
       Effect.gen(function*() {
         const Api = HttpApi.make("Api").add(
           HttpApiGroup.make("test").add(
@@ -242,7 +222,7 @@ describe("HttpApiClient", () => {
         const client = yield* HttpApiClient.makeWith(Api, {
           baseUrl: "http://test",
           httpClient: clientFromResponse(() =>
-            new Response(textStream(["data: ", `{"text":"hello"}\n\n`]), {
+            new Response(textStream([`data: {"text":"hello"}\n\n`]), {
               status: 200,
               headers: {
                 "content-type": "text/event-stream; charset=utf-8",
@@ -252,23 +232,13 @@ describe("HttpApiClient", () => {
           )
         })
 
-        const value = yield* client.test.chat({ sseOptions: { maxEventSize: 4 } })
+        const value = yield* client.test.chat({})
         if (!(HttpApiSchema.WithHeadersValueTypeId in value)) {
           throw new Error("Expected WithHeaders response")
         }
-        const error = yield* value.body.pipe(Stream.runCollect, Effect.flip)
+        const events = yield* Stream.runCollect(value.body)
 
         assert.deepStrictEqual(value.headers, { "x-count": 1 })
-        assert.instanceOf(error, Sse.SseError)
-        assert.instanceOf(error.reason, Sse.EventTooLarge)
-        assert.strictEqual(error.reason.maxEventSize, 4)
-
-        const defaultValue = yield* client.test.chat({})
-        if (!(HttpApiSchema.WithHeadersValueTypeId in defaultValue)) {
-          throw new Error("Expected WithHeaders response")
-        }
-        const events = yield* Stream.runCollect(defaultValue.body)
-        assert.deepStrictEqual(defaultValue.headers, { "x-count": 1 })
         assert.deepStrictEqual(events, [{ text: "hello" }])
       }))
 
@@ -453,30 +423,6 @@ describe("HttpApiClient", () => {
       }))
   })
 
-  it.effect("decodes form-urlencoded responses", () =>
-    Effect.gen(function*() {
-      const Api = HttpApi.make("Api").add(
-        HttpApiGroup.make("test").add(
-          HttpApiEndpoint.get("form", "/form", {
-            success: Schema.Struct({ name: Schema.String }).pipe(HttpApiSchema.asFormUrlEncoded())
-          })
-        )
-      )
-      const client = yield* HttpApiClient.makeWith(Api, {
-        baseUrl: "https://example.test",
-        httpClient: clientFromResponse(() =>
-          new Response("name=Ada", {
-            status: 200,
-            headers: { "content-type": "application/x-www-form-urlencoded" }
-          })
-        )
-      })
-
-      const value = yield* client.test.form({})
-
-      assert.deepStrictEqual(value, { name: "Ada" })
-    }))
-
   describe("response headers", () => {
     it.effect("fails response decoding when a declared header is invalid", () =>
       Effect.gen(function*() {
@@ -554,14 +500,6 @@ describe("HttpApiClient", () => {
         }),
         "https://api.example.com/users/123?page=1&tags=1&tags=2"
       )
-    })
-
-    it("preserves a base URL pathname", () => {
-      const builder = HttpApiClient.urlBuilder(Api, {
-        baseUrl: "https://api.example.com/v1"
-      })
-
-      strictEqual(builder.users.health(), "https://api.example.com/v1/health")
     })
 
     it("encodes path parameters", () => {

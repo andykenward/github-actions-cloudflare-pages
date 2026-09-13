@@ -502,8 +502,6 @@ export interface WithHeaders<S extends Schema.Top, H extends Schema.Top> extends
  * The Type of a `WithHeaders` schema: what handlers return and what the
  * client resolves to, constructed via {@link withHeaders}.
  *
- * **Details**
- *
  * `body` is the inner success value. For stream success schemas it is the
  * `Stream` itself, so headers are decided before the body starts streaming.
  *
@@ -525,12 +523,8 @@ const withHeadersValueSchema = Schema.declare(isWithHeadersValue)
 /**
  * Wraps a success schema with a response headers schema.
  *
- * **Details**
- *
  * Headers accept either a schema or a fields shorthand, mirroring the
  * request-side headers option.
- *
- * **Example** (Adding response headers to a success schema)
  *
  * ```ts import.meta.vitest
  * import { Schema } from "effect"
@@ -577,8 +571,6 @@ export function WithHeaders(
 /**
  * Constructs a `WithHeaders` response value from a body and headers.
  *
- * **Details**
- *
  * The returned value is branded so servers and clients can detect it exactly,
  * including in mixed success unions. The same shape is used on both sides: a
  * value received from a client can be returned from another handler unchanged.
@@ -600,8 +592,6 @@ export const withHeaders = <A, H>(options: {
 
 /**
  * Returns `true` when a schema is a `WithHeaders` response schema.
- *
- * **Example** (Detecting a response headers schema)
  *
  * ```ts import.meta.vitest
  * import { Schema } from "effect"
@@ -673,8 +663,6 @@ export interface encodeToWithHeaders<
  * defects on the client. Stream responses should use {@link WithHeaders},
  * which preserves the body stream's error channel in the generated client.
  *
- * **Example** (Encoding an error with headers)
- *
  * ```ts import.meta.vitest
  * import { Schema } from "effect"
  * import { HttpApiSchema } from "effect/unstable/httpapi"
@@ -735,8 +723,8 @@ export function encodeToWithHeaders<
       )
     ).annotate({
       "~httpApiWithHeaders": { body, headers, headersCodec: Schema.toEncoded(headers) },
-      httpApiStatus: status,
-      "~httpApiEncoding": encoding
+      ...(status !== undefined ? { httpApiStatus: status } : undefined),
+      ...(encoding !== undefined ? { "~httpApiEncoding": encoding } : undefined)
     })
   }
 }
@@ -994,6 +982,11 @@ export function getResponseEncodingSchema(schema: Schema.Constraint): ResponseEn
     return getResponseEncoding(schema.schema.ast)
   }
   return getResponseEncoding(schema.ast)
+}
+
+/** @internal */
+export function getStatusStream(self: StreamSchema): number {
+  return getStatusSuccess(self.ast)
 }
 
 /** @internal */

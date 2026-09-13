@@ -11,7 +11,6 @@
  * @since 2.0.0
  */
 import type { Kind, TypeLambda } from "./HKT.ts"
-import { getStackTraceLimit } from "./internal/stackTraceLimit.ts"
 import type * as Types from "./Types.ts"
 
 /**
@@ -220,8 +219,7 @@ const pickInternalCall = (): <A>(body: () => A) => A => {
     }
   }
 
-  const isNotOptimizedAway = getStackTraceLimit() !== 0 &&
-    standard[InternalTypeId](() => new Error().stack)?.includes(InternalTypeId) === true
+  const isNotOptimizedAway = standard[InternalTypeId](() => new Error().stack)?.includes(InternalTypeId) === true
 
   return isNotOptimizedAway ? standard[InternalTypeId] : forced[InternalTypeId]
 }

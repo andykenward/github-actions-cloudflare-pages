@@ -21,7 +21,7 @@ const seededClient = Effect.gen(function*() {
 })
 
 layer(LibsqlContainer.layerClient, { timeout: "30 seconds" })("Resolver", (it) => {
-  describe("ordered", { concurrent: false }, () => {
+  describe.sequential("ordered", () => {
     it.effect("insert", () =>
       Effect.gen(function*() {
         const batches: Array<Array<string>> = []
@@ -76,7 +76,7 @@ layer(LibsqlContainer.layerClient, { timeout: "30 seconds" })("Resolver", (it) =
       }))
   })
 
-  describe("grouped", { concurrent: false }, () => {
+  describe.sequential("grouped", () => {
     it.effect("find by name", () =>
       Effect.gen(function*() {
         const sql = yield* seededClient
@@ -130,7 +130,7 @@ layer(LibsqlContainer.layerClient, { timeout: "30 seconds" })("Resolver", (it) =
       }))
   })
 
-  describe("findById", { concurrent: false }, () => {
+  describe.sequential("findById", () => {
     it.effect("find by id", () =>
       Effect.gen(function*() {
         const sql = yield* seededClient

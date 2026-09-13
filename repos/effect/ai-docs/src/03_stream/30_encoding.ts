@@ -1,17 +1,19 @@
 /**
  * @title Decoding and encoding streams
  *
- * Use `Stream.pipeThroughChannel` with the `Ndjson` and `SchemaBinary` modules to
+ * Use `Stream.pipeThroughChannel` with the `Ndjson` & `Msgpack` modules to
  * decode and encode streams of structured data.
  */
 import { DateTime, Schema, Stream } from "effect"
-import { Ndjson, SchemaBinary } from "effect/unstable/encoding"
+import { Msgpack, Ndjson } from "effect/unstable/encoding"
 
-// SchemaBinary derives a framed binary decoder directly from a schema.
-export const schemaBinaryDecoder = SchemaBinary.decode(Schema.Struct({
+// All of the examples below can also be done with Msgpack by replacing `Ndjson`
+// with `Msgpack` and using the appropriate channels (`Msgpack.decode()`,
+// `Msgpack.encode()`, etc.).
+export const msgpackDecoder = Msgpack.decodeSchema(Schema.Struct({
   id: Schema.Int,
   name: Schema.String
-}))()
+}))
 
 // ---------------------------------------------------------------------------
 // Domain

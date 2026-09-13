@@ -1,4 +1,4 @@
-import { assert, it } from "@effect/vitest"
+import { assert, describe, it } from "@effect/vitest"
 import { Cause, Effect, Schema } from "effect"
 import { Model } from "effect/unstable/schema"
 import { SqlClient, SqlModel, SqlResolver } from "effect/unstable/sql"
@@ -22,64 +22,67 @@ class SoftDeleteUser extends Model.Class<SoftDeleteUser>("SoftDeleteUser")({
   )
 }) {}
 
-it.layer(MysqlContainer.layer, { timeout: "90 seconds", excludeTestServices: true })("SqlModel", (it) => {
+describe("SqlModel", () => {
   it.effect("insert returns result", () =>
     Effect.gen(function*() {
       const repo = yield* SqlModel.makeRepository(User, {
-        tableName: "users_insert",
+        tableName: "users",
         idColumn: "id",
         spanPrefix: "UserRepository"
       })
       const sql = yield* SqlClient.SqlClient
-      yield* sql`CREATE TABLE users_insert (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
+      yield* sql`CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
 
       const result = yield* repo.insert(User.insert.make({ name: "Alice", age: 30 }))
       assert.deepStrictEqual(result, new User({ id: 1, name: "Alice", age: 30 }))
     }).pipe(
-      Effect.provide(MysqlContainer.client)
+      Effect.provide(MysqlContainer.layerClient),
+      Effect.catchTag("ContainerError", () => Effect.void)
     ), { timeout: 60_000 })
 
   it.effect("insert returns result with transforms", () =>
     Effect.gen(function*() {
       const repo = yield* SqlModel.makeRepository(User, {
-        tableName: "users_insert_transforms",
+        tableName: "users",
         idColumn: "id",
         spanPrefix: "UserRepository"
       })
       const sql = yield* SqlClient.SqlClient
-      yield* sql`CREATE TABLE users_insert_transforms (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
+      yield* sql`CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
 
       const result = yield* repo.insert(User.insert.make({ name: "Alice", age: 30 }))
       assert.deepStrictEqual(result, new User({ id: 1, name: "Alice", age: 30 }))
     }).pipe(
-      Effect.provide(MysqlContainer.clientWithTransforms)
+      Effect.provide(MysqlContainer.layerClientWithTransforms),
+      Effect.catchTag("ContainerError", () => Effect.void)
     ), { timeout: 60_000 })
 
   it.effect("insertVoid", () =>
     Effect.gen(function*() {
       const repo = yield* SqlModel.makeRepository(User, {
-        tableName: "users_insert_void",
+        tableName: "users",
         idColumn: "id",
         spanPrefix: "UserRepository"
       })
       const sql = yield* SqlClient.SqlClient
-      yield* sql`CREATE TABLE users_insert_void (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
+      yield* sql`CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
 
       const result = yield* repo.insertVoid(User.insert.make({ name: "Alice", age: 30 }))
       assert.strictEqual(result, void 0)
     }).pipe(
-      Effect.provide(MysqlContainer.client)
+      Effect.provide(MysqlContainer.layerClient),
+      Effect.catchTag("ContainerError", () => Effect.void)
     ), { timeout: 60_000 })
 
-  it.effect("insert data loader returns result", () =>
+  it.live("insert data loader returns result", () =>
     Effect.gen(function*() {
       const repo = yield* SqlModel.makeResolvers(User, {
-        tableName: "users_insert_loader",
+        tableName: "users",
         idColumn: "id",
         spanPrefix: "UserRepository"
       })
       const sql = yield* SqlClient.SqlClient
-      yield* sql`CREATE TABLE users_insert_loader (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
+      yield* sql`CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
 
       const [alice, john] = yield* Effect.all([
         SqlResolver.request(User.insert.make({ name: "Alice", age: 30 }), repo.insert),
@@ -88,18 +91,19 @@ it.layer(MysqlContainer.layer, { timeout: "90 seconds", excludeTestServices: tru
       assert.deepStrictEqual(alice.name, "Alice")
       assert.deepStrictEqual(john.name, "John")
     }).pipe(
-      Effect.provide(MysqlContainer.client)
+      Effect.provide(MysqlContainer.layerClient),
+      Effect.catchTag("ContainerError", () => Effect.void)
     ), { timeout: 60_000 })
 
-  it.effect("findById data loader", () =>
+  it.live("findById data loader", () =>
     Effect.gen(function*() {
       const repo = yield* SqlModel.makeResolvers(User, {
-        tableName: "users_find_loader",
+        tableName: "users",
         idColumn: "id",
         spanPrefix: "UserRepository"
       })
       const sql = yield* SqlClient.SqlClient
-      yield* sql`CREATE TABLE users_find_loader (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
+      yield* sql`CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
       const alice = yield* SqlResolver.request(User.insert.make({ name: "Alice", age: 30 }), repo.insert)
       const john = yield* SqlResolver.request(User.insert.make({ name: "John", age: 30 }), repo.insert)
 
@@ -111,7 +115,8 @@ it.layer(MysqlContainer.layer, { timeout: "90 seconds", excludeTestServices: tru
       assert.deepStrictEqual(alice2.name, "Alice")
       assert.deepStrictEqual(john2.name, "John")
     }).pipe(
-      Effect.provide(MysqlContainer.client)
+      Effect.provide(MysqlContainer.layerClient),
+      Effect.catchTag("ContainerError", () => Effect.void)
     ), { timeout: 60_000 })
 
   it.effect("findById ignores soft deleted rows", () =>
@@ -145,10 +150,11 @@ it.layer(MysqlContainer.layer, { timeout: "90 seconds", excludeTestServices: tru
       const deletedError = yield* Effect.flip(repo.findById(alice.id))
       assert.isTrue(Cause.isNoSuchElementError(deletedError))
     }).pipe(
-      Effect.provide(MysqlContainer.client)
+      Effect.provide(MysqlContainer.layerClient),
+      Effect.catchTag("ContainerError", () => Effect.void)
     ), { timeout: 60_000 })
 
-  it.effect("findById data loader ignores soft deleted rows", () =>
+  it.live("findById data loader ignores soft deleted rows", () =>
     Effect.gen(function*() {
       const repo = yield* SqlModel.makeResolvers(SoftDeleteUser, {
         tableName: "soft_delete_user_resolvers",
@@ -179,40 +185,43 @@ it.layer(MysqlContainer.layer, { timeout: "90 seconds", excludeTestServices: tru
       const deletedError = yield* Effect.flip(SqlResolver.request(alice.id, repo.findById))
       assert.isTrue(Cause.isNoSuchElementError(deletedError))
     }).pipe(
-      Effect.provide(MysqlContainer.client)
+      Effect.provide(MysqlContainer.layerClient),
+      Effect.catchTag("ContainerError", () => Effect.void)
     ), { timeout: 60_000 })
 
   it.effect("update returns result", () =>
     Effect.gen(function*() {
       const repo = yield* SqlModel.makeRepository(User, {
-        tableName: "users_update",
+        tableName: "users",
         idColumn: "id",
         spanPrefix: "UserRepository"
       })
       const sql = yield* SqlClient.SqlClient
-      yield* sql`CREATE TABLE users_update (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
+      yield* sql`CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
 
       let result = yield* repo.insert(User.insert.make({ name: "Alice", age: 30 }))
       result = yield* repo.update(User.update.make({ ...result, name: "Bob" }))
       assert.deepStrictEqual(result, new User({ id: 1, name: "Bob", age: 30 }))
     }).pipe(
-      Effect.provide(MysqlContainer.client)
+      Effect.provide(MysqlContainer.layerClient),
+      Effect.catchTag("ContainerError", () => Effect.void)
     ), { timeout: 60_000 })
 
   it.effect("update returns result with transforms", () =>
     Effect.gen(function*() {
       const repo = yield* SqlModel.makeRepository(User, {
-        tableName: "users_update_transforms",
+        tableName: "users",
         idColumn: "id",
         spanPrefix: "UserRepository"
       })
       const sql = yield* SqlClient.SqlClient
-      yield* sql`CREATE TABLE users_update_transforms (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
+      yield* sql`CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), age INT)`
 
       let result = yield* repo.insert(User.insert.make({ name: "Alice", age: 30 }))
       result = yield* repo.update(User.update.make({ ...result, name: "Bob" }))
       assert.deepStrictEqual(result, new User({ id: 1, name: "Bob", age: 30 }))
     }).pipe(
-      Effect.provide(MysqlContainer.clientWithTransforms)
+      Effect.provide(MysqlContainer.layerClientWithTransforms),
+      Effect.catchTag("ContainerError", () => Effect.void)
     ), { timeout: 60_000 })
 })

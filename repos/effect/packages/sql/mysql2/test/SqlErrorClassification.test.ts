@@ -38,7 +38,7 @@ const assertUniqueViolation = (reason: SqlError.SqlErrorReason, constraint: stri
   }
 }
 
-describe("MysqlClient SqlError classification", { concurrent: false }, () => {
+describe("MysqlClient SqlError classification", () => {
   it.effect("maps representative errno codes to reasons", () =>
     Effect.gen(function*() {
       const cases = [

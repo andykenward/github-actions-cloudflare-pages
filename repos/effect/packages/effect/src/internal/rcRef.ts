@@ -116,10 +116,7 @@ const getState = <A, E>(self: RcRefImpl<A, E>) =>
               self.acquire as Effect.Effect<A, E>,
               Context.add(self.context, Scope.Scope, scope)
             )).pipe(
-              Effect.flatMap((value) => {
-                if (self.state._tag === "Closed") {
-                  return Effect.interrupt
-                }
+              Effect.map((value) => {
                 const state: State.Acquired<A> = {
                   _tag: "Acquired",
                   value,
@@ -129,7 +126,7 @@ const getState = <A, E>(self: RcRefImpl<A, E>) =>
                   invalidated: false
                 }
                 self.state = state
-                return Effect.succeed(state)
+                return state
               }),
               Effect.onExit((exit) => Exit.isFailure(exit) ? Scope.close(scope, exit) : Effect.void)
             )
@@ -152,17 +149,17 @@ export const get = Effect.fnUntraced(function*<A, E>(
     if (state.refCount > 0) {
       return Effect.void
     }
-    if (self.idleTimeToLive === undefined || state.invalidated) {
-      if (self.state === state) {
-        self.state = stateEmpty
-      }
+    if (self.idleTimeToLive === undefined) {
+      self.state = stateEmpty
+      return Scope.close(state.scope, Exit.void)
+    } else if (state.invalidated) {
       return Scope.close(state.scope, Exit.void)
     } else if (!isFinite) {
       return Effect.void
     }
     state.fiber = Effect.sleep(self.idleTimeToLive).pipe(
       Effect.flatMap(() => {
-        if (self.state === state && state.refCount === 0) {
+        if (self.state._tag === "Acquired" && self.state.refCount === 0) {
           self.state = stateEmpty
           return Scope.close(state.scope, Exit.void)
         }

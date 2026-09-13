@@ -22,7 +22,7 @@ import * as Layer from "../../Layer.ts"
 import * as Option from "../../Option.ts"
 import type * as Scope from "../../Scope.ts"
 import * as Tracer from "../../Tracer.ts"
-import type { ExtractTag } from "../../Types.ts"
+import type { ExtractTag, Mutable } from "../../Types.ts"
 import type * as Headers from "../http/Headers.ts"
 import type * as HttpClient from "../http/HttpClient.ts"
 import * as OtlpEnv from "./internal/otlpEnv.ts"
@@ -96,14 +96,22 @@ export const make: (
 
   return Tracer.make({
     span(options) {
-      return new SpanImpl(options, exportFn)
+      return makeSpan({
+        ...options,
+        status: {
+          _tag: "Started",
+          startTime: options.startTime
+        },
+        attributes: new Map(),
+        export: exportFn
+      })
     },
     context: options.context ?
       function(primitive, fiber) {
-        if (fiber.cache.span === undefined) {
+        if (fiber.currentSpan === undefined) {
           return primitive["~effect/Effect/evaluate"](fiber)
         }
-        return options.context!(primitive, fiber.cache.span)
+        return options.context!(primitive, fiber.currentSpan)
       } :
       undefined
   })
@@ -150,7 +158,7 @@ export const layerFromConfig = (options?: {
 }): Layer.Layer<Exporter.Flusher, never, HttpClient.HttpClient | OtlpSerialization> =>
   Effect.gen(function*() {
     const { disabled, endpoint, exporters } = yield* Config.all({
-      disabled: Config.Boolean("OTEL_SDK_DISABLED").pipe(Config.withDefault(false)),
+      disabled: Config.boolean("OTEL_SDK_DISABLED").pipe(Config.withDefault(false)),
       endpoint: OtlpEnv.endpoint("TRACES"),
       exporters: OtlpEnv.exporters("TRACES")
     })
@@ -160,15 +168,15 @@ export const layerFromConfig = (options?: {
     }
 
     const { baseTimeout, tracesTimeout, exportTimeout, scheduleDelay, maxBatchSize } = yield* Config.all({
-      baseTimeout: Config.option(Config.Int("OTEL_EXPORTER_OTLP_TIMEOUT")),
-      tracesTimeout: Config.option(Config.Int("OTEL_EXPORTER_OTLP_TRACES_TIMEOUT")),
-      exportTimeout: Config.option(Config.Int("OTEL_BSP_EXPORT_TIMEOUT")),
+      baseTimeout: Config.option(Config.int("OTEL_EXPORTER_OTLP_TIMEOUT")),
+      tracesTimeout: Config.option(Config.int("OTEL_EXPORTER_OTLP_TRACES_TIMEOUT")),
+      exportTimeout: Config.option(Config.int("OTEL_BSP_EXPORT_TIMEOUT")),
       scheduleDelay: Config.option(
-        Config.Int("OTEL_BSP_SCHEDULE_DELAY").pipe(
+        Config.int("OTEL_BSP_SCHEDULE_DELAY").pipe(
           Config.map(Duration.millis)
         )
       ),
-      maxBatchSize: Config.option(Config.Int("OTEL_BSP_MAX_EXPORT_BATCH_SIZE"))
+      maxBatchSize: Config.option(Config.int("OTEL_BSP_MAX_EXPORT_BATCH_SIZE"))
     })
 
     const shutdownTimeout = Option.firstSomeOf([tracesTimeout, baseTimeout, exportTimeout]).pipe(
@@ -188,64 +196,17 @@ export const layerFromConfig = (options?: {
 
 // internal
 
-class SpanImpl implements Tracer.Span {
-  readonly _tag = "Span"
-  readonly name: string
-  readonly parent: Option.Option<Tracer.AnySpan>
-  readonly annotations: Context.Context<never>
-  readonly links: Array<Tracer.SpanLink>
-  readonly kind: Tracer.SpanKind
-  readonly sampled: boolean
+interface SpanImpl extends Tracer.Span {
   readonly export: (span: SpanImpl) => void
+  readonly attributes: Map<string, unknown>
+  readonly links: Array<Tracer.SpanLink>
+  readonly events: Array<[name: string, startTime: bigint, attributes: Record<string, unknown> | undefined]>
   status: Tracer.SpanStatus
-  _traceId: string | undefined = undefined
-  _spanId: string | undefined = undefined
-  _attributes: Map<string, unknown> | undefined = undefined
-  _events: Array<[name: string, startTime: bigint, attributes: Record<string, unknown> | undefined]> | undefined =
-    undefined
+}
 
-  constructor(
-    options: {
-      readonly name: string
-      readonly parent: Option.Option<Tracer.AnySpan>
-      readonly annotations: Context.Context<never>
-      readonly links: Array<Tracer.SpanLink>
-      readonly startTime: bigint
-      readonly kind: Tracer.SpanKind
-      readonly sampled: boolean
-    },
-    exportFn: (span: SpanImpl) => void
-  ) {
-    this.name = options.name
-    this.parent = options.parent
-    this.annotations = options.annotations
-    this.links = options.links
-    this.kind = options.kind
-    this.sampled = options.sampled
-    this.export = exportFn
-    this.status = {
-      _tag: "Started",
-      startTime: options.startTime
-    }
-  }
-
-  get traceId(): string {
-    return this._traceId ??= Option.isSome(this.parent) ? this.parent.value.traceId : Encoding.randomHex(32)
-  }
-
-  get spanId(): string {
-    return this._spanId ??= Encoding.randomHex(16)
-  }
-
-  get attributes(): Map<string, unknown> {
-    return this._attributes ??= new Map()
-  }
-
-  get events(): Array<[name: string, startTime: bigint, attributes: Record<string, unknown> | undefined]> {
-    return this._events ??= []
-  }
-
-  end(endTime: bigint, exit: Exit.Exit<unknown, unknown>): void {
+const SpanProto = {
+  _tag: "Span",
+  end(this: SpanImpl, endTime: bigint, exit: Exit.Exit<unknown, unknown>) {
     this.status = {
       _tag: "Ended",
       startTime: this.status.startTime,
@@ -253,43 +214,59 @@ class SpanImpl implements Tracer.Span {
       exit
     }
     this.export(this)
-  }
-
-  attribute(key: string, value: unknown): void {
+  },
+  attribute(this: SpanImpl, key: string, value: unknown) {
     this.attributes.set(key, value)
-  }
-
-  event(name: string, startTime: bigint, attributes?: Record<string, unknown>): void {
+  },
+  event(this: SpanImpl, name: string, startTime: bigint, attributes?: Record<string, unknown>) {
     this.events.push([name, startTime, attributes])
-  }
-
-  addLinks(links: ReadonlyArray<Tracer.SpanLink>): void {
-    // oxlint-disable-next-line no-restricted-syntax
+  },
+  addLinks(this: SpanImpl, links: ReadonlyArray<Tracer.SpanLink>) {
     this.links.push(...links)
   }
+}
+type RemainingSpanImpl = Omit<Tracer.Span, (keyof typeof SpanProto) | "traceId" | "spanId" | "events">
+
+const makeSpan = (options: {
+  readonly name: string
+  readonly parent: Option.Option<Tracer.AnySpan>
+  readonly annotations: Context.Context<never>
+  readonly status: Tracer.SpanStatus
+  readonly attributes: ReadonlyMap<string, unknown>
+  readonly links: ReadonlyArray<Tracer.SpanLink>
+  readonly kind: Tracer.SpanKind
+  readonly sampled: boolean
+  readonly export: (span: SpanImpl) => void
+}): SpanImpl => {
+  const self: Mutable<SpanImpl> = Object.assign(
+    Object.create(SpanProto),
+    options satisfies RemainingSpanImpl
+  )
+  if (Option.isSome(self.parent)) {
+    self.traceId = self.parent.value.traceId
+  } else {
+    self.traceId = Encoding.randomHex(32)
+  }
+  self.spanId = Encoding.randomHex(16)
+  self.events = []
+  return self
 }
 
 const makeOtlpSpan = (self: SpanImpl): OtlpSpan => {
   const status = self.status as ExtractTag<Tracer.SpanStatus, "Ended">
-  const attributes = self._attributes === undefined ? [] : entriesToAttributes(self._attributes)
-  const events: Array<Event> = []
-  if (self._events !== undefined) {
-    for (let i = 0; i < self._events.length; i++) {
-      const [name, startTime, attributes] = self._events[i]
-      events.push({
-        name,
-        timeUnixNano: String(startTime),
-        attributes: attributes
-          ? entriesToAttributes(Object.entries(attributes))
-          : [],
-        droppedAttributesCount: 0
-      })
-    }
-  }
+  const attributes = entriesToAttributes(self.attributes.entries())
+  const events = self.events.map(([name, startTime, attributes]) => ({
+    name,
+    timeUnixNano: String(startTime),
+    attributes: attributes
+      ? entriesToAttributes(Object.entries(attributes))
+      : [],
+    droppedAttributesCount: 0
+  }))
   let otelStatus: Status
 
   if (status.exit._tag === "Success") {
-    otelStatus = { code: StatusCode.Ok }
+    otelStatus = constOtelStatusSuccess
   } else if (Cause.hasInterruptsOnly(status.exit.cause)) {
     otelStatus = {
       code: StatusCode.Ok,
@@ -341,21 +318,13 @@ const makeOtlpSpan = (self: SpanImpl): OtlpSpan => {
     }
   }
 
-  const links: Array<Link> = []
-  for (let i = 0; i < self.links.length; i++) {
-    const link = self.links[i]
-    links.push({
-      traceId: link.span.traceId,
-      spanId: link.span.spanId,
-      attributes: entriesToAttributes(Object.entries(link.attributes)),
-      droppedAttributesCount: 0
-    })
-  }
-
   return {
     traceId: self.traceId,
     spanId: self.spanId,
-    parentSpanId: Option.isSome(self.parent) ? self.parent.value.spanId : undefined,
+    parentSpanId: Option.match(self.parent, {
+      onNone: () => undefined,
+      onSome: (parent) => parent.spanId
+    }),
     name: self.name,
     kind: SpanKind[self.kind],
     startTimeUnixNano: String(status.startTime),
@@ -365,7 +334,12 @@ const makeOtlpSpan = (self: SpanImpl): OtlpSpan => {
     events,
     droppedEventsCount: 0,
     status: otelStatus,
-    links,
+    links: self.links.map((link) => ({
+      traceId: link.span.traceId,
+      spanId: link.span.spanId,
+      attributes: entriesToAttributes(Object.entries(link.attributes)),
+      droppedAttributesCount: 0
+    })),
     droppedLinksCount: 0
   }
 }
@@ -460,3 +434,7 @@ const SpanKind = {
   producer: 4,
   consumer: 5
 } as const
+
+const constOtelStatusSuccess: Status = {
+  code: StatusCode.Ok
+}

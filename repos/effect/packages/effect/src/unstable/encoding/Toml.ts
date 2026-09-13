@@ -45,7 +45,7 @@ class TomlParser {
   private index = 0
   private line = 1
   private column = 1
-  private readonly explicitTables = new Set<Table>()
+  private readonly explicitTables = new Set<string>()
 
   constructor(input: string) {
     this.input = input
@@ -85,14 +85,14 @@ class TomlParser {
     }
     this.finishStatement()
 
-    const table = this.resolveTable(path, array)
-    if (!array && this.explicitTables.has(table)) {
+    const pathKey = JSON.stringify(path)
+    if (!array && this.explicitTables.has(pathKey)) {
       this.fail(`Cannot redefine table '${path.join(".")}'`)
     }
     if (!array) {
-      this.explicitTables.add(table)
+      this.explicitTables.add(pathKey)
     }
-    this.current = table
+    this.current = this.resolveTable(path, array)
   }
 
   private resolveTable(path: ReadonlyArray<string>, array: boolean): Table {
@@ -494,8 +494,6 @@ class TomlParser {
 
 /**
  * Parses a TOML document into a null-prototype record.
- *
- * **Details**
  *
  * Offset date-times are represented by `Date`, matching the package this
  * parser replaces. Local dates and times remain strings.

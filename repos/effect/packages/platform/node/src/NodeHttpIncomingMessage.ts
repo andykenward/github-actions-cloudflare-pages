@@ -76,7 +76,17 @@ export abstract class NodeHttpIncomingMessage<E> extends Inspectable.Class
     if (this.textEffect) {
       return this.textEffect
     }
-    this.textEffect = Effect.map(this.arrayBuffer, (_) => Buffer.from(_).toString("utf8"))
+    this.textEffect = Effect.runSync(Effect.cached(
+      Effect.flatMap(
+        IncomingMessage.MaxBodySize,
+        (maxBodySize) =>
+          NodeStream.toString(() => this.source, {
+            onError: this.onError,
+            maxBytes: maxBodySize
+          })
+      )
+    ))
+    this.arrayBufferEffect = Effect.map(this.textEffect, (_) => new TextEncoder().encode(_).buffer)
     return this.textEffect
   }
 

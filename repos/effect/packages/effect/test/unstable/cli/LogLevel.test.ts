@@ -154,7 +154,7 @@ describe("LogLevel", () => {
   it.effect("applies the selected log level to subcommands", () =>
     Effect.gen(function*() {
       const parentCommand = Command.make("parent", {
-        verbose: Flag.Boolean("verbose")
+        verbose: Flag.boolean("verbose")
       })
 
       const childCommand = Command.make("child", {}, () =>

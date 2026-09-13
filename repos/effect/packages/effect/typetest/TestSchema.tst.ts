@@ -9,12 +9,4 @@ describe("TestSchema", () => {
 
     expect(encoding.encodeUnknownEffect(1)).type.toBe<Effect.Effect<string, SchemaIssue.Issue>>()
   })
-
-  it("uses native Arbitrary check options", () => {
-    const asserts = new TestSchema.Asserts(Schema.String)
-
-    expect(asserts.verifyLosslessTransformation({ runs: 20, seed: "lossless" })).type.toBe<Promise<void>>()
-    expect(asserts.arbitrary().verifyGeneration({ runs: 20, maxDiscards: 100, seed: "generation" }))
-      .type.toBe<void>()
-  })
 })

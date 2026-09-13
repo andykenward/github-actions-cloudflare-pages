@@ -23,7 +23,7 @@ import { pipeArguments } from "./Pipeable.ts"
 import { hasProperty, isNumber } from "./Predicate.ts"
 import * as Reducer from "./Reducer.ts"
 
-const TypeId = "~effect/Duration"
+const TypeId = "~effect/time/Duration"
 
 const bigint0 = BigInt(0)
 const bigint1 = BigInt(1)

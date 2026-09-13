@@ -1,25 +1,28 @@
 import * as Config from "../../../Config.ts"
 import * as Schema from "../../../Schema.ts"
+import * as SchemaGetter from "../../../SchemaGetter.ts"
 
 export type Signal = "LOGS" | "METRICS" | "TRACES"
 
-const exporterList = (path: string) =>
-  Config.Array(Schema.String, path).pipe(
-    Config.map((_) => _.map((_) => _.toLowerCase().trim()).filter((_) => _ !== ""))
-  )
+const ExporterList = Config.Array(Schema.String).pipe(
+  Schema.decode({
+    decode: SchemaGetter.transform((_) => _.map((_) => _.toLowerCase().trim()).filter((_) => _ !== "")),
+    encode: SchemaGetter.passthrough()
+  })
+)
 
-const headersRecord = (path: string) => Config.Record(Schema.String, Schema.StringFromUriComponent, path)
+const HeadersRecord = Config.Record(Schema.String, Schema.StringFromUriComponent)
 
 export const headers = (signal: Signal) =>
-  headersRecord(`OTEL_EXPORTER_OTLP_${signal}_HEADERS`).pipe(
-    Config.orElse(() => headersRecord("OTEL_EXPORTER_OTLP_HEADERS")),
+  Config.schema(HeadersRecord, `OTEL_EXPORTER_OTLP_${signal}_HEADERS`).pipe(
+    Config.orElse(() => Config.schema(HeadersRecord, "OTEL_EXPORTER_OTLP_HEADERS")),
     Config.withDefault(undefined)
   )
 
 export const endpoint = (signal: Signal) =>
-  Config.URL(`OTEL_EXPORTER_OTLP_${signal}_ENDPOINT`).pipe(
+  Config.url(`OTEL_EXPORTER_OTLP_${signal}_ENDPOINT`).pipe(
     Config.orElse(() =>
-      Config.URL("OTEL_EXPORTER_OTLP_ENDPOINT").pipe(
+      Config.url("OTEL_EXPORTER_OTLP_ENDPOINT").pipe(
         Config.map((url) => {
           const slash = url.pathname.endsWith("/") ? "" : "/"
           url.pathname += `${slash}v1/${signal.toLowerCase()}`
@@ -31,6 +34,6 @@ export const endpoint = (signal: Signal) =>
   )
 
 export const exporters = (signal: Signal) =>
-  exporterList(`OTEL_${signal}_EXPORTER`).pipe(
+  Config.schema(ExporterList, `OTEL_${signal}_EXPORTER`).pipe(
     Config.withDefault<ReadonlyArray<string>>([])
   )
