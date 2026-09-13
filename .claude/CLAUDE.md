@@ -23,7 +23,7 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 | `pnpm run build`               | Bundle `dist/deploy` and `dist/delete`                                                                                     |
 | `pnpm run codegen` (`:watch`)  | GraphQL types → `__generated__/gql/`                                                                                       |
 | `pnpm run codegen:cloudflare`  | Cloudflare Pages types → `__generated__/types/cloudflare/`                                                                 |
-| `pnpm run codegen:events`      | GitHub event types from `@octokit/openapi-webhooks` → `__generated__/types/github/`                                        |
+| `pnpm run codegen:events`      | GitHub event names from `@octokit/openapi-webhooks` → `__generated__/types/github/`                                        |
 | `pnpm run download`            | Refresh `__generated__/payloads/` from `octokit/webhooks` (needs `GITHUB_TOKEN` in `.env`)                                 |
 | `pnpm run tsc:check`           | Type-check                                                                                                                 |
 | `pnpm run test` / `test:watch` | Vitest (`test:ci` adds the GitHub Actions reporter)                                                                        |

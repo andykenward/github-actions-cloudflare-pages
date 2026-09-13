@@ -4,6 +4,8 @@ import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 
+import type {WorkflowEvent} from './workflow-event/types.js'
+
 import {errorMessage} from '../errors.js'
 import {raise} from '../utils.js'
 import {getWorkflowEvent} from './workflow-event/workflow-event.js'
@@ -21,7 +23,7 @@ interface GitHubContextShape {
   /**
    * The event that triggered the workflow run.
    */
-  event: ReturnType<typeof getWorkflowEvent>
+  event: WorkflowEvent
   repo: Repo
   /**
    * The branch or tag ref that triggered the workflow run.
@@ -59,9 +61,8 @@ const getGitHubContext = (): GitHubContextShape => {
     }
 
     const node_id =
-      ('repository' in event.payload
-        ? event.payload.repository?.node_id
-        : undefined) || raise('context.repo: no repo node_id in payload')
+      event.payload.repository?.node_id ||
+      raise('context.repo: no repo node_id in payload')
 
     return {owner, repo, node_id}
   })()
@@ -108,16 +109,16 @@ const getGitHubContext = (): GitHubContextShape => {
       )
     }
 
-    let ref = process.env.GITHUB_HEAD_REF
-    if (!ref) {
-      if ('ref' in event.payload) {
-        ref = event.payload.ref ?? undefined // refs/heads/feature-branch-1
-      } else if (event.eventName === 'pull_request') {
-        ref = event.payload.pull_request.head.ref // andykenward/issue18
-      }
-      if (!ref) return raise('context: no ref')
-    }
-    return ref
+    return (
+      process.env.GITHUB_HEAD_REF ||
+      // `push`: `refs/heads/feature-branch-1`. `pull_request`: the head's
+      // short name, `andykenward/issue18`.
+      event.payload.ref ||
+      (event.eventName === 'pull_request'
+        ? event.payload.pull_request.head.ref
+        : undefined) ||
+      raise('context: no ref')
+    )
   })()
 
   const context = {

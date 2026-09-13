@@ -77,6 +77,38 @@ describe(getWorkflowEvent, () => {
     )
   })
 
+  test('throws naming the field a payload lacks for its event', () => {
+    expect.assertions(1)
+
+    const directory = mkdtempSync(path.join(tmpdir(), 'workflow-event-'))
+    onTestFinished(() => rmSync(directory, {recursive: true, force: true}))
+    const file = path.join(directory, 'event.json')
+    // A `pull_request` payload without the pull request.
+    writeFileSync(
+      file,
+      '{"action": "opened", "repository": {"node_id": "R_1"}}'
+    )
+    vi.stubEnv('GITHUB_EVENT_PATH', file)
+
+    expect(() => getWorkflowEvent()).toThrow(
+      `GITHUB_EVENT_PATH ${file} is not a pull_request payload: `
+    )
+  })
+
+  test('keeps only the fields the action reads', () => {
+    expect.assertions(1)
+
+    const {payload} = getWorkflowEvent()
+
+    // The fixture has ~30 top-level keys; the schema keeps the base ones plus
+    // the pull request, so a debug log of it stays small.
+    expect(Object.keys(payload).toSorted()).toStrictEqual([
+      'action',
+      'pull_request',
+      'repository'
+    ])
+  })
+
   test('logs the event name and payload with step debug logging on', () => {
     expect.assertions(2)
 
