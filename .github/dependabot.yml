@@ -24,11 +24,12 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # `pnpm-workspace.yaml` sets `minimumReleaseAge` to 7 days, and pnpm
+    # enforces it when Dependabot rewrites the lockfile. A shorter cooldown
+    # here selects a version pnpm then rejects, and the whole update fails.
     cooldown:
       default-days: 7
       semver-major-days: 14
-      semver-minor-days: 7
-      semver-patch-days: 3
     # Vendored read-only reference source (`pnpm run sync:effect`); its
     # manifests and lockfiles are upstream's, not dependencies of this action.
     # This only stops version updates — security updates are handled by the

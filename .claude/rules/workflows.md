@@ -33,4 +33,5 @@ paths:
 
 - Groups bump coupled packages together (`effect` + `@effect/vitest`; `vitest` + `@vitest/coverage-v8`; `@effect/tsgo` + `oxlint` + `oxlint-tsgolint`).
 - `undici` majors are ignored on purpose — see the tooling rule.
+- The npm `cooldown` must be at least `minimumReleaseAge` in `pnpm-workspace.yaml` (7 days). Dependabot picks the version with its own cooldown, then runs `pnpm install --lockfile-only`, and pnpm rejects anything younger than `minimumReleaseAge` with `ERR_PNPM_NO_MATURE_MATCHING_VERSION`, failing that dependency (2026-09-14, `skills` under a 3-day patch cooldown).
 - `exclude-paths: ['repos/**']` stops version updates for the vendored source. It doesn't affect alerts (the dependency graph still reads `repos/effect/pnpm-lock.yaml`) nor the security-update PRs they raise; the separate `/repos/*` npm entry with `ignore: dependency-name: '*'` stops those, because `ignore` applies to security updates and `exclude-paths` doesn't (options reference, 2026-09-13). The alerts themselves still show under Security.
