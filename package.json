@@ -55,8 +55,8 @@
     "openapi-fetch": "0.17.0"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "1.0.0",
-    "@changesets/cli": "3.0.1",
+    "@changesets/changelog-github": "1.0.1",
+    "@changesets/cli": "3.0.2",
     "@effect/tsgo": "0.39.0",
     "@effect/vitest": "4.0.0-rc.112",
     "@graphql-codegen/cli": "7.2.0",
