@@ -1,20 +1,31 @@
+import type {OpenAPISpec} from 'effect/http-api/OpenApi'
+import type * as Schema from 'effect/Schema'
+
 import {strict as assert} from 'node:assert'
 import {existsSync} from 'node:fs'
 import {mkdir, writeFile} from 'node:fs/promises'
 
-import openapiTS, {astToString} from 'openapi-typescript'
+import * as OpenApiGenerator from '@effect/openapi-generator/OpenApiGenerator'
+import * as OpenApiPatch from '@effect/openapi-generator/OpenApiPatch'
+import * as Effect from 'effect/Effect'
 
 /**
- * Code generates TypeScript for the Cloudflare Pages REST endpoints this action
- * consumes, sourced from Cloudflare's canonical OpenAPI schema
+ * Code generates the typed client for the Cloudflare Pages REST endpoints this
+ * action consumes, sourced from Cloudflare's canonical OpenAPI schema
  * ([`cloudflare/api-schemas`](https://github.com/cloudflare/api-schemas)).
  *
  * The published schema describes the *entire* Cloudflare API (~10MB), so this
  * script prunes it down to the handful of Pages operations we call, transitively
  * walking `$ref`s to keep only the referenced `components`, then hands the
- * self-contained subset to `openapi-typescript`. The result is a small, focused
- * `__generated__/types/cloudflare/pages.ts` instead of a multi-megabyte dump of
- * the whole API.
+ * self-contained subset to `@effect/openapi-generator`. The result is a small,
+ * focused `__generated__/types/cloudflare/pages.ts` — the response types and
+ * an `effect/http` client with one method per operation — instead of a
+ * multi-megabyte dump of the whole API.
+ *
+ * The client is generated type-only (`httpclient-type-only`): it casts a
+ * response body to its type rather than decoding it with a `Schema`, because
+ * Cloudflare's real responses don't always match its schema (an `ad_hoc`
+ * deployment has `source: null`) and a strict decode would reject them.
  *
  * There is no npm package for the schema, so it is fetched at codegen time (the
  * same network-at-codegen posture as [`bin/download/`](../download)). Pin a
@@ -34,21 +45,17 @@ assert.ok(
 const SCHEMA_URL = `https://raw.githubusercontent.com/cloudflare/api-schemas/${REF}/openapi.json`
 
 /**
- * The Pages operations this action calls. Paths are matched by pattern (account
- * and project/deployment id segments are templated) so we are resilient to the
- * exact parameter names Cloudflare uses.
+ * The Pages operations this action calls — only those: each one is a method
+ * of the generated client, so an unused operation is dead code in `dist/`.
+ * Paths are matched by pattern (account and project/deployment id segments are
+ * templated) so we are resilient to the exact parameter names Cloudflare uses.
  */
 const OPERATIONS: Array<{pattern: RegExp; methods: string[]}> = [
-  // GET a single project — https://developers.cloudflare.com/api/resources/pages/subresources/projects/methods/get/
-  {
-    pattern: /^\/accounts\/\{[^}]+\}\/pages\/projects\/\{[^}]+\}$/u,
-    methods: ['get']
-  },
-  // List + create deployments
+  // List deployments — creating one is wrangler's job
   {
     pattern:
       /^\/accounts\/\{[^}]+\}\/pages\/projects\/\{[^}]+\}\/deployments$/u,
-    methods: ['get', 'post']
+    methods: ['get']
   },
   // Get + delete a single deployment
   {
@@ -182,6 +189,84 @@ const collectRefs = (root: JsonObject, node: Json, used: Set<string>): void => {
   }
 }
 
+/**
+ * Corrections to the pruned schema, applied in order before generation
+ * ([RFC 6902](https://www.rfc-editor.org/rfc/rfc6902) operations, as the
+ * generator's own `--patch` flag takes). A path that no longer exists fails
+ * the run, so a patch Cloudflare has made unnecessary can't linger unnoticed.
+ */
+const PATCHES: OpenApiPatch.JsonPatchDocument = [
+  // The generator can't intersect `type: object` with a `oneOf` ("Cannot
+  // intersect these anyOf or oneOf alternatives"); the members already say
+  // they are objects.
+  {
+    op: 'remove',
+    path: '/components/schemas/pages_env_vars/additionalProperties/type'
+  },
+  // Cloudflare sends `source: null` for an `ad_hoc` (wrangler) deployment,
+  // which is every deployment this action creates (checked live 2026-09-11).
+  {
+    op: 'replace',
+    path: '/components/schemas/pages_deployment/properties/source',
+    value: {
+      anyOf: [{$ref: '#/components/schemas/pages_source'}, {type: 'null'}]
+    }
+  }
+]
+
+/** The generator's warnings fail the run: each is something it left out. */
+const generate = (subset: JsonObject): Promise<string> => {
+  const warnings: Array<string> = []
+  return Effect.runPromise(
+    Effect.gen(function* () {
+      const patched = yield* OpenApiPatch.applyPatches(
+        [{source: 'PATCHES', patch: PATCHES}],
+        // Parsed from JSON by `fetchSchema`, so it holds only JSON values.
+        subset as Schema.Json
+      )
+      const generator = yield* OpenApiGenerator.OpenApiGenerator
+      // The subset was checked to be an object with `paths`; the generator
+      // validates the rest of the document itself.
+      const source = yield* generator.generate(
+        patched as unknown as OpenAPISpec,
+        {
+          name: 'CloudflarePages',
+          format: 'httpclient-type-only',
+          onWarning: warning => {
+            warnings.push(`[${warning.code}] ${warning.message}`)
+          }
+        }
+      )
+      assert.deepEqual(warnings, [], 'The generator reported warnings')
+      return source
+    }).pipe(
+      // This script is the entry point.
+      // oxlint-disable-next-line effecttsgo/strict-effect-provide
+      Effect.provide(OpenApiGenerator.layerTransformerTs)
+    )
+  )
+}
+
+const SCHEMA_IMPORT = 'import type * as Schema from "effect/Schema"'
+
+/**
+ * The type-only output names `Schema.Json` (the type of an object's unlisted
+ * properties) without importing `Schema`, so it doesn't type-check as
+ * generated (@effect/openapi-generator 4.0.0). Remove this once it does.
+ *
+ * Closing the objects instead (`additionalProperties: false` through the
+ * generator's `onEnter` hook) is not an option: Cloudflare composes every
+ * response with `allOf`, and two closed objects intersect to `never`.
+ */
+const withSchemaImport = (source: string): string => {
+  assert.ok(source.includes('Schema.Json'), 'Schema.Json is no longer used')
+  assert.ok(
+    !/^import .* as Schema from/mu.test(source),
+    'The generator now imports Schema itself: remove withSchemaImport'
+  )
+  return `${SCHEMA_IMPORT}\n${source}`
+}
+
 const run = async (): Promise<void> => {
   const schema = await fetchSchema()
   const paths = prunePaths(schema['paths'] as JsonObject)
@@ -199,13 +284,10 @@ const run = async (): Promise<void> => {
     setAt(subset, pointer, resolvePointer(schema, pointer))
   }
 
-  const ast = await openapiTS(
-    subset as unknown as Parameters<typeof openapiTS>[0]
-  )
   const banner =
     '/* Generated by `pnpm run codegen:cloudflare`. Do not edit. */\n' +
-    `/* Source: cloudflare/api-schemas @ ${REF} */\n`
-  const contents = `${banner}${astToString(ast)}`
+    `/* Source: cloudflare/api-schemas @ ${REF} */\n\n`
+  const contents = `${banner}${withSchemaImport(await generate(subset))}\n`
 
   const DIRECTORY = '__generated__/types/cloudflare'
   if (!existsSync(DIRECTORY)) {

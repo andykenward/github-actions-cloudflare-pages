@@ -104,7 +104,7 @@ export const MOCK_PROJECT_NAME = 'mock-cloudflare-project-name'
 /** The id of the fixture deployment, so a GET for it answers with itself. */
 export const MOCK_DEPLOYMENT_ID = '206e215c-33b3-4ce4-adf4-7fc6c9b65483'
 
-export const MOCK_API_PATH_PROJECT = `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`
+const MOCK_API_PATH_PROJECT = `/client/v4/accounts/${MOCK_ACCOUNT_ID}/pages/projects/${MOCK_PROJECT_NAME}`
 export const MOCK_API_PATH_DEPLOYMENTS = `${MOCK_API_PATH_PROJECT}/deployments`
 export const MOCK_API_PATH_DEPLOYMENT = `${MOCK_API_PATH_DEPLOYMENTS}/${MOCK_DEPLOYMENT_ID}`
 export const MOCK_API_PATH_DEPLOYMENTS_DELETE = `${MOCK_API_PATH_PROJECT}/deployments/${MOCK_DEPLOYMENT_ID}?force=true`

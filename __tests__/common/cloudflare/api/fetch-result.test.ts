@@ -2,22 +2,23 @@ import * as core from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as Fiber from 'effect/Fiber'
+import * as FetchHttpClient from 'effect/http/FetchHttpClient'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {FetchResult} from '@/common/cloudflare/types.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
-import {CloudflareApi} from '@/common/cloudflare/api/client.js'
+import {CloudflareApi, WITH_RESPONSE} from '@/common/cloudflare/api/client.js'
 import {ApiErrors, CloudflareApiError} from '@/common/cloudflare/api/error.js'
 import {unwrap, unwrapSuccess} from '@/common/cloudflare/api/fetch-result.js'
-import RESPONSE_NOT_FOUND from '@/responses/api.cloudflare.com/pages/projects/project-not-found.response.json' with {type: 'json'}
-import RESPONSE_OK from '@/responses/api.cloudflare.com/pages/projects/project.response.json' with {type: 'json'}
+import RESPONSE_NOT_FOUND from '@/responses/api.cloudflare.com/pages/deployments/deployments-not-found.response.json' with {type: 'json'}
+import RESPONSE_OK from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import RESPONSE_UNAUTHORIZED from '@/responses/api.cloudflare.com/unauthorized.response.json' with {type: 'json'}
 import {
   getMockApi,
   MOCK_ACCOUNT_ID,
   MOCK_API_PATH_DEPLOYMENTS_DELETE,
-  MOCK_API_PATH_PROJECT,
+  MOCK_API_PATH_DEPLOYMENTS,
   MOCK_DEPLOYMENT_ID,
   MOCK_PROJECT_NAME
 } from '@/tests/helpers/api.js'
@@ -25,39 +26,30 @@ import {CloudflareApiTestLayer} from '@/tests/helpers/layers.js'
 
 vi.mock(import('@actions/core'))
 
-const PROJECT_URL = `https://api.cloudflare.com${MOCK_API_PATH_PROJECT}`
+const DEPLOYMENTS_URL = `https://api.cloudflare.com${MOCK_API_PATH_DEPLOYMENTS}`
 const DELETE_URL = `https://api.cloudflare.com${MOCK_API_PATH_DEPLOYMENTS_DELETE}`
 
 /** `CloudflareApi.result`, which unwraps with `unwrap`. */
-const getProject = Effect.gen(function* () {
+const getDeployments = Effect.gen(function* () {
   const cloudflare = yield* CloudflareApi
-  return yield* cloudflare.result((client, signal) =>
-    client.GET('/accounts/{account_id}/pages/projects/{project_name}', {
-      params: {
-        path: {account_id: MOCK_ACCOUNT_ID, project_name: MOCK_PROJECT_NAME}
-      },
-      signal
-    })
+  return yield* cloudflare.result(client =>
+    client.pagesDeploymentGetDeployments(
+      MOCK_ACCOUNT_ID,
+      MOCK_PROJECT_NAME,
+      WITH_RESPONSE
+    )
   )
 })
 
 /** `CloudflareApi.success`, which unwraps with `unwrapSuccess`. */
 const deleteDeployment = Effect.gen(function* () {
   const cloudflare = yield* CloudflareApi
-  return yield* cloudflare.success((client, signal) =>
-    client.DELETE(
-      '/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}',
-      {
-        params: {
-          path: {
-            account_id: MOCK_ACCOUNT_ID,
-            project_name: MOCK_PROJECT_NAME,
-            deployment_id: MOCK_DEPLOYMENT_ID
-          },
-          query: {force: true}
-        },
-        signal
-      }
+  return yield* cloudflare.success(client =>
+    client.pagesDeploymentDeleteDeployment(
+      MOCK_ACCOUNT_ID,
+      MOCK_PROJECT_NAME,
+      MOCK_DEPLOYMENT_ID,
+      {params: {force: true}, ...WITH_RESPONSE}
     )
   )
 })
@@ -79,13 +71,9 @@ describe('api', () => {
       Effect.gen(function* () {
         expect.assertions(1)
 
-        mockApi.interceptCloudflare<{id: string}>(
-          MOCK_API_PATH_PROJECT,
-          RESPONSE_OK,
-          200
-        )
+        mockApi.interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, RESPONSE_OK, 200)
 
-        expect(yield* getProject).toStrictEqual(RESPONSE_OK.result)
+        expect(yield* getDeployments).toStrictEqual(RESPONSE_OK.result)
       }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
 
@@ -94,19 +82,19 @@ describe('api', () => {
         expect.assertions(3)
 
         mockApi.interceptCloudflare<null>(
-          MOCK_API_PATH_PROJECT,
+          MOCK_API_PATH_DEPLOYMENTS,
           RESPONSE_NOT_FOUND,
           404
         )
 
-        const failure = yield* Effect.flip(getProject)
+        const failure = yield* Effect.flip(getDeployments)
 
         expect(failure.message).toBe(
-          `A request to the Cloudflare API (${PROJECT_URL}) failed. Project not found. The specified project name does not match any of your existing projects. [code: 8000007]`
+          `A request to the Cloudflare API (${DEPLOYMENTS_URL}) failed. Project not found. The specified project name does not match any of your existing projects. [code: 8000007]`
         )
         expect(failure.reason).toMatchObject({
           _tag: 'ApiErrors',
-          url: PROJECT_URL,
+          url: DEPLOYMENTS_URL,
           code: 8000007
         })
         // A caller may tolerate the error, so reporting it is the caller's job.
@@ -122,13 +110,13 @@ describe('api', () => {
 
           // e.g. an HTML error page from Cloudflare's edge.
           mockApi
-            .interceptCloudflareRaw(MOCK_API_PATH_PROJECT, 'GET')
+            .interceptCloudflareRaw(MOCK_API_PATH_DEPLOYMENTS, 'GET')
             .reply(502, '<html>Bad gateway</html>')
 
-          const failure = yield* Effect.flip(getProject)
+          const failure = yield* Effect.flip(getDeployments)
 
           expect(failure.message).toBe(
-            `A request to the Cloudflare API (${PROJECT_URL}) failed: 502 Bad Gateway`
+            `A request to the Cloudflare API (${DEPLOYMENTS_URL}) failed: 502 Bad Gateway`
           )
           expect(failure.reason).toMatchObject({
             _tag: 'HttpError',
@@ -138,17 +126,37 @@ describe('api', () => {
         }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
 
+    it.effect('fails with the envelope errors on a 5xx that carries them', () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        mockApi.interceptCloudflare(
+          MOCK_API_PATH_DEPLOYMENTS,
+          RESPONSE_UNAUTHORIZED,
+          503
+        )
+
+        const failure = yield* Effect.flip(getDeployments)
+
+        expect(failure.reason).toMatchObject({
+          _tag: 'ApiErrors',
+          url: DEPLOYMENTS_URL,
+          code: 10000
+        })
+      }).pipe(Effect.provide(CloudflareApiTestLayer))
+    )
+
     it.effect('fails with the envelope errors when a 200 reports failure', () =>
       Effect.gen(function* () {
         expect.assertions(2)
 
         mockApi.interceptCloudflare(
-          MOCK_API_PATH_PROJECT,
+          MOCK_API_PATH_DEPLOYMENTS,
           RESPONSE_UNAUTHORIZED,
           200
         )
 
-        const failure = yield* Effect.flip(getProject)
+        const failure = yield* Effect.flip(getDeployments)
 
         expect(failure.reason).toMatchObject({_tag: 'ApiErrors', code: 10000})
         expect(failure.message).toContain('Authentication error [code: 10000]')
@@ -159,15 +167,15 @@ describe('api', () => {
       Effect.gen(function* () {
         expect.assertions(1)
 
-        // A `204 No Content`, which openapi-fetch returns with no `data`.
+        // A `204 No Content`, whose empty body the client reads as `null`.
         mockApi
-          .interceptCloudflareRaw(MOCK_API_PATH_PROJECT, 'GET')
+          .interceptCloudflareRaw(MOCK_API_PATH_DEPLOYMENTS, 'GET')
           .reply(204, '')
 
-        const failure = yield* Effect.flip(getProject)
+        const failure = yield* Effect.flip(getDeployments)
 
         expect(failure.message).toBe(
-          `A request to the Cloudflare API (${PROJECT_URL}) failed: 204 No Content`
+          `A request to the Cloudflare API (${DEPLOYMENTS_URL}) failed: 204 No Content`
         )
       }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
@@ -179,16 +187,16 @@ describe('api', () => {
           expect.assertions(2)
 
           mockApi.interceptCloudflare<null>(
-            MOCK_API_PATH_PROJECT,
+            MOCK_API_PATH_DEPLOYMENTS,
             {errors: [], success: true, result},
             200
           )
 
-          const failure = yield* Effect.flip(getProject)
+          const failure = yield* Effect.flip(getDeployments)
 
           expect(failure.reason._tag).toBe('MissingResult')
           expect(failure.message).toBe(
-            `A request to the Cloudflare API (${PROJECT_URL}) failed: response missing 'result'`
+            `A request to the Cloudflare API (${DEPLOYMENTS_URL}) failed: response missing 'result'`
           )
         }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
@@ -198,10 +206,10 @@ describe('api', () => {
         expect.assertions(2)
 
         mockApi
-          .interceptCloudflareRaw(MOCK_API_PATH_PROJECT, 'GET')
+          .interceptCloudflareRaw(MOCK_API_PATH_DEPLOYMENTS, 'GET')
           .replyWithError(new Error('socket hang up'))
 
-        const failure = yield* Effect.flip(getProject)
+        const failure = yield* Effect.flip(getDeployments)
 
         expect(failure.reason._tag).toBe('RequestError')
         expect(failure.message).toBe('fetch failed')
@@ -212,26 +220,59 @@ describe('api', () => {
       Effect.gen(function* () {
         expect.assertions(2)
 
-        const cloudflare = yield* CloudflareApi
-        let signal: AbortSignal | undefined
+        let signal: AbortSignal | null | undefined
 
-        // A request that settles only when aborted, standing in for a hung
-        // fetch: openapi-fetch passes `signal` straight to `fetch`.
-        const hung = cloudflare.result<unknown>((_client, requestSignal) => {
-          signal = requestSignal
+        // A fetch that settles only when aborted, standing in for a hung
+        // request: the client passes the effect's signal straight to `fetch`.
+        const hungFetch: typeof fetch = (_input, init) => {
+          signal = init?.signal
           return new Promise((_resolve, reject) => {
-            requestSignal.addEventListener('abort', () =>
+            init?.signal?.addEventListener('abort', () => {
               reject(new Error('aborted'))
-            )
+            })
           })
-        })
+        }
 
-        const fiber = yield* Effect.forkChild(hung)
-        yield* Effect.yieldNow
+        const fiber = yield* Effect.forkChild(
+          getDeployments.pipe(
+            Effect.provideService(FetchHttpClient.Fetch, hungFetch)
+          )
+        )
+        // The request is sent once the forked fiber has run.
+        yield* Effect.promise(() =>
+          vi.waitFor(() => {
+            if (signal === undefined) {
+              throw new Error('The request has not been sent yet')
+            }
+          })
+        )
         yield* Fiber.interrupt(fiber)
 
         expect(signal).toBeDefined()
         expect(signal?.aborted).toBe(true)
+      }).pipe(Effect.provide(CloudflareApiTestLayer))
+    )
+
+    it.effect('sends the token, and no trace headers', () =>
+      Effect.gen(function* () {
+        expect.assertions(3)
+
+        let headers = new Headers()
+        const recordingFetch: typeof fetch = (_input, init) => {
+          headers = new Headers(init?.headers)
+          return Promise.resolve(Response.json(RESPONSE_OK))
+        }
+
+        yield* getDeployments.pipe(
+          Effect.withSpan('caller'),
+          Effect.provideService(FetchHttpClient.Fetch, recordingFetch)
+        )
+
+        expect(headers.get('authorization')).toBe(
+          'Bearer mock-cloudflare-api-token'
+        )
+        expect(headers.has('traceparent')).toBe(false)
+        expect(headers.has('b3')).toBe(false)
       }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
   })

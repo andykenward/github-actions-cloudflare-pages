@@ -1,6 +1,6 @@
 import * as Schema from 'effect/Schema'
 
-import type {components} from '@/types/cloudflare/pages.js'
+import type {Pages_deployment} from '@/types/cloudflare/pages.js'
 
 /** One entry of a Cloudflare envelope's `errors`, possibly with a chain. */
 export interface FetchError {
@@ -38,4 +38,4 @@ export interface FetchResult<ResponseType = unknown> extends Envelope {
  * The type for a Cloudflare Pages Deployment, generated from Cloudflare's
  * canonical OpenAPI schema by `pnpm run codegen:cloudflare`.
  */
-export type PagesDeployment = components['schemas']['pages_deployment']
+export type PagesDeployment = Pages_deployment

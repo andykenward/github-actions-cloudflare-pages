@@ -1,7 +1,7 @@
 import {info, warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 
-import {CloudflareApi} from '../api/client.js'
+import {CloudflareApi, WITH_RESPONSE} from '../api/client.js'
 
 /**
  * Cloudflare's "deployment does not exist" code. Treated as success: the
@@ -36,21 +36,11 @@ export const deleteCloudflareDeployment = Effect.fn(
   }) {
     const cloudflare = yield* CloudflareApi
 
-    yield* cloudflare.success((client, signal) =>
-      client.DELETE(
-        '/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}',
-        {
-          params: {
-            path: {
-              account_id: accountId,
-              project_name: projectName,
-              deployment_id: id
-            },
-            query: {force: true}
-          },
-          signal
-        }
-      )
+    yield* cloudflare.success(client =>
+      client.pagesDeploymentDeleteDeployment(accountId, projectName, id, {
+        params: {force: true},
+        ...WITH_RESPONSE
+      })
     )
 
     info(`Cloudflare Deployment Deleted: ${id}`)
