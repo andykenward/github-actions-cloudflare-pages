@@ -38,5 +38,7 @@ paths:
 
 - `CLAUDE.md` loads every session: keep it under 200 lines and limited to session-wide rules. Put anything that matters for only part of the codebase in a rule here, with `paths:` frontmatter.
 - Write imperative, specific bullets with repo-root paths, and a short reason when a rule isn't obvious. Don't restate what the code shows or what another file already says.
+- A procedure for an occasional task (reviewing a wrangler upgrade) gets its own rule with narrow `paths:`, not a section in a rule that loads for all of `src/**` — that would put it in context for every source edit. When its paths may not be opened during the task, add a one-line trigger to `CLAUDE.md` ("Before you finish") pointing at it.
+- Trial a new procedure rule before committing it: hand a fresh subagent only the rule and a real case as a dry run (no tracked-file changes), and ask where it had to guess. The first trial of `wrangler-upgrade.md` found a command that returned nothing after its own previous step, a placeholder left in a command, and a check against a README statement that didn't exist — none visible to the author.
 - Adding, renaming or re-scoping a rule → update the rules table in `CLAUDE.md`.
 - `prek.toml` excludes `.claude/`, so these files are never formatted on commit — run `pnpm exec oxfmt --write .claude/CLAUDE.md .claude/rules/*.md` after editing them.
