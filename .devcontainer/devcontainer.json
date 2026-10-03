@@ -16,7 +16,7 @@
       "extensions": "github/gh-stack"
     },
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0.5": {},
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.0": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.1": {},
     // act runs workflows locally in Docker (pnpm run act:d).
     "ghcr.io/dhoeric/features/act:1.0.0": {
       "version": "0.2.89"
