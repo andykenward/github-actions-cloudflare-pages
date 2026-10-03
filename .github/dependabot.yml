@@ -79,12 +79,15 @@ updates:
           - '@vitest*'
           - 'vitest'
           - 'vite'
-      # `@effect/vitest` peers on `^<effect version>`, so bump them together.
-      # After merging, run `pnpm run sync:effect` to refresh `repos/effect`.
+      # `@effect/vitest` and `@effect/openapi-generator` peer on
+      # `^<effect version>`, so bump them together. After merging, run
+      # `pnpm run sync:effect` to refresh `repos/effect` and
+      # `pnpm run codegen:cloudflare` to regenerate the Cloudflare client.
       effect:
         patterns:
           - 'effect'
           - '@effect/vitest'
+          - '@effect/openapi-generator'
       # `@effect/tsgo` patches the `oxlint` / `oxlint-tsgolint` binaries in
       # place, so it is version-coupled to them rather than to `effect`.
       ox:
