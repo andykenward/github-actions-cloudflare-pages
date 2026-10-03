@@ -14,11 +14,26 @@ import {CommonInputs} from '@/common/inputs.js'
 import {writeSummary} from '@/common/summary.js'
 import {logVerbatim} from '@/common/utils.js'
 
+import type {DeploymentStatus} from './status.js'
+
 import {getCloudflareDeploymentAlias} from './get.js'
 import {statusCloudflareDeployment} from './status.js'
 import {wranglerPagesDeploy} from './wrangler.js'
 
 const PREFIX = `Create Deployment:`
+
+/** The terminal statuses, from Cloudflare's schema, that aren't a success. */
+type BuildEndedStatus = Exclude<DeploymentStatus, 'success'>
+
+/**
+ * How the error message words each of them. The keys are checked against the
+ * generated type, so a status Cloudflare adds fails the type-check here.
+ */
+const BUILD_OUTCOMES = {
+  failure: 'failed',
+  canceled: 'was canceled',
+  skipped: 'was skipped'
+} as const satisfies Record<BuildEndedStatus, string>
 
 // oxlint-disable-next-line unicorn/throw-new-error
 class CreateDeploymentError extends Schema.TaggedError<CreateDeploymentError>()(
@@ -35,16 +50,21 @@ class CreateDeploymentError extends Schema.TaggedError<CreateDeploymentError>()(
       cause
     })
 
-  /** The build ended `failure` or `canceled`; the message links its log. */
+  /**
+   * The build ended `failure`, `canceled` or `skipped`; the message links its
+   * log, and gives Cloudflare's reason for a skip when it sent one.
+   */
   static readonly buildEnded = (
-    status: 'failure' | 'canceled',
+    status: BuildEndedStatus,
     deployment: PagesDeployment,
     endpoint: {accountId: string; projectName: string}
   ): CreateDeploymentError => {
-    const outcome = status === 'failure' ? 'failed' : 'was canceled'
+    const {skip_reason} = deployment
+    const reason =
+      status === 'skipped' && skip_reason ? ` (${skip_reason})` : ''
     const logUrl = getCloudflareLogEndpoint({id: deployment.id, ...endpoint})
     return new CreateDeploymentError({
-      message: `${PREFIX} the Cloudflare Pages build ${outcome}. Build log: ${logUrl}`
+      message: `${PREFIX} the Cloudflare Pages build ${BUILD_OUTCOMES[status]}${reason}. Build log: ${logUrl}`
     })
   }
 }
@@ -164,11 +184,11 @@ export const createCloudflareDeployment = Effect.fn(
   )
 
   /**
-   * A failed or canceled build fails the step — but only once the outputs and
-   * summary are written, so both still describe it. No comment or GitHub
-   * Deployment records a broken deploy as green.
+   * A failed, canceled or skipped build fails the step — but only once the
+   * outputs and summary are written, so both still describe it. No comment or
+   * GitHub Deployment records a broken deploy as green.
    */
-  if (status === 'failure' || status === 'canceled') {
+  if (status !== 'success') {
     return yield* CreateDeploymentError.buildEnded(status, deployment, {
       accountId,
       projectName
