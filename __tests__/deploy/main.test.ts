@@ -56,42 +56,42 @@ describe('deploy', () => {
       vi.mocked(execFileAsync).mockReset()
     })
 
-    describe('run effect', () => {
-      /** Wrangler succeeds, Cloudflare reports the deployment, GitHub has the environment. */
-      const mockSuccessfulDeploy = () => {
-        vi.mocked(execFileAsync).mockResolvedValueOnce({
-          stdout: 'success',
-          stderr: ''
-        })
-        mockApi.interceptCloudflare(
-          MOCK_API_PATH_DEPLOYMENTS,
-          RESPONSE_DEPLOYMENTS,
-          200
-        )
-        mockApi.interceptGithub(
-          {
-            query: GetEnvironmentAndRefDocument,
-            variables: {
-              owner: 'andykenward',
-              repo: 'github-actions-cloudflare-pages',
-              environmentName: 'mock-github-environment',
-              qualifiedName: 'mock-github-head-ref'
-            }
-          },
-          {
-            data: {
-              repository: {
-                environment: {
-                  name: 'unlike-dev (Preview)',
-                  id: 'EN_kwDOJn0nrM5D_l8n'
-                },
-                ref: {id: REF_ID}
-              }
+    /** Wrangler succeeds, Cloudflare reports the deployment, GitHub has the environment. */
+    const mockSuccessfulDeploy = () => {
+      vi.mocked(execFileAsync).mockResolvedValueOnce({
+        stdout: 'success',
+        stderr: ''
+      })
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS,
+        RESPONSE_DEPLOYMENTS,
+        200
+      )
+      mockApi.interceptGithub(
+        {
+          query: GetEnvironmentAndRefDocument,
+          variables: {
+            owner: 'andykenward',
+            repo: 'github-actions-cloudflare-pages',
+            environmentName: 'mock-github-environment',
+            qualifiedName: 'mock-github-head-ref'
+          }
+        },
+        {
+          data: {
+            repository: {
+              environment: {
+                name: 'unlike-dev (Preview)',
+                id: 'EN_kwDOJn0nrM5D_l8n'
+              },
+              ref: {id: REF_ID}
             }
           }
-        )
-      }
+        }
+      )
+    }
 
+    describe('run effect', () => {
       /** `it.live`: status polling sleeps on the real clock. */
       it.live('success', () =>
         Effect.gen(function* () {
