@@ -387,10 +387,14 @@ describe('createCloudflareDeployment', () => {
 type LatestStage = PagesDeployment['latest_stage']
 
 /** A single-deployment GET response whose `deploy` stage has `status`. */
-const deploymentResponse = (status: LatestStage['status']) => ({
+const deploymentResponse = (
+  status: LatestStage['status'],
+  skipReason?: string
+) => ({
   ...RESPONSE_DEPLOYMENTS,
   result: {
     ...RESPONSE_DEPLOYMENTS.result[0],
+    ...(skipReason === undefined ? {} : {skip_reason: skipReason}),
     latest_stage: {name: 'deploy', status, started_on: null, ended_on: null}
   }
 })
@@ -504,10 +508,20 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
 
   it.live.each([
     {status: 'failure', outcome: 'failed'},
-    {status: 'canceled', outcome: 'was canceled'}
-  ] as const)(
-    'fails after writing the outputs and summary when the build is $status',
-    ({status, outcome}) =>
+    {status: 'canceled', outcome: 'was canceled'},
+    {status: 'skipped', outcome: 'was skipped'},
+    {
+      status: 'skipped',
+      skipReason: 'superseded_queued_build',
+      outcome: 'was skipped (superseded_queued_build)'
+    }
+  ] satisfies {
+    status: LatestStage['status']
+    skipReason?: string
+    outcome: string
+  }[])(
+    'fails after writing the outputs and summary when the build $outcome',
+    ({status, skipReason, outcome}) =>
       Effect.gen(function* () {
         expect.assertions(4)
 
@@ -516,7 +530,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
         )
         mockApi.interceptCloudflare(
           MOCK_API_PATH_DEPLOYMENT,
-          deploymentResponse(status)
+          deploymentResponse(status, skipReason)
         )
 
         const error = yield* Effect.flip(

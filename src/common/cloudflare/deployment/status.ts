@@ -53,7 +53,7 @@ export const PollCountMax = Context.Reference<number>(
   {defaultValue: () => POLL_COUNT_MAX}
 )
 
-type DeploymentStatus = Exclude<
+export type DeploymentStatus = Exclude<
   PagesDeployment['latest_stage']['status'],
   'idle' | 'active'
 >
@@ -113,10 +113,11 @@ const pollOnce = Effect.fn('pollOnce')(function* (
 
   debug(`${PREFIX} ${JSON.stringify(latest_stage)}`)
 
-  // Any stage failing or canceled ends the deploy; only the `deploy` stage
-  // succeeding completes it. Anything else — an earlier stage done, or a
-  // stage `idle` / `active` — is still running, as wrangler also treats it.
-  if (status === 'failure' || status === 'canceled') {
+  // Any stage failing, canceled or skipped ends the deploy; only the `deploy`
+  // stage succeeding completes it. Anything else — an earlier stage done, or
+  // a stage `idle` / `active` — is still running, as wrangler also treats it.
+  // A skipped stage never resumes, so waiting on it only ends in the timeout.
+  if (status === 'failure' || status === 'canceled' || status === 'skipped') {
     return {deployment, status}
   }
   if (status === 'success' && name === 'deploy') {

@@ -260,7 +260,8 @@ describe('statusCloudflareDeployment', () => {
 
   it.live.each([
     {stage: 'build', status: 'failure'},
-    {stage: 'build', status: 'canceled'}
+    {stage: 'build', status: 'canceled'},
+    {stage: 'queued', status: 'skipped'}
   ] satisfies {stage: LatestStage['name']; status: LatestStage['status']}[])(
     'returns $status immediately without polling ($stage stage)',
     ({stage, status}) =>
