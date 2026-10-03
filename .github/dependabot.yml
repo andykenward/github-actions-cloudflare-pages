@@ -8,6 +8,27 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    # First matching group wins, so the catch-all goes last. Majors of
+    # third-party actions stay as individual PRs so their breaking changes get
+    # reviewed on their own.
+    groups:
+      # GitHub-maintained actions release in step (runtime bumps), so take
+      # their majors together too.
+      github:
+        patterns:
+          - 'actions/*'
+          - 'github/*'
+      # `changesets/action`, `/pr-status` and `/pr-comment` are one repo at one
+      # SHA; without this each sub-action gets its own PR (#893–#895).
+      changesets:
+        patterns:
+          - 'changesets/action*'
+      actions-minor-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
   - package-ecosystem: docker
     directory: /.devcontainer
     schedule:
