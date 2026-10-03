@@ -67,7 +67,7 @@ paths:
 
 ## Dependencies
 
-- Three runtime dependencies: `effect`, `@actions/core`, `openapi-fetch`. A fourth needs a reason in the PR; every one is bundled into `dist/` and is a supply-chain surface. Dev dependencies follow `tooling.md`.
+- Two runtime dependencies: `effect` and `@actions/core`. A third needs a reason in the PR; every one is bundled into `dist/` and is a supply-chain surface. Dev dependencies follow `tooling.md`.
 
 ## Not adopted, and why
 

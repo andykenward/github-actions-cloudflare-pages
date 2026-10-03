@@ -6,7 +6,7 @@ paths:
 
 # Effect patterns
 
-`src/common/` is Effect throughout. Code with no dependencies stays plain — `src/common/cloudflare/api/fetch-result.ts` (returns `Result`, not `Effect`), payload and event decoding, `src/common/utils.ts`, the body of `src/common/github/context.ts`.
+`src/common/` is Effect throughout. Code with no dependencies stays plain — `unwrap` / `unwrapSuccess` in `src/common/cloudflare/api/fetch-result.ts` (they return `Result`, not `Effect`; `operationFailure` beside them is an Effect only because it re-reads a response body), payload and event decoding, `src/common/utils.ts`, the body of `src/common/github/context.ts`.
 
 ## Structure
 

@@ -26,7 +26,7 @@ paths:
 
 - Don't edit it unless explicitly asked, and never import from it — application code imports the `effect` package.
 - Never hand-edit it to "fix" drift — re-sync instead (below).
-- Vendor another package only when all three hold: agents write a lot of code against it, its API is too new or too large to recall reliably, and `node_modules` doesn't already carry readable source. Only `effect` qualifies (considered 2026-10-03). `wrangler` is never imported and an upgrade review needs a diff between versions, not a snapshot (see `wrangler-upgrade.md`); `@actions/core` is ten well-known functions; `openapi-fetch` and `@effect/vitest` ship their `src/` in `node_modules`. Every snapshot repeats the exclusions below and needs its own sync.
+- Vendor another package only when all three hold: agents write a lot of code against it, its API is too new or too large to recall reliably, and `node_modules` doesn't already carry readable source. Only `effect` qualifies (considered 2026-10-03). `wrangler` is never imported and an upgrade review needs a diff between versions, not a snapshot (see `wrangler-upgrade.md`); `@actions/core` is ten well-known functions; `@effect/vitest` ships its `src/` in `node_modules`. Every snapshot repeats the exclusions below and needs its own sync.
 
 ## Every tool must ignore it
 
