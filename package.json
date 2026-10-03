@@ -51,14 +51,14 @@
   },
   "dependencies": {
     "@actions/core": "3.0.1",
-    "effect": "4.0.0-rc.112",
+    "effect": "4.0.0",
     "openapi-fetch": "0.17.0"
   },
   "devDependencies": {
     "@changesets/changelog-github": "1.0.1",
     "@changesets/cli": "3.0.3",
     "@effect/tsgo": "0.46.1",
-    "@effect/vitest": "4.0.0-rc.112",
+    "@effect/vitest": "4.0.0",
     "@graphql-codegen/cli": "7.4.3",
     "@graphql-codegen/client-preset": "6.2.0",
     "@graphql-typed-document-node/core": "3.2.0",

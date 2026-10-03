@@ -40,7 +40,7 @@ describe(errorMessage, () => {
     stubInputEnv(INPUT_KEY_CLOUDFLARE_API_TOKEN, '')
 
     expect(
-      errorMessage(configError(Config.redacted(INPUT_KEY_CLOUDFLARE_API_TOKEN)))
+      errorMessage(configError(Config.Redacted(INPUT_KEY_CLOUDFLARE_API_TOKEN)))
     ).toBe('Input required and not supplied: cloudflare-api-token')
   })
 
@@ -49,7 +49,7 @@ describe(errorMessage, () => {
 
     stubInputEnv(INPUT_KEY_KEEP_LATEST, 'abc')
 
-    expect(errorMessage(configError(Config.int(INPUT_KEY_KEEP_LATEST)))).toBe(
+    expect(errorMessage(configError(Config.Int(INPUT_KEY_KEEP_LATEST)))).toBe(
       "Input 'keep-latest' is invalid: Expected a string representing a finite number"
     )
   })
