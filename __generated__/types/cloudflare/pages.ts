@@ -9,8 +9,8 @@ export interface paths {
       cookie?: never
     }
     /**
-     * Get project
-     * @description Fetch a project by name.
+     * Get a Cloudflare Pages project
+     * @description Retrieve the configuration and deployment settings for a Cloudflare Pages project.
      */
     get: operations['pages-project-get-project']
     put?: never
@@ -29,14 +29,14 @@ export interface paths {
       cookie?: never
     }
     /**
-     * Get deployments
-     * @description Fetch a list of project deployments.
+     * List Pages deployments
+     * @description List the production or preview deployments for a Cloudflare Pages project.
      */
     get: operations['pages-deployment-get-deployments']
     put?: never
     /**
-     * Create deployment
-     * @description Start a new deployment from production. The repository and account must have already been authorized on the Cloudflare Pages dashboard.
+     * Create a Pages deployment
+     * @description Create a Cloudflare Pages deployment from a Git branch or Direct Upload manifest. Git repositories must already be authorized in Cloudflare Pages.
      */
     post: operations['pages-deployment-create-deployment']
     delete?: never
@@ -53,15 +53,15 @@ export interface paths {
       cookie?: never
     }
     /**
-     * Get deployment info
-     * @description Fetch information about a deployment.
+     * Get a Pages deployment
+     * @description Retrieve the status and details of a Cloudflare Pages deployment.
      */
     get: operations['pages-deployment-get-deployment-info']
     put?: never
     post?: never
     /**
-     * Delete deployment
-     * @description Delete a deployment.
+     * Delete a Pages deployment
+     * @description Remove a deployment from a Cloudflare Pages project.
      */
     delete: operations['pages-deployment-delete-deployment']
     options?: never
@@ -74,7 +74,7 @@ export type webhooks = Record<string, never>
 export interface components {
   schemas: {
     /**
-     * @description Name of the project.
+     * @description Name of the Pages project. Must begin with a lowercase letter or digit and contain only lowercase letters, digits, and hyphens.
      * @example this-is-my-project-01
      */
     pages_project_name: string
@@ -256,7 +256,7 @@ export interface components {
        */
       readonly id: string
       /**
-       * @description If the deployment has been skipped.
+       * @description Whether the deployment was skipped.
        * @example true
        */
       readonly is_skipped: boolean
@@ -290,6 +290,7 @@ export interface components {
         | 'path_config'
         | 'branch_config'
         | 'pages_to_workers_conversion'
+        | 'superseded_queued_build'
         | null
       source: components['schemas']['pages_source']
       /**
@@ -402,67 +403,75 @@ export interface components {
        * @example success
        * @enum {string}
        */
-      readonly status: 'success' | 'idle' | 'active' | 'failure' | 'canceled'
+      readonly status:
+        | 'success'
+        | 'idle'
+        | 'active'
+        | 'failure'
+        | 'canceled'
+        | 'skipped'
     }
     /** @description Configs for the project source control. */
     pages_source: {
-      config: {
-        /**
-         * @deprecated
-         * @description Whether to enable automatic deployments when pushing to the source repository.
-         *     When disabled, no deployments (production or preview) will be triggered automatically.
-         */
-        deployments_enabled: boolean
-        /**
-         * @description The owner of the repository.
-         * @example my-org
-         */
-        owner: string
-        /**
-         * @description The owner ID of the repository.
-         * @example 12345678
-         */
-        owner_id: string
-        /** @description A list of paths that should be excluded from triggering a preview deployment. Wildcard syntax (`*`) is supported. */
-        path_excludes: string[]
-        /** @description A list of paths that should be watched to trigger a preview deployment. Wildcard syntax (`*`) is supported. */
-        path_includes: string[]
-        /** @description Whether to enable PR comments. */
-        pr_comments_enabled: boolean
-        /** @description A list of branches that should not trigger a preview deployment. Wildcard syntax (`*`) is supported. Must be used with `preview_deployment_setting` set to `custom`. */
-        preview_branch_excludes: string[]
-        /** @description A list of branches that should trigger a preview deployment. Wildcard syntax (`*`) is supported. Must be used with `preview_deployment_setting` set to `custom`. */
-        preview_branch_includes: string[]
-        /**
-         * @description Controls whether commits to preview branches trigger a preview deployment.
-         * @enum {string}
-         */
-        preview_deployment_setting: 'all' | 'none' | 'custom'
-        /**
-         * @description The production branch of the repository.
-         * @example main
-         */
-        production_branch: string
-        /** @description Whether to trigger a production deployment on commits to the production branch. */
-        production_deployments_enabled: boolean
-        /**
-         * @description The ID of the repository.
-         * @example 12345678
-         */
-        repo_id: string
-        /**
-         * @description The name of the repository.
-         * @example my-repo
-         */
-        repo_name: string
-      }
+      config: components['schemas']['pages_source_config']
+      type: components['schemas']['pages_source_type']
+    }
+    pages_source_config: {
       /**
-       * @description The source control management provider.
-       * @example github
+       * @deprecated
+       * @description Whether to enable automatic deployments when pushing to the source repository.
+       *     When disabled, no deployments (production or preview) will be triggered automatically.
+       */
+      deployments_enabled: boolean
+      /**
+       * @description The owner of the repository.
+       * @example my-org
+       */
+      owner: string
+      /**
+       * @description The owner ID of the repository.
+       * @example 12345678
+       */
+      owner_id: string
+      /** @description A list of paths that should be excluded from triggering a preview deployment. Wildcard syntax (`*`) is supported. */
+      path_excludes: string[]
+      /** @description A list of paths that should be watched to trigger a preview deployment. Wildcard syntax (`*`) is supported. */
+      path_includes: string[]
+      /** @description Whether to enable PR comments. */
+      pr_comments_enabled: boolean
+      /** @description A list of branches that should not trigger a preview deployment. Wildcard syntax (`*`) is supported. Must be used with `preview_deployment_setting` set to `custom`. */
+      preview_branch_excludes: string[]
+      /** @description A list of branches that should trigger a preview deployment. Wildcard syntax (`*`) is supported. Must be used with `preview_deployment_setting` set to `custom`. */
+      preview_branch_includes: string[]
+      /**
+       * @description Controls whether commits to preview branches trigger a preview deployment.
        * @enum {string}
        */
-      type: 'github' | 'gitlab'
+      preview_deployment_setting: 'all' | 'none' | 'custom'
+      /**
+       * @description The production branch of the repository.
+       * @example main
+       */
+      production_branch: string
+      /** @description Whether to trigger a production deployment on commits to the production branch. */
+      production_deployments_enabled: boolean
+      /**
+       * @description The ID of the repository.
+       * @example 12345678
+       */
+      repo_id: string
+      /**
+       * @description The name of the repository.
+       * @example my-repo
+       */
+      repo_name: string
     }
+    /**
+     * @description The source control management provider.
+     * @example github
+     * @enum {string}
+     */
+    pages_source_type: 'github' | 'gitlab'
     pages_deployment_config_values: {
       /**
        * @description Constellation bindings used for Pages Functions.
@@ -772,6 +781,12 @@ export interface components {
         total_pages?: number
       }
     }
+    /**
+     * Format: uuid
+     * @description UUID of the Pages deployment, as returned by deployment list or create operations.
+     * @example f64788e9-fccd-4d4a-a28a-cb84f88f6e12
+     */
+    pages_deployment_id: string
   }
   responses: never
   parameters: never
@@ -895,23 +910,23 @@ export interface operations {
            */
           '_worker.js'?: string
           /**
-           * @description The branch to build the new deployment from. The `HEAD` of the branch will be used. If omitted, the production branch will be used by default.
+           * @description Git branch to deploy. Uses the branch's `HEAD`; defaults to the project's production branch.
            * @example staging
            */
           branch?: string
           /**
-           * @description Boolean string indicating if the working directory has uncommitted changes.
+           * @description Whether the associated Git working tree has uncommitted changes. Provide `true` or `false`.
            * @example false
            * @enum {string}
            */
           commit_dirty?: 'true' | 'false'
           /**
-           * @description Git commit SHA associated with this deployment.
+           * @description Git commit SHA associated with the deployment.
            * @example a1b2c3d4e5f6
            */
           commit_hash?: string
           /**
-           * @description Git commit message associated with this deployment.
+           * @description Git commit message associated with the deployment.
            * @example Update homepage
            */
           commit_message?: string
@@ -921,8 +936,8 @@ export interface operations {
            */
           'functions-filepath-routing-config.json'?: string
           /**
-           * @description JSON string containing a manifest of files to deploy. Maps file paths to their content hashes.
-           *     Required for direct upload deployments. Maximum 20,000 entries.
+           * @description JSON-encoded object mapping deployment file paths to their uploaded content hashes.
+           *     Required for Direct Upload deployments. Maximum 20,000 entries.
            * @example {"index.html": "abc123", "style.css": "def456"}
            */
           manifest?: string
@@ -964,7 +979,7 @@ export interface operations {
       query?: never
       header?: never
       path: {
-        deployment_id: components['schemas']['pages_identifier']
+        deployment_id: components['schemas']['pages_deployment_id']
         project_name: components['schemas']['pages_project_name']
         account_id: components['schemas']['pages_identifier']
       }
@@ -1001,7 +1016,7 @@ export interface operations {
       }
       header?: never
       path: {
-        deployment_id: components['schemas']['pages_identifier']
+        deployment_id: components['schemas']['pages_deployment_id']
         project_name: components['schemas']['pages_project_name']
         account_id: components['schemas']['pages_identifier']
       }
