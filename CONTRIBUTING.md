@@ -26,6 +26,7 @@ pnpm refuses package versions published less than 7 days ago (`minimumReleaseAge
 | `pnpm run format`              | Format with oxfmt                                                                                          |
 | `pnpm run build`               | Bundle the actions into `dist/`                                                                            |
 | `pnpm run codegen`             | Regenerate the GraphQL types after editing a `.graphql` file                                               |
+| `pnpm run codegen:cloudflare`  | Regenerate the Cloudflare Pages client from Cloudflare's OpenAPI schema                                    |
 | `pnpm run start`               | Run the built deploy action locally, with inputs from a `.env` file based on [.env.example](.env.example)  |
 | `pnpm run act:d`               | Run the delete workflow in Docker with [act], using the Cloudflare secrets from `.env` and your `gh` login |
 | `pnpm changeset`               | Describe your change for the changelog                                                                     |
