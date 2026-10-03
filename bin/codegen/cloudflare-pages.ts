@@ -149,13 +149,12 @@ const childFrames = (node: Json): Array<Frame> => {
     return []
   }
   return Object.entries(node)
-    .map(
-      ([key, value]): Frame =>
-        key === '$ref' &&
-        typeof value === 'string' &&
-        value.startsWith('#/components/')
-          ? {pointer: value.slice('#/'.length)}
-          : {node: value}
+    .map(([key, value]): Frame =>
+      key === '$ref' &&
+      typeof value === 'string' &&
+      value.startsWith('#/components/')
+        ? {pointer: value.slice('#/'.length)}
+        : {node: value}
     )
     .toReversed()
 }
