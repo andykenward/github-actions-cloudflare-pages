@@ -1,6 +1,6 @@
 import * as Schema from 'effect/Schema'
 
-import type {Pages_deployment} from '@/types/cloudflare/pages.js'
+import type {Pages_deployment} from '@/cloudflare/pages.js'
 
 /** One entry of a Cloudflare envelope's `errors`, possibly with a chain. */
 export interface FetchError {

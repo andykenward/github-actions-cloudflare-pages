@@ -7,7 +7,7 @@ import * as HttpClientError from 'effect/http/HttpClientError'
 import * as Result from 'effect/Result'
 import * as Schema from 'effect/Schema'
 
-import type {CloudflarePagesError} from '@/types/cloudflare/pages.js'
+import type {CloudflarePagesError} from '@/cloudflare/pages.js'
 
 import {Envelope} from '../types.js'
 import {

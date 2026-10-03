@@ -18,7 +18,7 @@ import * as Effect from 'effect/Effect'
  * script prunes it down to the handful of Pages operations we call, transitively
  * walking `$ref`s to keep only the referenced `components`, then hands the
  * self-contained subset to `@effect/openapi-generator`. The result is a small,
- * focused `__generated__/types/cloudflare/pages.ts` — the response types and
+ * focused `__generated__/cloudflare/pages.ts` — the response types and
  * an `effect/http` client with one method per operation — instead of a
  * multi-megabyte dump of the whole API.
  *
@@ -289,7 +289,7 @@ const run = async (): Promise<void> => {
     `/* Source: cloudflare/api-schemas @ ${REF} */\n\n`
   const contents = `${banner}${withSchemaImport(await generate(subset))}\n`
 
-  const DIRECTORY = '__generated__/types/cloudflare'
+  const DIRECTORY = '__generated__/cloudflare'
   if (!existsSync(DIRECTORY)) {
     await mkdir(DIRECTORY, {recursive: true})
   }

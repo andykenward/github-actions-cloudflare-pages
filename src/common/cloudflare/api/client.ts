@@ -6,10 +6,10 @@ import * as HttpClient from 'effect/http/HttpClient'
 import * as HttpClientRequest from 'effect/http/HttpClientRequest'
 import * as Layer from 'effect/Layer'
 
-import type {CloudflarePages} from '@/types/cloudflare/pages.js'
+import type {CloudflarePages} from '@/cloudflare/pages.js'
 
+import {make} from '@/cloudflare/pages.js'
 import {CommonInputs} from '@/common/inputs.js'
-import {make} from '@/types/cloudflare/pages.js'
 
 import type {CloudflareApiError} from './error.js'
 import type {ClientResponse, OperationError} from './fetch-result.js'
@@ -41,7 +41,7 @@ type Operation<R> = (
 /**
  * The Cloudflare Pages REST API. Each method makes one request with the
  * generated client — one typed method per operation, from Cloudflare's OpenAPI
- * schema ([`__generated__/types/cloudflare/pages.ts`](../../../../__generated__/types/cloudflare/pages.ts))
+ * schema ([`__generated__/cloudflare/pages.ts`](../../../../__generated__/cloudflare/pages.ts))
  * — and unwraps the `{success, result, errors}` envelope with `unwrap` /
  * `unwrapSuccess` ([`fetch-result.ts`](./fetch-result.ts)). A transport
  * failure or an error envelope fails with `CloudflareApiError`, whose

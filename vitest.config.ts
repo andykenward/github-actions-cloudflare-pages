@@ -38,6 +38,7 @@ export default defineConfig({
        * Used to resolve vi.mock() files
        * These have to match with tsconfig.json paths
        */
+      '@/cloudflare/': `${path.resolve(process.cwd(), '__generated__/cloudflare')}/`,
       '@/common/': `${path.resolve(process.cwd(), 'src/common')}/`,
       '@/delete/': `${path.resolve(process.cwd(), 'src/delete')}/`,
       '@/deploy/': `${path.resolve(process.cwd(), 'src/deploy')}/`,

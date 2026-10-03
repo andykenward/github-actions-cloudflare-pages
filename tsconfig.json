@@ -18,6 +18,7 @@
        * These have to match with vitest.config.ts alias.
        * Otherwise vi.mock() will not resolve in __tests__.
        */
+      "@/cloudflare/*": ["./__generated__/cloudflare/*"],
       "@/common/*": ["./src/common/*"],
       "@/delete/*": ["./src/delete/*"],
       "@/deploy/*": ["./src/deploy/*"],
