@@ -182,12 +182,14 @@ export interface OperationConfig {
  */
 export type WithOptionalResponse<
   A,
-  Config extends OperationConfig
+  Config extends OperationConfig | undefined
 > = Config extends {
   readonly includeResponse: true
 }
   ? [A, HttpClientResponse.HttpClientResponse]
-  : A
+  : Config extends {readonly includeResponse?: false | undefined} | undefined
+    ? A
+    : A | [A, HttpClientResponse.HttpClientResponse]
 
 export const make = (
   httpClient: HttpClient.HttpClient,
@@ -317,7 +319,11 @@ export const make = (
     }
   return {
     httpClient,
-    pagesDeploymentGetDeployments: (accountId, projectName, options) =>
+    pagesDeploymentGetDeployments: (
+      accountId,
+      projectName,
+      options: Parameters<CloudflarePages['pagesDeploymentGetDeployments']>[2]
+    ) =>
       __makePathRequest(
         HttpClientRequest.get,
         [accountId, projectName],
@@ -345,7 +351,9 @@ export const make = (
       accountId,
       projectName,
       deploymentId,
-      options
+      options: Parameters<
+        CloudflarePages['pagesDeploymentGetDeploymentInfo']
+      >[3]
     ) =>
       __makePathRequest(
         HttpClientRequest.get,
@@ -371,7 +379,7 @@ export const make = (
       accountId,
       projectName,
       deploymentId,
-      options
+      options: Parameters<CloudflarePages['pagesDeploymentDeleteDeployment']>[3]
     ) =>
       __makePathRequest(
         HttpClientRequest.delete,
@@ -404,60 +412,119 @@ export interface CloudflarePages {
   /**
    * List the production or preview deployments for a Cloudflare Pages project.
    */
-  readonly pagesDeploymentGetDeployments: <Config extends OperationConfig>(
-    accountId: string,
-    projectName: string,
-    options:
-      | {
-          readonly params?: PagesDeploymentGetDeploymentsParams | undefined
-          readonly config?: Config | undefined
-        }
-      | undefined
-  ) => Effect.Effect<
-    WithOptionalResponse<PagesDeploymentGetDeployments200, Config>,
-    | HttpClientError.HttpClientError
-    | CloudflarePagesError<
-        'PagesDeploymentGetDeployments4XX',
-        PagesDeploymentGetDeployments4XX
-      >
-  >
+  readonly pagesDeploymentGetDeployments: {
+    <Config extends OperationConfig | undefined = undefined>(
+      accountId: string,
+      projectName: string,
+      options: {
+        readonly params?: PagesDeploymentGetDeploymentsParams | undefined
+        readonly config: Config
+      }
+    ): Effect.Effect<
+      WithOptionalResponse<PagesDeploymentGetDeployments200, Config>,
+      | HttpClientError.HttpClientError
+      | CloudflarePagesError<
+          'PagesDeploymentGetDeployments4XX',
+          PagesDeploymentGetDeployments4XX
+        >
+    >
+    <Config extends OperationConfig | undefined = undefined>(
+      accountId: string,
+      projectName: string,
+      options:
+        | {
+            readonly params?: PagesDeploymentGetDeploymentsParams | undefined
+            readonly config?: Config | undefined
+          }
+        | undefined
+    ): Effect.Effect<
+      WithOptionalResponse<
+        PagesDeploymentGetDeployments200,
+        Config | undefined
+      >,
+      | HttpClientError.HttpClientError
+      | CloudflarePagesError<
+          'PagesDeploymentGetDeployments4XX',
+          PagesDeploymentGetDeployments4XX
+        >
+    >
+  }
   /**
    * Retrieve the status and details of a Cloudflare Pages deployment.
    */
-  readonly pagesDeploymentGetDeploymentInfo: <Config extends OperationConfig>(
-    accountId: string,
-    projectName: string,
-    deploymentId: string,
-    options: {readonly config?: Config | undefined} | undefined
-  ) => Effect.Effect<
-    WithOptionalResponse<PagesDeploymentGetDeploymentInfo200, Config>,
-    | HttpClientError.HttpClientError
-    | CloudflarePagesError<
-        'PagesDeploymentGetDeploymentInfo4XX',
-        PagesDeploymentGetDeploymentInfo4XX
-      >
-  >
+  readonly pagesDeploymentGetDeploymentInfo: {
+    <Config extends OperationConfig | undefined = undefined>(
+      accountId: string,
+      projectName: string,
+      deploymentId: string,
+      options: {readonly config: Config}
+    ): Effect.Effect<
+      WithOptionalResponse<PagesDeploymentGetDeploymentInfo200, Config>,
+      | HttpClientError.HttpClientError
+      | CloudflarePagesError<
+          'PagesDeploymentGetDeploymentInfo4XX',
+          PagesDeploymentGetDeploymentInfo4XX
+        >
+    >
+    <Config extends OperationConfig | undefined = undefined>(
+      accountId: string,
+      projectName: string,
+      deploymentId: string,
+      options: {readonly config?: Config | undefined} | undefined
+    ): Effect.Effect<
+      WithOptionalResponse<
+        PagesDeploymentGetDeploymentInfo200,
+        Config | undefined
+      >,
+      | HttpClientError.HttpClientError
+      | CloudflarePagesError<
+          'PagesDeploymentGetDeploymentInfo4XX',
+          PagesDeploymentGetDeploymentInfo4XX
+        >
+    >
+  }
   /**
    * Remove a deployment from a Cloudflare Pages project.
    */
-  readonly pagesDeploymentDeleteDeployment: <Config extends OperationConfig>(
-    accountId: string,
-    projectName: string,
-    deploymentId: string,
-    options:
-      | {
-          readonly params?: PagesDeploymentDeleteDeploymentParams | undefined
-          readonly config?: Config | undefined
-        }
-      | undefined
-  ) => Effect.Effect<
-    WithOptionalResponse<PagesDeploymentDeleteDeployment200, Config>,
-    | HttpClientError.HttpClientError
-    | CloudflarePagesError<
-        'PagesDeploymentDeleteDeployment4XX',
-        PagesDeploymentDeleteDeployment4XX
-      >
-  >
+  readonly pagesDeploymentDeleteDeployment: {
+    <Config extends OperationConfig | undefined = undefined>(
+      accountId: string,
+      projectName: string,
+      deploymentId: string,
+      options: {
+        readonly params?: PagesDeploymentDeleteDeploymentParams | undefined
+        readonly config: Config
+      }
+    ): Effect.Effect<
+      WithOptionalResponse<PagesDeploymentDeleteDeployment200, Config>,
+      | HttpClientError.HttpClientError
+      | CloudflarePagesError<
+          'PagesDeploymentDeleteDeployment4XX',
+          PagesDeploymentDeleteDeployment4XX
+        >
+    >
+    <Config extends OperationConfig | undefined = undefined>(
+      accountId: string,
+      projectName: string,
+      deploymentId: string,
+      options:
+        | {
+            readonly params?: PagesDeploymentDeleteDeploymentParams | undefined
+            readonly config?: Config | undefined
+          }
+        | undefined
+    ): Effect.Effect<
+      WithOptionalResponse<
+        PagesDeploymentDeleteDeployment200,
+        Config | undefined
+      >,
+      | HttpClientError.HttpClientError
+      | CloudflarePagesError<
+          'PagesDeploymentDeleteDeployment4XX',
+          PagesDeploymentDeleteDeployment4XX
+        >
+    >
+  }
 }
 
 export interface CloudflarePagesError<Tag extends string, E> {
