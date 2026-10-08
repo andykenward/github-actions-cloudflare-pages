@@ -128,19 +128,38 @@ const pollOnce = Effect.fn('pollOnce')(function* (
   })
 })
 
+/** The first HTTP status that means the server, not the request, failed. */
+const HTTP_STATUS_SERVER_ERROR_MIN = 500
+
 /**
- * Deliberately a plain boolean predicate rather than `Predicate.isTagged`
- * itself: as a refinement, `Effect.retry`'s result type would claim a pending
- * error cannot escape, but the last failure still propagates when the schedule
- * itself is exhausted.
+ * A failure of the transport rather than an answer from Cloudflare: no
+ * response at all, or a 5xx without an envelope (an HTML 502 from the edge).
+ * One of these during a ten-minute poll shouldn't fail a finished deploy, and
+ * would leave the Cloudflare deployment with no comment or GitHub Deployment.
+ * An envelope error (a bad id, a token without the permission) is an answer,
+ * and is not retried.
  */
-const isPending = (error: unknown): boolean =>
-  Predicate.isTagged(error, 'DeploymentPendingError')
+const isTransientError = (error: CloudflareApiError): boolean =>
+  error.reason._tag === 'RequestError' ||
+  (error.reason._tag === 'HttpError' &&
+    error.reason.status >= HTTP_STATUS_SERVER_ERROR_MIN)
+
+/**
+ * Deliberately a plain boolean predicate rather than a refinement: as a
+ * refinement, `Effect.retry`'s result type would claim a retried error cannot
+ * escape, but the last failure still propagates when the schedule itself is
+ * exhausted.
+ */
+const isRetryable = (
+  error: DeploymentPendingError | CloudflareApiError
+): boolean =>
+  Predicate.isTagged(error, 'DeploymentPendingError') || isTransientError(error)
 
 /**
  * Polls the deployment until it reaches a terminal stage — by id when wrangler
- * reported one, otherwise the newest deployment for the context commit.
- * `CloudflareApiError` (transport or envelope failures) is not retried.
+ * reported one, otherwise the newest deployment for the context commit. A
+ * pending stage and a transient failure (`isTransientError`) are retried on
+ * the same bounded schedule; any other `CloudflareApiError` fails at once.
  */
 export const statusCloudflareDeployment = Effect.fn(
   'statusCloudflareDeployment'
@@ -152,8 +171,17 @@ export const statusCloudflareDeployment = Effect.fn(
   assert.ok(Duration.toMillis(pollTimeout) > 0)
 
   return yield* pollOnce(target).pipe(
+    // A user can't act on a blip that the next poll recovers from, so it goes
+    // to the debug log; one that exhausts the schedule still fails the step.
+    Effect.tapError(error =>
+      Effect.sync(() => {
+        if (Predicate.isTagged(error, 'CloudflareApiError')) {
+          debug(`${PREFIX} ${error.message}`)
+        }
+      })
+    ),
     Effect.retry({
-      while: isPending,
+      while: isRetryable,
       // Bounded both ways. `times` counts schedule steps, and the effect runs
       // once before the first step, so the poll runs at most `times + 1`.
       schedule: Schedule.spaced(pollInterval).pipe(
@@ -166,7 +194,7 @@ export const statusCloudflareDeployment = Effect.fn(
     // The poll ran out of time or polls, by either route: the retry schedule
     // exhausted (propagating the last `DeploymentPendingError`) or the overall
     // `Effect.timeout` fired. `CloudflareApiError` deliberately falls through
-    // so transport failures surface unchanged.
+    // so a failed request, transient or not, surfaces with its own message.
     Effect.catchTag(
       ['DeploymentPendingError', 'TimeoutError'],
       () =>
