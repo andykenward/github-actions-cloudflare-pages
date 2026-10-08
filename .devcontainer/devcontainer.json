@@ -49,8 +49,7 @@
   },
   "postCreateCommand": "pnpm install && prek install",
   "containerEnv": {
-    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
-    "HISTFILE": "/home/vscode/.commandhistory/.zsh_history"
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
   },
   // Named volumes keyed by ${devcontainerId}, so Claude Code sign-in, gh CLI
   // auth and zsh history survive rebuilds without being shared with other
