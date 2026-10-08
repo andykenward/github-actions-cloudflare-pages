@@ -7,7 +7,7 @@ import {GitHubContext} from '@/common/github/context.js'
 import type {CloudflareApiEndpoint} from '../api/endpoints.js'
 import type {PagesDeployment} from '../types.js'
 
-import {CloudflareApi} from '../api/client.js'
+import {CloudflareApi, WITH_RESPONSE} from '../api/client.js'
 
 export const getCloudflareDeploymentAlias = (
   deployment: PagesDeployment
@@ -26,19 +26,12 @@ export const getCloudflareDeployment = Effect.fn('getCloudflareDeployment')(
   }: CloudflareApiEndpoint & {deploymentId: string}) {
     const cloudflare = yield* CloudflareApi
 
-    return yield* cloudflare.result((client, signal) =>
-      client.GET(
-        '/accounts/{account_id}/pages/projects/{project_name}/deployments/{deployment_id}',
-        {
-          params: {
-            path: {
-              account_id: accountId,
-              project_name: projectName,
-              deployment_id: deploymentId
-            }
-          },
-          signal
-        }
+    return yield* cloudflare.result(client =>
+      client.pagesDeploymentGetDeploymentInfo(
+        accountId,
+        projectName,
+        deploymentId,
+        WITH_RESPONSE
       )
     )
   }
@@ -60,14 +53,8 @@ export const findCloudflareLatestDeployment = Effect.fn(
   const {sha: commitHash} = yield* GitHubContext
   const cloudflare = yield* CloudflareApi
 
-  const deployments = yield* cloudflare.result((client, signal) =>
-    client.GET(
-      '/accounts/{account_id}/pages/projects/{project_name}/deployments',
-      {
-        params: {path: {account_id: accountId, project_name: projectName}},
-        signal
-      }
-    )
+  const deployments = yield* cloudflare.result(client =>
+    client.pagesDeploymentGetDeployments(accountId, projectName, WITH_RESPONSE)
   )
 
   return deployments.find(

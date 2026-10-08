@@ -1,40 +1,47 @@
 import * as Context from 'effect/Context'
 import * as Effect from 'effect/Effect'
+import {flow} from 'effect/Function'
+import * as FetchHttpClient from 'effect/http/FetchHttpClient'
+import * as HttpClient from 'effect/http/HttpClient'
+import * as HttpClientRequest from 'effect/http/HttpClientRequest'
 import * as Layer from 'effect/Layer'
-import createClient from 'openapi-fetch'
 
-import type {paths} from '@/types/cloudflare/pages.js'
+import type {CloudflarePages} from '@/cloudflare/pages.js'
 
-import {CommonInputs, secret} from '@/common/inputs.js'
+import {make} from '@/cloudflare/pages.js'
+import {CommonInputs} from '@/common/inputs.js'
 
-import type {ClientResponse} from './fetch-result.js'
+import type {CloudflareApiError} from './error.js'
+import type {ClientResponse, OperationError} from './fetch-result.js'
 
-import {CloudflareApiError, RequestError} from './error.js'
-import {unwrap, unwrapSuccess} from './fetch-result.js'
+import {operationFailure, unwrap, unwrapSuccess} from './fetch-result.js'
 
 export {CloudflareApiError} from './error.js'
 
 /**
- * Base URL for Cloudflare's REST API. The generated `paths` are relative to the
- * `/client/v4` prefix, so it lives here rather than in each operation path.
+ * Base URL for Cloudflare's REST API. The generated operations' paths are
+ * relative to the `/client/v4` prefix, so it lives here rather than in each.
  */
 const BASE_URL = 'https://api.cloudflare.com/client/v4'
 
-type CloudflareClient = ReturnType<typeof createClient<paths>>
-
 /**
- * One request. `signal` is the effect's: pass it as the call's `signal` so an
- * interrupt or timeout aborts the fetch rather than leaving it in flight.
+ * Pass as (or spread into) an operation's options: the client then returns
+ * the response beside the body, which is where a failure's URL comes from.
  */
-type Request<R> = (
-  client: CloudflareClient,
-  signal: AbortSignal
-) => Promise<ClientResponse<R>>
+export const WITH_RESPONSE = {config: {includeResponse: true}} as const
 
 /**
- * The Cloudflare Pages REST API. Each method makes one request with the typed
- * client — paths, params and response bodies are inferred from the generated
- * OpenAPI `paths` ([`__generated__/types/cloudflare/pages.ts`](../../../../__generated__/types/cloudflare/pages.ts))
+ * One request: an operation of the generated client, called with
+ * `WITH_RESPONSE`. Interrupting the effect aborts the fetch.
+ */
+type Operation<R> = (
+  client: CloudflarePages
+) => Effect.Effect<ClientResponse<R>, OperationError>
+
+/**
+ * The Cloudflare Pages REST API. Each method makes one request with the
+ * generated client — one typed method per operation, from Cloudflare's OpenAPI
+ * schema ([`__generated__/cloudflare/pages.ts`](../../../../__generated__/cloudflare/pages.ts))
  * — and unwraps the `{success, result, errors}` envelope with `unwrap` /
  * `unwrapSuccess` ([`fetch-result.ts`](./fetch-result.ts)). A transport
  * failure or an error envelope fails with `CloudflareApiError`, whose
@@ -44,49 +51,57 @@ export class CloudflareApi extends Context.Service<
   CloudflareApi,
   {
     /** Returns the envelope's typed `result`. */
-    result<R>(request: Request<R>): Effect.Effect<R, CloudflareApiError>
+    result<R>(operation: Operation<R>): Effect.Effect<R, CloudflareApiError>
     /** For requests with no meaningful `result` (e.g. DELETE). */
-    success(request: Request<unknown>): Effect.Effect<void, CloudflareApiError>
+    success(
+      operation: Operation<unknown>
+    ): Effect.Effect<void, CloudflareApiError>
   }
 >()(
   'github-actions-cloudflare-pages/common/cloudflare/api/client/CloudflareApi'
 ) {
-  /** Auth is attached once, by middleware closing over the token. */
+  /**
+   * The base URL and auth are attached once, to every request. The token stays
+   * `Redacted` until `bearerToken` writes the header.
+   */
   static readonly layer = Layer.effect(
     CloudflareApi,
     Effect.gen(function* () {
       const {cloudflareApiToken} = yield* CommonInputs
-      const client = createClient<paths>({baseUrl: BASE_URL})
+      const httpClient = yield* HttpClient.HttpClient
 
-      client.use({
-        onRequest({request}) {
-          request.headers.set(
-            'Authorization',
-            `Bearer ${secret(cloudflareApiToken)}`
+      const client = make(
+        httpClient.pipe(
+          HttpClient.mapRequest(
+            flow(
+              HttpClientRequest.prependUrl(BASE_URL),
+              HttpClientRequest.bearerToken(cloudflareApiToken),
+              HttpClientRequest.acceptJson
+            )
           )
-          request.headers.set('Content-Type', 'application/json;charset=UTF-8')
-          return request
-        }
-      })
+        )
+      )
 
-      const send = <R>(request: Request<R>) =>
-        Effect.tryPromise({
-          try: signal => request(client, signal),
-          catch: cause => CloudflareApiError.from(new RequestError({cause}))
-        })
+      const send = <R>(operation: Operation<R>) =>
+        operation(client).pipe(
+          Effect.catch(operationFailure),
+          // No tracer is exported, so `traceparent` / `b3` headers would only
+          // hand Cloudflare ids nothing else records.
+          Effect.provideService(HttpClient.TracerPropagationEnabled, false)
+        )
 
       return CloudflareApi.of({
-        result: request =>
-          send(request).pipe(
+        result: operation =>
+          send(operation).pipe(
             Effect.flatMap(response => Effect.fromResult(unwrap(response)))
           ),
-        success: request =>
-          send(request).pipe(
+        success: operation =>
+          send(operation).pipe(
             Effect.flatMap(response =>
               Effect.fromResult(unwrapSuccess(response))
             )
           )
       })
     })
-  )
+  ).pipe(Layer.provide(FetchHttpClient.layer))
 }

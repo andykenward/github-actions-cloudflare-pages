@@ -4,3 +4,10 @@ allowBuilds:
   sharp: false
   workerd: false
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - effect
+  - '@effect/vitest'
+  - '@effect/openapi-generator'
+  # Peers of the generator that pnpm installs for it.
+  - '@effect/platform-node'
+  - '@effect/platform-node-shared'

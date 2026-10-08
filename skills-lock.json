@@ -60,6 +60,12 @@
       "sourceType": "github",
       "skillPath": "skills/wrangler/SKILL.md",
       "computedHash": "4d247a243fec7e23f1247976e0e491520cb0feb397c5477022551e7b4f5cdd93"
+    },
+    "write-pr-description": {
+      "source": "warpdotdev/common-skills",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/write-pr-description/SKILL.md",
+      "computedHash": "12dcdad5ff5180cf324165deb0c8fad902ae0a79ae9d86b18cf5d347501870cb"
     }
   }
 }

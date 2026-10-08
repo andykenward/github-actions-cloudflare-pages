@@ -6,7 +6,7 @@ paths:
 
 # Effect patterns
 
-`src/common/` is Effect throughout. Code with no dependencies stays plain — `src/common/cloudflare/api/fetch-result.ts` (returns `Result`, not `Effect`), payload and event decoding, `src/common/utils.ts`, the body of `src/common/github/context.ts`.
+`src/common/` is Effect throughout. Code with no dependencies stays plain — `unwrap` / `unwrapSuccess` in `src/common/cloudflare/api/fetch-result.ts` (they return `Result`, not `Effect`; `operationFailure` beside them is an Effect only because it re-reads a response body), payload and event decoding, `src/common/utils.ts`, the body of `src/common/github/context.ts`.
 
 ## Structure
 
@@ -38,7 +38,7 @@ paths:
 
 - Parse with `readInputs(config)` (`src/common/config/provider.ts`). Never call `config.parse(actionInputProvider)` at module scope — `parse` reads the env when called, so the layer would see the import-time env.
 - The provider is `ConfigProvider.fromEnvRecord(process.env)`, because the default snapshots `process.env` once and misses `vi.stubEnv`. It mirrors `getInput` naming (`INPUT_` + upper-case, spaces → `_`, **hyphens kept**: `INPUT_KEEP-LATEST`) — don't use `ConfigProvider.constantCase`.
-- Declare secrets with `Config.redacted`; unwrap with `secret()` (`src/common/inputs.ts`) only at the point of use (auth header, child env). `CommonInputs.layer` registers both tokens with `setSecret`, because the runner only auto-masks `secrets.*` values.
+- Declare secrets with `Config.Redacted`; unwrap with `secret()` (`src/common/inputs.ts`) only at the point of use (auth header, child env). `CommonInputs.layer` registers both tokens with `setSecret`, because the runner only auto-masks `secrets.*` values.
 
 ## Decoding, polling, summaries
 

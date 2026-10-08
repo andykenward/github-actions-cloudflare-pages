@@ -1,14 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "outputStyle": "Concise",
-  "extraKnownMarketplaces": {
-    "cloudflare-pages-action": {
-      "source": {"source": "directory", "path": "./.claude/marketplace"}
-    }
-  },
-  "enabledPlugins": {
-    "typescript-7-lsp@cloudflare-pages-action": true
-  },
   "hooks": {
     "Stop": [
       {
@@ -21,5 +12,18 @@
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {
+    "typescript-7-lsp@cloudflare-pages-action": true,
+    "ponytail@ponytail": true
+  },
+  "extraKnownMarketplaces": {
+    "cloudflare-pages-action": {
+      "source": {
+        "source": "directory",
+        "path": "./.claude/marketplace"
+      }
+    }
+  },
+  "outputStyle": "Concise"
 }

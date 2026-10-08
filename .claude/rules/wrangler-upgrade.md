@@ -1,6 +1,6 @@
 ---
 paths:
-  - '__generated__/types/cloudflare/**'
+  - '__generated__/cloudflare/**'
   - 'src/common/inputs.ts'
   - 'src/common/cloudflare/deployment/wrangler.ts'
   - 'bin/sync-versions.ts'
@@ -10,7 +10,7 @@ paths:
 
 Whenever `devDependencies.wrangler` changes (a Dependabot cloudflare-group PR or a manual bump), look for improvements the new version allows — don't only make CI green. Do it in this order, and report the findings to the user before changing `src/`. `<old>` and `<new>` below are the two versions.
 
-1. **Regenerate.** Check out the bump's branch, `pnpm install`, then `pnpm run all`: it syncs `WRANGLER_VERSION_DEFAULT`, refreshes `__generated__/types/cloudflare/pages.ts` and rebuilds `dist/`. Commit that to the bump's branch; the checks fail without it.
+1. **Regenerate.** Check out the bump's branch, `pnpm install`, then `pnpm run all`: it syncs `WRANGLER_VERSION_DEFAULT`, refreshes `__generated__/cloudflare/pages.ts` and rebuilds `dist/`. Commit that to the bump's branch; the checks fail without it.
 2. **Read the release notes for every version in the range** — after `<old>`, up to and including `<new>`. The list is newest first and covers every package, so save it once and cut it:
 
    ```sh
@@ -21,7 +21,7 @@ Whenever `devDependencies.wrangler` changes (a Dependabot cloudflare-group PR or
 
    Under about ten releases, read `range.md` in full. Otherwise search it case-insensitively for `pages`, `WRANGLER_OUTPUT_FILE`, `CLOUDFLARE_`, `API token`, `deprecat`, `retry`, `Node`, `security`, `GHSA` and `undici`. Most entries are Workers-only and don't apply; a security fix in a bundled dependency does, as a reason to take the bump promptly.
 
-3. **Check the Pages types.** They come from Cloudflare's OpenAPI schema (`cloudflare/api-schemas`), not from wrangler, so `git diff origin/main -- __generated__/types/cloudflare/` shows API drift since the last regeneration and is often empty. Reworded descriptions are noise. Diff or not, confirm every value of the enums the action branches on is handled: `latest_stage.status` and `name` (`pollOnce` in `src/common/cloudflare/deployment/status.ts` treats an unknown status as still pending, so an unhandled terminal status polls to the 10-minute timeout), `skip_reason`, `environment`. Note any new field on `pages_deployment` worth an output or a summary row.
+3. **Check the Pages types.** They and the generated client come from Cloudflare's OpenAPI schema (`cloudflare/api-schemas`), not from wrangler, so `git diff origin/main -- __generated__/cloudflare/` shows API drift since the last regeneration and is often empty. Reworded descriptions are noise. Diff or not, confirm every value of the enums the action branches on is handled: `latest_stage.status` and `name` (`pollOnce` in `src/common/cloudflare/deployment/status.ts` treats an unknown status as still pending, so an unhandled terminal status polls to the 10-minute timeout), `skip_reason`, `environment`. Note any new field on `pages_deployment` worth an output or a summary row.
 4. **Compare the two versions**, because the release notes omit detail. Read; never execute a downloaded package.
    - **Source first** — readable TypeScript, fetched from GitHub at the release tags (wrangler's source isn't vendored: the action never imports it, and a single snapshot can't show a difference). List the commits that touched the Pages code in the range, then diff the deploy command itself:
 
@@ -43,7 +43,7 @@ Whenever `devDependencies.wrangler` changes (a Dependabot cloudflare-group PR or
 5. **Verify each idea against the new source and bundle before proposing it.** A release note can promise more than the code gives (see `command-failed` below).
 6. **Report** each finding as: what changed upstream, what it means for the action, and a recommendation (do, optional, or doesn't apply and why), marked verified in the bundle or release-notes only. Say plainly when nothing applies. Each accepted improvement gets its own branch and PR, separate from the bump.
 
-To rehearse this without a bump, skip step 1 and regenerate the types with `node bin/codegen/cloudflare-pages.ts && pnpm exec oxfmt --write __generated__/types/cloudflare/pages.ts` — `pnpm run codegen:cloudflare` formats the whole repo.
+To rehearse this without a bump, skip step 1 and regenerate the types with `node bin/codegen/cloudflare-pages.ts && pnpm exec oxfmt --write __generated__/cloudflare/pages.ts` — `pnpm run codegen:cloudflare` formats the whole repo.
 
 ## Already checked
 

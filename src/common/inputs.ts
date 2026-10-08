@@ -36,9 +36,9 @@ export const wranglerVersionConfig = optionalInput(
 
 const commonConfig = Config.all({
   /** Cloudflare API token */
-  cloudflareApiToken: Config.redacted(INPUT_KEY_CLOUDFLARE_API_TOKEN),
+  cloudflareApiToken: Config.Redacted(INPUT_KEY_CLOUDFLARE_API_TOKEN),
   /** GitHub API Token */
-  gitHubApiToken: Config.redacted(INPUT_KEY_GITHUB_TOKEN)
+  gitHubApiToken: Config.Redacted(INPUT_KEY_GITHUB_TOKEN)
 })
 
 /**

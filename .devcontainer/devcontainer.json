@@ -50,7 +50,6 @@
   "postCreateCommand": "pnpm install && prek install",
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
-    "DISABLE_AUTOUPDATER": "1",
     "HISTFILE": "/home/vscode/.commandhistory/.zsh_history"
   },
   // Named volumes keyed by ${devcontainerId}, so Claude Code sign-in, gh CLI
@@ -62,5 +61,8 @@
     "source=gh-config-${devcontainerId},target=/home/vscode/.config/gh,type=volume",
     "source=zsh-history-${devcontainerId},target=/home/vscode/.commandhistory,type=volume"
   ],
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+  "otherPortsAttributes": {
+    "onAutoForward": "ignore"
+  }
 }

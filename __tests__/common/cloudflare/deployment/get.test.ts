@@ -11,7 +11,7 @@ describe(getCloudflareDeploymentAlias, () => {
     const alias = getCloudflareDeploymentAlias({
       aliases: null,
       url: 'https://helloworld.pages.dev'
-    } as PagesDeployment)
+    } as unknown as PagesDeployment)
 
     expect(alias).toBe('https://helloworld.pages.dev')
   })
@@ -33,7 +33,7 @@ describe(getCloudflareDeploymentAlias, () => {
     const alias = getCloudflareDeploymentAlias({
       aliases: ['https://helloworld-alias.pages.dev'],
       url: 'https://helloworld.pages.dev'
-    } as PagesDeployment)
+    } as unknown as PagesDeployment)
 
     expect(alias).toBe('https://helloworld-alias.pages.dev')
   })

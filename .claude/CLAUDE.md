@@ -4,10 +4,10 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 
 ## Critical rules
 
-1. **GitHub API → GraphQL only**, via `GitHubApi.request` (`src/common/github/api/client.ts`). The one REST call is `GitHubRestApi.paginate` in `src/common/github/deployment/get.ts` — don't add more.
+1. **GitHub API → GraphQL only**, via `GitHubApi.request` (`src/common/github/api/client.ts`). The one REST call is `GitHubRestApi.paginate` (`src/common/github/api/paginate.ts`, called from `src/common/github/deployment/get.ts`) — don't add more.
 2. **GraphQL lives in `.graphql` files.** After editing one, run `pnpm run codegen`, then update every test mock for it (`grep -rn XDocument __tests__/`).
 3. **Import with `@/` aliases and a `.js` extension** (`@/common/utils.js`), except `@/input-keys`; import JSON `with {type: 'json'}`. Keep `tsconfig.json` `paths` and `vitest.config.ts` `resolve.alias` identical, or `vi.mock()` silently fails.
-4. **Never hand-edit `__generated__/gql/`, `__generated__/types/` or `__generated__/payloads/`** — regenerate them (see Commands). `__generated__/responses/` is hand-maintained fixtures.
+4. **Never hand-edit `__generated__/gql/`, `__generated__/cloudflare/`, `__generated__/types/` or `__generated__/payloads/`** — regenerate them (see Commands). `__generated__/responses/` is hand-maintained fixtures.
 5. **No `console.log`** — use `@actions/core` (`info`, `debug`, `warning`, `error`). Only entry points call `setFailed` (via `reportFailure`); a helper that calls it before failing duplicates the error annotation.
 6. **Changed an exported function → update its tests.** Tests for `bin/` scripts go in `__tests__/scripts/` (vitest excludes `__tests__/bin/`).
 7. **Run scripts with `node`**, or `tsx` when they transitively import `__generated__/gql/` (its enums and `.js` imports break type-stripping).
@@ -17,25 +17,23 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 
 ## Commands
 
-| Command                        | Purpose                                                                                                                    |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm run all`                 | Full validation: sync-versions → knip → codegen → codegen:events → codegen:cloudflare → tsc → format → lint → test → build |
-| `pnpm run build`               | Bundle `dist/deploy` and `dist/delete`                                                                                     |
-| `pnpm run codegen` (`:watch`)  | GraphQL types → `__generated__/gql/`                                                                                       |
-| `pnpm run codegen:cloudflare`  | Cloudflare Pages types → `__generated__/types/cloudflare/`                                                                 |
-| `pnpm run codegen:events`      | GitHub event names from `@octokit/openapi-webhooks` → `__generated__/types/github/`                                        |
-| `pnpm run download`            | Refresh `__generated__/payloads/` from `octokit/webhooks` (needs `GITHUB_TOKEN` in `.env`)                                 |
-| `pnpm run tsc:check`           | Type-check                                                                                                                 |
-| `pnpm run test` / `test:watch` | Vitest (`test:ci` adds the GitHub Actions reporter)                                                                        |
-| `pnpm run test:coverage`       | Vitest with V8 coverage of `src/` → `.cache/coverage/`                                                                     |
-| `pnpm run lint` / `lint:fix`   | oxlint, type-aware — also where Effect diagnostics come from                                                               |
-| `pnpm run format`              | oxfmt (`format:check` to verify)                                                                                           |
-| `pnpm run start`               | Run the built deploy action with `.env` loaded (see `.env.example`)                                                        |
-| `pnpm run act:d`               | Run `deploy-delete.yml` in Docker with `act` (needs `gh auth login`; event payload in `.github/act/`)                      |
-| `pnpm run sync:effect`         | On a clean branch: replace `repos/effect` with the tag matching `dependencies.effect` and commit it (see repos rule)       |
-| `pnpm run sync:readme`         | Rewrite pinned `@<sha> #vX.Y.Z` refs in READMEs, workflow templates and the skill                                          |
-| `pnpm run deployments:delete`  | Delete **all preview** deployments of the `.env` project, bypassing GitHub; repeats until a pass deletes nothing           |
-| `pnpm changeset`               | Record a notable or breaking change for `CHANGELOG.md`                                                                     |
+The scripts whose name doesn't say what they do; the rest are in `package.json`.
+
+| Command                       | Purpose                                                                                                                    |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run all`                | Full validation: sync-versions → knip → codegen → codegen:events → codegen:cloudflare → tsc → format → lint → test → build |
+| `pnpm run codegen` (`:watch`) | GraphQL types → `__generated__/gql/`                                                                                       |
+| `pnpm run codegen:cloudflare` | Cloudflare Pages types and client → `__generated__/cloudflare/`                                                            |
+| `pnpm run codegen:events`     | GitHub event names from `@octokit/openapi-webhooks` → `__generated__/types/github/`                                        |
+| `pnpm run download`           | Refresh `__generated__/payloads/` from `octokit/webhooks` (needs `GITHUB_TOKEN` in `.env`)                                 |
+| `pnpm run test:coverage`      | Vitest with V8 coverage of `src/` → `.cache/coverage/`                                                                     |
+| `pnpm run lint` / `lint:fix`  | oxlint, type-aware — also where Effect diagnostics come from                                                               |
+| `pnpm run start`              | Run the built deploy action with `.env` loaded (see `.env.example`)                                                        |
+| `pnpm run act:d`              | Run `deploy-delete.yml` in Docker with `act` (needs `gh auth login`; event payload in `.github/act/`)                      |
+| `pnpm run sync:effect`        | On a clean branch: replace `repos/effect` with the tag matching `dependencies.effect` and commit it (see repos rule)       |
+| `pnpm run sync:readme`        | Rewrite pinned `@<sha> #vX.Y.Z` refs in READMEs, workflow templates and the skill                                          |
+| `pnpm run deployments:delete` | Delete **all preview** deployments of the `.env` project, bypassing GitHub; repeats until a pass deletes nothing           |
+| `pnpm changeset`              | Record a notable or breaking change for `CHANGELOG.md`                                                                     |
 
 ## Before you finish
 
@@ -58,23 +56,23 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 - Effect **v4** (`effect/Schema`, `effect/Config`, `effect/Result`) — never v3 APIs.
 - Before writing Effect code, read `node_modules/effect/AGENTS.md` completely and follow its links.
 - Treat `repos/effect/` (the vendored Effect source) as the source of truth for idiomatic usage and APIs; prefer it over web search or recall.
-- `repos/effect/` can be a newer rc than the installed `effect` (e.g. `Config.mapEffect` there is `Config.mapOrFail` in `node_modules`); confirm an API exists in `node_modules/effect/dist/*.d.ts` before using it, or pick one present in both.
+- `repos/effect/` can be a newer rc than the installed `effect`; confirm an API exists in `node_modules/effect/dist/*.d.ts` before using it, or pick one present in both.
 
 ## Path-scoped rules
 
 These load automatically when you read a matching file. If one hasn't loaded — e.g. in a subagent, or before you've opened a matching file — read it directly.
 
-| Rule                                             | Loads for                                                                                                                         | Covers                                                                                                       |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [graphql.md](rules/graphql.md)                   | `src/**/*.graphql`, `bin/**/*.graphql`, `graphql.config.ts`, `__generated__/gql/`                                                 | Writing operations, codegen, mocks                                                                           |
-| [effect.md](rules/effect.md)                     | `src/**/*.ts`, `__tests__/**/*.ts`                                                                                                | Services and layers, entry points, errors, inputs, secrets, polling, summaries, lint                         |
-| [action-runtime.md](rules/action-runtime.md)     | `src/**`, `action.yml`, `delete/action.yml`, `input-keys.ts`, `bin/codegen/cloudflare-pages.ts`                                   | Deploy/delete flow, GitHub and Cloudflare clients, adding inputs and Pages endpoints                         |
-| [wrangler-upgrade.md](rules/wrangler-upgrade.md) | `__generated__/types/cloudflare/`, `src/common/inputs.ts`, `src/common/cloudflare/deployment/wrangler.ts`, `bin/sync-versions.ts` | Checking a wrangler bump for improvements: release notes, type diff, bundle checks, verdicts already reached |
-| [testing.md](rules/testing.md)                   | `__tests__/**`, `**/__mocks__/**`, vitest config                                                                                  | Helpers, Effect tests, mocks, wrangler, snapshots                                                            |
-| [tooling.md](rules/tooling.md)                   | `package.json`, TS/lint/format/bundler config, `bin/**`, `.claude/` config, `.devcontainer/**`                                    | Dependencies, TypeScript 6 + 7, `@effect/tsgo`, scripts, bundling, hooks, debugging                          |
-| [workflows.md](rules/workflows.md)               | `.github/**`                                                                                                                      | CI, release, Dependabot, workflow hygiene, signed bot commits                                                |
-| [repos.md](rules/repos.md)                       | `repos/**`, the configs that exclude it, `bin/sync-effect.ts`                                                                     | Vendored-source exclusions and the snapshot sync                                                             |
-| [tiger-style.md](rules/tiger-style.md)           | `src/**/*.ts`, `bin/**/*.ts`, `__tests__/**/*.ts`, `.oxlintrc.json`                                                               | Function size, bounds, assertions, explicit errors, naming, and the lint rules behind them                   |
-| [docs.md](rules/docs.md)                         | READMEs, `CONTRIBUTING.md`, `action.yml`, workflow templates, `skills/**`, `.claude/**/*.md`                                      | User and contributor docs, Markdown gotchas, maintaining these instructions                                  |
+| Rule                                             | Loads for                                                                                                                   | Covers                                                                                                       |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [graphql.md](rules/graphql.md)                   | `src/**/*.graphql`, `bin/**/*.graphql`, `graphql.config.ts`, `__generated__/gql/`                                           | Writing operations, codegen, mocks                                                                           |
+| [effect.md](rules/effect.md)                     | `src/**/*.ts`, `__tests__/**/*.ts`                                                                                          | Services and layers, entry points, errors, inputs, secrets, polling, summaries, lint                         |
+| [action-runtime.md](rules/action-runtime.md)     | `src/**`, `action.yml`, `delete/action.yml`, `input-keys.ts`, `bin/codegen/cloudflare-pages.ts`                             | Deploy/delete flow, GitHub and Cloudflare clients, adding inputs and Pages endpoints                         |
+| [wrangler-upgrade.md](rules/wrangler-upgrade.md) | `__generated__/cloudflare/`, `src/common/inputs.ts`, `src/common/cloudflare/deployment/wrangler.ts`, `bin/sync-versions.ts` | Checking a wrangler bump for improvements: release notes, type diff, bundle checks, verdicts already reached |
+| [testing.md](rules/testing.md)                   | `__tests__/**`, `**/__mocks__/**`, vitest config                                                                            | Helpers, Effect tests, mocks, wrangler, snapshots                                                            |
+| [tooling.md](rules/tooling.md)                   | `package.json`, TS/lint/format/bundler config, `bin/**`, `.claude/` config, `.devcontainer/**`                              | Dependencies, TypeScript 7, `@effect/tsgo`, scripts, bundling, hooks, debugging                              |
+| [workflows.md](rules/workflows.md)               | `.github/**`                                                                                                                | CI, release, Dependabot, workflow hygiene, signed bot commits                                                |
+| [repos.md](rules/repos.md)                       | `repos/**`, the configs that exclude it, `bin/sync-effect.ts`                                                               | Vendored-source exclusions and the snapshot sync                                                             |
+| [tiger-style.md](rules/tiger-style.md)           | `src/**/*.ts`, `bin/**/*.ts`, `__tests__/**/*.ts`, `.oxlintrc.json`                                                         | Function size, bounds, assertions, explicit errors, naming, and the lint rules behind them                   |
+| [docs.md](rules/docs.md)                         | READMEs, `CONTRIBUTING.md`, `action.yml`, workflow templates, `skills/**`, `.claude/**/*.md`                                | User and contributor docs, Markdown gotchas, maintaining these instructions                                  |
 
 Record new learnings where they apply: session-wide rules here, path-specific ones in the matching rule.
