@@ -15,3 +15,8 @@ COPY --from=ghcr.io/j178/prek:0.4.11@sha256:b8fc85002e8b77d27fa2b8f305bbde52517a
 # is chowned too, since mkdir -p creates it as root.
 RUN mkdir -p /home/vscode/.claude /home/vscode/.config/gh /home/vscode/.commandhistory \
     && chown -R vscode:vscode /home/vscode/.claude /home/vscode/.config /home/vscode/.commandhistory
+
+# Shell history location and prompt; see the comments in zshrc. Appended, not
+# copied over, so the base image's Oh My Zsh setup stays.
+COPY zshrc /tmp/zshrc
+RUN cat /tmp/zshrc >> /home/vscode/.zshrc && rm /tmp/zshrc
