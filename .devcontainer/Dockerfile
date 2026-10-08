@@ -2,7 +2,7 @@
 # runner — pinned by digest. It ships zsh + Oh My Zsh and the non-root `vscode`
 # user (UID 1000), and builds an up-to-date git from source, so local git
 # matches CI instead of lagging at the distro's release.
-FROM mcr.microsoft.com/devcontainers/base:3.0.8-noble@sha256:d7c468679f45a52ad3673d06656b5bf16e488990b17216a1fa295d9e1f89d724
+FROM mcr.microsoft.com/devcontainers/base:3.0.9-noble@sha256:92164bd01e0a8578ac68ccd4466a472fee8dde530d25741a377487f545884bd5
 
 # prek — pre-commit hook manager, copied from the official distroless image.
 # The digest is the multi-arch index, so amd64 and arm64 each get their own
