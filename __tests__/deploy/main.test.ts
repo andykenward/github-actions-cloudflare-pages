@@ -1,4 +1,4 @@
-import {setOutput} from '@actions/core'
+import {setOutput, warning} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
@@ -7,7 +7,7 @@ import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 import type {GetEnvironmentAndRefQuery} from '@/gql/graphql.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
-import {GitHubApi} from '@/common/github/api/client.js'
+import {GitHubApi, GitHubApiError} from '@/common/github/api/client.js'
 import {addComment} from '@/common/github/comment.js'
 import {createGitHubDeployment} from '@/common/github/deployment/create.js'
 import {execFileAsync} from '@/common/utils.js'
@@ -143,6 +143,33 @@ describe('deploy', () => {
             expect(vi.mocked(addComment).mock.calls[0]?.[2]).toBeUndefined()
           }).pipe(Effect.provide(DeployLayer))
         }
+      )
+
+      it.live(
+        'records the deployment without a comment when posting it fails',
+        () =>
+          Effect.gen(function* () {
+            expect.assertions(2)
+
+            mockSuccessfulDeploy()
+            vi.mocked(addComment).mockReturnValueOnce(
+              Effect.fail(
+                GitHubApiError.from(
+                  new Error('GitHub API request failed: 502 Bad Gateway')
+                )
+              )
+            )
+
+            yield* run
+
+            expect(warning).toHaveBeenCalledWith(
+              'addComment - Posting the pull request comment failed; recording the deployment without one: GitHub API request failed: 502 Bad Gateway'
+            )
+            expect(createGitHubDeployment).toHaveBeenCalledExactlyOnceWith(
+              // oxlint-disable-next-line typescript/no-unsafe-assignment
+              expect.objectContaining({commentId: undefined})
+            )
+          }).pipe(Effect.provide(DeployLayer))
       )
 
       it.live('stops wrangler when the GitHub Environment is missing', () => {
