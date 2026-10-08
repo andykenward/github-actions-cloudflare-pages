@@ -175,6 +175,26 @@ describe(GitHubContext, () => {
     })
   )
 
+  it.effect('takes the branch of a `delete` from its payload', () =>
+    Effect.gen(function* () {
+      expect.assertions(2)
+
+      // The run is on the default branch, which `GITHUB_REF_NAME` names; the
+      // deleted branch is only in the payload.
+      vi.stubEnv('GITHUB_EVENT_NAME', 'delete')
+      vi.stubEnv('GITHUB_HEAD_REF', '')
+      vi.stubEnv(
+        'GITHUB_EVENT_PATH',
+        '__fixtures__/payloads/delete.payload.json'
+      )
+
+      const {branch, ref} = yield* context
+
+      expect(branch).toBe('feature/deleted-branch')
+      expect(ref).toBe('feature/deleted-branch')
+    })
+  )
+
   it.effect('returns context for `workflow_run`', () =>
     Effect.gen(function* () {
       expect.assertions(7)
