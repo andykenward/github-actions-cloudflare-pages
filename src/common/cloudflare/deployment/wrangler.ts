@@ -17,7 +17,7 @@ import * as Schema from 'effect/Schema'
 
 import {errorMessage} from '@/common/errors.js'
 import {secret} from '@/common/inputs.js'
-import {execFileAsync} from '@/common/utils.js'
+import {execFileAsync, logVerbatim} from '@/common/utils.js'
 
 export const CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN'
 export const CLOUDFLARE_ACCOUNT_ID = 'CLOUDFLARE_ACCOUNT_ID'
@@ -230,10 +230,8 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
   assert.ok(path.isAbsolute(outputFile))
   const wranglerTimeout = yield* WranglerTimeout
 
-  /**
-   * Tried to use wrangler.unstable_pages.deploy. But wrangler is 8mb+ and the bundler is unable to tree shake it.
-   */
-  const {stdout} = yield* Effect.tryPromise({
+  // Not wrangler's `unstable_pages.deploy`: at 8 MB+ it can't be tree-shaken.
+  const {stdout, stderr} = yield* Effect.tryPromise({
     try: signal =>
       execFileAsync(
         'npx',
@@ -264,6 +262,11 @@ export const wranglerPagesDeploy = Effect.fn('wranglerPagesDeploy')(function* ({
         })
     )
   )
+
+  // Wrangler's warnings go to stderr, which a successful run otherwise drops.
+  if (stderr !== '') {
+    logVerbatim(stderr)
+  }
 
   const deploymentId = yield* wranglerPagesDeployOutput(outputFile)
 
