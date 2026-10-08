@@ -2,7 +2,7 @@ import {mkdir, mkdtemp, readdir, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
 
-import {debug} from '@actions/core'
+import {debug, info} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Duration from 'effect/Duration'
 import * as Effect from 'effect/Effect'
@@ -135,6 +135,26 @@ describe('wranglerPagesDeploy', () => {
       })
     }
   )
+
+  it.effect('logs wrangler stderr, which carries its warnings', () => {
+    vi.stubEnv('RUNNER_TEMP', runnerTemp)
+
+    return Effect.gen(function* () {
+      expect.assertions(2)
+
+      const stderr = '▲ [WARNING] Invalid _redirects line: /a /b 999'
+      vi.mocked(execFileAsync).mockResolvedValueOnce({
+        stdout: 'success',
+        stderr
+      })
+
+      const result = yield* wranglerPagesDeploy(DEPLOY_ARGS)
+
+      expect(result.stdout).toBe('success')
+      // Verbatim, between `stop-commands` markers, not as an annotation.
+      expect(info).toHaveBeenCalledWith(stderr)
+    })
+  })
 
   it.effect('fails when the output file cannot be read', () => {
     vi.stubEnv('RUNNER_TEMP', runnerTemp)
