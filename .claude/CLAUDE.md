@@ -4,7 +4,7 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 
 ## Critical rules
 
-1. **GitHub API → GraphQL only**, via `GitHubApi.request` (`src/common/github/api/client.ts`). The one REST call is `GitHubRestApi.paginate` in `src/common/github/deployment/get.ts` — don't add more.
+1. **GitHub API → GraphQL only**, via `GitHubApi.request` (`src/common/github/api/client.ts`). The one REST call is `GitHubRestApi.paginate` (`src/common/github/api/paginate.ts`, called from `src/common/github/deployment/get.ts`) — don't add more.
 2. **GraphQL lives in `.graphql` files.** After editing one, run `pnpm run codegen`, then update every test mock for it (`grep -rn XDocument __tests__/`).
 3. **Import with `@/` aliases and a `.js` extension** (`@/common/utils.js`), except `@/input-keys`; import JSON `with {type: 'json'}`. Keep `tsconfig.json` `paths` and `vitest.config.ts` `resolve.alias` identical, or `vi.mock()` silently fails.
 4. **Never hand-edit `__generated__/gql/`, `__generated__/cloudflare/`, `__generated__/types/` or `__generated__/payloads/`** — regenerate them (see Commands). `__generated__/responses/` is hand-maintained fixtures.
@@ -17,25 +17,23 @@ Dual-mode GitHub Action for Cloudflare Pages: **deploy** runs `wrangler pages de
 
 ## Commands
 
-| Command                        | Purpose                                                                                                                    |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm run all`                 | Full validation: sync-versions → knip → codegen → codegen:events → codegen:cloudflare → tsc → format → lint → test → build |
-| `pnpm run build`               | Bundle `dist/deploy` and `dist/delete`                                                                                     |
-| `pnpm run codegen` (`:watch`)  | GraphQL types → `__generated__/gql/`                                                                                       |
-| `pnpm run codegen:cloudflare`  | Cloudflare Pages types and client → `__generated__/cloudflare/`                                                            |
-| `pnpm run codegen:events`      | GitHub event names from `@octokit/openapi-webhooks` → `__generated__/types/github/`                                        |
-| `pnpm run download`            | Refresh `__generated__/payloads/` from `octokit/webhooks` (needs `GITHUB_TOKEN` in `.env`)                                 |
-| `pnpm run tsc:check`           | Type-check                                                                                                                 |
-| `pnpm run test` / `test:watch` | Vitest (`test:ci` adds the GitHub Actions reporter)                                                                        |
-| `pnpm run test:coverage`       | Vitest with V8 coverage of `src/` → `.cache/coverage/`                                                                     |
-| `pnpm run lint` / `lint:fix`   | oxlint, type-aware — also where Effect diagnostics come from                                                               |
-| `pnpm run format`              | oxfmt (`format:check` to verify)                                                                                           |
-| `pnpm run start`               | Run the built deploy action with `.env` loaded (see `.env.example`)                                                        |
-| `pnpm run act:d`               | Run `deploy-delete.yml` in Docker with `act` (needs `gh auth login`; event payload in `.github/act/`)                      |
-| `pnpm run sync:effect`         | On a clean branch: replace `repos/effect` with the tag matching `dependencies.effect` and commit it (see repos rule)       |
-| `pnpm run sync:readme`         | Rewrite pinned `@<sha> #vX.Y.Z` refs in READMEs, workflow templates and the skill                                          |
-| `pnpm run deployments:delete`  | Delete **all preview** deployments of the `.env` project, bypassing GitHub; repeats until a pass deletes nothing           |
-| `pnpm changeset`               | Record a notable or breaking change for `CHANGELOG.md`                                                                     |
+The scripts whose name doesn't say what they do; the rest are in `package.json`.
+
+| Command                       | Purpose                                                                                                                    |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run all`                | Full validation: sync-versions → knip → codegen → codegen:events → codegen:cloudflare → tsc → format → lint → test → build |
+| `pnpm run codegen` (`:watch`) | GraphQL types → `__generated__/gql/`                                                                                       |
+| `pnpm run codegen:cloudflare` | Cloudflare Pages types and client → `__generated__/cloudflare/`                                                            |
+| `pnpm run codegen:events`     | GitHub event names from `@octokit/openapi-webhooks` → `__generated__/types/github/`                                        |
+| `pnpm run download`           | Refresh `__generated__/payloads/` from `octokit/webhooks` (needs `GITHUB_TOKEN` in `.env`)                                 |
+| `pnpm run test:coverage`      | Vitest with V8 coverage of `src/` → `.cache/coverage/`                                                                     |
+| `pnpm run lint` / `lint:fix`  | oxlint, type-aware — also where Effect diagnostics come from                                                               |
+| `pnpm run start`              | Run the built deploy action with `.env` loaded (see `.env.example`)                                                        |
+| `pnpm run act:d`              | Run `deploy-delete.yml` in Docker with `act` (needs `gh auth login`; event payload in `.github/act/`)                      |
+| `pnpm run sync:effect`        | On a clean branch: replace `repos/effect` with the tag matching `dependencies.effect` and commit it (see repos rule)       |
+| `pnpm run sync:readme`        | Rewrite pinned `@<sha> #vX.Y.Z` refs in READMEs, workflow templates and the skill                                          |
+| `pnpm run deployments:delete` | Delete **all preview** deployments of the `.env` project, bypassing GitHub; repeats until a pass deletes nothing           |
+| `pnpm changeset`              | Record a notable or breaking change for `CHANGELOG.md`                                                                     |
 
 ## Before you finish
 
