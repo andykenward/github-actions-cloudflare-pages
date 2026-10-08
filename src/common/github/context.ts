@@ -87,6 +87,11 @@ const getGitHubContextBranch = (event: WorkflowEvent): string => {
   if (event.eventName === 'workflow_run') {
     return event.payload.workflow_run.head_branch || raise('context: no branch')
   }
+  // A `delete` run is on the default branch, so `GITHUB_REF_NAME` names that,
+  // not the deleted one: the delete action would remove its deployments.
+  if (event.eventName === 'delete') {
+    return event.payload.ref || raise('context: no branch')
+  }
   return (
     process.env.GITHUB_HEAD_REF ||
     process.env.GITHUB_REF_NAME ||

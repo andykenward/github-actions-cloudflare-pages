@@ -19,7 +19,7 @@ paths:
 6. Create the GitHub Deployment (payload `{cloudflare: {id, accountId, projectName}, url, commentId}`) and a `SUCCESS` status with the dashboard log URL.
 
 - **PR to comment on** (`src/common/github/comment.ts`): the `pr-number` input wins (parsed as a positive integer by `DeployInputs`, so an invalid value fails before wrangler runs). Otherwise `pull_request` → the payload's node id (no comment when `closed`); `workflow_dispatch` → the first open PR headed by the branch; `workflow_run` → the single `pull_requests[]` entry matching `head_branch` + `head_sha`; `push` → no comment. For `workflow_dispatch` and `workflow_run`, finding no PR (or several, for `workflow_run`) **fails the deploy** with `CommentError` — it doesn't just skip the comment.
-- **Branch and sha** (`src/common/github/context.ts`): `workflow_run` uses the payload's `head_branch` / `head_sha`; other events use `GITHUB_HEAD_REF || GITHUB_REF_NAME` and `GITHUB_SHA`. The `branch` input overrides only Cloudflare's `--branch`.
+- **Branch and sha** (`src/common/github/context.ts`): `workflow_run` uses the payload's `head_branch` / `head_sha`; `delete` uses the payload's `ref` (the run is on the default branch, which `GITHUB_REF_NAME` names — using it deleted the default branch's deployments); other events use `GITHUB_HEAD_REF || GITHUB_REF_NAME` and `GITHUB_SHA`. The `branch` input overrides only Cloudflare's `--branch`.
 
 ## Delete (`src/delete/main.ts`)
 

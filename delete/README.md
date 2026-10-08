@@ -16,7 +16,7 @@ Delete deployments created by [`andykenward/github-actions-cloudflare-pages`](..
 
 ## Quick start
 
-Run this on `pull_request: closed` to clean up a PR's preview deployments when it's closed or merged (this mirrors the official template in [.github/workflow-templates/delete.yml](../.github/workflow-templates/delete.yml)):
+Run this on `pull_request: closed` to clean up a PR's preview deployments when it's closed or merged (this mirrors the official template in [.github/workflow-templates/delete.yml](../.github/workflow-templates/delete.yml)). On a `delete` event it deletes the deployments of the deleted branch, read from the event payload:
 
 ```yaml
 name: Cloudflare Pages Delete
