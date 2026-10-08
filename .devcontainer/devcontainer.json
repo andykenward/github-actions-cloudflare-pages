@@ -61,5 +61,8 @@
     "source=gh-config-${devcontainerId},target=/home/vscode/.config/gh,type=volume",
     "source=zsh-history-${devcontainerId},target=/home/vscode/.commandhistory,type=volume"
   ],
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+  "otherPortsAttributes": {
+    "onAutoForward": "ignore"
+  }
 }
