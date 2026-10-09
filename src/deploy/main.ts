@@ -1,3 +1,4 @@
+import {warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
@@ -32,6 +33,24 @@ class DeployError extends Schema.TaggedError<DeployError>()('DeployError', {
 
 /** Every service `run` needs, built from the action inputs and runner env. */
 export const DeployLayer = Layer.mergeAll(CommonLayer, DeployInputs.layer)
+
+/**
+ * `addComment`, tolerating a failed post. A failed comment must not lose the
+ * GitHub Deployment: without that record the delete action can never find the
+ * Cloudflare deployment. The comment is a convenience, so warn and go on.
+ */
+const runAddComment = (...args: Parameters<typeof addComment>) =>
+  addComment(...args).pipe(
+    Effect.catchTag('GitHubApiError', error =>
+      Effect.sync(() => {
+        warning(
+          `addComment - Posting the pull request comment failed; recording the deployment without one: ${error.message}`
+        )
+        // oxlint-disable-next-line unicorn/no-useless-undefined
+        return undefined
+      })
+    )
+  )
 
 /**
  * Exported as an Effect value rather than a function: Effect is already lazy,
@@ -85,7 +104,7 @@ export const run = Effect.gen(function* () {
     {concurrency: 'unbounded'}
   )
 
-  const commentId = yield* addComment(
+  const commentId = yield* runAddComment(
     pullRequestId,
     cloudflareDeployment,
     wranglerCommentOutput ? wranglerOutput : undefined

@@ -161,7 +161,7 @@ Or point the agent at this section.
 1. **Checks while uploading.** While Wrangler uploads `directory`, the action checks that `github-environment` exists and finds the pull request to comment on. If either fails, the upload is stopped and the step fails straight away, so no orphaned Cloudflare deployment is left behind. An upload still running after 30 minutes is stopped too.
 2. **Waits for Cloudflare.** It polls the deployment Wrangler just created every second, for up to 10 minutes, until it's live. A build still running after 10 minutes fails the step. So does a failed, canceled or skipped build, once the outputs and job summary are written: the error links to the Cloudflare build log, and no pull request comment or GitHub Deployment is created.
 3. **Reports.** It sets the [outputs](#outputs) and writes a [job summary] with the environment, branch, commit, status, URLs and Wrangler output.
-4. **Comments** on the pull request, if there is one — see [below](#which-pull-request-gets-the-comment). Set `wrangler-comment-output: false` to leave the Wrangler output out of the comment.
+4. **Comments** on the pull request, if there is one — see [below](#which-pull-request-gets-the-comment). Set `wrangler-comment-output: false` to leave the Wrangler output out of the comment. If posting the comment fails, the step warns and carries on, so the deployment is still recorded.
 5. **Records a [GitHub Deployment]** in `github-environment`, with a success status that links to the deployment URL and its Cloudflare build log.
 
 ### Supported events
