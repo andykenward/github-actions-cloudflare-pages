@@ -49,12 +49,14 @@
   },
   // Object form: the entries run in parallel and are independent. The ponytail
   // plugin is enabled in .claude/settings.json, but an external plugin is only
-  // fetched by an explicit install; idempotent on rebuilds. The CLI pins a tag
-  // only (v5.1.0 = 9cc65d03aa2da1db7121b912d03596409ee340b8); .claude/settings.json pins the sha.
+  // fetched by an explicit install; idempotent on rebuilds. No #tag on the
+  // source: the CLI deep-compares it with the extraKnownMarketplaces entry it
+  // wrote to user settings (persisted in the claude-code-config volume), and
+  // that entry has no ref. The version pin lives in .claude/settings.json.
   "postCreateCommand": {
     "pnpm": "pnpm install",
     "prek": "prek install",
-    "claude-plugins": "claude plugin install ponytail --marketplace DietrichGebert/ponytail#v5.1.0 --scope project"
+    "claude-plugins": "claude plugin install ponytail --marketplace DietrichGebert/ponytail --scope project"
   },
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
