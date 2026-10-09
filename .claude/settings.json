@@ -1,18 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ./.claude/scripts/stop-review-agents.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  },
   "enabledPlugins": {
     "typescript-7-lsp@cloudflare-pages-action": true,
     "ponytail@ponytail": true
@@ -22,6 +9,14 @@
       "source": {
         "source": "directory",
         "path": "./.claude/marketplace"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail",
+        "ref": "v5.1.0",
+        "sha": "9cc65d03aa2da1db7121b912d03596409ee340b8"
       }
     }
   },
