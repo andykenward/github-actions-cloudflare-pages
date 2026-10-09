@@ -36,14 +36,25 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      # The action switches the checkout above to the PR branch, fork PRs
+      # included, before it installs plugins. Plugins must come from main, or a
+      # PR could point the marketplace at its own code and run it here.
+      - name: Checkout the plugin marketplace from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          ref: main
+          path: trusted
+          sparse-checkout: .claude/marketplace
+          persist-credentials: false
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@ed670b4cf9de2a5a570d130d2f6197b9e543cd64 #v1.0.240
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # The repo's directory marketplace pins the plugin's commit sha; a git
-          # URL here would install the marketplace's default branch unpinned.
-          plugin_marketplaces: ./.claude/marketplace
+          # The marketplace manifest pins the plugin's commit sha; a git URL
+          # here would install the marketplace's default branch unpinned.
+          plugin_marketplaces: ./trusted/.claude/marketplace
           plugins: ponytail@cloudflare-pages-action
 
           # This is an optional setting that allows Claude to read CI results on PRs
