@@ -47,7 +47,15 @@
       }
     }
   },
-  "postCreateCommand": "pnpm install && prek install",
+  // Object form: the entries run in parallel and are independent. The ponytail
+  // plugin is enabled in .claude/settings.json, but an external plugin is only
+  // fetched by an explicit install; idempotent on rebuilds. It comes from the
+  // repo's directory marketplace, whose manifest pins the commit sha.
+  "postCreateCommand": {
+    "pnpm": "pnpm install",
+    "prek": "prek install",
+    "claude-plugins": "claude plugin install ponytail --marketplace ./.claude/marketplace --scope project"
+  },
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
   },

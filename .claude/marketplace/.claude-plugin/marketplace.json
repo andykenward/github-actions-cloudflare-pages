@@ -8,6 +8,16 @@
       "name": "typescript-7-lsp",
       "source": "./typescript-7-lsp",
       "description": "TypeScript 7 (typescript-go) language server from the project's node_modules"
+    },
+    {
+      "name": "ponytail",
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail",
+        "ref": "v5.1.0",
+        "sha": "9cc65d03aa2da1db7121b912d03596409ee340b8"
+      },
+      "description": "Lazy senior dev mode"
     }
   ]
 }

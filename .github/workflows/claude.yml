@@ -12,11 +12,16 @@ on:
 
 jobs:
   claude:
+    # Only people granted access to the repo can trigger a run. CONTRIBUTOR
+    # means one merged commit, so it is excluded. The `||` chain picks the
+    # object the event carries: comment, review or issue.
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association || github.event.issue.author_association) && (
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+        (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,11 +36,26 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      # The action switches the checkout above to the PR branch, fork PRs
+      # included, before it installs plugins. Plugins must come from main, or a
+      # PR could point the marketplace at its own code and run it here.
+      - name: Checkout the plugin marketplace from main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          ref: main
+          path: trusted
+          sparse-checkout: .claude/marketplace
+          persist-credentials: false
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@ed670b4cf9de2a5a570d130d2f6197b9e543cd64 #v1.0.240
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # The marketplace manifest pins the plugin's commit sha; a git URL
+          # here would install the marketplace's default branch unpinned.
+          plugin_marketplaces: ./trusted/.claude/marketplace
+          plugins: ponytail@cloudflare-pages-action
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
