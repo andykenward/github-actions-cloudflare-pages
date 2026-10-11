@@ -1492,6 +1492,41 @@ type AddedToProjectV2Event implements Node & ProjectV2Event {
 }
 
 """
+Represents an 'added_to_stack' event on a given pull request.
+"""
+type AddedToStackEvent implements Node {
+  """
+  Identifies the actor who performed the event.
+  """
+  actor: Actor
+
+  """
+  Identifies the date and time when the object was created.
+  """
+  createdAt: DateTime!
+
+  """
+  The Node ID of the AddedToStackEvent object
+  """
+  id: ID!
+
+  """
+  Pull request added to the stack.
+  """
+  pullRequest: PullRequest
+
+  """
+  Database ID of the stack.
+  """
+  stackId: BigInt
+
+  """
+  Number of the stack in its repository.
+  """
+  stackNumber: Int
+}
+
+"""
 Represents configuration for assigning Copilot to an issue (public variant)
 """
 input AgentAssignmentInput {
@@ -5035,8 +5070,10 @@ The object which triggered a `ClosedEvent`.
 union Closer = Commit | ProjectV2 | PullRequest
 
 """
-Enforce minimum line coverage thresholds on pull requests. When configured,
-uploaded coverage data must meet the specified criteria before changes can be merged.
+Enforce minimum line coverage thresholds on pull requests. This rule evaluates
+uploaded coverage data but does not wait for coverage uploads. To ensure
+coverage is evaluated before merging, make each status check associated with a
+coverage upload a required status check.
 """
 type CodeCoverageParameters {
   """
@@ -5054,8 +5091,10 @@ type CodeCoverageParameters {
 }
 
 """
-Enforce minimum line coverage thresholds on pull requests. When configured,
-uploaded coverage data must meet the specified criteria before changes can be merged.
+Enforce minimum line coverage thresholds on pull requests. This rule evaluates
+uploaded coverage data but does not wait for coverage uploads. To ensure
+coverage is evaluated before merging, make each status check associated with a
+coverage upload a required status check.
 """
 input CodeCoverageParametersInput {
   """
@@ -7637,8 +7676,7 @@ type ConvertedToDiscussionEvent implements Node {
 
 """
 Request Copilot code review for new pull requests automatically if the author
-has access to Copilot code review and their premium requests quota has not
-reached the limit.
+has access to Copilot code review and AI credits.
 """
 type CopilotCodeReviewParameters {
   """
@@ -7654,8 +7692,7 @@ type CopilotCodeReviewParameters {
 
 """
 Request Copilot code review for new pull requests automatically if the author
-has access to Copilot code review and their premium requests quota has not
-reached the limit.
+has access to Copilot code review and AI credits.
 """
 input CopilotCodeReviewParametersInput {
   """
@@ -27117,8 +27154,8 @@ type Mutation {
   ): ArchiveProjectV2ItemPayload
 
   """
-  Archive a pull request. Closes, locks, and marks the pull request as archived.
-  Only repository admins can archive pull requests.
+  Archive a pull request. Closes and marks the pull request as archived. Users
+  with the triage role or higher can archive pull requests.
   """
   archivePullRequest(
     """
@@ -28600,6 +28637,16 @@ type Mutation {
   ): RerequestCheckSuitePayload
 
   """
+  Rerequest reviews on a pull request.
+  """
+  rerequestReviews(
+    """
+    Parameters for RerequestReviews
+    """
+    input: RerequestReviewsInput!
+  ): RerequestReviewsPayload
+
+  """
   Marks a review thread as resolved.
   """
   resolveReviewThread(
@@ -28771,8 +28818,8 @@ type Mutation {
 
   """
   Unarchive a pull request. Removes the archived flag from the pull request.
-  Does not automatically reopen or unlock the pull request. Only repository
-  admins can unarchive pull requests.
+  Does not automatically reopen or unlock the pull request. Users with the
+  triage role or higher can unarchive pull requests.
   """
   unarchivePullRequest(
     """
@@ -40108,6 +40155,11 @@ input ProjectV2Iteration {
   duration: Int!
 
   """
+  The ID of an existing iteration. Include this to preserve the iteration's identity during replacement updates.
+  """
+  id: String
+
+  """
   The start date for the iteration.
   """
   startDate: Date!
@@ -44697,7 +44749,7 @@ type PullRequestTimelineItemEdge {
 """
 An item in a pull request timeline
 """
-union PullRequestTimelineItems = AddedToMergeQueueEvent | AddedToProjectEvent | AddedToProjectV2Event | AssignedEvent | AutoMergeDisabledEvent | AutoMergeEnabledEvent | AutoRebaseEnabledEvent | AutoSquashEnabledEvent | AutomaticBaseChangeFailedEvent | AutomaticBaseChangeSucceededEvent | BaseRefChangedEvent | BaseRefDeletedEvent | BaseRefForcePushedEvent | BlockedByAddedEvent | BlockedByRemovedEvent | BlockingAddedEvent | BlockingRemovedEvent | ClosedEvent | CommentDeletedEvent | ConnectedEvent | ConvertToDraftEvent | ConvertedFromDraftEvent | ConvertedNoteToIssueEvent | ConvertedToDiscussionEvent | CrossReferencedEvent | DemilestonedEvent | DeployedEvent | DeploymentEnvironmentChangedEvent | DisconnectedEvent | HeadRefDeletedEvent | HeadRefForcePushedEvent | HeadRefRestoredEvent | IssueComment | IssueCommentPinnedEvent | IssueCommentUnpinnedEvent | IssueFieldAddedEvent | IssueFieldChangedEvent | IssueFieldRemovedEvent | IssueTypeAddedEvent | IssueTypeChangedEvent | IssueTypeRemovedEvent | LabeledEvent | LockedEvent | MarkedAsDuplicateEvent | MentionedEvent | MergedEvent | MilestonedEvent | MovedColumnsInProjectEvent | ParentIssueAddedEvent | ParentIssueRemovedEvent | PinnedEvent | ProjectV2ItemStatusChangedEvent | PullRequestCommit | PullRequestCommitCommentThread | PullRequestReview | PullRequestReviewThread | PullRequestRevisionMarker | ReadyForReviewEvent | ReferencedEvent | RemovedFromMergeQueueEvent | RemovedFromProjectEvent | RemovedFromProjectV2Event | RenamedTitleEvent | ReopenedEvent | ReviewDismissedEvent | ReviewRequestRemovedEvent | ReviewRequestedEvent | SubIssueAddedEvent | SubIssueRemovedEvent | SubscribedEvent | TransferredEvent | UnassignedEvent | UnlabeledEvent | UnlockedEvent | UnmarkedAsDuplicateEvent | UnpinnedEvent | UnsubscribedEvent | UserBlockedEvent
+union PullRequestTimelineItems = AddedToMergeQueueEvent | AddedToProjectEvent | AddedToProjectV2Event | AddedToStackEvent | AssignedEvent | AutoMergeDisabledEvent | AutoMergeEnabledEvent | AutoRebaseEnabledEvent | AutoSquashEnabledEvent | AutomaticBaseChangeFailedEvent | AutomaticBaseChangeSucceededEvent | BaseRefChangedEvent | BaseRefDeletedEvent | BaseRefForcePushedEvent | BlockedByAddedEvent | BlockedByRemovedEvent | BlockingAddedEvent | BlockingRemovedEvent | ClosedEvent | CommentDeletedEvent | ConnectedEvent | ConvertToDraftEvent | ConvertedFromDraftEvent | ConvertedNoteToIssueEvent | ConvertedToDiscussionEvent | CrossReferencedEvent | DemilestonedEvent | DeployedEvent | DeploymentEnvironmentChangedEvent | DisconnectedEvent | HeadRefDeletedEvent | HeadRefForcePushedEvent | HeadRefRestoredEvent | IssueComment | IssueCommentPinnedEvent | IssueCommentUnpinnedEvent | IssueFieldAddedEvent | IssueFieldChangedEvent | IssueFieldRemovedEvent | IssueTypeAddedEvent | IssueTypeChangedEvent | IssueTypeRemovedEvent | LabeledEvent | LockedEvent | MarkedAsDuplicateEvent | MentionedEvent | MergedEvent | MilestonedEvent | MovedColumnsInProjectEvent | ParentIssueAddedEvent | ParentIssueRemovedEvent | PinnedEvent | ProjectV2ItemStatusChangedEvent | PullRequestCommit | PullRequestCommitCommentThread | PullRequestReview | PullRequestReviewThread | PullRequestRevisionMarker | ReadyForReviewEvent | ReferencedEvent | RemovedFromMergeQueueEvent | RemovedFromProjectEvent | RemovedFromProjectV2Event | RemovedFromStackEvent | RenamedTitleEvent | ReopenedEvent | ReviewDismissedEvent | ReviewRequestRemovedEvent | ReviewRequestedEvent | SubIssueAddedEvent | SubIssueRemovedEvent | SubscribedEvent | TransferredEvent | UnassignedEvent | UnlabeledEvent | UnlockedEvent | UnmarkedAsDuplicateEvent | UnpinnedEvent | UnsubscribedEvent | UserBlockedEvent
 
 """
 The connection type for PullRequestTimelineItems.
@@ -45686,6 +45738,11 @@ type Query implements Node {
     identifier: SecurityAdvisoryIdentifierFilter
 
     """
+    Filter advisories by withdrawn status. True returns only withdrawn advisories. False excludes withdrawn advisories.
+    """
+    isWithdrawn: Boolean
+
+    """
     Returns the last _n_ elements from the list.
     """
     last: Int
@@ -45699,6 +45756,11 @@ type Query implements Node {
     Filter advisories to those published since a time in the past.
     """
     publishedSince: DateTime
+
+    """
+    A list of advisory severities to filter advisories by.
+    """
+    severities: [SecurityAdvisorySeverity!]
 
     """
     Filter advisories to those updated since a time in the past.
@@ -47914,6 +47976,41 @@ type RemovedFromProjectV2Event implements Node & ProjectV2Event {
   Did this event result from workflow automation?
   """
   wasAutomated: Boolean!
+}
+
+"""
+Represents a 'removed_from_stack' event on a given pull request.
+"""
+type RemovedFromStackEvent implements Node {
+  """
+  Identifies the actor who performed the event.
+  """
+  actor: Actor
+
+  """
+  Identifies the date and time when the object was created.
+  """
+  createdAt: DateTime!
+
+  """
+  The Node ID of the RemovedFromStackEvent object
+  """
+  id: ID!
+
+  """
+  Pull request removed from the stack.
+  """
+  pullRequest: PullRequest
+
+  """
+  Database ID of the stack.
+  """
+  stackId: BigInt
+
+  """
+  Number of the stack in its repository.
+  """
+  stackNumber: Int
 }
 
 """
@@ -51123,6 +51220,11 @@ type Repository implements Node & PackageOwner & ProjectOwner & ProjectV2Recent 
   ): RepositoryConnection!
 
   """
+  Identifies the primary key from the database as a BigInt.
+  """
+  fullDatabaseId: BigInt
+
+  """
   The funding links for this repository
   """
   fundingLinks: [FundingLink!]!
@@ -54116,8 +54218,10 @@ enum RepositoryRuleType {
   BRANCH_NAME_PATTERN
 
   """
-  Enforce minimum line coverage thresholds on pull requests. When configured,
-  uploaded coverage data must meet the specified criteria before changes can be merged.
+  Enforce minimum line coverage thresholds on pull requests. This rule evaluates
+  uploaded coverage data but does not wait for coverage uploads. To ensure
+  coverage is evaluated before merging, make each status check associated with a
+  coverage upload a required status check.
   """
   CODE_COVERAGE
 
@@ -54152,8 +54256,7 @@ enum RepositoryRuleType {
 
   """
   Request Copilot code review for new pull requests automatically if the author
-  has access to Copilot code review and their premium requests quota has not
-  reached the limit.
+  has access to Copilot code review and AI credits.
   """
   COPILOT_CODE_REVIEW
 
@@ -55587,6 +55690,61 @@ type RerequestCheckSuitePayload {
 }
 
 """
+Autogenerated input type of RerequestReviews
+"""
+input RerequestReviewsInput {
+  """
+  The Node IDs of the bots to rerequest.
+  """
+  botIds: [ID!]
+
+  """
+  A unique identifier for the client performing the mutation.
+  """
+  clientMutationId: String
+
+  """
+  The Node ID of the pull request to modify.
+  """
+  pullRequestId: ID!
+
+  """
+  The Node IDs of the teams to rerequest.
+  """
+  teamIds: [ID!]
+
+  """
+  The Node IDs of the users to rerequest.
+  """
+  userIds: [ID!]
+}
+
+"""
+Autogenerated return type of RerequestReviews.
+"""
+type RerequestReviewsPayload {
+  """
+  Identifies the actor who performed the event.
+  """
+  actor: Actor
+
+  """
+  A unique identifier for the client performing the mutation.
+  """
+  clientMutationId: String
+
+  """
+  The pull request that is getting requests.
+  """
+  pullRequest: PullRequest
+
+  """
+  The edge from the pull request to the requested reviewers.
+  """
+  requestedReviewersEdge: UserEdge
+}
+
+"""
 Autogenerated input type of ResolveReviewThread
 """
 input ResolveReviewThreadInput {
@@ -56557,6 +56715,11 @@ type SecurityAdvisory implements Node {
   classification: SecurityAdvisoryClassification!
 
   """
+  The Common Vulnerabilities and Exposures ID
+  """
+  cveId: String
+
+  """
   The CVSS associated with this advisory
   """
   cvss: CVSS! @deprecated(reason: "`cvss` will be removed. New `cvss_severities` field will now contain both `cvss_v3` and `cvss_v4` properties. Removal on 2025-10-01 UTC.")
@@ -56612,6 +56775,11 @@ type SecurityAdvisory implements Node {
   ghsaId: String!
 
   """
+  When the GitHub Security team reviewed this advisory, which may differ from when GitHub published it
+  """
+  githubReviewedAt: DateTime
+
+  """
   The Node ID of the SecurityAdvisory object
   """
   id: ID!
@@ -56625,6 +56793,11 @@ type SecurityAdvisory implements Node {
   The permalink for the advisory's dependabot alerts page
   """
   notificationsPermalink: URI
+
+  """
+  When NVD published its advisory record, independent of GitHub's publishing timeline
+  """
+  nvdPublishedAt: DateTime
 
   """
   The organization that originated the advisory
@@ -56647,9 +56820,19 @@ type SecurityAdvisory implements Node {
   references: [SecurityAdvisoryReference!]!
 
   """
+  The URL for the associated repository security advisory, if this global advisory is linked to a repository-level advisory.
+  """
+  repositoryAdvisoryUrl: URI
+
+  """
   The severity of the advisory
   """
   severity: SecurityAdvisorySeverity!
+
+  """
+  URL to the upstream source code relevant to the advisory
+  """
+  sourceCodeLocation: URI
 
   """
   A short plaintext summary of the advisory
@@ -70571,5 +70754,5 @@ scalar X509Certificate
 
 scalar _Any
 
-union _Entity = AddedToMergeQueueEvent | AddedToProjectEvent | AddedToProjectV2Event | App | AssignedEvent | AutoMergeDisabledEvent | AutoMergeEnabledEvent | AutoRebaseEnabledEvent | AutoSquashEnabledEvent | AutomaticBaseChangeFailedEvent | AutomaticBaseChangeSucceededEvent | BaseRefChangedEvent | BaseRefDeletedEvent | BaseRefForcePushedEvent | Blob | BlockedByAddedEvent | BlockedByRemovedEvent | BlockingAddedEvent | BlockingRemovedEvent | Bot | BranchProtectionRule | BypassForcePushAllowance | BypassPullRequestAllowance | CWE | CheckRun | CheckSuite | ClosedEvent | CodeOfConduct | CommentDeletedEvent | Commit | CommitComment | CommitCommentThread | Comparison | ConnectedEvent | ConvertToDraftEvent | ConvertedFromDraftEvent | ConvertedNoteToIssueEvent | ConvertedToDiscussionEvent | CrossReferencedEvent | DemilestonedEvent | DependencyGraphManifest | DeployKey | DeployedEvent | Deployment | DeploymentEnvironmentChangedEvent | DeploymentReview | DeploymentStatus | DisconnectedEvent | Discussion | DiscussionCategory | DiscussionComment | DiscussionPoll | DiscussionPollOption | DraftIssue | Enterprise | EnterpriseAdministratorInvitation | EnterpriseIdentityProvider | EnterpriseMemberInvitation | EnterpriseRepositoryInfo | EnterpriseServerInstallation | EnterpriseServerUserAccount | EnterpriseServerUserAccountEmail | EnterpriseServerUserAccountsUpload | EnterpriseTeam | EnterpriseUserAccount | Environment | ExternalIdentity | Gist | GistComment | HeadRefDeletedEvent | HeadRefForcePushedEvent | HeadRefRestoredEvent | IpAllowListEntry | Issue | IssueComment | IssueCommentPinnedEvent | IssueCommentUnpinnedEvent | IssueFieldAddedEvent | IssueFieldChangedEvent | IssueFieldDate | IssueFieldDateValue | IssueFieldMultiSelect | IssueFieldMultiSelectValue | IssueFieldNumber | IssueFieldNumberValue | IssueFieldRemovedEvent | IssueFieldSingleSelect | IssueFieldSingleSelectOption | IssueFieldSingleSelectValue | IssueFieldText | IssueFieldTextValue | IssueType | IssueTypeAddedEvent | IssueTypeChangedEvent | IssueTypeRemovedEvent | Label | LabeledEvent | Language | License | LinkedBranch | LockedEvent | Mannequin | MarkedAsDuplicateEvent | MarketplaceCategory | MarketplaceListing | MemberFeatureRequestNotification | MembersCanDeleteReposClearAuditEntry | MembersCanDeleteReposDisableAuditEntry | MembersCanDeleteReposEnableAuditEntry | MentionedEvent | MergeQueue | MergeQueueEntry | MergedEvent | MigrationSource | Milestone | MilestonedEvent | MovedColumnsInProjectEvent | OIDCProvider | OauthApplicationCreateAuditEntry | OrgAddBillingManagerAuditEntry | OrgAddMemberAuditEntry | OrgBlockUserAuditEntry | OrgConfigDisableCollaboratorsOnlyAuditEntry | OrgConfigEnableCollaboratorsOnlyAuditEntry | OrgCreateAuditEntry | OrgDisableOauthAppRestrictionsAuditEntry | OrgDisableSamlAuditEntry | OrgDisableTwoFactorRequirementAuditEntry | OrgEnableOauthAppRestrictionsAuditEntry | OrgEnableSamlAuditEntry | OrgEnableTwoFactorRequirementAuditEntry | OrgInviteMemberAuditEntry | OrgInviteToBusinessAuditEntry | OrgOauthAppAccessApprovedAuditEntry | OrgOauthAppAccessBlockedAuditEntry | OrgOauthAppAccessDeniedAuditEntry | OrgOauthAppAccessRequestedAuditEntry | OrgOauthAppAccessUnblockedAuditEntry | OrgRemoveBillingManagerAuditEntry | OrgRemoveMemberAuditEntry | OrgRemoveOutsideCollaboratorAuditEntry | OrgRestoreMemberAuditEntry | OrgUnblockUserAuditEntry | OrgUpdateDefaultRepositoryPermissionAuditEntry | OrgUpdateMemberAuditEntry | OrgUpdateMemberRepositoryCreationPermissionAuditEntry | OrgUpdateMemberRepositoryInvitationPermissionAuditEntry | Organization | OrganizationIdentityProvider | OrganizationInvitation | Package | PackageFile | PackageTag | PackageVersion | ParentIssueAddedEvent | ParentIssueRemovedEvent | PendingAssigneeSuggestion | PendingCloseSuggestion | PendingFieldSuggestion | PendingLabelSuggestion | PendingTypeSuggestion | PinnedDiscussion | PinnedEnvironment | PinnedEvent | PinnedIssue | PinnedIssueComment | PrivateRepositoryForkingDisableAuditEntry | PrivateRepositoryForkingEnableAuditEntry | Project | ProjectCard | ProjectColumn | ProjectV2 | ProjectV2Field | ProjectV2Item | ProjectV2ItemFieldDateValue | ProjectV2ItemFieldIterationValue | ProjectV2ItemFieldMultiSelectValue | ProjectV2ItemFieldNumberValue | ProjectV2ItemFieldSingleSelectValue | ProjectV2ItemFieldTextValue | ProjectV2ItemStatusChangedEvent | ProjectV2IterationField | ProjectV2MultiSelectField | ProjectV2SingleSelectField | ProjectV2StatusUpdate | ProjectV2View | ProjectV2Workflow | PublicKey | PullRequest | PullRequestCommit | PullRequestCommitCommentThread | PullRequestReview | PullRequestReviewComment | PullRequestReviewThread | PullRequestStack | PullRequestStackEntry | PullRequestThread | Push | PushAllowance | Query | Reaction | ReadyForReviewEvent | Ref | ReferencedEvent | Release | ReleaseAsset | RemovedFromMergeQueueEvent | RemovedFromProjectEvent | RemovedFromProjectV2Event | RenamedTitleEvent | ReopenedEvent | RepoAccessAuditEntry | RepoAddMemberAuditEntry | RepoAddTopicAuditEntry | RepoArchivedAuditEntry | RepoChangeMergeSettingAuditEntry | RepoConfigDisableAnonymousGitAccessAuditEntry | RepoConfigDisableCollaboratorsOnlyAuditEntry | RepoConfigDisableContributorsOnlyAuditEntry | RepoConfigDisableSockpuppetDisallowedAuditEntry | RepoConfigEnableAnonymousGitAccessAuditEntry | RepoConfigEnableCollaboratorsOnlyAuditEntry | RepoConfigEnableContributorsOnlyAuditEntry | RepoConfigEnableSockpuppetDisallowedAuditEntry | RepoConfigLockAnonymousGitAccessAuditEntry | RepoConfigUnlockAnonymousGitAccessAuditEntry | RepoCreateAuditEntry | RepoDestroyAuditEntry | RepoRemoveMemberAuditEntry | RepoRemoveTopicAuditEntry | Repository | RepositoryCustomProperty | RepositoryInvitation | RepositoryMigration | RepositoryRule | RepositoryRuleset | RepositoryRulesetBypassActor | RepositoryTopic | RepositoryVisibilityChangeDisableAuditEntry | RepositoryVisibilityChangeEnableAuditEntry | RepositoryVulnerabilityAlert | ReviewDismissalAllowance | ReviewDismissedEvent | ReviewRequest | ReviewRequestRemovedEvent | ReviewRequestedEvent | SavedReply | SecurityAdvisory | SponsorsActivity | SponsorsListing | SponsorsListingFeaturedItem | SponsorsTier | Sponsorship | SponsorshipNewsletter | Status | StatusCheckRollup | StatusContext | SubIssueAddedEvent | SubIssueRemovedEvent | SubscribedEvent | Team | TeamAddMemberAuditEntry | TeamAddRepositoryAuditEntry | TeamChangeParentTeamAuditEntry | TeamRemoveMemberAuditEntry | TeamRemoveRepositoryAuditEntry | Topic | TransferredEvent | Tree | UnassignedEvent | UnlabeledEvent | UnlockedEvent | UnmarkedAsDuplicateEvent | UnpinnedEvent | UnsubscribedEvent | User | UserBlockedEvent | UserContentEdit | UserList | UserNamespaceRepository | UserStatus | VerifiableDomain | Workflow | WorkflowRun | WorkflowRunFile
+union _Entity = AddedToMergeQueueEvent | AddedToProjectEvent | AddedToProjectV2Event | AddedToStackEvent | App | AssignedEvent | AutoMergeDisabledEvent | AutoMergeEnabledEvent | AutoRebaseEnabledEvent | AutoSquashEnabledEvent | AutomaticBaseChangeFailedEvent | AutomaticBaseChangeSucceededEvent | BaseRefChangedEvent | BaseRefDeletedEvent | BaseRefForcePushedEvent | Blob | BlockedByAddedEvent | BlockedByRemovedEvent | BlockingAddedEvent | BlockingRemovedEvent | Bot | BranchProtectionRule | BypassForcePushAllowance | BypassPullRequestAllowance | CWE | CheckRun | CheckSuite | ClosedEvent | CodeOfConduct | CommentDeletedEvent | Commit | CommitComment | CommitCommentThread | Comparison | ConnectedEvent | ConvertToDraftEvent | ConvertedFromDraftEvent | ConvertedNoteToIssueEvent | ConvertedToDiscussionEvent | CrossReferencedEvent | DemilestonedEvent | DependencyGraphManifest | DeployKey | DeployedEvent | Deployment | DeploymentEnvironmentChangedEvent | DeploymentReview | DeploymentStatus | DisconnectedEvent | Discussion | DiscussionCategory | DiscussionComment | DiscussionPoll | DiscussionPollOption | DraftIssue | Enterprise | EnterpriseAdministratorInvitation | EnterpriseIdentityProvider | EnterpriseMemberInvitation | EnterpriseRepositoryInfo | EnterpriseServerInstallation | EnterpriseServerUserAccount | EnterpriseServerUserAccountEmail | EnterpriseServerUserAccountsUpload | EnterpriseTeam | EnterpriseUserAccount | Environment | ExternalIdentity | Gist | GistComment | HeadRefDeletedEvent | HeadRefForcePushedEvent | HeadRefRestoredEvent | IpAllowListEntry | Issue | IssueComment | IssueCommentPinnedEvent | IssueCommentUnpinnedEvent | IssueFieldAddedEvent | IssueFieldChangedEvent | IssueFieldDate | IssueFieldDateValue | IssueFieldMultiSelect | IssueFieldMultiSelectValue | IssueFieldNumber | IssueFieldNumberValue | IssueFieldRemovedEvent | IssueFieldSingleSelect | IssueFieldSingleSelectOption | IssueFieldSingleSelectValue | IssueFieldText | IssueFieldTextValue | IssueType | IssueTypeAddedEvent | IssueTypeChangedEvent | IssueTypeRemovedEvent | Label | LabeledEvent | Language | License | LinkedBranch | LockedEvent | Mannequin | MarkedAsDuplicateEvent | MarketplaceCategory | MarketplaceListing | MemberFeatureRequestNotification | MembersCanDeleteReposClearAuditEntry | MembersCanDeleteReposDisableAuditEntry | MembersCanDeleteReposEnableAuditEntry | MentionedEvent | MergeQueue | MergeQueueEntry | MergedEvent | MigrationSource | Milestone | MilestonedEvent | MovedColumnsInProjectEvent | OIDCProvider | OauthApplicationCreateAuditEntry | OrgAddBillingManagerAuditEntry | OrgAddMemberAuditEntry | OrgBlockUserAuditEntry | OrgConfigDisableCollaboratorsOnlyAuditEntry | OrgConfigEnableCollaboratorsOnlyAuditEntry | OrgCreateAuditEntry | OrgDisableOauthAppRestrictionsAuditEntry | OrgDisableSamlAuditEntry | OrgDisableTwoFactorRequirementAuditEntry | OrgEnableOauthAppRestrictionsAuditEntry | OrgEnableSamlAuditEntry | OrgEnableTwoFactorRequirementAuditEntry | OrgInviteMemberAuditEntry | OrgInviteToBusinessAuditEntry | OrgOauthAppAccessApprovedAuditEntry | OrgOauthAppAccessBlockedAuditEntry | OrgOauthAppAccessDeniedAuditEntry | OrgOauthAppAccessRequestedAuditEntry | OrgOauthAppAccessUnblockedAuditEntry | OrgRemoveBillingManagerAuditEntry | OrgRemoveMemberAuditEntry | OrgRemoveOutsideCollaboratorAuditEntry | OrgRestoreMemberAuditEntry | OrgUnblockUserAuditEntry | OrgUpdateDefaultRepositoryPermissionAuditEntry | OrgUpdateMemberAuditEntry | OrgUpdateMemberRepositoryCreationPermissionAuditEntry | OrgUpdateMemberRepositoryInvitationPermissionAuditEntry | Organization | OrganizationIdentityProvider | OrganizationInvitation | Package | PackageFile | PackageTag | PackageVersion | ParentIssueAddedEvent | ParentIssueRemovedEvent | PendingAssigneeSuggestion | PendingCloseSuggestion | PendingFieldSuggestion | PendingLabelSuggestion | PendingTypeSuggestion | PinnedDiscussion | PinnedEnvironment | PinnedEvent | PinnedIssue | PinnedIssueComment | PrivateRepositoryForkingDisableAuditEntry | PrivateRepositoryForkingEnableAuditEntry | Project | ProjectCard | ProjectColumn | ProjectV2 | ProjectV2Field | ProjectV2Item | ProjectV2ItemFieldDateValue | ProjectV2ItemFieldIterationValue | ProjectV2ItemFieldMultiSelectValue | ProjectV2ItemFieldNumberValue | ProjectV2ItemFieldSingleSelectValue | ProjectV2ItemFieldTextValue | ProjectV2ItemStatusChangedEvent | ProjectV2IterationField | ProjectV2MultiSelectField | ProjectV2SingleSelectField | ProjectV2StatusUpdate | ProjectV2View | ProjectV2Workflow | PublicKey | PullRequest | PullRequestCommit | PullRequestCommitCommentThread | PullRequestReview | PullRequestReviewComment | PullRequestReviewThread | PullRequestStack | PullRequestStackEntry | PullRequestThread | Push | PushAllowance | Query | Reaction | ReadyForReviewEvent | Ref | ReferencedEvent | Release | ReleaseAsset | RemovedFromMergeQueueEvent | RemovedFromProjectEvent | RemovedFromProjectV2Event | RemovedFromStackEvent | RenamedTitleEvent | ReopenedEvent | RepoAccessAuditEntry | RepoAddMemberAuditEntry | RepoAddTopicAuditEntry | RepoArchivedAuditEntry | RepoChangeMergeSettingAuditEntry | RepoConfigDisableAnonymousGitAccessAuditEntry | RepoConfigDisableCollaboratorsOnlyAuditEntry | RepoConfigDisableContributorsOnlyAuditEntry | RepoConfigDisableSockpuppetDisallowedAuditEntry | RepoConfigEnableAnonymousGitAccessAuditEntry | RepoConfigEnableCollaboratorsOnlyAuditEntry | RepoConfigEnableContributorsOnlyAuditEntry | RepoConfigEnableSockpuppetDisallowedAuditEntry | RepoConfigLockAnonymousGitAccessAuditEntry | RepoConfigUnlockAnonymousGitAccessAuditEntry | RepoCreateAuditEntry | RepoDestroyAuditEntry | RepoRemoveMemberAuditEntry | RepoRemoveTopicAuditEntry | Repository | RepositoryCustomProperty | RepositoryInvitation | RepositoryMigration | RepositoryRule | RepositoryRuleset | RepositoryRulesetBypassActor | RepositoryTopic | RepositoryVisibilityChangeDisableAuditEntry | RepositoryVisibilityChangeEnableAuditEntry | RepositoryVulnerabilityAlert | ReviewDismissalAllowance | ReviewDismissedEvent | ReviewRequest | ReviewRequestRemovedEvent | ReviewRequestedEvent | SavedReply | SecurityAdvisory | SponsorsActivity | SponsorsListing | SponsorsListingFeaturedItem | SponsorsTier | Sponsorship | SponsorshipNewsletter | Status | StatusCheckRollup | StatusContext | SubIssueAddedEvent | SubIssueRemovedEvent | SubscribedEvent | Team | TeamAddMemberAuditEntry | TeamAddRepositoryAuditEntry | TeamChangeParentTeamAuditEntry | TeamRemoveMemberAuditEntry | TeamRemoveRepositoryAuditEntry | Topic | TransferredEvent | Tree | UnassignedEvent | UnlabeledEvent | UnlockedEvent | UnmarkedAsDuplicateEvent | UnpinnedEvent | UnsubscribedEvent | User | UserBlockedEvent | UserContentEdit | UserList | UserNamespaceRepository | UserStatus | VerifiableDomain | Workflow | WorkflowRun | WorkflowRunFile
 
