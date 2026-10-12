@@ -279,6 +279,65 @@ describe('statusCloudflareDeployment', () => {
       }).pipe(Effect.provide(TestLayer))
   )
 
+  it.live('retries a 5xx without an envelope, then succeeds', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // An HTML 502 from the edge: no envelope, so `HttpError`.
+      mockApi
+        .interceptCloudflareRaw(MOCK_API_PATH_DEPLOYMENTS, 'GET')
+        .reply(502, '<html>Bad Gateway</html>')
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS,
+        RESPONSE_DEPLOYMENTS
+      )
+
+      const {status} = yield* statusCloudflareDeployment(API_ENDPOINT)
+
+      expect(status).toBe('success')
+    }).pipe(Effect.provide(TestLayer))
+  )
+
+  it.live('retries a failed request, then succeeds', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      mockApi
+        .interceptCloudflareRaw(MOCK_API_PATH_DEPLOYMENTS, 'GET')
+        .replyWithError(new Error('ECONNRESET'))
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS,
+        RESPONSE_DEPLOYMENTS
+      )
+
+      const {status} = yield* statusCloudflareDeployment(API_ENDPOINT)
+
+      expect(status).toBe('success')
+    }).pipe(Effect.provide(TestLayer))
+  )
+
+  it.live('fails with the last transient error once the polls run out', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // `PollCountMax` 1 allows one retry: two 502s exhaust it.
+      mockApi
+        .interceptCloudflareRaw(MOCK_API_PATH_DEPLOYMENTS, 'GET')
+        .reply(502, '<html>Bad Gateway</html>')
+        .times(2)
+
+      const error = yield* Effect.flip(statusCloudflareDeployment(API_ENDPOINT))
+
+      expect(error).toMatchObject({
+        _tag: 'CloudflareApiError',
+        reason: {_tag: 'HttpError', status: 502}
+      })
+    }).pipe(
+      Effect.provide(Layer.succeed(PollCountMax, 1)),
+      Effect.provide(TestLayer)
+    )
+  )
+
   it.live('fails without retrying when the api returns an error', () =>
     Effect.gen(function* () {
       expect.assertions(1)
