@@ -95,6 +95,7 @@ describe('api', () => {
         expect(failure.reason).toMatchObject({
           _tag: 'ApiErrors',
           url: DEPLOYMENTS_URL,
+          status: 404,
           code: 8000007
         })
         // A caller may tolerate the error, so reporting it is the caller's job.
@@ -337,7 +338,9 @@ describe(CloudflareApiError, () => {
   const RESOURCE_URL = `https://api.cloudflare.com/path`
 
   const apiErrors = (errors: FetchResult['errors']) =>
-    CloudflareApiError.from(new ApiErrors({url: RESOURCE_URL, errors}))
+    CloudflareApiError.from(
+      new ApiErrors({url: RESOURCE_URL, status: 403, errors})
+    )
 
   test('puts every error in the message', () => {
     expect.assertions(1)

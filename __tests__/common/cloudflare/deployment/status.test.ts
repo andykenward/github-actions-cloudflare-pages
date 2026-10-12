@@ -316,6 +316,25 @@ describe('statusCloudflareDeployment', () => {
     }).pipe(Effect.provide(TestLayer))
   )
 
+  it.live('retries a 429 and a 5xx envelope, then succeeds', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      // Cloudflare answers both with an envelope; wrangler retries them too.
+      const envelope = {result: null, success: false, errors: [], messages: []}
+      mockApi.interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, envelope, 429)
+      mockApi.interceptCloudflare(MOCK_API_PATH_DEPLOYMENTS, envelope, 503)
+      mockApi.interceptCloudflare(
+        MOCK_API_PATH_DEPLOYMENTS,
+        RESPONSE_DEPLOYMENTS
+      )
+
+      const {status} = yield* statusCloudflareDeployment(API_ENDPOINT)
+
+      expect(status).toBe('success')
+    }).pipe(Effect.provide(TestLayer))
+  )
+
   it.live('fails with the last transient error once the polls run out', () =>
     Effect.gen(function* () {
       expect.assertions(1)

@@ -68,7 +68,11 @@ const errorReason = (
   body: unknown
 ): ApiErrors | HttpError =>
   isEnvelope(body)
-    ? new ApiErrors({url: responseUrl(response), errors: body.errors})
+    ? new ApiErrors({
+        url: responseUrl(response),
+        status: response.status,
+        errors: body.errors
+      })
     : httpError(response)
 
 /**
@@ -84,7 +88,11 @@ const envelope = ([body, response]: ClientResponse<unknown>): Result.Result<
   }
   if (!body.success) {
     return fail(
-      new ApiErrors({url: responseUrl(response), errors: body.errors})
+      new ApiErrors({
+        url: responseUrl(response),
+        status: response.status,
+        errors: body.errors
+      })
     )
   }
   return Result.succeed(body)

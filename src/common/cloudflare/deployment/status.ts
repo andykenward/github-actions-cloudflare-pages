@@ -128,21 +128,23 @@ const pollOnce = Effect.fn('pollOnce')(function* (
   })
 })
 
+const HTTP_STATUS_TOO_MANY_REQUESTS = 429
 /** The first HTTP status that means the server, not the request, failed. */
 const HTTP_STATUS_SERVER_ERROR_MIN = 500
 
 /**
- * A failure of the transport rather than an answer from Cloudflare: no
- * response at all, or a 5xx without an envelope (an HTML 502 from the edge).
- * One of these during a ten-minute poll shouldn't fail a finished deploy, and
- * would leave the Cloudflare deployment with no comment or GitHub Deployment.
- * An envelope error (a bad id, a token without the permission) is an answer,
- * and is not retried.
+ * A failure that the next poll may not repeat: no response at all, a rate
+ * limit, or a 5xx — with or without an envelope, as wrangler retries them
+ * too. One of these during a ten-minute poll shouldn't fail a finished
+ * deploy, and would leave the Cloudflare deployment with no comment or GitHub
+ * Deployment. Any other answer (a bad id, a token without the permission) is
+ * not retried.
  */
-const isTransientError = (error: CloudflareApiError): boolean =>
-  error.reason._tag === 'RequestError' ||
-  (error.reason._tag === 'HttpError' &&
-    error.reason.status >= HTTP_STATUS_SERVER_ERROR_MIN)
+const isTransientError = ({reason}: CloudflareApiError): boolean =>
+  reason._tag === 'RequestError' ||
+  ((reason._tag === 'ApiErrors' || reason._tag === 'HttpError') &&
+    (reason.status === HTTP_STATUS_TOO_MANY_REQUESTS ||
+      reason.status >= HTTP_STATUS_SERVER_ERROR_MIN))
 
 /**
  * Deliberately a plain boolean predicate rather than a refinement: as a

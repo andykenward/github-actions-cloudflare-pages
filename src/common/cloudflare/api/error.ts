@@ -56,12 +56,14 @@ const requestFailedMessage = (url: string): string =>
   `A request to the Cloudflare API (${url}) failed`
 
 /**
- * Cloudflare answered with an envelope reporting failure. `code` is the first
- * error's, the one Cloudflare's docs key on (e.g. `8000009`, not found).
+ * Cloudflare answered with an envelope reporting failure, with `status` the
+ * HTTP status it came with. `code` is the first error's, the one Cloudflare's
+ * docs key on (e.g. `8000009`, not found).
  */
 // oxlint-disable-next-line unicorn/throw-new-error
 export class ApiErrors extends Schema.TaggedError<ApiErrors>()('ApiErrors', {
   url: Schema.String,
+  status: Schema.Number,
   errors: Schema.Array(FetchError)
 }) {
   get code(): number | undefined {
