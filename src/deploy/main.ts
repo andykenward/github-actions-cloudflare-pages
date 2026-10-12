@@ -1,3 +1,4 @@
+import {warning} from '@actions/core'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
@@ -85,10 +86,19 @@ export const run = Effect.gen(function* () {
     {concurrency: 'unbounded'}
   )
 
+  // A failed comment must not lose the GitHub Deployment: without that record
+  // the delete action can never find the Cloudflare deployment. Warn and go on.
   const commentId = yield* addComment(
     pullRequestId,
     cloudflareDeployment,
     wranglerCommentOutput ? wranglerOutput : undefined
+  ).pipe(
+    Effect.catchTag('GitHubApiError', error => {
+      warning(
+        `addComment - Posting the pull request comment failed; recording the deployment without one: ${error.message}`
+      )
+      return Effect.undefined
+    })
   )
 
   yield* createGitHubDeployment({
