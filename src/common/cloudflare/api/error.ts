@@ -56,12 +56,14 @@ const requestFailedMessage = (url: string): string =>
   `A request to the Cloudflare API (${url}) failed`
 
 /**
- * Cloudflare answered with an envelope reporting failure. `code` is the first
- * error's, the one Cloudflare's docs key on (e.g. `8000009`, not found).
+ * Cloudflare answered with an envelope reporting failure, with `status` the
+ * HTTP status it came with. `code` is the first error's, the one Cloudflare's
+ * docs key on (e.g. `8000009`, not found).
  */
 // oxlint-disable-next-line unicorn/throw-new-error
 export class ApiErrors extends Schema.TaggedError<ApiErrors>()('ApiErrors', {
   url: Schema.String,
+  status: Schema.Number,
   errors: Schema.Array(FetchError)
 }) {
   get code(): number | undefined {
@@ -97,7 +99,11 @@ const reasonMessage = (
   switch (reason._tag) {
     case 'ApiErrors': {
       // Cloudflare's reasons go in the message, which is what reaches the
-      // step's failure annotation or the caller's log line.
+      // step's failure annotation or the caller's log line. Without any, the
+      // status is all there is to say.
+      if (reason.errors.length === 0) {
+        return `${requestFailedMessage(reason.url)}: ${reason.status}`
+      }
       return [
         `${requestFailedMessage(reason.url)}.`,
         ...reason.errors.map(renderError)

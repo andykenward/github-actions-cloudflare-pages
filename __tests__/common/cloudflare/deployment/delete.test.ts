@@ -99,7 +99,7 @@ describe('deleteCloudflareDeployment', () => {
       title: 'the API reports failure without errors',
       response: {success: false, errors: [], result: null},
       status: 200,
-      reason: REQUEST_FAILED
+      reason: `${REQUEST_FAILED.slice(0, -1)}: 200`
     }
   ])('fails with the reason when $title', ({response, status, reason}) =>
     Effect.gen(function* () {
