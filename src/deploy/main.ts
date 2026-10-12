@@ -35,24 +35,6 @@ class DeployError extends Schema.TaggedError<DeployError>()('DeployError', {
 export const DeployLayer = Layer.mergeAll(CommonLayer, DeployInputs.layer)
 
 /**
- * `addComment`, tolerating a failed post. A failed comment must not lose the
- * GitHub Deployment: without that record the delete action can never find the
- * Cloudflare deployment. The comment is a convenience, so warn and go on.
- */
-const runAddComment = (...args: Parameters<typeof addComment>) =>
-  addComment(...args).pipe(
-    Effect.catchTag('GitHubApiError', error =>
-      Effect.sync(() => {
-        warning(
-          `addComment - Posting the pull request comment failed; recording the deployment without one: ${error.message}`
-        )
-        // oxlint-disable-next-line unicorn/no-useless-undefined
-        return undefined
-      })
-    )
-  )
-
-/**
  * Exported as an Effect value rather than a function: Effect is already lazy,
  * so a zero-argument wrapper is pure indirection (`effecttsgo/lazy-effect`).
  * Requires the services in `DeployLayer`; tests can provide their own.
@@ -104,10 +86,19 @@ export const run = Effect.gen(function* () {
     {concurrency: 'unbounded'}
   )
 
-  const commentId = yield* runAddComment(
+  // A failed comment must not lose the GitHub Deployment: without that record
+  // the delete action can never find the Cloudflare deployment. Warn and go on.
+  const commentId = yield* addComment(
     pullRequestId,
     cloudflareDeployment,
     wranglerCommentOutput ? wranglerOutput : undefined
+  ).pipe(
+    Effect.catchTag('GitHubApiError', error => {
+      warning(
+        `addComment - Posting the pull request comment failed; recording the deployment without one: ${error.message}`
+      )
+      return Effect.undefined
+    })
   )
 
   yield* createGitHubDeployment({
