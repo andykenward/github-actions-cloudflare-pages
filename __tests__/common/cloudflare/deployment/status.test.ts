@@ -371,7 +371,7 @@ describe('statusCloudflareDeployment', () => {
 
       expect(error).toMatchObject({
         _tag: 'CloudflareApiError',
-        message: `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed.`
+        message: `A request to the Cloudflare API (https://api.cloudflare.com/client/v4/accounts/mock-cloudflare-account-id/pages/projects/mock-cloudflare-project-name/deployments) failed: 404`
       })
     }).pipe(Effect.provide(TestLayer))
   )

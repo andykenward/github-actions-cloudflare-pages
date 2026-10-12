@@ -99,7 +99,11 @@ const reasonMessage = (
   switch (reason._tag) {
     case 'ApiErrors': {
       // Cloudflare's reasons go in the message, which is what reaches the
-      // step's failure annotation or the caller's log line.
+      // step's failure annotation or the caller's log line. Without any, the
+      // status is all there is to say.
+      if (reason.errors.length === 0) {
+        return `${requestFailedMessage(reason.url)}: ${reason.status}`
+      }
       return [
         `${requestFailedMessage(reason.url)}.`,
         ...reason.errors.map(renderError)

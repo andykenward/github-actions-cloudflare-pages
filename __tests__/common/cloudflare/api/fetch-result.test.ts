@@ -327,7 +327,7 @@ describe('api', () => {
 
         expect(failure.reason).toMatchObject({_tag: 'ApiErrors', errors: []})
         expect(failure.message).toBe(
-          `A request to the Cloudflare API (${DELETE_URL}) failed.`
+          `A request to the Cloudflare API (${DELETE_URL}) failed: 200`
         )
       }).pipe(Effect.provide(CloudflareApiTestLayer))
     )
@@ -406,6 +406,14 @@ describe(CloudflareApiError, () => {
     expect(message).toContain('level 99 [code: 1]')
     expect(message).toMatch(/\n- … \(more errors omitted\)$/)
     expect(message).not.toContain('leaf')
+  })
+
+  test('falls back to the status when there are no errors', () => {
+    expect.assertions(1)
+
+    expect(apiErrors([]).message).toBe(
+      `A request to the Cloudflare API (${RESOURCE_URL}) failed: 403`
+    )
   })
 
   test('has no code when there are no errors', () => {
