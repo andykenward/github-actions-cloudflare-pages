@@ -1,0 +1,12 @@
+rules:
+  # `uses: $/path` (GitHub, 2026-07-30) is not understood by act 0.2.x
+  # (nektos/act#6189), which `pnpm run act:d` relies on. Revisit once act
+  # resolves it.
+  self-repository:
+    disable: true
+  # release.yml checks out main at its own ref, never pull request code, and
+  # pushes with an app token; the workflow_run hazard this audit targets does
+  # not apply.
+  dangerous-triggers:
+    ignore:
+      - release.yml:5

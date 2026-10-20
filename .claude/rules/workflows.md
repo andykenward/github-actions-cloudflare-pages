@@ -11,6 +11,7 @@ paths:
 - Default to `permissions: {}` at workflow level and grant per job (a few read-only workflows, such as `check-dist.yml`, set `contents: read` instead).
 - Use `persist-credentials: false` on every checkout.
 - zizmor isn't installed in the devcontainer, and Docker can't bind-mount `/workspaces`. Check locally by copying `.github/` into the container: `cid=$(docker create ghcr.io/zizmorcore/zizmor --offline /w/.github/workflows/test.yml) && docker cp <dir containing .github> "$cid:/w" && docker start -a "$cid"`. The file must sit under `.github/workflows/` — anywhere else zizmor parses it as a zizmor config.
+- `.github/zizmor.yml` holds the audits we don't act on, each with its reason: `self-repository` (the `$/` syntax breaks `act`, nektos/act#6189) and `dangerous-triggers` on `release.yml`. Findings in composite actions can't be ignored there, only inline.
 - zizmor's `inputs` is an allowlist (`.github action.yml delete/action.yml`) — it has no exclude setting, and its default `.` would scan `repos/*/.github/`.
 
 ## Commits made by workflows
