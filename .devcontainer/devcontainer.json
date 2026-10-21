@@ -54,7 +54,7 @@
   "postCreateCommand": {
     "pnpm": "pnpm install",
     "prek": "prek install",
-    "claude-plugins": "claude plugin install ponytail --marketplace ./.claude/marketplace --scope project"
+    "claude-plugins": "claude plugin marketplace add ./.claude/marketplace && claude plugin install ponytail@cloudflare-pages-action --scope project"
   },
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
