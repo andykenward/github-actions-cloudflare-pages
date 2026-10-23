@@ -12,8 +12,8 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       effect:
-        specifier: 4.0.1
-        version: 4.0.1
+        specifier: 4.0.5
+        version: 4.0.5
     devDependencies:
       '@changesets/changelog-github':
         specifier: 1.0.1
@@ -22,14 +22,14 @@ importers:
         specifier: 3.0.3
         version: 3.0.3
       '@effect/openapi-generator':
-        specifier: 4.0.1
-        version: 4.0.1(@effect/platform-node@4.0.1(effect@4.0.1)(redis@6.2.1))(effect@4.0.1)
+        specifier: 4.0.5
+        version: 4.0.5(@effect/platform-node@4.0.5(effect@4.0.5)(redis@6.2.1))(effect@4.0.5)
       '@effect/tsgo':
         specifier: 0.47.2
         version: 0.47.2
       '@effect/vitest':
-        specifier: 4.0.1
-        version: 4.0.1(effect@4.0.1)(vitest@5.0.3)
+        specifier: 4.0.5
+        version: 4.0.5(effect@4.0.5)(vitest@5.0.3)
       '@graphql-codegen/cli':
         specifier: 7.4.6
         version: 7.4.6(@types/node@24.12.2)(graphql@17.0.2)(supports-color@10.2.2)(typescript@7.0.2)
@@ -321,24 +321,24 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@effect/openapi-generator@4.0.1':
-    resolution: {integrity: sha512-UWlXX1cjP68FDQyc+mlwfh34OpCKlnAREFpWk9DG6fzmw/w/+FvIyadZvS1y7G2b8U2e/khO0f3p5ak0DTC9Ng==}
+  '@effect/openapi-generator@4.0.5':
+    resolution: {integrity: sha512-pksR5BhRKQQfDcpA8AbxCiAFLAbdnZseiRmgr1UtVi1x/IyEuS8WmXoFD1C424TEyS+n2Q6lPpR0ue/WQ743aw==}
     hasBin: true
     peerDependencies:
-      '@effect/platform-node': ^4.0.1
-      effect: ^4.0.1
+      '@effect/platform-node': ^4.0.5
+      effect: ^4.0.5
 
-  '@effect/platform-node-shared@4.0.1':
-    resolution: {integrity: sha512-VanaejudEhKJ4mpmqnEzdncVUhN6sGSO9ZDND54mRxAlZxj+4dYAWjDTYAy9o4tJo9aALeP2U8cVcOFzEdSeLg==}
+  '@effect/platform-node-shared@4.0.5':
+    resolution: {integrity: sha512-a8rCdEkfZBGe9C6bsIjxVZuRp73svIyK5IHwHdDAVsvZXjrbkxusfI+rZ8WlX31RP1mKizwI/E72GQTNfdMWHw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      effect: ^4.0.1
+      effect: ^4.0.5
 
-  '@effect/platform-node@4.0.1':
-    resolution: {integrity: sha512-FT0Fu5LO0/XP9zBpj0HqrtJNLluK4StNKqf6TSulUsjp8FPBsDVXGJiDuyoN5J2yVMT7tgvhxSwaDcObWVRIaQ==}
+  '@effect/platform-node@4.0.5':
+    resolution: {integrity: sha512-v4KD5fWvEUa4QmWFpZFbBsRhmfnTP6ETCME2r9ifyXVDPjhfpxpTZl41prjgQFMqZBHdWWCl7YC5ImbXv5ui5g==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      effect: ^4.0.1
+      effect: ^4.0.5
       redis: '>=5.0.0 <7.0.0'
 
   '@effect/tsgo-darwin-arm64@0.47.2':
@@ -380,10 +380,10 @@ packages:
     resolution: {integrity: sha512-mGIelPZhTJg8g+RgiAe7wrB8NLw/lOzPGntAYBBqEJS0/I8ir1/ULKcpFQyuAfPjwkDYrg93KWv1PDGwgsgBIA==}
     hasBin: true
 
-  '@effect/vitest@4.0.1':
-    resolution: {integrity: sha512-DbY9kf/018zBxRIX7rJwBnPVPzSarnUpcshm0vfYPFiDkSa7AFrXTh2BlDNUbrdrmqcIOBhVZ7GkEtxf8WiQrg==}
+  '@effect/vitest@4.0.5':
+    resolution: {integrity: sha512-q64paZ/i4V2NiRhTyqCmT2KiDbFjlxc2EZrZca8GGt+Nf8844946HyJM5bPk/q+YeRkFSxIrlCs+J+LSfky/wA==}
     peerDependencies:
-      effect: ^4.0.1
+      effect: ^4.0.5
       vitest: '>=5.0.0 <6.0.0'
 
   '@emnapi/core@1.11.2':
@@ -1857,6 +1857,9 @@ packages:
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
+  '@types/ws@8.18.2':
+    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
+
   '@typescript/typescript-aix-ppc64@7.0.2':
     resolution: {integrity: sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==}
     engines: {node: '>=16.20.0'}
@@ -2243,8 +2246,8 @@ packages:
     engines: {node: '>=12'}
     hasBin: true
 
-  effect@4.0.1:
-    resolution: {integrity: sha512-b1VlQG9g8fwxE5QnIZuPoOP/0MsqHJSRKxUijjoM80E5q95FXrX5yWtY5XI8G+GJsBQAVSDbLS458z9a++uVvw==}
+  effect@4.0.5:
+    resolution: {integrity: sha512-BY4/28NlpOd99yzmV741xbVGmp+1U7tks4oB7F/Png64bTa5tm5eCA6W0RiXsnuLDDoJpjfVSo4Dnq4BZb/89Q==}
 
   electron-to-chromium@1.5.439:
     resolution: {integrity: sha512-qu6QIPXhsb+CRcAiTMNjR4A1y/7tCYKkKjr5CZXRVih6qkDf79peZ2BpEU3qoDBNCRrcy3Mra3X9nG5oruuA7Q==}
@@ -3609,27 +3612,27 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@effect/openapi-generator@4.0.1(@effect/platform-node@4.0.1(effect@4.0.1)(redis@6.2.1))(effect@4.0.1)':
+  '@effect/openapi-generator@4.0.5(@effect/platform-node@4.0.5(effect@4.0.5)(redis@6.2.1))(effect@4.0.5)':
     dependencies:
-      '@effect/platform-node': 4.0.1(effect@4.0.1)(redis@6.2.1)
-      effect: 4.0.1
+      '@effect/platform-node': 4.0.5(effect@4.0.5)(redis@6.2.1)
+      effect: 4.0.5
       swagger2openapi: 7.0.8
     transitivePeerDependencies:
       - encoding
 
-  '@effect/platform-node-shared@4.0.1(effect@4.0.1)':
+  '@effect/platform-node-shared@4.0.5(effect@4.0.5)':
     dependencies:
-      '@types/ws': 8.18.1
-      effect: 4.0.1
+      '@types/ws': 8.18.2
+      effect: 4.0.5
       ws: 8.22.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@effect/platform-node@4.0.1(effect@4.0.1)(redis@6.2.1)':
+  '@effect/platform-node@4.0.5(effect@4.0.5)(redis@6.2.1)':
     dependencies:
-      '@effect/platform-node-shared': 4.0.1(effect@4.0.1)
-      effect: 4.0.1
+      '@effect/platform-node-shared': 4.0.5(effect@4.0.5)
+      effect: 4.0.5
       redis: 6.2.1
       undici: 8.11.2
     transitivePeerDependencies:
@@ -3667,9 +3670,9 @@ snapshots:
       '@effect/tsgo-win32-arm64': 0.47.2
       '@effect/tsgo-win32-x64': 0.47.2
 
-  '@effect/vitest@4.0.1(effect@4.0.1)(vitest@5.0.3)':
+  '@effect/vitest@4.0.5(effect@4.0.5)(vitest@5.0.3)':
     dependencies:
-      effect: 4.0.1
+      effect: 4.0.5
       vitest: 5.0.3(@types/node@24.12.2)(@vitest/coverage-v8@5.0.3)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.1))
 
   '@emnapi/core@1.11.2':
@@ -4850,6 +4853,10 @@ snapshots:
     dependencies:
       '@types/node': 24.12.2
 
+  '@types/ws@8.18.2':
+    dependencies:
+      '@types/node': 24.12.2
+
   '@typescript/typescript-aix-ppc64@7.0.2':
     optional: true
 
@@ -5139,7 +5146,7 @@ snapshots:
 
   dotenv@18.0.4: {}
 
-  effect@4.0.1: {}
+  effect@4.0.5: {}
 
   electron-to-chromium@1.5.439: {}
 
