@@ -18314,6 +18314,11 @@ being pushed to the commit graph. This includes absolute paths that contain file
 """
 type FilePathRestrictionParameters {
   """
+  Files matching these patterns are allowed even when they also match a restricted path.
+  """
+  ignoredFilePaths: [String!]
+
+  """
   The file paths that are restricted from being pushed to the commit graph.
   """
   restrictedFilePaths: [String!]!
@@ -18324,6 +18329,11 @@ Prevent commits that include changes in specified file and folder paths from
 being pushed to the commit graph. This includes absolute paths that contain file names.
 """
 input FilePathRestrictionParametersInput {
+  """
+  Files matching these patterns are allowed even when they also match a restricted path.
+  """
+  ignoredFilePaths: [String!]
+
   """
   The file paths that are restricted from being pushed to the commit graph.
   """
@@ -25068,6 +25078,11 @@ Prevent commits with individual files that exceed the specified limit from being
 """
 type MaxFileSizeParameters {
   """
+  Files matching these patterns may exceed the maximum size.
+  """
+  ignoredFilePaths: [String!]
+
+  """
   The maximum file size allowed in megabytes. This limit does not apply to Git Large File Storage (Git LFS).
   """
   maxFileSize: Int!
@@ -25077,6 +25092,11 @@ type MaxFileSizeParameters {
 Prevent commits with individual files that exceed the specified limit from being pushed to the commit graph.
 """
 input MaxFileSizeParametersInput {
+  """
+  Files matching these patterns may exceed the maximum size.
+  """
+  ignoredFilePaths: [String!]
+
   """
   The maximum file size allowed in megabytes. This limit does not apply to Git Large File Storage (Git LFS).
   """
@@ -43370,9 +43390,8 @@ type PullRequestParameters {
   requiredReviewThreadResolution: Boolean!
 
   """
-  This field is in beta and subject to change. A collection of reviewers and
-  associated file patterns. Each reviewer has a list of file patterns which
-  determine the files that reviewer is required to review.
+  A collection of reviewers and associated file patterns. Each reviewer has a
+  list of file patterns which determine the files that reviewer is required to review.
   """
   requiredReviewers: [RequiredReviewerConfiguration!]
 }
@@ -43418,9 +43437,8 @@ input PullRequestParametersInput {
   requiredReviewThreadResolution: Boolean!
 
   """
-  This argument is in beta and subject to change. A collection of reviewers and
-  associated file patterns. Each reviewer has a list of file patterns which
-  determine the files that reviewer is required to review.
+  A collection of reviewers and associated file patterns. Each reviewer has a
+  list of file patterns which determine the files that reviewer is required to review.
   """
   requiredReviewers: [RequiredReviewerConfigurationInput!]
 }
