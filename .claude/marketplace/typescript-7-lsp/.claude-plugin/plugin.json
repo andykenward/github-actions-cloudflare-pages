@@ -1,7 +1,0 @@
-{
-  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "typescript-7-lsp",
-  "version": "1.0.0",
-  "description": "TypeScript 7 (typescript-go) language server via `tsc --lsp --stdio` from the project's typescript install, with the @effect/tsgo patch applied",
-  "author": {"name": "Andy Kenward"}
-}
