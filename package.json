@@ -75,7 +75,6 @@
     "oxfmt": "0.71.0",
     "oxlint": "1.86.0",
     "oxlint-tsgolint": "7.0.2003",
-    "skills": "1.5.23",
     "tsx": "4.23.1",
     "typescript": "7.0.2",
     "undici": "7.29.1",
