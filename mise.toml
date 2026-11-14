@@ -1,0 +1,6 @@
+[settings]
+idiomatic_version_file_enable_tools = ["node", "pnpm"]
+
+[tools]
+act = "0.2.97"
+prek = "0.5.10"
