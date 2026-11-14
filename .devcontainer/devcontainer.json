@@ -20,12 +20,12 @@
       ]
     }
   },
-  // Object form: the entries run in parallel and are independent. The ponytail
-  // plugin is enabled in .claude/settings.json, but an external plugin is only
-  // fetched by an explicit install; idempotent on rebuilds. It comes from the
-  // repo's directory marketplace, whose manifest pins the commit sha.
+  // devcontainer-post-create (from the image) installs the mise tools and the
+  // Claude Code CLI, so the rest runs after it. The ponytail plugin is enabled
+  // in .claude/settings.json, but an external plugin is only fetched by an
+  // explicit install; idempotent on rebuilds.
   "postCreateCommand": {
-    "post-create": "devcontainer-post-create && mise exec -- pnpm i && mise exec -- prek install"
+    "post-create": "devcontainer-post-create && mise exec -- pnpm i && mise exec -- prek install && claude plugin marketplace add ./.claude/marketplace && claude plugin install ponytail@cloudflare-pages-action --scope project"
   },
   "mounts": [
     "source=devcontainer-claude,target=/home/vscode/.claude,type=volume",

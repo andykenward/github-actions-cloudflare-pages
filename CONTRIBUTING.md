@@ -4,7 +4,7 @@ Thanks for helping out! This covers setting up the repository, what a pull reque
 
 ## Setup
 
-The quickest route is the [dev container](.devcontainer/devcontainer.json): it provides Node, pnpm, [prek] and [act], then runs `pnpm install && prek install` for you.
+The quickest route is the [dev container](.devcontainer/devcontainer.json): its image ships [mise], which installs Node and pnpm from [package.json](package.json) and [prek] and [act] from [mise.toml](mise.toml), then it runs `pnpm install && prek install` for you.
 
 To set up by hand, install the Node and pnpm versions from [package.json](package.json) (`engines` and `packageManager`), then run:
 
@@ -63,6 +63,7 @@ Instructions for coding agents live in [.claude/CLAUDE.md](.claude/CLAUDE.md), w
 - [TypeScript ESM Node](https://www.typescriptlang.org/docs/handbook/esm-node.html)
 
 [Effect]: https://effect.website/
+[mise]: https://mise.jdx.dev
 [prek]: https://prek.j178.dev
 [act]: https://github.com/nektos/act
 [signed commits]: https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification
