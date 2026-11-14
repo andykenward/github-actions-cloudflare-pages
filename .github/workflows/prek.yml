@@ -31,4 +31,4 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
       - uses: j178/prek-action@44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d #v3.1.0
         with:
-          prek-version: '0.4.11' # match .devcontainer/Dockerfile
+          prek-version: '0.5.10' # match mise.toml

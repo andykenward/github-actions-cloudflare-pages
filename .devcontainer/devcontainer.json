@@ -5,70 +5,36 @@
     "dockerfile": "Dockerfile"
   },
   "features": {
-    // Node 24 matches CI (.github/actions/setup-pnpm); pnpm matches packageManager.
-    "ghcr.io/devcontainers/features/node:2.1.1": {
-      "version": "24",
-      "pnpmVersion": "12.14.0"
-    },
-    // Extensions install at image build as the remote user. The option can't
-    // pin a version, so each rebuild pulls the extension's latest release.
-    "ghcr.io/devcontainers/features/github-cli:1.1.3": {
-      "extensions": "github/gh-stack"
-    },
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0.5": {},
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.1": {},
-    // act runs workflows locally in Docker (pnpm run act:d).
-    "ghcr.io/dhoeric/features/act:1.0.0": {
-      "version": "0.2.89"
-    }
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.1": {}
   },
   "customizations": {
     "vscode": {
       "extensions": [
-        "anthropic.claude-code",
         "eamodio.gitlens",
-        "github.vscode-github-actions",
-        "github.vscode-pull-request-github",
         "GraphQL.vscode-graphql",
         "GraphQL.vscode-graphql-syntax",
         "oxc.oxc-vscode",
         "TypeScriptTeam.native-preview",
         "vitest.explorer",
         "webpro.vscode-knip"
-      ],
-      "settings": {
-        "chat.disableAIFeatures": true,
-        "terminal.integrated.defaultProfile.linux": "zsh",
-        "terminal.integrated.profiles.linux": {
-          "zsh": {
-            "path": "/usr/bin/zsh"
-          }
-        }
-      }
+      ]
     }
   },
-  // Object form: the entries run in parallel and are independent. The ponytail
-  // plugin is enabled in .claude/settings.json, but an external plugin is only
-  // fetched by an explicit install; idempotent on rebuilds. It comes from the
-  // repo's directory marketplace, whose manifest pins the commit sha.
+  // devcontainer-post-create (from the image) installs the mise tools and the
+  // Claude Code CLI, so the rest runs after it. The ponytail plugin is enabled
+  // in .claude/settings.json, but an external plugin is only fetched by an
+  // explicit install; idempotent on rebuilds.
   "postCreateCommand": {
-    "pnpm": "pnpm install",
-    "prek": "prek install",
-    "claude-plugins": "claude plugin marketplace add ./.claude/marketplace && claude plugin install ponytail@cloudflare-pages-action --scope project"
+    "post-create": "devcontainer-post-create && mise exec -- pnpm i && mise exec -- prek install && claude plugin marketplace add ./.claude/marketplace && claude plugin install ponytail@cloudflare-pages-action --scope project"
   },
-  "containerEnv": {
-    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
-  },
-  // Named volumes keyed by ${devcontainerId}, so Claude Code sign-in, gh CLI
-  // auth and zsh history survive rebuilds without being shared with other
-  // projects. gh extensions live in ~/.local/share/gh, outside the gh volume,
-  // so they still come from the image build.
   "mounts": [
-    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
-    "source=gh-config-${devcontainerId},target=/home/vscode/.config/gh,type=volume",
-    "source=zsh-history-${devcontainerId},target=/home/vscode/.commandhistory,type=volume"
+    "source=devcontainer-claude,target=/home/vscode/.claude,type=volume",
+    "source=devcontainer-gh,target=/home/vscode/.config/gh,type=volume",
+    "source=devcontainer-git,target=/home/vscode/.config/git,type=volume",
+    "source=${devcontainerId}-mise,target=/home/vscode/.local/share/mise,type=volume",
+    "source=${devcontainerId}-history,target=/commandhistory,type=volume",
+    "source=${devcontainerId}-vscode-extensions,target=/home/vscode/.vscode-server/extensions,type=volume"
   ],
-  "remoteUser": "vscode",
   "otherPortsAttributes": {
     "onAutoForward": "ignore"
   }

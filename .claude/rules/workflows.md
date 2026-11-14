@@ -10,7 +10,7 @@ paths:
 - Pin every action to a full commit SHA with a `#vX.Y.Z` comment.
 - Default to `permissions: {}` at workflow level and grant per job (a few read-only workflows, such as `check-dist.yml`, set `contents: read` instead).
 - Use `persist-credentials: false` on every checkout.
-- zizmor isn't installed in the devcontainer, and Docker can't bind-mount `/workspaces`. Check locally by copying `.github/` into the container: `cid=$(docker create ghcr.io/zizmorcore/zizmor --offline /w/.github/workflows/test.yml) && docker cp <dir containing .github> "$cid:/w" && docker start -a "$cid"`. The file must sit under `.github/workflows/` — anywhere else zizmor parses it as a zizmor config.
+- The dev container image ships zizmor: `zizmor .github action.yml delete/action.yml`. Without it, use Docker, which can't bind-mount `/workspaces`, so copy `.github/` into the container: `cid=$(docker create ghcr.io/zizmorcore/zizmor --offline /w/.github/workflows/test.yml) && docker cp <dir containing .github> "$cid:/w" && docker start -a "$cid"`. The file must sit under `.github/workflows/` — anywhere else zizmor parses it as a zizmor config.
 - `.github/zizmor.yml` holds the audits we don't act on, each with its reason: `self-repository` (the `$/` syntax breaks `act`, nektos/act#6189) and `dangerous-triggers` on `release.yml`. Findings in composite actions can't be ignored there, only inline.
 - zizmor's `inputs` is an allowlist (`.github action.yml delete/action.yml`) — it has no exclude setting, and its default `.` would scan `repos/*/.github/`.
 
@@ -24,7 +24,7 @@ paths:
 
 - `test.yml` runs only `lint`, `tsc:check` and `test:ci --coverage` — not knip, format or codegen drift. `davelosert/vitest-coverage-report-action` then writes the coverage step summary and a PR comment (hence `pull-requests: write`) — vitest's `github-actions` reporter summarizes test results only, not coverage. It reads `.cache/coverage/coverage-{summary,final}.json`, so keep the `json-summary` and `json` reporters and `reportsDirectory` in `vitest.config.ts` in step. Fork PRs get a read-only token, so they get `comment-on: none` and only the summary.
 - `check-dist.yml` rebuilds and fails if the committed `dist/` differs.
-- `prek.yml` runs `prek run --all-files` on PRs and `main`; keep its `prek-version` equal to the prek in `.devcontainer/Dockerfile`.
+- `prek.yml` runs `prek run --all-files` on PRs and `main`; keep its `prek-version` equal to the prek in `mise.toml`.
 - `deploy.yml`, `deploy-main.yml` and `deploy-delete.yml` dogfood the action (`uses: ./`, `./delete`) against `example/`. Only `deploy.yml` skips fork PRs. Deploy jobs set `timeout-minutes: 15` (why: the docs rule); delete jobs don't poll.
 - `codeql.yml` runs CodeQL as advanced setup, because default setup can't exclude `repos/` (`.github/codeql/codeql-config.yml` `paths-ignore`).
 - **Release** (`release.yml`): after `test` passes on `main`, changesets/action opens the "Version Packages" PR; merging it runs `pnpm release` (`pnpm run all && changeset publish`). The package is private, so "publish" means a git tag + GitHub release. A `v*` tag triggers `sync-readme-versions.yml`, which PRs the new pinned SHA into the READMEs and `.github/workflow-templates/`.
