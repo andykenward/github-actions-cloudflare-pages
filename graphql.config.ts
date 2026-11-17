@@ -6,7 +6,7 @@ const config: CodegenConfig = {
   // Operations live in .graphql files only; code imports the generated
   // `…Document` constants from `__generated__/gql/graphql.ts`.
   documents: ['./src/**/*.graphql', './bin/**/*.graphql'],
-  emitLegacyCommonJSImports: false,
+  importExtension: '.js',
   generates: {
     '__generated__/gql/': {
       preset: 'client',
