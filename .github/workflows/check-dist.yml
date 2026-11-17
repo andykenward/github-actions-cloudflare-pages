@@ -34,6 +34,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
         with:
           persist-credentials: false
+          # Skip the vendored repos/ (most of the repo's files); blob:none fetches only the files checked out
+          filter: blob:none
+          sparse-checkout: |
+            /*
+            !/repos/
+          sparse-checkout-cone-mode: false
       - uses: ./.github/actions/setup-pnpm
       # Fails if an operation no longer validates against schema/github/ (e.g. the
       # weekly schema PR removed a field), or the committed output is stale.

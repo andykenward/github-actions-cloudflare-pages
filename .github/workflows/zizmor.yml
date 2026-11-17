@@ -23,6 +23,12 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
         with:
           persist-credentials: false
+          # Skip the vendored repos/ (most of the repo's files); blob:none fetches only the files checked out
+          filter: blob:none
+          sparse-checkout: |
+            /*
+            !/repos/
+          sparse-checkout-cone-mode: false
 
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd #v0.8.1

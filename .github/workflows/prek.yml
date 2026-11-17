@@ -27,6 +27,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
         with:
           persist-credentials: false
+          # Skip the vendored repos/ (most of the repo's files); blob:none fetches only the files checked out
+          filter: blob:none
+          sparse-checkout: |
+            /*
+            !/repos/
+          sparse-checkout-cone-mode: false
       # The oxc-format-and-lint hook runs oxfmt and oxlint from node_modules.
       - uses: ./.github/actions/setup-pnpm
       - uses: j178/prek-action@44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d #v3.1.0
