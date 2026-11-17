@@ -44,6 +44,16 @@ const assertThrowsTagged = (tag: string, run: () => unknown) => {
   assert.fail(`Expected ${tag} to be thrown`)
 }
 
+const thrownCodecError = (run: () => unknown): PgTypesResult.CodecError => {
+  try {
+    run()
+  } catch (error) {
+    assert.instanceOf(error, PgTypesResult.CodecError)
+    return error as PgTypesResult.CodecError
+  }
+  return assert.fail("Expected PgTypesCodecError to be thrown")
+}
+
 /** Every value below was produced by PostgreSQL for the encoded parameter. */
 const roundTrips: Array<{
   readonly name: keyof typeof rows
@@ -167,6 +177,83 @@ const binary = (oids: ReadonlyArray<number>): Array<PgTypesResult.Column> =>
   oids.map((dataTypeOid) => ({ dataTypeOid, format: 1 }))
 
 describe("PgTypes", () => {
+  describe("intervals", () => {
+    // PostgreSQL interval_send: int64 microseconds, int32 days, int32 months.
+    // Independent fixtures for the four values reported in #8743.
+    const wires = [
+      "000000036c8bc0800000000300000000",
+      "0000000000000000000000000000000e",
+      "0000000000000000ffffffff00000000",
+      "000000000016e3600000000000000000"
+    ]
+    const values = [
+      { months: 0, days: 3, microseconds: 14706000000n },
+      { months: 14, days: 0, microseconds: 0n },
+      { months: 0, days: -1, microseconds: 0n },
+      { months: 0, days: 0, microseconds: 1500000n }
+    ]
+
+    it("reads the reported intervals alongside text and SQL NULL", () => {
+      const { interval, text } = PgTypes.OID
+      const parser = PgProtocol.makeParser({
+        readField: PgTypes.makeFieldReader(binary([interval, interval, interval, interval, text, interval]))
+      })
+      const row = parser.push(dataRow([...wires.map(bytes), bytes("6f6b"), null]))[0] as PgProtocol.DataRow<unknown>
+      assert.deepStrictEqual(row.values, [...values, "ok", null])
+    })
+
+    it("encodes and decodes an interval array with a NULL element", () => {
+      const value = [values[0], null, values[2]]
+      const wire = bytes(
+        "0000000100000001000004a20000000300000001" +
+          "00000010000000036c8bc0800000000300000000" +
+          "ffffffff" +
+          "000000100000000000000000ffffffff00000000"
+      )
+      assert.deepStrictEqual(PgTypes.encodeParameter(PgTypes.array(value, PgTypes.OID.interval)), wire)
+      assert.deepStrictEqual(PgTypes.decode(wire, PgTypes.OID.intervalArray, 1), value)
+    })
+
+    it("preserves signed int32 and int64 boundaries without flattening calendar units", () => {
+      for (
+        const { value, wire } of [
+          {
+            wire: "80000000000000007fffffff80000000",
+            value: { months: -2147483648, days: 2147483647, microseconds: -9223372036854775808n }
+          },
+          {
+            wire: "7fffffffffffffff800000007fffffff",
+            value: { months: 2147483647, days: -2147483648, microseconds: 9223372036854775807n }
+          }
+        ]
+      ) {
+        assert.deepStrictEqual(PgTypes.decode(bytes(wire), PgTypes.OID.interval, 1), value)
+        assert.deepStrictEqual(PgTypes.encodeParameter(PgTypes.interval(value)), bytes(wire))
+      }
+    })
+
+    it("requires exactly sixteen payload bytes", () => {
+      for (const size of [15, 17]) {
+        assertThrowsTagged(
+          "PgTypesCodecError",
+          () => PgTypesResult.decode(new Uint8Array(size), PgTypes.OID.interval, 1)
+        )
+      }
+    })
+
+    it("rejects out-of-range calendar units and invalid microseconds", () => {
+      for (
+        const value of [
+          { months: -2147483649, days: 0, microseconds: 0n },
+          { months: 0, days: 2147483648, microseconds: 0n },
+          { months: 0, days: 0, microseconds: 9223372036854775808n },
+          { months: 0, days: 0, microseconds: 1 }
+        ]
+      ) {
+        assertThrowsTagged("PgTypesCodecError", () => PgTypesResult.encode(value, PgTypes.OID.interval))
+      }
+    })
+  })
   it("returns codec failures as Result values", () => {
     for (
       const result of [
@@ -553,15 +640,15 @@ describe("PgTypes", () => {
       }
     })
 
-    it("rejects invalid UTF-8 with the same codec failure as text", () => {
-      for (const wire of ["ff", "c3", "c328"]) {
-        const expected = PgTypesResult.decode(bytes(wire), PgTypes.OID.text, 1)
-        const actual = PgTypesResult.decode(bytes(wire), 99999, 1)
-        assert.isTrue(Result.isFailure(expected))
-        assert.isTrue(Result.isFailure(actual))
-        if (Result.isFailure(expected) && Result.isFailure(actual)) {
-          assert.strictEqual(actual.failure._tag, "PgTypesCodecError")
-          assert.strictEqual(actual.failure.message, expected.failure.message)
+    it("rejects bytes that cannot be text with a codec failure naming the OID", () => {
+      // `0001000000000000` is pgvector's `'[0]'`: valid UTF-8, but binary data.
+      for (const [wire, reason] of [["ff", "UTF-8"], ["c3", "UTF-8"], ["c328", "UTF-8"], ["0001000000000000", "NUL"]]) {
+        const decoded = PgTypesResult.decode(bytes(wire), 99999, 1)
+        assert.isTrue(Result.isFailure(decoded))
+        if (Result.isFailure(decoded)) {
+          assert.strictEqual(decoded.failure._tag, "PgTypesCodecError")
+          assert.include(decoded.failure.message, reason)
+          assert.include(decoded.failure.message, "99999")
         }
       }
     })
@@ -1055,15 +1142,16 @@ describe("PgTypes", () => {
       assert.deepStrictEqual((messages[0] as PgProtocol.DataRow<unknown>).values, [7, "use_key", "gérer ☃", "", null])
     })
 
-    it("rejects invalid UTF-8 in an unregistered column with a codec error", () => {
-      for (const wire of ["ff", "c3", "c328"]) {
-        const parser = PgProtocol.makeParser({
-          readField: PgTypes.makeFieldReader(binary([PgTypes.OID.int4, 99999]))
-        })
-        assertThrowsTagged(
-          "PgTypesCodecError",
-          () => parser.push(dataRow([PgTypes.encode(7, PgTypes.OID.int4), bytes(wire)]))
-        )
+    it("rejects an unregistered column that cannot be text with a codec error naming it", () => {
+      const columns = [
+        { dataTypeOid: PgTypes.OID.int4, format: 1, name: "id" },
+        { dataTypeOid: 99999, format: 1, name: "embedding" }
+      ]
+      for (const wire of ["ff", "c3", "c328", "0001000000000000"]) {
+        const parser = PgProtocol.makeParser({ readField: PgTypes.makeFieldReader(columns) })
+        const error = thrownCodecError(() => parser.push(dataRow([PgTypes.encode(7, PgTypes.OID.int4), bytes(wire)])))
+        assert.include(error.message, "embedding")
+        assert.include(error.message, "99999")
       }
     })
 

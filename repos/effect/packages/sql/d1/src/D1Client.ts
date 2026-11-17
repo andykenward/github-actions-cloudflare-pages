@@ -29,6 +29,7 @@ import * as Stream from "effect/Stream"
 
 const ATTR_DB_SYSTEM_NAME = "db.system.name"
 const ATTR_DB_OPERATION_NAME = "db.operation.name"
+const ATTR_DB_OPERATION_BATCH_SIZE = "db.operation.batch.size"
 const ATTR_DB_QUERY_TEXT = "db.query.text"
 
 const classifyError = (cause: unknown, message: string, operation: string) =>
@@ -59,7 +60,7 @@ export type TypeId = "~@effect/sql-d1/D1Client"
  * @category services
  * @since 4.0.0
  */
-export interface D1Client extends Client.SqlClient {
+export interface D1Client extends Client.Base {
   readonly [TypeId]: TypeId
   readonly config: D1ClientConfig
 
@@ -104,7 +105,7 @@ export interface D1Client extends Client.SqlClient {
  * @category services
  * @since 4.0.0
  */
-export const D1Client = Context.Service<D1Client>("@effect/sql-d1/D1Client")
+export const D1Client = Context.Service<D1Client, D1Client & Client.SqlClient>("@effect/sql-d1/D1Client")
 
 /**
  * Configuration for a Cloudflare D1 client, including the `D1Database`, prepared statement cache settings, span attributes, and query/result name transforms.
@@ -133,6 +134,11 @@ interface StatementWithTransformRows extends Statement.Statement<any> {
   readonly transformRows: TransformRows | undefined
 }
 
+const batchSpanName = (spanAttributes: ReadonlyArray<readonly [string, unknown]>): string => {
+  const target = Statement.spanTarget(spanAttributes)
+  return target === undefined ? "BATCH" : `BATCH ${target}`
+}
+
 const makeBatch = (options: {
   readonly db: D1Database
   readonly prepareCache: Cache.Cache<string, D1PreparedStatement, SqlError>
@@ -145,8 +151,9 @@ const makeBatch = (options: {
   if (statements.length === 0) {
     return Effect.succeed([] as unknown as BatchResults<Statements>)
   }
+  const isBatch = statements.length > 1
   return Effect.useSpan(
-    "sql.execute",
+    isBatch ? batchSpanName(options.spanAttributes) : Statement.spanName(options.spanAttributes),
     { kind: "client" },
     (span) =>
       Effect.withFiber(Effect.fnUntraced(function*(fiber) {
@@ -168,7 +175,10 @@ const makeBatch = (options: {
         for (const [key, value] of options.spanAttributes) {
           span.attribute(key, value)
         }
-        span.attribute(ATTR_DB_OPERATION_NAME, "batch")
+        if (isBatch) {
+          span.attribute(ATTR_DB_OPERATION_NAME, "BATCH")
+          span.attribute(ATTR_DB_OPERATION_BATCH_SIZE, statements.length)
+        }
         span.attribute(ATTR_DB_QUERY_TEXT, queryTexts.join("; "))
 
         // D1 batches execute on the binding directly and intentionally cannot participate in SqlClient transactions.
@@ -204,7 +214,7 @@ const makeBatch = (options: {
  */
 export const make = (
   options: D1ClientConfig
-): Effect.Effect<D1Client, never, Scope.Scope | Reactivity.Reactivity> =>
+): Effect.Effect<D1Client & Client.SqlClient, never, Scope.Scope | Reactivity.Reactivity> =>
   Effect.gen(function*() {
     const compiler = Statement.makeCompilerSqlite(options.transformQueryNames)
     const transformRows = options.transformResultNames ?
@@ -329,15 +339,16 @@ export const make = (
     const acquirer = Effect.succeed(connection)
     const transactionAcquirer = Effect.die("transactions are not supported in D1")
 
-    let client!: D1Client
+    let client!: D1Client & Client.SqlClient
     client = Object.assign(
       (yield* Client.make({
+        driver: "d1",
         acquirer,
         compiler,
         transactionAcquirer,
         spanAttributes,
         transformRows
-      })) as D1Client,
+      })) as D1Client & Client.SqlClient,
       {
         [TypeId]: TypeId as TypeId,
         config: options,
@@ -352,14 +363,15 @@ export const make = (
 
     if (options.transformQueryNames !== undefined || transformRows !== undefined) {
       const clientWithoutTransformsBase = yield* Client.make({
+        driver: "d1",
         acquirer: Effect.succeed(connection),
         compiler: compiler.withoutTransform,
         transactionAcquirer,
         spanAttributes,
         transformRows: undefined
       })
-      let clientWithoutTransforms!: D1Client
-      clientWithoutTransforms = Object.assign(clientWithoutTransformsBase as D1Client, {
+      let clientWithoutTransforms!: D1Client & Client.SqlClient
+      clientWithoutTransforms = Object.assign(clientWithoutTransformsBase as D1Client & Client.SqlClient, {
         [TypeId]: TypeId as TypeId,
         config: options,
         batch: makeBatch({

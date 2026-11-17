@@ -91,6 +91,32 @@ describe("toCodecOpenAI", () => {
   })
 
   describe("Suspend", () => {
+    it("resolves a root alias of an identified schema", () => {
+      const NR = Schema.Struct({ a: Schema.String }).annotate({ identifier: "NR" })
+      const Params = Schema.suspend(() => NR).annotate({ identifier: "Params" })
+      assertJsonSchema(Params, {
+        type: "object",
+        properties: { a: { type: "string" } },
+        required: ["a"],
+        additionalProperties: false,
+        $defs: {
+          NR: {
+            type: "object",
+            properties: { a: { type: "string" } },
+            required: ["a"],
+            additionalProperties: false
+          },
+          Params: { $ref: "#/$defs/NR" }
+        }
+      })
+    })
+
+    it("rejects a root reference cycle", () => {
+      const A: Schema.Codec<unknown> = Schema.suspend((): Schema.Codec<unknown> => B).annotate({ identifier: "A" })
+      const B: Schema.Codec<unknown> = Schema.suspend((): Schema.Codec<unknown> => A).annotate({ identifier: "B" })
+      assertError(A, `Circular reference "#/$defs/A"`)
+    })
+
     it("no-transformation recursive schema", () => {
       interface A {
         readonly a: string
@@ -365,10 +391,14 @@ describe("toCodecOpenAI", () => {
     describe("Int", () => {
       it("Int", () => {
         assertJsonSchema(Schema.Int, {
-          "type": "integer"
+          "type": "integer",
+          "minimum": globalThis.Number.MIN_SAFE_INTEGER,
+          "maximum": globalThis.Number.MAX_SAFE_INTEGER
         })
         assertJsonSchema(Schema.Int.annotate({ description: "description" }), {
           "type": "integer",
+          "minimum": globalThis.Number.MIN_SAFE_INTEGER,
+          "maximum": globalThis.Number.MAX_SAFE_INTEGER,
           "description": "description"
         })
       })
@@ -376,6 +406,8 @@ describe("toCodecOpenAI", () => {
       it("Int + string format", () => {
         assertJsonSchema(Schema.Int.annotate({ format: "duration" }), {
           "type": "integer",
+          "minimum": globalThis.Number.MIN_SAFE_INTEGER,
+          "maximum": globalThis.Number.MAX_SAFE_INTEGER,
           "description": "a value with a format of duration"
         })
       })
@@ -383,6 +415,8 @@ describe("toCodecOpenAI", () => {
       it("Int + unsupported format", () => {
         assertJsonSchema(Schema.Int.annotate({ format: "int32" }), {
           "type": "integer",
+          "minimum": globalThis.Number.MIN_SAFE_INTEGER,
+          "maximum": globalThis.Number.MAX_SAFE_INTEGER,
           "description": "a value with a format of int32"
         })
       })
@@ -390,6 +424,7 @@ describe("toCodecOpenAI", () => {
       it("Int + isGreaterThan", () => {
         assertJsonSchema(Schema.Int.check(Schema.isGreaterThan(1)), {
           "type": "integer",
+          "maximum": globalThis.Number.MAX_SAFE_INTEGER,
           "description": "a value greater than 1",
           "exclusiveMinimum": 1
         })
@@ -443,7 +478,11 @@ describe("toCodecOpenAI", () => {
       assertJsonSchema(Schema.Union([Schema.NonEmptyString, Schema.Int]), {
         "anyOf": [
           { "type": "string", "description": "a value with a length of at least 1" },
-          { "type": "integer" }
+          {
+            "type": "integer",
+            "minimum": globalThis.Number.MIN_SAFE_INTEGER,
+            "maximum": globalThis.Number.MAX_SAFE_INTEGER
+          }
         ]
       })
     })
@@ -512,6 +551,19 @@ describe("toCodecOpenAI", () => {
 
       const decoding = asserts.decoding()
       await decoding.succeed({ "0": "a", "1": 1 }, ["a", 1])
+    })
+
+    it("optional Tuple([String, Finite])", async () => {
+      const schema = Schema.Struct({ value: Schema.optional(Schema.Tuple([Schema.String, Schema.Finite])) })
+      const asserts = new TestSchema.Asserts(toCodecOpenAI(schema).codec)
+
+      const encoding = asserts.encoding()
+      await encoding.succeed({ value: ["a", 1] }, { value: { "0": "a", "1": 1 } })
+      await encoding.succeed({}, { value: null })
+
+      const decoding = asserts.decoding()
+      await decoding.succeed({ value: { "0": "a", "1": 1 } }, { value: ["a", 1] })
+      await decoding.succeed({ value: null }, {})
     })
 
     it("Tuple([String, Finite]) + description", () => {
@@ -755,6 +807,19 @@ describe("toCodecOpenAI", () => {
         Schema.decodeUnknownExit(result.codec)({ value: [{ 0: "dynamic", 1: "value" }] })._tag,
         "Failure"
       )
+    })
+
+    it("optional Record(String, Finite)", async () => {
+      const schema = Schema.Struct({ value: Schema.optional(Schema.Record(Schema.String, Schema.Finite)) })
+      const asserts = new TestSchema.Asserts(toCodecOpenAI(schema).codec)
+
+      const encoding = asserts.encoding()
+      await encoding.succeed({ value: { "a": 1 } }, { value: [{ 0: "a", 1: 1 }] })
+      await encoding.succeed({}, { value: null })
+
+      const decoding = asserts.decoding()
+      await decoding.succeed({ value: [{ 0: "a", 1: 1 }] }, { value: { "a": 1 } })
+      await decoding.succeed({ value: null }, {})
     })
 
     it("Record(String, Finite) + description", () => {

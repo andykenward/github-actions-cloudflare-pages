@@ -8,6 +8,7 @@ import * as McpSchema2026 from "effect/ai/internal/mcpSchema/v2026_07_28"
 import * as McpProtocol from "effect/ai/McpProtocol"
 import * as McpSchema from "effect/ai/McpSchema"
 import * as McpServer from "effect/ai/McpServer"
+import * as McpTest from "effect/ai/McpTest"
 import * as Tool from "effect/ai/Tool"
 import * as Toolkit from "effect/ai/Toolkit"
 import * as Cause from "effect/Cause"
@@ -26,22 +27,31 @@ import * as Option from "effect/Option"
 import * as PubSub from "effect/PubSub"
 import * as Queue from "effect/Queue"
 import * as Ref from "effect/Ref"
+import * as References from "effect/References"
 import { RpcSerialization } from "effect/rpc"
 import * as Rpc from "effect/rpc/Rpc"
 import * as RpcClient from "effect/rpc/RpcClient"
 import type * as RpcMessage from "effect/rpc/RpcMessage"
 import { RequestId } from "effect/rpc/RpcMessage"
 import * as RpcServer from "effect/rpc/RpcServer"
+import * as Runtime from "effect/Runtime"
+import * as Scheduler from "effect/Scheduler"
 import * as Schema from "effect/Schema"
+import * as SchemaGetter from "effect/SchemaGetter"
 import * as Sink from "effect/Sink"
 import * as Stdio from "effect/Stdio"
 import * as Stream from "effect/Stream"
 import * as TestClock from "effect/testing/TestClock"
+import * as Tracer from "effect/Tracer"
 import { collectGarbage } from "../../utils/gc.ts"
+import { makeHeldServerScheduler } from "./TestUtils/McpHeldScheduler.ts"
 import { initializeHttpSession, makeHttpHarness } from "./TestUtils/McpHttpHarness.ts"
 import { makeMcpSseReader, readMcpHttpResponse } from "./TestUtils/McpHttpResponse.ts"
 import { makeServerLayer } from "./TestUtils/McpServerLayer.ts"
 import { makeMcpStdioHarness } from "./TestUtils/McpStdioHarness.ts"
+
+// oxlint-disable-next-line @typescript-eslint/no-require-imports
+const Ajv2020 = require("ajv/dist/2020")
 
 const OptionalStringTool = Tool.make("OptionalStringTool", {
   parameters: Schema.Struct({ signature: Schema.optional(Schema.String) }),
@@ -101,6 +111,16 @@ const ArrayResultTool = Tool.make("ArrayResultTool", {
   success: Schema.Array(Schema.String)
 })
 
+// A `Response` body can only be read once, so its encoding must run only once.
+const ConsumableResultTool = Tool.make("ConsumableResultTool", {
+  success: Schema.Struct({
+    body: Schema.String.pipe(Schema.decodeTo(Schema.instanceOf(Response), {
+      decode: SchemaGetter.transform((text) => new Response(text)),
+      encode: SchemaGetter.transformEffect((response) => Effect.promise(() => response.text()))
+    }))
+  })
+})
+
 const TestToolkit = Toolkit.make(
   OptionalStringTool,
   StrictObjectTool,
@@ -113,7 +133,8 @@ const TestToolkit = Toolkit.make(
   StructuredResultTool,
   AnnotatedVoidTool,
   NullableResultTool,
-  ArrayResultTool
+  ArrayResultTool,
+  ConsumableResultTool
 )
 type TestToolkitHandlers = Toolkit.HandlersFrom<Toolkit.Tools<typeof TestToolkit>>
 
@@ -137,6 +158,7 @@ const testToolkitHandlers = TestToolkit.of({
   AnnotatedVoidTool: () => Effect.void,
   NullableResultTool: () => Effect.succeed(null),
   ArrayResultTool: () => Effect.succeed(["first", "second"]),
+  ConsumableResultTool: () => Effect.succeed({ body: new Response("hello") }),
   UnserializableResultTool: () => Effect.succeed(1n)
 })
 
@@ -211,28 +233,21 @@ const makeToolkitTestClient = Effect.fnUntraced(function*(
 ) {
   const reported: Array<Cause.Cause<unknown>> = []
   const logged: Array<Cause.Cause<unknown>> = []
-  const loggerLayer = Logger.layer([Logger.make(({ cause, logLevel }) => {
+  const logger = Logger.make(({ cause, logLevel }) => {
     if (logLevel === "Error") logged.push(cause)
-  })])
+  })
   const reporterLayer = ErrorReporter.layer(
     options?.reportErrors === false ? [] : [ErrorReporter.make(({ cause }) => {
       reported.push(cause)
     })]
   )
-  const serverLayer = McpServer.toolkit(TestToolkit).pipe(
-    Layer.provideMerge(TestToolkit.toLayer(handlers)),
-    Layer.provide(Layer.mergeAll(TestServerLayer, loggerLayer)),
-    Layer.provide(reporterLayer)
+  const registrations = McpServer.toolkit(TestToolkit).pipe(
+    Layer.provideMerge(TestToolkit.toLayer(handlers))
   )
-  const { client } = yield* makeTestClientWith(serverLayer)
-  yield* client.initialize({
-    protocolVersion: "9999-01-01",
-    capabilities: {},
-    clientInfo: {
-      name: "TestClient",
-      version: "1.0.0"
-    }
-  })
+  const client = yield* McpTest.makeClient(registrations, { protocols: [McpProtocol.v2025_06_18] }).pipe(
+    Effect.provideService(References.CurrentLoggers, new Set([logger])),
+    Effect.provide(reporterLayer)
+  )
   return { client, reported, logged }
 })
 
@@ -300,22 +315,35 @@ describe("McpServer", () => {
       assert.deepInclude((yield* fixture.sendRequest("ping")).error, { code: -32601 })
     }))
 
-  // Effect delivery contract: an unavailable destination must not leave the caller waiting.
-  it.effect("should return from completion notification when the target client is absent", () =>
+  // https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#stdio
+  // `@effect/rpc/*` control messages are internal to Effect RPC, not MCP wire methods.
+  it.effect("should treat Effect RPC control methods from stdio clients as unknown notifications", () =>
     Effect.gen(function*() {
       const fixture = yield* makeMcpStdioHarness(McpProtocol.v2025_11_25)
       yield* fixture.initialize()
-      yield* fixture.server.notifyElicitationComplete({ clientId: 999, elicitationId: "not-connected" })
-      assert.deepInclude(yield* fixture.sendRequest("ping", {}), { result: {} })
+      yield* fixture.sendNotification("@effect/rpc/Ping")
+      yield* fixture.sendNotification("@effect/rpc/Eof")
+      const response = yield* fixture.sendRequest("ping", {}, "after-control")
+      assert.deepInclude(response, { id: "after-control", result: {} })
+      // Only the initialize and ping responses reach stdout; no `@effect/rpc/Pong`.
+      assert.deepInclude(yield* fixture.takeFrame, { id: 1 })
+      assert.deepStrictEqual(yield* fixture.takeFrame, response)
+    }))
+
+  // Effect delivery contract: an unavailable destination must not leave the caller waiting.
+  it.effect("should return from completion notification when the target client is absent", () =>
+    Effect.gen(function*() {
+      const client = yield* McpTest.makeClient(Layer.empty, { protocols: [McpProtocol.v2025_11_25] })
+      yield* client.server.notifyElicitationComplete({ clientId: 999, elicitationId: "not-connected" })
+      yield* client.ping
     }))
 
   // URL completion is unavailable in June; this checks that the Effect call returns, not wire suppression.
   it.effect("should return from completion notification when the target protocol does not support it", () =>
     Effect.gen(function*() {
-      const fixture = yield* makeMcpStdioHarness(McpProtocol.v2025_06_18)
-      yield* fixture.initialize()
-      yield* fixture.server.notifyElicitationComplete({ clientId: 0, elicitationId: "unsupported" })
-      assert.deepInclude(yield* fixture.sendRequest("ping", {}), { result: {} })
+      const client = yield* McpTest.makeClient(Layer.empty, { protocols: [McpProtocol.v2025_06_18] })
+      yield* client.server.notifyElicitationComplete({ clientId: 0, elicitationId: "unsupported" })
+      yield* client.ping
     }))
 
   // https://modelcontextprotocol.io/specification/2025-11-25/client/elicitation#completion-notifications-for-url-mode-elicitation
@@ -328,31 +356,30 @@ describe("McpServer", () => {
         yield* server.addTool({
           tool: new McpSchema.Tool({ name: "Authorize", inputSchema: { type: "object" } }),
           annotations: Context.empty(),
-          handle: () =>
-            Effect.gen(function*() {
-              const client = yield* Effect.serviceOption(McpSchema.McpServerClient).pipe(
-                Effect.flatMap(Effect.fromOption)
-              )
-              yield* client.getClient.pipe(
-                Effect.flatMap((reverseClient) =>
-                  reverseClient.elicit(
-                    Schema.decodeUnknownSync(McpSchema.Elicit.payloadSchema)({
-                      mode: "url",
-                      message: "Authorize access",
-                      url: "https://example.com/authorize",
-                      elicitationId: "authorization-1"
-                    })
-                  )
-                ),
-                Effect.scoped
-              )
-              yield* Deferred.await(authorizationCompleted)
-              yield* server.notifyElicitationComplete({
-                clientId: client.clientId,
-                elicitationId: "authorization-1"
-              })
-              return new McpSchema.CallToolResult({ content: [{ type: "text", text: "Authorized" }] })
-            }).pipe(Effect.orDie)
+          handle: Effect.fnUntraced(function*() {
+            const client = yield* Effect.serviceOption(McpSchema.McpServerClient).pipe(
+              Effect.flatMap(Effect.fromOption)
+            )
+            yield* client.getClient.pipe(
+              Effect.flatMap((reverseClient) =>
+                reverseClient.elicit(
+                  Schema.decodeUnknownSync(McpSchema.Elicit.payloadSchema)({
+                    mode: "url",
+                    message: "Authorize access",
+                    url: "https://example.com/authorize",
+                    elicitationId: "authorization-1"
+                  })
+                )
+              ),
+              Effect.scoped
+            )
+            yield* Deferred.await(authorizationCompleted)
+            yield* server.notifyElicitationComplete({
+              clientId: client.clientId,
+              elicitationId: "authorization-1"
+            })
+            return new McpSchema.CallToolResult({ content: [{ type: "text", text: "Authorized" }] })
+          }, (_) => Effect.orDie(_))
         })
       }))
       const harness = yield* makeHttpHarness(registration.pipe(Layer.provideMerge(
@@ -415,13 +442,12 @@ describe("McpServer", () => {
             yield* server.addTool({
               tool: new McpSchema.Tool({ name: "Capture", inputSchema: { type: "object" } }),
               annotations: Context.empty(),
-              handle: () =>
-                Effect.gen(function*() {
-                  const context = yield* McpSchema.McpRequestContext
-                  references.push(new WeakRef(context.requestMetadata!))
-                  controls.push(new WeakRef({ unrelated: true }))
-                  return new McpSchema.CallToolResult({ content: [] })
-                })
+              handle: Effect.fnUntraced(function*() {
+                const context = yield* McpSchema.McpRequestContext
+                references.push(new WeakRef(context.requestMetadata!))
+                controls.push(new WeakRef({ unrelated: true }))
+                return new McpSchema.CallToolResult({ content: [] })
+              })
             })
           })).pipe(Layer.provideMerge(makeServerLayer({
             name: "HttpRequestLifecycle",
@@ -494,18 +520,17 @@ describe("McpServer", () => {
         yield* Layer.build(
           McpServer.toolkit(toolkit).pipe(
             Layer.provide(toolkit.toLayer({
-              Probe: () =>
-                Effect.gen(function*() {
-                  const client = yield* McpSchema.McpServerClient
-                  refs.set(client.clientId, new WeakRef(client.clientInfo))
-                  if (client.clientId === 2) return "control"
-                  yield* McpServer.elicit({ message: "Approve", schema: Schema.Struct({ approved: Schema.Boolean }) })
-                    .pipe(
-                      Effect.orDie,
-                      Effect.onInterrupt(() => Deferred.succeed(cancelled, undefined))
-                    )
-                  return "done"
-                })
+              Probe: Effect.fnUntraced(function*() {
+                const client = yield* McpSchema.McpServerClient
+                refs.set(client.clientId, new WeakRef(client.clientInfo))
+                if (client.clientId === 2) return "control"
+                yield* McpServer.elicit({ message: "Approve", schema: Schema.Struct({ approved: Schema.Boolean }) })
+                  .pipe(
+                    Effect.orDie,
+                    Effect.onInterrupt(() => Deferred.succeed(cancelled, undefined))
+                  )
+                return "done"
+              })
             })),
             Layer.provide(
               McpServer.layer({ name: "ReverseLifetime", version: "1", protocols: [McpProtocol.v2025_11_25] }).pipe(
@@ -538,6 +563,8 @@ describe("McpServer", () => {
           const outboundMessage = yield* Queue.take(outbound)
           assert.strictEqual(outboundMessage._tag, clientId === 1 ? "Request" : "Exit")
           if (clientId === 1) {
+            assert(outboundMessage._tag === "Request")
+            assert.strictEqual(outboundMessage.tag, "elicitation/create")
             yield* send(clientId, {
               _tag: "Request",
               id: "",
@@ -547,8 +574,12 @@ describe("McpServer", () => {
               headers: []
             })
             yield* Deferred.await(cancelled)
-            // The reverse client emits a control Interrupt; consume it before the next connection.
-            assert.strictEqual((yield* Queue.take(outbound))._tag, "Interrupt")
+            // Consume the MCP cancellation before the next connection.
+            const cancellation = yield* Queue.take(outbound)
+            assert(cancellation._tag === "Request")
+            assert.strictEqual(cancellation.tag, "notifications/cancelled")
+            assert.strictEqual(cancellation.isNotification, true)
+            assert.deepStrictEqual(cancellation.payload, { requestId: outboundMessage.id })
           }
           yield* send(clientId, { _tag: "Eof" })
           connected.delete(clientId)
@@ -647,12 +678,11 @@ describe("McpServer", () => {
           server.addTool({
             tool: new McpSchema.Tool({ name: "Emit", inputSchema: { type: "object" } }),
             annotations: Context.empty(),
-            handle: () =>
-              Effect.gen(function*() {
-                yield* server.notifications["notifications/message"]({ level: "warning", data: "filtered" })
-                yield* server.notifications["notifications/message"]({ level: "error", data: "delivered" })
-                return new McpSchema.CallToolResult({ content: [] })
-              })
+            handle: Effect.fnUntraced(function*() {
+              yield* server.notifications["notifications/message"]({ level: "warning", data: "filtered" })
+              yield* server.notifications["notifications/message"]({ level: "error", data: "delivered" })
+              return new McpSchema.CallToolResult({ content: [] })
+            })
           })
         )).pipe(Layer.provideMerge(makeServerLayer({
           name: "SessionLogLevel",
@@ -846,6 +876,122 @@ describe("McpServer", () => {
       assert.strictEqual((yield* subscription.take()).method, "notifications/tools/list_changed")
     }))
 
+  it.effect("should deliver list changes to every initialized HTTP session", () =>
+    Effect.gen(function*() {
+      const holding = yield* Queue.unbounded<void>()
+      const release = yield* Deferred.make<void>()
+      const ready = yield* Deferred.make<McpServer.McpServer["Service"]>()
+      const protocol = McpProtocol.v2025_11_25
+      const harness = yield* makeHttpHarness(
+        Layer.effectDiscard(Effect.gen(function*() {
+          const server = yield* McpServer.McpServer
+          yield* server.addTool({
+            tool: new McpSchema.Tool({ name: "Hold", inputSchema: { type: "object" } }),
+            annotations: Context.empty(),
+            handle: () =>
+              Queue.offer(holding, undefined).pipe(
+                Effect.andThen(Deferred.await(release)),
+                Effect.as(new McpSchema.CallToolResult({ content: [] }))
+              )
+          })
+          yield* Deferred.succeed(ready, server)
+        })).pipe(Layer.provideMerge(makeServerLayer({ name: "HttpListChanges", protocols: [protocol] })))
+      )
+      const server = yield* Deferred.await(ready)
+      const calls = yield* Effect.forEach(["first", "second"], (id) =>
+        initializeHttpSession(harness, protocol).pipe(
+          Effect.flatMap((headers) =>
+            harness.post({ jsonrpc: "2.0", id, method: "tools/call", params: { name: "Hold" } }, headers)
+          ),
+          Effect.forkChild
+        ))
+      yield* Queue.take(holding)
+      yield* Queue.take(holding)
+
+      yield* server.notifications["notifications/tools/list_changed"]({})
+      const streams = yield* Effect.forEach(calls, (call) =>
+        Fiber.join(call).pipe(
+          Effect.map(makeMcpSseReader),
+          Effect.tap((stream) => Effect.addFinalizer(() => stream.cancel))
+        ))
+      for (const stream of streams) {
+        assert.strictEqual((yield* stream.take()).method, "notifications/tools/list_changed")
+      }
+      yield* Deferred.succeed(release, undefined)
+      assert.deepStrictEqual(
+        yield* Effect.forEach(streams, (stream) => Effect.map(stream.drain(), (messages) => messages.map((m) => m.id))),
+        [["first"], ["second"]]
+      )
+    }))
+
+  it.effect("should not deliver list changes from before an HTTP session initialized", () => {
+    // EFF-3277: this test hangs rarely on Bun. Before the 5000ms test timeout, report
+    // the step it is stuck on.
+    let step = "build server"
+    return Effect.gen(function*() {
+      const { describe: schedulerState, release, scheduler } = yield* makeHeldServerScheduler
+      const watchdog = setTimeout(() => {
+        console.error(`EFF-3277: stuck at step "${step}", held scheduler ${schedulerState()}`)
+      }, 4000)
+      // Registered first, so it is cleared only after every other finalizer.
+      yield* Effect.addFinalizer(() => Effect.sync(() => clearTimeout(watchdog)))
+      const holding = yield* Deferred.make<void>()
+      const resume = yield* Deferred.make<void>()
+      const protocol = McpProtocol.v2025_11_25
+      const harness = yield* makeHttpHarness(
+        Layer.effectDiscard(McpServer.McpServer.use((server) =>
+          server.addTool({
+            tool: new McpSchema.Tool({ name: "Hold", inputSchema: { type: "object" } }),
+            annotations: Context.empty(),
+            handle: () =>
+              Deferred.succeed(holding, undefined).pipe(
+                Effect.andThen(Deferred.await(resume)),
+                Effect.andThen(server.notifications["notifications/tools/list_changed"]({})),
+                Effect.as(new McpSchema.CallToolResult({ content: [] }))
+              )
+          })
+        )).pipe(
+          Layer.provideMerge(makeServerLayer({ name: "HttpStaleListChange", protocols: [protocol] })),
+          // The web handler builds the server in its own runtime, so the
+          // scheduler must reach it through the layer.
+          Layer.provide(Layer.succeed(Scheduler.Scheduler, scheduler))
+        )
+      )
+      step = "initialize session"
+      const headers = yield* initializeHttpSession(harness, protocol)
+      const call = yield* harness.post({
+        jsonrpc: "2.0",
+        id: "hold",
+        method: "tools/call",
+        params: { name: "Hold" }
+      }, headers).pipe(Effect.forkChild)
+      step = "await tool call"
+      yield* Deferred.await(holding)
+
+      // Queue the registration's list change while the session's request is in
+      // flight, then emit a newer one that must follow it on the stream.
+      step = "release held list change"
+      yield* release
+      yield* Deferred.succeed(resume, undefined)
+      step = "join tool call response"
+      const stream = makeMcpSseReader(yield* Fiber.join(call))
+      yield* Effect.addFinalizer(() => stream.cancel)
+      step = "drain response stream"
+      const messages = yield* stream.drain()
+      assert.deepStrictEqual(messages.map((message) => message.method ?? message.id), [
+        "notifications/tools/list_changed",
+        "hold"
+      ])
+    }).pipe(
+      // Runs on success, failure and interruption, before the test scope's finalizers.
+      Effect.onExit(() =>
+        Effect.sync(() => {
+          step = "teardown"
+        })
+      )
+    )
+  })
+
   it.effect("should deliver notifications and results to other clients when one client stops reading", () =>
     Effect.gen(function*() {
       const outbound = yield* Queue.unbounded<{ clientId: number; message: RpcMessage.FromServerEncoded }>()
@@ -858,16 +1004,15 @@ describe("McpServer", () => {
       const transport = yield* RpcServer.Protocol.make((write) =>
         Deferred.succeed(ready, write).pipe(Effect.as({
           disconnects,
-          send: (clientId, message) =>
-            Effect.gen(function*() {
-              if (
-                clientId === 1 && message._tag === "Request" && (message.payload as { data?: string }).data === "first"
-              ) {
-                yield* Deferred.succeed(blocked, undefined)
-                yield* Deferred.await(release)
-              }
-              yield* Queue.offer(outbound, { clientId, message })
-            }),
+          send: Effect.fnUntraced(function*(clientId, message) {
+            if (
+              clientId === 1 && message._tag === "Request" && (message.payload as { data?: string }).data === "first"
+            ) {
+              yield* Deferred.succeed(blocked, undefined)
+              yield* Deferred.await(release)
+            }
+            yield* Queue.offer(outbound, { clientId, message })
+          }),
           end: () => Effect.void,
           clientIds: Effect.succeed(new Set([1, 2])),
           initialMessage: Effect.succeedNone,
@@ -886,20 +1031,21 @@ describe("McpServer", () => {
       yield* server.addTool({
         tool: new McpSchema.Tool({ name: "Log", inputSchema: { type: "object" } }),
         annotations: Context.empty(),
-        handle: () =>
-          Effect.gen(function*() {
-            yield* Effect.forEach(["first", "second"], (data) =>
-              server.notifications["notifications/message"]({ level: "error", data }), { concurrency: "unbounded" })
-            if ((yield* McpSchema.McpRequestContext).clientId === 2) {
-              yield* server.addTool({
-                tool: new McpSchema.Tool({ name: "Dynamic", inputSchema: { type: "object" } }),
-                annotations: Context.empty(),
-                handle: () =>
-                  Effect.succeed(new McpSchema.CallToolResult({ content: [] }))
-              })
-            }
-            return new McpSchema.CallToolResult({ content: [] })
-          })
+        handle: Effect.fnUntraced(function*() {
+          yield* Effect.forEach(
+            ["first", "second"],
+            (data) => server.notifications["notifications/message"]({ level: "error", data }),
+            { concurrency: "unbounded" }
+          )
+          if ((yield* McpSchema.McpRequestContext).clientId === 2) {
+            yield* server.addTool({
+              tool: new McpSchema.Tool({ name: "Dynamic", inputSchema: { type: "object" } }),
+              annotations: Context.empty(),
+              handle: () => Effect.succeed(new McpSchema.CallToolResult({ content: [] }))
+            })
+          }
+          return new McpSchema.CallToolResult({ content: [] })
+        })
       })
       const take = Effect.fnUntraced(function*(clientId: number) {
         const event = yield* Queue.take(outbound)
@@ -952,6 +1098,193 @@ describe("McpServer", () => {
       assert.deepInclude(remaining.find((message) => message._tag === "Request"), {
         tag: "notifications/tools/list_changed"
       })
+    }))
+
+  it.effect("drops queued progress after cancellation but preserves background progress", () =>
+    Effect.gen(function*() {
+      const outbound = yield* Queue.unbounded<RpcMessage.FromServerEncoded>()
+      const disconnects = yield* Queue.unbounded<number>()
+      const blocked = yield* Deferred.make<void>()
+      const release = yield* Deferred.make<void>()
+      const queued = yield* Deferred.make<void>()
+      const cancelled = yield* Deferred.make<void>()
+      const ready = yield* Deferred.make<
+        (clientId: number, message: RpcMessage.FromClientEncoded) => Effect.Effect<void>
+      >()
+      const transport = yield* RpcServer.Protocol.make((write) =>
+        Deferred.succeed(ready, write).pipe(Effect.as({
+          disconnects,
+          send: Effect.fnUntraced(function*(_clientId, message) {
+            if (message._tag === "Request" && message.tag === "notifications/message") {
+              yield* Deferred.succeed(blocked, undefined)
+              yield* Deferred.await(release)
+            }
+            yield* Queue.offer(outbound, message)
+          }),
+          end: () => Effect.void,
+          clientIds: Effect.succeed(new Set([1])),
+          initialMessage: Effect.succeedNone,
+          supportsAck: false,
+          supportsTransferables: false,
+          supportsSpanPropagation: false,
+          supportsNotifications: true,
+          codecFor: Schema.toCodecJson as RpcSerialization.CodecFor
+        }))
+      )
+      const context = yield* Layer.build(
+        McpServer.layer({ name: "ProgressCancellation", version: "1.0.0", protocols: [McpProtocol.v2025_11_25] })
+          .pipe(Layer.provide(Layer.succeed(RpcServer.Protocol, transport)))
+      )
+      const server = Context.get(context, McpServer.McpServer)
+      yield* server.addTool({
+        tool: new McpSchema.Tool({ name: "Progress", inputSchema: { type: "object" } }),
+        annotations: Context.empty(),
+        handle: Effect.fnUntraced(function*() {
+          yield* server.notifications["notifications/progress"]({ progressToken: "request", progress: 1 }).pipe(
+            Effect.forkChild({ startImmediately: true })
+          )
+          yield* Deferred.succeed(queued, undefined)
+          return yield* Effect.never
+        }, Effect.ensuring(Deferred.succeed(cancelled, undefined)))
+      })
+      const write = yield* Deferred.await(ready)
+      const send = (message: RpcMessage.FromClientEncoded) => write(1, message)
+      yield* send({
+        _tag: "Request",
+        id: "initialize",
+        tag: "initialize",
+        headers: [],
+        payload: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "client", version: "1" } }
+      })
+      yield* Queue.take(outbound)
+      yield* send({
+        _tag: "Request",
+        id: "",
+        tag: "notifications/initialized",
+        payload: {},
+        headers: [],
+        isNotification: true
+      })
+      yield* server.notifications["notifications/message"]({ level: "error", data: "blocked" }).pipe(
+        Effect.forkScoped({ startImmediately: true })
+      )
+      yield* Deferred.await(blocked)
+      yield* send({
+        _tag: "Request",
+        id: "work",
+        tag: "tools/call",
+        headers: [],
+        payload: { name: "Progress", _meta: { progressToken: "request" } }
+      })
+      yield* Deferred.await(queued)
+      yield* send({
+        _tag: "Request",
+        id: "",
+        tag: "notifications/cancelled",
+        headers: [],
+        payload: { requestId: "work" },
+        isNotification: true
+      })
+      yield* Deferred.await(cancelled)
+      yield* Deferred.succeed(release, undefined)
+      // Await a later notification so the assertion cannot race the delivery chain.
+      yield* server.notifications["notifications/progress"]({ progressToken: "background", progress: 1 })
+      assert.deepInclude(yield* Queue.take(outbound), { tag: "notifications/message" })
+      assert.deepInclude(yield* Queue.take(outbound), {
+        tag: "notifications/progress",
+        payload: { progressToken: "background", progress: 1 }
+      })
+      assert.strictEqual(yield* Queue.size(outbound), 0)
+    }))
+
+  it.effect("drops progress when the transport disconnects during projection", () =>
+    Effect.gen(function*() {
+      const outbound = yield* Queue.unbounded<RpcMessage.FromServerEncoded>()
+      const disconnects = yield* Queue.unbounded<number>()
+      const blocked = yield* Deferred.make<void>()
+      const release = yield* Deferred.make<void>()
+      const scope = yield* Effect.scope
+      const delivered = yield* Deferred.make<void>()
+      const clientIds = new Set([1])
+      const cancelled = yield* Deferred.make<void>()
+      const ready = yield* Deferred.make<
+        (clientId: number, message: RpcMessage.FromClientEncoded) => Effect.Effect<void>
+      >()
+      const transport = yield* RpcServer.Protocol.make((write) =>
+        Deferred.succeed(ready, write).pipe(Effect.as({
+          disconnects,
+          send: (_clientId, message) => Queue.offer(outbound, message).pipe(Effect.asVoid),
+          end: () => Effect.void,
+          clientIds: Effect.succeed(clientIds),
+          initialMessage: Effect.succeedNone,
+          supportsAck: false,
+          supportsTransferables: false,
+          supportsSpanPropagation: false,
+          supportsNotifications: true,
+          codecFor: Schema.toCodecJson as RpcSerialization.CodecFor
+        }))
+      )
+      const context = yield* Layer.build(
+        McpServer.layer({
+          name: "ProgressCancellation",
+          version: "1.0.0",
+          protocols: [{
+            ...McpProtocol.v2025_11_25,
+            projectNotification: Effect.fnUntraced(function*(notification) {
+              if (notification._tag === "Progress") {
+                yield* Deferred.succeed(blocked, undefined)
+                yield* Deferred.await(release)
+              }
+              return yield* McpProtocol.v2025_11_25.projectNotification(notification)
+            })
+          }]
+        })
+          .pipe(Layer.provide(Layer.succeed(RpcServer.Protocol, transport)))
+      )
+      const server = Context.get(context, McpServer.McpServer)
+      yield* server.addTool({
+        tool: new McpSchema.Tool({ name: "Progress", inputSchema: { type: "object" } }),
+        annotations: Context.empty(),
+        handle: Effect.fnUntraced(function*() {
+          yield* server.notifications["notifications/progress"]({ progressToken: "request", progress: 1 }).pipe(
+            Effect.ensuring(Deferred.succeed(delivered, undefined)),
+            Effect.forkIn(scope, { startImmediately: true })
+          )
+          return yield* Effect.never
+        }, Effect.ensuring(Deferred.succeed(cancelled, undefined)))
+      })
+      const write = yield* Deferred.await(ready)
+      const send = (message: RpcMessage.FromClientEncoded) => write(1, message)
+      yield* send({
+        _tag: "Request",
+        id: "initialize",
+        tag: "initialize",
+        headers: [],
+        payload: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "client", version: "1" } }
+      })
+      yield* Queue.take(outbound)
+      yield* send({
+        _tag: "Request",
+        id: "",
+        tag: "notifications/initialized",
+        payload: {},
+        headers: [],
+        isNotification: true
+      })
+      yield* send({
+        _tag: "Request",
+        id: "work",
+        tag: "tools/call",
+        headers: [],
+        payload: { name: "Progress", _meta: { progressToken: "request" } }
+      })
+      yield* Deferred.await(blocked)
+      clientIds.delete(1)
+      yield* Queue.offer(disconnects, 1)
+      yield* Deferred.await(cancelled)
+      yield* Deferred.succeed(release, undefined)
+      yield* Deferred.await(delivered)
+      assert.strictEqual(yield* Queue.size(outbound), 0)
     }))
 
   it.effect("should suppress cancelled responses when a custom transport handles MCP messages", () =>
@@ -1185,15 +1518,19 @@ describe("McpServer", () => {
         dependencies: [McpSchema.McpRequestContext, RegistrationLabel]
       }))
 
-      // Registration captures application services, but each invocation owns its request identity.
-      // This contract belongs to the public server helpers rather than wire conformance.
+      // Registration captures application services, but each invocation owns its request identity
+      // and request-level services. This contract belongs to the public server helpers rather than
+      // wire conformance.
       const makeRegisteredServer = Effect.gen(function*() {
         const server = yield* McpServer.McpServer.make
+        const ProvideLabel = McpServer.middleware<{ provides: RegistrationLabel }>()((effect) =>
+          Effect.provideService(effect, RegistrationLabel, "middleware")
+        )
         yield* server.addTool({
           tool: new McpSchema.Tool({ name: "register", inputSchema: { type: "object" } }),
           annotations: Context.empty(),
-          handle: () =>
-            Effect.gen(function*() {
+          handle: Effect.fnUntraced(
+            function*() {
               yield* McpServer.registerResource({ uri: "file:///owner", name: "owner", content: currentOwner })
               yield* McpServer.registerResource`file:///owners/${Schema.String}`({
                 name: "owners",
@@ -1210,16 +1547,17 @@ describe("McpServer", () => {
                 Effect.provide(toolkit.toLayer({ owner: () => currentOwner }))
               )
               return new McpSchema.CallToolResult({ content: [] })
-            }).pipe(
-              Effect.provideService(McpServer.McpServer, server),
-              Effect.provideService(RegistrationLabel, "registered")
-            )
+            },
+            Effect.provide(ProvideLabel.layer),
+            Effect.provideService(McpServer.McpServer, server),
+            Effect.provideService(RegistrationLabel, "registered")
+          )
         })
         yield* server.callTool({ name: "register" }).pipe(Effect.provideService(McpSchema.McpServerClient, alice))
         return server
       })
 
-      const expectedOwner = "registered:2:Bob:Bob"
+      const expectedOwner = "middleware:2:Bob:Bob"
 
       it.effect("should use the current request when a resource was registered by another client", () =>
         Effect.gen(function*() {
@@ -1535,22 +1873,20 @@ describe("McpServer", () => {
           success: Schema.String
         })
         const toolkit = Toolkit.make(NonStrictTool)
-        const server = yield* McpServer.McpServer.make
-        yield* McpServer.registerToolkit(toolkit).pipe(
-          Effect.provideService(McpServer.McpServer, server),
-          Effect.provide(toolkit.toLayer({
-            NonStrictTool: () => {
-              handlerInvoked = true
-              return Effect.succeed("ok")
-            }
-          }))
+        const client = yield* McpTest.makeClient(
+          Layer.effectDiscard(McpServer.registerToolkit(toolkit)).pipe(
+            Layer.provide(toolkit.toLayer({
+              NonStrictTool: () => {
+                handlerInvoked = true
+                return Effect.succeed("ok")
+              }
+            }))
+          ),
+          { protocols: [McpProtocol.v2025_06_18] }
         )
 
         for (const args of [{ first: 1, second: "invalid", extra: true }, { extra: true }]) {
-          const error = yield* server.callTool({ name: "NonStrictTool", arguments: args }).pipe(
-            Effect.provideService(McpSchema.McpServerClient, directClient),
-            Effect.flip
-          )
+          const error = yield* client.callTool({ name: "NonStrictTool", arguments: args }).pipe(Effect.flip)
 
           assert.strictEqual(error.code, McpSchema.INVALID_PARAMS_ERROR_CODE)
           assert.include(error.message, "[\"first\"]")
@@ -1562,39 +1898,89 @@ describe("McpServer", () => {
 
     it.effect("registers tools with identified output schemas", () =>
       Effect.gen(function*() {
+        class Event extends Schema.Class<Event>("Event")({ at: Schema.Date }) {}
+        interface Tree {
+          readonly children: ReadonlyArray<Tree>
+        }
+        const Tree: Schema.Codec<Tree> = Schema.Struct({
+          children: Schema.Array(Schema.suspend(() => Tree))
+        }).annotate({ identifier: "Tree" })
         const IdentifiedResultTool = Tool.make("IdentifiedResultTool", {
           success: Schema.Struct({ value: Schema.String }).annotate({ identifier: "IdentifiedResult" })
         })
-        const toolkit = Toolkit.make(IdentifiedResultTool)
+        const EventTool = Tool.make("EventTool", { success: Event })
+        const TreeTool = Tool.make("TreeTool", { success: Tree })
+        const toolkit = Toolkit.make(IdentifiedResultTool, EventTool, TreeTool)
         const server = yield* McpServer.McpServer.make
         yield* McpServer.registerToolkit(toolkit).pipe(
           Effect.provideService(McpServer.McpServer, server),
           Effect.provide(toolkit.toLayer({
-            IdentifiedResultTool: () => Effect.succeed({ value: "ok" })
+            IdentifiedResultTool: () => Effect.succeed({ value: "ok" }),
+            EventTool: () => Effect.succeed(new Event({ at: new Date(0) })),
+            TreeTool: () => Effect.succeed({ children: [] })
           }))
         )
 
-        assert.deepStrictEqual(server.tools[0].tool.outputSchema, {
-          type: "object",
-          properties: { value: { type: "string" } },
-          required: ["value"],
-          additionalProperties: true,
-          $defs: {
-            IdentifiedResult: {
-              type: "object",
-              properties: { value: { type: "string" } },
-              required: ["value"],
-              additionalProperties: true
+        assert.deepStrictEqual(server.tools.map(({ tool }) => tool.outputSchema), [
+          {
+            type: "object",
+            properties: { value: { type: "string" } },
+            required: ["value"],
+            additionalProperties: true
+          },
+          {
+            type: "object",
+            properties: { at: { type: "string" } },
+            required: ["at"],
+            additionalProperties: true
+          },
+          {
+            type: "object",
+            properties: { children: { type: "array", items: { $ref: "#/$defs/Tree" } } },
+            required: ["children"],
+            additionalProperties: true,
+            $defs: {
+              Tree: {
+                type: "object",
+                properties: { children: { type: "array", items: { $ref: "#/$defs/Tree" } } },
+                required: ["children"],
+                additionalProperties: true
+              }
             }
           }
-        })
+        ])
+      }))
+
+    it.effect("publishes the definitions an inlined tool schema references by anchor", () =>
+      Effect.gen(function*() {
+        const Target = Schema.String.check(
+          Schema.makeFilter(() => true, { toJsonSchema: () => ({ $anchor: "target" }) })
+        ).annotate({ identifier: "Target" })
+        const Note = Schema.Struct({
+          alias: Schema.String.check(Schema.makeFilter(() => true, {
+            representation: { id: "test/anchor", payload: null, schemas: [Target.ast] },
+            toJsonSchema: () => ({ $ref: "#target" })
+          }))
+        }).annotate({ identifier: "Note" })
+        const NoteTool = Tool.make("NoteTool", { success: Note })
+        const toolkit = Toolkit.make(NoteTool)
+        const server = yield* McpServer.McpServer.make
+        yield* McpServer.registerToolkit(toolkit).pipe(
+          Effect.provideService(McpServer.McpServer, server),
+          Effect.provide(toolkit.toLayer({
+            NoteTool: () => Effect.succeed({ alias: "a" })
+          }))
+        )
+
+        const validate = new Ajv2020.default({ strict: false }).compile(server.tools[0].tool.outputSchema)
+        assertTrue(validate({ alias: "a" }))
       }))
 
     it.effect("advertises closed strict input schemas with escaped identifiers", () =>
       Effect.gen(function*() {
         const { client } = yield* makeToolkitTestClient()
 
-        const listed = yield* client["tools/list"]({})
+        const listed = yield* client.listTools({})
         const tool = listed.tools.find((tool) => tool.name === "StrictObjectTool")
         assert.isDefined(tool)
         assert.strictEqual(tool.inputSchema.type, "object")
@@ -1627,7 +2013,7 @@ describe("McpServer", () => {
             { config: { value: 1 } }
           ]
         ) {
-          const error = yield* client["tools/call"]({
+          const error = yield* client.callTool({
             name: "StrictObjectTool",
             arguments: args
           }).pipe(Effect.flip)
@@ -1638,7 +2024,7 @@ describe("McpServer", () => {
           assert.include(error.message, "Invalid parameters for tool 'StrictObjectTool'")
           assert.notMatch(error.message, /AiError|ToolParameterValidationError|Toolkit/)
         }
-        const result = yield* client["tools/call"]({
+        const result = yield* client.callTool({
           name: "StrictObjectTool",
           arguments: { config: { value: "1" } }
         })
@@ -1658,7 +2044,7 @@ describe("McpServer", () => {
         }))
 
         for (const config of [{ value: "1" }, { value: 1 }, {}]) {
-          const error = yield* client["tools/call"]({
+          const error = yield* client.callTool({
             name: "StrictObjectTool",
             arguments: { first: true, second: true, config: { ...config, third: true, fourth: true } }
           }).pipe(Effect.flip)
@@ -1803,7 +2189,7 @@ describe("McpServer", () => {
       Effect.gen(function*() {
         const { client } = yield* makeToolkitTestClient()
 
-        const result = yield* client["tools/list"]({})
+        const result = yield* client.listTools({})
         const structuredTool = result.tools.find((tool) => tool.name === "StructuredResultTool")
         const scalarTool = result.tools.find((tool) => tool.name === "OptionalStringTool")
         const untypedTool = result.tools.find((tool) => tool.name === "UntypedTool")
@@ -1834,16 +2220,16 @@ describe("McpServer", () => {
           }
         }))
 
-        const error = yield* client["tools/call"]({
+        const error = yield* client.callTool({
           name: "OptionalStringTool",
-          arguments: { signature: null }
+          arguments: { signature: false }
         }).pipe(Effect.flip)
 
         assert.isFalse(handlerInvoked)
         assert.isTrue("code" in error)
         if ("code" in error) assert.strictEqual(error.code, McpSchema.INVALID_PARAMS_ERROR_CODE)
         assert.match(error.message, /Invalid parameters for tool 'OptionalStringTool'/)
-        assert.match(error.message, /Expected string \| undefined/)
+        assert.match(error.message, /Expected string \| null/)
         assert.match(error.message, /at \["signature"\]/)
         assert.lengthOf(reported, 1)
         assert.isTrue(Cause.hasFails(reported[0]))
@@ -1865,7 +2251,7 @@ describe("McpServer", () => {
           }
         }))
 
-        const result = yield* client["tools/call"]({
+        const result = yield* client.callTool({
           name: "OptionalStringTool",
           arguments: {}
         })
@@ -1884,7 +2270,7 @@ describe("McpServer", () => {
       Effect.gen(function*() {
         const { client, reported } = yield* makeToolkitTestClient()
 
-        const result = yield* client["tools/call"]({
+        const result = yield* client.callTool({
           name: "UntypedTool",
           arguments: {}
         })
@@ -1903,7 +2289,7 @@ describe("McpServer", () => {
       Effect.gen(function*() {
         const { client } = yield* makeToolkitTestClient()
 
-        const result = yield* client["tools/call"]({
+        const result = yield* client.callTool({
           name: "StructuredResultTool",
           arguments: {}
         })
@@ -1915,11 +2301,25 @@ describe("McpServer", () => {
         }])
       }))
 
+    it.effect("encodes a tool result once for structured content", () =>
+      Effect.gen(function*() {
+        const { client } = yield* makeToolkitTestClient()
+
+        const result = yield* client.callTool({
+          name: "ConsumableResultTool",
+          arguments: {}
+        })
+
+        assert.isFalse(result.isError)
+        assert.deepStrictEqual(result.structuredContent, { body: "hello" })
+        assert.deepStrictEqual(result.content, [{ type: "text", text: JSON.stringify({ body: "hello" }) }])
+      }))
+
     it.effect("omits structured content for null and array tool results", () =>
       Effect.gen(function*() {
         const { client } = yield* makeToolkitTestClient()
 
-        const nullResult = yield* client["tools/call"]({
+        const nullResult = yield* client.callTool({
           name: "NullableResultTool",
           arguments: {}
         })
@@ -1927,7 +2327,7 @@ describe("McpServer", () => {
         assert.isUndefined(nullResult.structuredContent)
         assert.deepStrictEqual(nullResult.content, [{ type: "text", text: "null" }])
 
-        const arrayResult = yield* client["tools/call"]({
+        const arrayResult = yield* client.callTool({
           name: "ArrayResultTool",
           arguments: {}
         })
@@ -1943,7 +2343,7 @@ describe("McpServer", () => {
       Effect.gen(function*() {
         const { client, logged, reported } = yield* makeToolkitTestClient()
 
-        const result = yield* client["tools/call"]({
+        const result = yield* client.callTool({
           name: "PublicFailureTool",
           arguments: {}
         })
@@ -1959,7 +2359,7 @@ describe("McpServer", () => {
     it.effect("encodes declared non-Error failures without structured content or internal diagnostics", () =>
       Effect.gen(function*() {
         const { client, logged, reported } = yield* makeToolkitTestClient()
-        const result = yield* client["tools/call"]({ name: "StructuredFailureTool" })
+        const result = yield* client.callTool({ name: "StructuredFailureTool" })
 
         assert.isTrue(result.isError)
         assert.isUndefined(result.structuredContent)
@@ -1980,14 +2380,13 @@ describe("McpServer", () => {
           parameters: Schema.Struct({ id: Schema.String }),
           failure: NoteNotFound
         }))
-        const server = yield* McpServer.McpServer.make
-        yield* McpServer.registerToolkit(toolkit).pipe(
-          Effect.provideService(McpServer.McpServer, server),
-          Effect.provide(toolkit.toLayer({ GetNote: ({ id }) => Effect.fail(new NoteNotFound({ id })) }))
+        const client = yield* McpTest.makeClient(
+          Layer.effectDiscard(McpServer.registerToolkit(toolkit)).pipe(
+            Layer.provide(toolkit.toLayer({ GetNote: ({ id }) => Effect.fail(new NoteNotFound({ id })) }))
+          ),
+          { protocols: [McpProtocol.v2025_06_18] }
         )
-        const result = yield* server.callTool({ name: "GetNote", arguments: { id: "n1" } }).pipe(
-          Effect.provideService(McpSchema.McpServerClient, directClient)
-        )
+        const result = yield* client.callTool({ name: "GetNote", arguments: { id: "n1" } })
 
         assert.isTrue(result.isError)
         assert.isUndefined(result.structuredContent)
@@ -2000,16 +2399,38 @@ describe("McpServer", () => {
           ...testToolkitHandlers,
           StructuredFailureTool: () => Effect.fail({ reason: "busy", retryAfter: 5, detail: 1n })
         }))
-        const result = yield* client["tools/call"]({ name: "StructuredFailureTool" })
+        const result = yield* client.callTool({ name: "StructuredFailureTool" })
 
         assert.isTrue(result.isError)
         assert.isUndefined(result.structuredContent)
         assert.deepStrictEqual(result.content, [{ type: "text", text: INTERNAL_TOOL_ERROR_MESSAGE }])
         assert.lengthOf(reported, 1)
-        assert.instanceOf(Cause.squash(reported[0]), TypeError)
+        const error = Cause.squash(reported[0])
+        assertTrue(AiError.isAiError(error))
+        assert.strictEqual(error.reason._tag, "ToolResultEncodingError")
         assert.lengthOf(logged, 1)
         assert.strictEqual(Cause.squash(logged[0]), Cause.squash(reported[0]))
       }))
+
+    for (const failureMode of ["error", "return"] as const) {
+      it.effect(`encodes declared failures with their JSON codec in ${failureMode} mode`, () =>
+        Effect.gen(function*() {
+          const toolkit = Toolkit.make(Tool.make("Charge", {
+            failure: Schema.Struct({ missingCents: Schema.BigInt, retryAfter: Schema.FiniteFromString }),
+            failureMode
+          }))
+          const client = yield* McpTest.makeClient(
+            Layer.effectDiscard(McpServer.registerToolkit(toolkit)).pipe(
+              Layer.provide(toolkit.toLayer({ Charge: () => Effect.fail({ missingCents: 250n, retryAfter: 5 }) }))
+            ),
+            { protocols: [McpProtocol.v2025_06_18] }
+          )
+          const result = yield* client.callTool({ name: "Charge" })
+
+          assert.isTrue(result.isError)
+          assert.strictEqual(toolResultText(result), JSON.stringify({ missingCents: "250", retryAfter: "5" }))
+        }))
+    }
 
     for (
       const [origin, failureMode] of [
@@ -2038,10 +2459,8 @@ describe("McpServer", () => {
             failure: AiError.AiError,
             failureMode
           }))
-          const server = yield* McpServer.McpServer.make
-          yield* McpServer.registerToolkit(toolkit).pipe(
-            Effect.provideService(McpServer.McpServer, server),
-            Effect.provide(toolkit.toLayer({
+          const registrations = Layer.effectDiscard(McpServer.registerToolkit(toolkit)).pipe(
+            Layer.provide(toolkit.toLayer({
               OriginTool: ({ value }) => {
                 receivedValue = value
                 return origin === "handler" ? Effect.fail(failure) : origin === "ToolResultEncodingError"
@@ -2052,16 +2471,15 @@ describe("McpServer", () => {
                     )
               }
             })),
-            Effect.provide(ErrorReporter.layer([ErrorReporter.make(({ cause }) => {
+            Layer.provide(ErrorReporter.layer([ErrorReporter.make(({ cause }) => {
               reported.push(cause)
             })])),
-            Effect.provide(Logger.layer([Logger.make(({ cause, logLevel }) => {
+            Layer.provide(Logger.layer([Logger.make(({ cause, logLevel }) => {
               if (logLevel === "Error") logged.push(cause)
             })]))
           )
-          const result = yield* server.callTool({ name: "OriginTool", arguments: { value: "valid" } }).pipe(
-            Effect.provideService(McpSchema.McpServerClient, directClient)
-          )
+          const client = yield* McpTest.makeClient(registrations, { protocols: [McpProtocol.v2025_06_18] })
+          const result = yield* client.callTool({ name: "OriginTool", arguments: { value: "valid" } })
 
           assert.strictEqual(receivedValue, "valid")
           assert.isTrue(result.isError)
@@ -2090,7 +2508,7 @@ describe("McpServer", () => {
       Effect.gen(function*() {
         const { client, logged, reported } = yield* makeToolkitTestClient()
 
-        const result = yield* client["tools/call"]({
+        const result = yield* client.callTool({
           name: "InternalAiErrorTool",
           arguments: {}
         })
@@ -2110,7 +2528,7 @@ describe("McpServer", () => {
         Effect.gen(function*() {
           const { client, logged, reported } = yield* makeToolkitTestClient(undefined, { reportErrors })
 
-          const result = yield* client["tools/call"]({
+          const result = yield* client.callTool({
             name: "DefectTool",
             arguments: {}
           })
@@ -2130,11 +2548,11 @@ describe("McpServer", () => {
         }))
     }
 
-    it.effect("reports response serialization defects before returning a generic message", () =>
+    it.effect("reports response serialization failures before returning a generic message", () =>
       Effect.gen(function*() {
         const { client, reported } = yield* makeToolkitTestClient()
 
-        const result = yield* client["tools/call"]({
+        const result = yield* client.callTool({
           name: "UnserializableResultTool",
           arguments: {}
         })
@@ -2142,15 +2560,16 @@ describe("McpServer", () => {
         assert.strictEqual(result.isError, true)
         assert.strictEqual(toolResultText(result), INTERNAL_TOOL_ERROR_MESSAGE)
         assert.lengthOf(reported, 1)
-        assert.isTrue(Cause.hasDies(reported[0]))
-        assert.instanceOf(Cause.squash(reported[0]), TypeError)
+        const error = Cause.squash(reported[0])
+        assertTrue(AiError.isAiError(error))
+        assert.strictEqual(error.reason._tag, "ToolResultEncodingError")
       }))
 
     it.effect("keeps unknown tools as protocol errors", () =>
       Effect.gen(function*() {
         const { client } = yield* makeToolkitTestClient()
 
-        const error = yield* client["tools/call"]({
+        const error = yield* client.callTool({
           name: "UnknownTool",
           arguments: {}
         }).pipe(Effect.flip)
@@ -2162,6 +2581,72 @@ describe("McpServer", () => {
         }
       }))
   })
+
+  for (
+    const [label, makeLayer] of [
+      ["allowSubscriptions is false", () =>
+        McpServer.layerHttp({
+          name: "SubscriptionsTest",
+          version: "1.0.0",
+          path: "/mcp",
+          protocols: [McpProtocol.v2026_07_28],
+          allowSubscriptions: false
+        })],
+      ["request scoped", () =>
+        McpServer.layerHttpRequestScoped({
+          name: "SubscriptionsTest",
+          version: "1.0.0",
+          path: "/mcp",
+          protocols: [McpProtocol.v2026_07_28]
+        })]
+    ] as const
+  ) {
+    it.effect(`disables HTTP subscription discovery and listening when ${label}`, () =>
+      Effect.gen(function*() {
+        const harness = yield* makeHttpHarness(
+          Layer.effectDiscard(Effect.gen(function*() {
+            const server = yield* McpServer.McpServer
+            yield* server.addTool({
+              tool: new McpSchema.Tool({ name: "Test", inputSchema: { type: "object" } }),
+              annotations: Context.empty(),
+              handle: () => Effect.succeed(new McpSchema.CallToolResult({ content: [] }))
+            })
+          })).pipe(Layer.provideMerge(makeLayer()))
+        )
+        const post = (method: string, params: Record<string, unknown> = {}) =>
+          harness.post({
+            jsonrpc: "2.0",
+            id: 1,
+            method,
+            params: {
+              ...params,
+              _meta: {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            }
+          }, { "mcp-protocol-version": "2026-07-28", "mcp-method": method })
+
+        assert.nestedPropertyVal(
+          yield* readMcpHttpResponse(yield* post("server/discover")),
+          "result.capabilities.tools.listChanged",
+          false
+        )
+        const response = yield* post("subscriptions/listen", { notifications: { toolsListChanged: true } })
+        // A live subscription never reaches EOF; inspect only its first frame.
+        if (response.headers.get("content-type")?.includes("text/event-stream")) {
+          const reader = makeMcpSseReader(response)
+          yield* Effect.addFinalizer(() => reader.cancel)
+          const message = yield* reader.take()
+          assert.strictEqual(message.id, 1)
+          assert.deepInclude(message.error, { code: -32601 })
+        } else {
+          const message = yield* readMcpHttpResponse(response)
+          assert.propertyVal(message, "id", 1)
+          assert.nestedPropertyVal(message, "error.code", -32601)
+        }
+      }))
+  }
 
   it.effect("rejects unsupported HTTP methods without disturbing an initialized session", () =>
     Effect.gen(function*() {
@@ -2178,6 +2663,178 @@ describe("McpServer", () => {
       }
 
       yield* client.ping({})
+    }))
+
+  it.effect("terminates an HTTP session on DELETE without a protocol header when allowSessionTermination is set", () =>
+    Effect.gen(function*() {
+      const harness = yield* makeHttpHarness(makeServerLayer({
+        name: "SessionDelete",
+        protocols: [McpProtocol.v2025_11_25],
+        allowSessionTermination: true
+      }))
+      const headers = yield* initializeHttpSession(harness, McpProtocol.v2025_11_25)
+      const response = yield* harness.delete({ "Mcp-Session-Id": headers["Mcp-Session-Id"] })
+      strictEqual(response.status, 204)
+      strictEqual(yield* Effect.promise(() => response.text()), "")
+      strictEqual((yield* harness.post({ jsonrpc: "2.0", id: 3, method: "ping" }, headers)).status, 404)
+      strictEqual((yield* harness.delete(headers)).status, 404)
+    }))
+
+  it.effect("rejects DELETE with a missing or unknown session id when termination is enabled", () =>
+    Effect.gen(function*() {
+      const harness = yield* makeHttpHarness(makeServerLayer({
+        name: "SessionDelete",
+        allowSessionTermination: true
+      }))
+      strictEqual((yield* harness.delete()).status, 400)
+      strictEqual((yield* harness.delete({ "Mcp-Session-Id": "unknown" })).status, 404)
+    }))
+
+  it.effect("rejects disallowed DELETE Origins without terminating the session", () =>
+    Effect.gen(function*() {
+      const harness = yield* makeHttpHarness(makeServerLayer({
+        name: "SessionDelete",
+        protocols: [McpProtocol.v2025_11_25],
+        allowSessionTermination: true
+      }))
+      const headers = yield* initializeHttpSession(harness, McpProtocol.v2025_11_25)
+      strictEqual((yield* harness.delete({ ...headers, origin: "https://blocked.example" })).status, 403)
+      strictEqual((yield* harness.post({ jsonrpc: "2.0", id: 2, method: "ping" }, headers)).status, 200)
+      strictEqual((yield* harness.delete({ ...headers, origin: "https://allowed.example" })).status, 204)
+    }))
+
+  it.effect("rejects unsupported or mismatched DELETE protocol versions without terminating the session", () =>
+    Effect.gen(function*() {
+      const harness = yield* makeHttpHarness(makeServerLayer({
+        name: "SessionDelete",
+        protocols: [McpProtocol.v2025_06_18, McpProtocol.v2025_11_25],
+        allowSessionTermination: true
+      }))
+      const headers = yield* initializeHttpSession(harness, McpProtocol.v2025_11_25)
+      for (const version of ["9999-01-01", "2025-06-18"]) {
+        strictEqual((yield* harness.delete({ ...headers, "Mcp-Protocol-Version": version })).status, 400)
+        const ping = yield* harness.post({ jsonrpc: "2.0", id: 2, method: "ping" }, headers)
+        strictEqual(ping.status, 200)
+        assert.deepStrictEqual(yield* readMcpHttpResponse(ping), { jsonrpc: "2.0", id: 2, result: {} })
+      }
+      strictEqual((yield* harness.delete(headers)).status, 204)
+    }))
+
+  it.effect("refuses DELETE for a stateless-only server even when termination is enabled", () =>
+    Effect.gen(function*() {
+      const harness = yield* makeHttpHarness(makeServerLayer({
+        name: "StatelessDelete",
+        protocols: [McpProtocol.v2026_07_28],
+        allowSessionTermination: true
+      }))
+      const response = yield* harness.delete()
+      strictEqual(response.status, 405)
+      strictEqual(response.headers.get("Allow"), "POST")
+    }))
+
+  it.effect("advertises DELETE on unsupported methods when stateful termination is enabled", () =>
+    Effect.gen(function*() {
+      const harness = yield* makeHttpHarness(makeServerLayer({
+        name: "SessionDelete",
+        protocols: [McpProtocol.v2026_07_28, McpProtocol.v2025_11_25],
+        allowSessionTermination: true
+      }))
+      for (const method of ["GET", "PUT", "PATCH", "HEAD"] as const) {
+        const response = yield* Effect.promise(() => harness.handler(new Request("http://localhost/mcp", { method })))
+        strictEqual(response.status, 405)
+        strictEqual(response.headers.get("Allow"), "POST, DELETE")
+      }
+    }))
+
+  it.effect("interrupts an in-flight tool on DELETE and returns 404 for its pending POST", () =>
+    Effect.gen(function*() {
+      const started = yield* Deferred.make<void>()
+      const interrupted = yield* Deferred.make<void>()
+      const registration = Layer.effectDiscard(Effect.gen(function*() {
+        const server = yield* McpServer.McpServer
+        yield* server.addTool({
+          tool: new McpSchema.Tool({ name: "Blocked", inputSchema: { type: "object" } }),
+          annotations: Context.empty(),
+          handle: () =>
+            Deferred.succeed(started, undefined).pipe(
+              Effect.andThen(Effect.never),
+              Effect.onInterrupt(() => Deferred.succeed(interrupted, undefined))
+            )
+        })
+      }))
+      const harness = yield* makeHttpHarness(registration.pipe(Layer.provideMerge(
+        makeServerLayer({
+          name: "SessionDelete",
+          protocols: [McpProtocol.v2025_11_25],
+          allowSessionTermination: true
+        })
+      )))
+      const headers = yield* initializeHttpSession(harness, McpProtocol.v2025_11_25)
+      const pending = yield* harness.post({
+        jsonrpc: "2.0",
+        id: "blocked-tool",
+        method: "tools/call",
+        params: { name: "Blocked", arguments: {} }
+      }, headers).pipe(Effect.forkScoped)
+      yield* Deferred.await(started)
+      strictEqual((yield* harness.delete(headers)).status, 204)
+      yield* Deferred.await(interrupted)
+      strictEqual((yield* Fiber.join(pending)).status, 404)
+    }))
+
+  it.effect("closes an already-started elicitation stream on DELETE", () =>
+    Effect.gen(function*() {
+      const interrupted = yield* Deferred.make<void>()
+      const registration = Layer.effectDiscard(Effect.gen(function*() {
+        const server = yield* McpServer.McpServer
+        yield* server.addTool({
+          tool: new McpSchema.Tool({ name: "Authorize", inputSchema: { type: "object" } }),
+          annotations: Context.empty(),
+          handle: Effect.fnUntraced(
+            function*() {
+              const client = yield* Effect.serviceOption(McpSchema.McpServerClient).pipe(
+                Effect.flatMap(Effect.fromOption)
+              )
+              const reverseClient = yield* client.getClient
+              yield* reverseClient.elicit(
+                Schema.decodeUnknownSync(McpSchema.Elicit.payloadSchema)({
+                  mode: "url",
+                  message: "Authorize access",
+                  url: "https://example.com/authorize",
+                  elicitationId: "authorization-1"
+                })
+              )
+              return new McpSchema.CallToolResult({ content: [] })
+            },
+            (_) => Effect.scoped(_),
+            (_) => Effect.orDie(_),
+            Effect.onInterrupt(() => Deferred.succeed(interrupted, undefined))
+          )
+        })
+      }))
+      const harness = yield* makeHttpHarness(registration.pipe(Layer.provideMerge(
+        makeServerLayer({
+          name: "SessionDelete",
+          protocols: [McpProtocol.v2025_11_25],
+          allowSessionTermination: true
+        })
+      )))
+      const headers = yield* initializeHttpSession(harness, McpProtocol.v2025_11_25, { elicitation: { url: {} } })
+      const response = yield* harness.post({
+        jsonrpc: "2.0",
+        id: "authorize-tool",
+        method: "tools/call",
+        params: { name: "Authorize", arguments: {} }
+      }, headers)
+      const stream = makeMcpSseReader(response)
+      yield* Effect.addFinalizer(() => stream.cancel)
+      const elicitation = yield* stream.take()
+      strictEqual(elicitation.method, "elicitation/create")
+      assert.isDefined(elicitation.id)
+      strictEqual((yield* harness.delete(headers)).status, 204)
+      yield* Deferred.await(interrupted)
+      const remaining = yield* stream.drain()
+      assert.isFalse(remaining.some((message) => message.id === "authorize-tool"))
     }))
 
   it.effect("returns an empty 202 for notifications and responses and remains successful for request POSTs", () =>
@@ -2280,7 +2937,13 @@ describe("McpServer", () => {
         httpClient.execute
       )
       strictEqual(unsupportedResponse.status, 400)
-      strictEqual(yield* unsupportedResponse.text, "")
+      assert.deepInclude(yield* unsupportedResponse.json, {
+        error: {
+          code: -32022,
+          message: "Unsupported protocol version '9999-01-01'",
+          data: { supported: ["2025-06-18"], requested: "9999-01-01" }
+        }
+      })
       strictEqual(unsupportedResponse.headers["access-control-allow-origin"], "*")
 
       const malformedResponse = yield* HttpClientRequest.post("http://localhost/mcp").pipe(
@@ -2291,7 +2954,7 @@ describe("McpServer", () => {
         httpClient.execute
       )
       strictEqual(malformedResponse.status, 400)
-      strictEqual(yield* malformedResponse.text, "")
+      strictEqual(JSON.parse(yield* malformedResponse.text).error.code, -32022)
 
       const malformedNoVersionResponse = yield* HttpClientRequest.post("http://localhost/mcp").pipe(
         HttpClientRequest.setHeader("accept", "application/json, text/event-stream"),
@@ -2311,7 +2974,7 @@ describe("McpServer", () => {
         httpClient.execute
       )
       strictEqual(invalidRequestResponse.status, 400)
-      strictEqual(yield* invalidRequestResponse.text, "")
+      strictEqual(JSON.parse(yield* invalidRequestResponse.text).error.code, -32022)
 
       const invalidRequestNoVersionResponse = yield* HttpClientRequest.post("http://localhost/mcp").pipe(
         HttpClientRequest.setHeader("accept", "application/json, text/event-stream"),
@@ -2330,7 +2993,7 @@ describe("McpServer", () => {
         httpClient.execute
       )
       strictEqual(invalidInitializeResponse.status, 400)
-      strictEqual(yield* invalidInitializeResponse.text, "")
+      strictEqual(JSON.parse(yield* invalidInitializeResponse.text).error.code, -32022)
 
       const responseOnly = yield* HttpClientRequest.post("http://localhost/mcp").pipe(
         HttpClientRequest.setHeader("accept", "application/json, text/event-stream"),
@@ -2339,7 +3002,7 @@ describe("McpServer", () => {
         httpClient.execute
       )
       strictEqual(responseOnly.status, 400)
-      strictEqual(yield* responseOnly.text, "")
+      strictEqual(JSON.parse(yield* responseOnly.text).error.code, -32022)
 
       const absentVersionResponse = yield* HttpClientRequest.post("http://localhost/mcp").pipe(
         HttpClientRequest.setHeader("accept", "application/json, text/event-stream"),
@@ -2386,6 +3049,41 @@ describe("McpServer", () => {
   })
 
   describe("list-change notification scheduling", () => {
+    it.live("should not replay startup tool changes to the first HTTP subscription", () =>
+      Effect.gen(function*() {
+        const kit = Toolkit.make(Tool.make("ping", { success: Schema.String }))
+        const harness = yield* makeHttpHarness(
+          McpServer.toolkit(kit).pipe(
+            Layer.provide(kit.toLayer({ ping: () => Effect.succeed("pong") })),
+            Layer.provide(makeServerLayer({ name: "StartupNotifications", protocols: [McpProtocol.v2026_07_28] }))
+          )
+        )
+        const subscription = makeMcpSseReader(
+          yield* harness.post({
+            jsonrpc: "2.0",
+            id: 2,
+            method: "subscriptions/listen",
+            params: {
+              notifications: { toolsListChanged: true },
+              _meta: {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientCapabilities": {},
+                "io.modelcontextprotocol/clientInfo": { name: "test", version: "1.0.0" }
+              }
+            }
+          }, { "mcp-protocol-version": "2026-07-28", "mcp-method": "subscriptions/listen" })
+        )
+        yield* Effect.addFinalizer(() => subscription.cancel)
+        assert.deepInclude(yield* subscription.take(), {
+          method: "notifications/subscriptions/acknowledged",
+          params: {
+            notifications: { toolsListChanged: true },
+            _meta: { "io.modelcontextprotocol/subscriptionId": 2 }
+          }
+        })
+        assert.deepStrictEqual(yield* subscription.take().pipe(Effect.timeoutOption("100 millis")), Option.none())
+      }))
+
     it.effect("should coalesce notifications when one registration kind changes repeatedly in a scheduling window", () =>
       Effect.gen(function*() {
         const fixture = yield* makeMcpStdioHarness(McpProtocol.v2026_07_28)
@@ -2431,6 +3129,52 @@ describe("McpServer", () => {
       }))
   })
 
+  describe("resources", () => {
+    it.effect("reads string and byte content with the registered MIME type", () =>
+      Effect.gen(function*() {
+        const bytes = new Uint8Array([1, 2, 3])
+        const name = McpSchema.param("name", Schema.String)
+        const registrations = Layer.mergeAll(
+          McpServer.resource({
+            uri: "test://app",
+            name: "app",
+            mimeType: "text/html;profile=mcp-app",
+            content: Effect.succeed("<p>app</p>")
+          }),
+          McpServer.resource`test://bytes/${name}`({
+            name: "bytes",
+            mimeType: "application/octet-stream",
+            content: () => Effect.succeed(bytes)
+          }),
+          McpServer.resource({
+            uri: "test://plain",
+            name: "plain",
+            content: Effect.succeed("plain")
+          }),
+          McpServer.resource({
+            uri: "test://result",
+            name: "result",
+            mimeType: "text/plain",
+            content: Effect.succeed(McpSchema.ReadResourceResult.make({
+              contents: [{ uri: "test://result#part", text: "part" }]
+            }))
+          })
+        )
+        const client = yield* McpTest.makeClient(registrations, { protocols: [McpProtocol.v2025_11_25] })
+        const read = (uri: string) => client.readResource({ uri }).pipe(Effect.map((result) => result.contents))
+
+        assert.deepStrictEqual(yield* read("test://app"), [
+          { uri: "test://app", mimeType: "text/html;profile=mcp-app", text: "<p>app</p>" }
+        ])
+        assert.deepStrictEqual(yield* read("test://bytes/data"), [
+          { uri: "test://bytes/data", mimeType: "application/octet-stream", blob: bytes }
+        ])
+        assert.deepStrictEqual(yield* read("test://plain"), [{ uri: "test://plain", text: "plain" }])
+        // A full result is the handler's own answer and is returned as is.
+        assert.deepStrictEqual(yield* read("test://result"), [{ uri: "test://result#part", text: "part" }])
+      }))
+  })
+
   describe("resource subscriptions", () => {
     // Releasing the upstream listener on overflow is this server's memory-bound policy,
     // not an MCP conformance requirement. Transport writes may stay blocked indefinitely.
@@ -2465,7 +3209,7 @@ describe("McpServer", () => {
               ),
             supportedVersions: [McpSchema2026.protocolVersion],
             serverInfo: { name: "SubscriptionBacklogTest", version: "1.0.0" },
-            registrationPresence: Effect.succeed({ tools: true, resources: false, prompts: false })
+            registrationPresence: Effect.succeed({ tools: true, resources: false, prompts: false, skills: false })
           })
           yield* handlers["subscriptions/listen"](
             {
@@ -2539,7 +3283,7 @@ describe("McpServer", () => {
             Deferred.succeed(slowTerminated, [protocolVersion, clientId, requestId, reason]),
           supportedVersions: [McpSchema2026.protocolVersion],
           serverInfo: { name: "SubscriptionBacklogTest", version: "1.0.0" },
-          registrationPresence: Effect.succeed({ tools: true, resources: false, prompts: false })
+          registrationPresence: Effect.succeed({ tools: true, resources: false, prompts: false, skills: false })
         })
         const listen = (clientId: number, requestId: string) =>
           handlers["subscriptions/listen"](
@@ -2733,19 +3477,71 @@ describe("McpServer", () => {
   })
 
   describe("stdio", () => {
+    it.effect("should exit successfully when stdin closes after initialization", () =>
+      Effect.gen(function*() {
+        const fixture = yield* makeMcpStdioHarness(McpProtocol.v2025_06_18)
+        yield* fixture.initialize()
+        yield* fixture.close
+        const exit = yield* Fiber.await(fixture.serverFiber)
+        Runtime.defaultTeardown(exit, (code) => assert.strictEqual(code, 0))
+      }))
+
+    it.effect("should give each layerStdio server its own protocol in one layer graph", () =>
+      Effect.gen(function*() {
+        const encoder = new TextEncoder()
+        const decoder = new TextDecoder()
+        const initialize = (id: number) =>
+          encoder.encode(`${
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id,
+              method: "initialize",
+              params: {
+                protocolVersion: "2025-11-25",
+                capabilities: {},
+                clientInfo: { name: "TestClient", version: "1.0.0" }
+              }
+            })
+          }\n`)
+        const makeStdio = (id: number, stdout: Queue.Queue<string | Uint8Array>) =>
+          Stdio.layerTest({
+            stdin: Stream.make(initialize(id)).pipe(Stream.concat(Stream.never)),
+            stdout: () => Sink.forEach((chunk) => Queue.offer(stdout, chunk))
+          })
+        const server = (name: string) =>
+          McpServer.layerStdio({ name, version: "1.0.0", protocols: [McpProtocol.v2025_11_25] })
+        const read = (stdout: Queue.Queue<string | Uint8Array>) =>
+          Queue.take(stdout).pipe(
+            Effect.map((chunk) => JSON.parse(typeof chunk === "string" ? chunk : decoder.decode(chunk)))
+          )
+
+        const stdoutA = yield* Queue.unbounded<string | Uint8Array>()
+        const stdoutB = yield* Queue.unbounded<string | Uint8Array>()
+        yield* Layer.build(Layer.mergeAll(
+          server("A").pipe(Layer.provide(makeStdio(1, stdoutA))),
+          server("B").pipe(Layer.provide(makeStdio(2, stdoutB)))
+        ))
+
+        const responseA = yield* read(stdoutA)
+        const responseB = yield* read(stdoutB)
+        strictEqual(responseA.id, 1)
+        strictEqual(responseA.result.serverInfo.name, "A")
+        strictEqual(responseB.id, 2)
+        strictEqual(responseB.result.serverInfo.name, "B")
+      }))
+
     it.effect("should deliver stateless request notifications over stdio", () =>
       Effect.gen(function*() {
         const fixture = yield* makeMcpStdioHarness(McpProtocol.v2026_07_28)
         yield* fixture.server.addTool({
           tool: new McpSchema.Tool({ name: "Emit", inputSchema: { type: "object" } }),
           annotations: Context.empty(),
-          handle: () =>
-            Effect.gen(function*() {
-              yield* fixture.server.notifications["notifications/message"]({ level: "info", data: "filtered" })
-              yield* fixture.server.notifications["notifications/message"]({ level: "error", data: "delivered" })
-              yield* fixture.server.notifications["notifications/progress"]({ progressToken: "token", progress: 1 })
-              return new McpSchema.CallToolResult({ content: [] })
-            })
+          handle: Effect.fnUntraced(function*() {
+            yield* fixture.server.notifications["notifications/message"]({ level: "info", data: "filtered" })
+            yield* fixture.server.notifications["notifications/message"]({ level: "error", data: "delivered" })
+            yield* fixture.server.notifications["notifications/progress"]({ progressToken: "token", progress: 1 })
+            return new McpSchema.CallToolResult({ content: [] })
+          })
         })
         yield* fixture.initialize()
         yield* fixture.takeFrame
@@ -2974,6 +3770,170 @@ describe("McpServer", () => {
         const tools = yield* read()
         assert.strictEqual(tools.id, 1)
         assert.isArray(tools.result.tools)
+      }))
+  })
+
+  // https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/mcp.md
+  describe("tracing", () => {
+    const GetWeather = Tool.make("get_weather", {
+      parameters: Schema.Struct({ location: Schema.String }),
+      success: Schema.String,
+      failure: Schema.String,
+      failureMode: "return"
+    })
+    const WeatherToolkit = Toolkit.make(GetWeather)
+
+    // Offers each ended `tools/call` span to `ended`.
+    const makeToolCallTracer = (ended: Queue.Queue<Tracer.NativeSpan>) =>
+      Tracer.make({
+        span(options) {
+          const span = new Tracer.NativeSpan(options)
+          const end = span.end.bind(span)
+          span.end = (endTime, exit) => {
+            end(endTime, exit)
+            if (span.attributes.get("mcp.method.name") === "tools/call") Queue.offerUnsafe(ended, span)
+          }
+          return span
+        }
+      })
+
+    // Returns a function that sends `tools/call` over HTTP and yields its ended MCP span.
+    const makeTracedServer = Effect.fnUntraced(function*(recordToolArguments = false) {
+      const ended = yield* Queue.unbounded<Tracer.NativeSpan>()
+      const tracer = makeToolCallTracer(ended)
+      const tools = Layer.mergeAll(
+        McpServer.toolkit(WeatherToolkit).pipe(
+          Layer.provideMerge(WeatherToolkit.toLayer({
+            get_weather: ({ location }) =>
+              location === "Atlantis" ? Effect.fail("unknown location") : Effect.succeed(`sunny in ${location}`)
+          }))
+        ),
+        Layer.effectDiscard(Effect.gen(function*() {
+          const server = yield* McpServer.McpServer
+          yield* server.addTool({
+            tool: new McpSchema.Tool({ name: "echo", inputSchema: { type: "object" } }),
+            annotations: Context.empty(),
+            handle: () => Effect.succeed(new McpSchema.CallToolResult({ content: [] }))
+          })
+        }))
+      )
+      const harness = yield* makeHttpHarness(tools.pipe(
+        Layer.provideMerge(makeServerLayer({ name: "TracingTest", protocols: [McpProtocol.v2025_06_18] })),
+        Layer.provideMerge(Layer.succeed(Tracer.Tracer, tracer)),
+        Layer.provideMerge(Layer.succeed(Toolkit.RecordToolArguments, recordToolArguments))
+      ))
+      const headers = yield* initializeHttpSession(harness, McpProtocol.v2025_06_18)
+      const callTool = Effect.fnUntraced(function*(params: Record<string, unknown>) {
+        yield* readMcpHttpResponse(
+          yield* harness.post({ jsonrpc: "2.0", id: 1, method: "tools/call", params }, headers)
+        )
+        return yield* Queue.take(ended)
+      })
+      return { headers, callTool }
+    })
+
+    it.effect("names tool call spans after the tool and does not record arguments by default", () =>
+      Effect.gen(function*() {
+        const { callTool, headers } = yield* makeTracedServer()
+
+        const span = yield* callTool({ name: "get_weather", arguments: { location: "London" } })
+        assert.strictEqual(span.name, "tools/call get_weather")
+        assert.deepInclude(Object.fromEntries(span.attributes), {
+          "jsonrpc.request.id": "1",
+          "mcp.session.id": headers["Mcp-Session-Id"],
+          "gen_ai.operation.name": "execute_tool",
+          "gen_ai.tool.name": "get_weather"
+        })
+        assert.isFalse(span.attributes.has("parameters"))
+        assert.isFalse(span.attributes.has("gen_ai.tool.call.arguments"))
+      }))
+
+    it.effect("records tool arguments when Toolkit.RecordToolArguments is enabled", () =>
+      Effect.gen(function*() {
+        const { callTool } = yield* makeTracedServer(true)
+
+        // `echo` is registered with `addTool`, so `Toolkit.handle` cannot record the arguments for McpServer.
+        const span = yield* callTool({ name: "echo", arguments: { text: "hi" } })
+        assert.strictEqual(span.attributes.get("gen_ai.tool.call.arguments"), "{\"text\":\"hi\"}")
+      }))
+
+    // https://github.com/modelcontextprotocol/modelcontextprotocol/pull/414
+    it.effect("continues the client trace from params._meta.traceparent", () =>
+      Effect.gen(function*() {
+        const { callTool } = yield* makeTracedServer()
+
+        const span = yield* callTool({
+          name: "get_weather",
+          arguments: { location: "London" },
+          _meta: { traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01" }
+        })
+        assert.strictEqual(span.traceId, "0af7651916cd43dd8448eb211c80319c")
+        assert.strictEqual(Option.getOrUndefined(span.parent)?.spanId, "b7ad6b7169203331")
+      }))
+
+    it.effect("marks a tool result with isError as a tool_error", () =>
+      Effect.gen(function*() {
+        const { callTool } = yield* makeTracedServer()
+
+        const span = yield* callTool({ name: "get_weather", arguments: { location: "Atlantis" } })
+        assert.strictEqual(span.attributes.get("error.type"), "tool_error")
+      }))
+
+    // When writing an error response fails, RpcServer sends -32603 instead, and the span must report that response.
+    it.effect("records the internal error sent after an error response fails to write", () =>
+      Effect.gen(function*() {
+        const ended = yield* Queue.unbounded<Tracer.NativeSpan>()
+        const outbound = yield* Queue.unbounded<RpcMessage.FromServerEncoded>()
+        const disconnects = yield* Queue.unbounded<number>()
+        const ready = yield* Deferred.make<
+          (clientId: number, message: RpcMessage.FromClientEncoded) => Effect.Effect<void>
+        >()
+        let failWrite = true
+        const transport = yield* RpcServer.Protocol.make((write) =>
+          Deferred.succeed(ready, write).pipe(Effect.as({
+            disconnects,
+            send: (_clientId, message) => {
+              if (failWrite && message._tag === "Exit" && message.requestId === "1") {
+                failWrite = false
+                return Effect.die("write failed")
+              }
+              return Queue.offer(outbound, message).pipe(Effect.asVoid)
+            },
+            end: () => Effect.void,
+            clientIds: Effect.succeed(new Set([1])),
+            initialMessage: Effect.succeedNone,
+            supportsAck: false,
+            supportsTransferables: false,
+            supportsSpanPropagation: false,
+            supportsNotifications: true,
+            codecFor: Schema.toCodecJson as RpcSerialization.CodecFor
+          }))
+        )
+        yield* Layer.build(
+          McpServer.layer({ name: "TracingTest", version: "1.0.0", protocols: [McpProtocol.v2025_03_26] }).pipe(
+            Layer.provide(Layer.succeed(RpcServer.Protocol, transport))
+          )
+        )
+        const write = yield* Deferred.await(ready)
+        const send = (message: RpcMessage.FromClientEncoded) =>
+          write(1, message).pipe(Effect.provideService(Tracer.Tracer, makeToolCallTracer(ended)))
+        const clientInfo = { name: "client", version: "1.0.0" }
+        const payload = { protocolVersion: "2025-03-26", capabilities: {}, clientInfo }
+        yield* send({ _tag: "Request", id: "0", tag: "initialize", payload, headers: [] })
+        yield* Queue.take(outbound)
+
+        // An unknown tool fails with the request error -32602, whose write then fails.
+        yield* send({ _tag: "Request", id: "1", tag: "tools/call", payload: { name: "missing_tool" }, headers: [] })
+
+        assert.deepStrictEqual(yield* Queue.take(outbound), {
+          _tag: "Exit",
+          requestId: "1",
+          exit: { _tag: "Failure", cause: [{ _tag: "Fail", error: { code: -32603, message: "Internal error" } }] }
+        })
+        const span = yield* Queue.take(ended)
+        assert.strictEqual(span.status._tag === "Ended" && span.status.exit._tag, "Failure")
+        assert.strictEqual(span.attributes.get("rpc.status_code"), "-32603")
+        assert.strictEqual(span.attributes.get("error.type"), "-32603")
       }))
   })
 })

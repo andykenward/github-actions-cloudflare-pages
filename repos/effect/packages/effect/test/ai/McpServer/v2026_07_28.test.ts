@@ -1,8 +1,13 @@
 import { assert, describe, it } from "@effect/vitest"
 import * as McpProtocol from "effect/ai/McpProtocol"
 import * as McpSchema from "effect/ai/McpSchema"
+import * as McpServer from "effect/ai/McpServer"
+import * as Context from "effect/Context"
+import * as Duration from "effect/Duration"
 import * as Effect from "effect/Effect"
 import * as Base64 from "effect/encoding/Base64"
+import * as HttpRouter from "effect/http/HttpRouter"
+import * as Layer from "effect/Layer"
 import * as Schema from "effect/Schema"
 import * as BaseProtocolTest from "./McpConformance/BaseProtocolTest.ts"
 import * as CompletionTest from "./McpConformance/CompletionTest.ts"
@@ -209,6 +214,75 @@ it.layer(testLayer)(`Mcp Conformance (${protocol.protocolVersion})`, (it) => {
             assert.strictEqual(response.status, 200)
           }
         }
+      }))
+
+    it.effect("should check tool visibility before mirrored headers and preserve middleware errors", () =>
+      Effect.gen(function*() {
+        const state = { visible: false, invocations: 0 }
+        const LogCode = McpServer.middleware()((effect) =>
+          Effect.tapError(effect, (error) => Effect.sync(() => error.code.toFixed(0)))
+        )
+        const Visible = McpServer.visibility(() => Effect.sync(() => state.visible))
+        const registrations = Layer.effectDiscard(Effect.gen(function*() {
+          const server = yield* McpServer.McpServer
+          yield* server.addTool({
+            tool: new McpSchema.Tool({
+              name: "SecretTool",
+              inputSchema: {
+                type: "object",
+                properties: { region: { type: "string", "x-mcp-header": "Region" } },
+                required: ["region"]
+              }
+            }),
+            annotations: Context.empty(),
+            services: yield* Effect.context<never>(),
+            handle: () =>
+              Effect.sync(() => {
+                state.invocations++
+                return new McpSchema.CallToolResult({ content: [{ type: "text", text: "allowed" }] })
+              })
+          })
+        })).pipe(Layer.provide(Visible.combine(LogCode).layer))
+        const harness = yield* makeHttpHarness(McpServer.layerHttp({
+          name: "HeaderVisibility",
+          version: "1.0.0",
+          path: "/mcp",
+          protocols: [protocol],
+          registrations
+        }))
+        const send = (header?: string) =>
+          harness.post(
+            request("visibility", "tools/call", { name: "SecretTool", arguments: { region: "eu" } }),
+            {
+              ...headers("tools/call", "SecretTool"),
+              ...(header === undefined ? {} : { "Mcp-Param-Region": header })
+            }
+          )
+
+        for (const header of [undefined, "us"]) {
+          const response = yield* send(header)
+          assert.strictEqual(response.status, 200)
+          const error = yield* decodeError(response)
+          assert.strictEqual(error.id, "visibility")
+          assert.strictEqual(error.error.code, McpSchema.INVALID_PARAMS_ERROR_CODE)
+          assert.strictEqual(error.error.message, "Tool 'SecretTool' not found")
+          assert.strictEqual(state.invocations, 0)
+        }
+
+        state.visible = true
+        const mismatched = yield* send("us")
+        assert.strictEqual(mismatched.status, 400)
+        const error = yield* decodeError(mismatched)
+        assert.strictEqual(error.error.code, McpSchema.HEADER_MISMATCH_ERROR_CODE)
+        assert.strictEqual(state.invocations, 0)
+
+        const allowed = yield* send("eu")
+        assert.strictEqual(allowed.status, 200)
+        const result = Schema.decodeUnknownSync(Schema.Struct({ result: McpSchema.CallToolResult }))(
+          yield* readMcpHttpResponse(allowed)
+        )
+        assert.deepStrictEqual(result.result.content, [{ type: "text", text: "allowed" }])
+        assert.strictEqual(state.invocations, 1)
       }))
 
     // SEP-2567: https://modelcontextprotocol.io/seps/2567-remove-sessions
@@ -491,11 +565,188 @@ it.layer(testLayer)(`Mcp Conformance (${protocol.protocolVersion})`, (it) => {
             })
           }))((body as { result: unknown }).result)
 
-          assert.isAtLeast(result.ttlMs, 0)
+          assert.deepStrictEqual({ ttlMs: result.ttlMs, cacheScope: result.cacheScope }, {
+            ttlMs: 0,
+            cacheScope: "private"
+          }, method)
           assert.deepStrictEqual(result._meta["io.modelcontextprotocol/serverInfo"], {
             name: "McpConformance",
             version: "1.0.0"
           })
+        }
+      }))
+
+    // Optional fields given as `undefined` are absent on the wire, not a reason to fail the listing.
+    it.effect("should list resources and templates whose optional fields are given as undefined", () =>
+      Effect.gen(function*() {
+        const registrations = Layer.mergeAll(
+          McpServer.resource({
+            uri: "file:///readme",
+            name: "Readme",
+            description: undefined,
+            mimeType: undefined,
+            audience: undefined,
+            content: Effect.succeed("readme")
+          }),
+          McpServer.resource`file:///notes/${Schema.String}`({
+            name: "Notes",
+            description: undefined,
+            mimeType: undefined,
+            content: () => Effect.succeed("notes")
+          })
+        )
+        const harness = yield* makeHttpHarness(registrations.pipe(Layer.provideMerge(makeServerLayer({
+          name: "UndefinedFieldsServer",
+          protocols: [protocol]
+        }))))
+        const list = Effect.fnUntraced(function*(method: string) {
+          const response = yield* harness.post(request(method, method), headers(method))
+          return Schema.decodeUnknownSync(Schema.Struct({ result: Schema.JsonObject }))(
+            yield* readMcpHttpResponse(response)
+          ).result
+        })
+
+        const resources = yield* list("resources/list")
+        assert.deepStrictEqual(resources.resources, [{ uri: "file:///readme", name: "Readme", annotations: {} }])
+        const templates = yield* list("resources/templates/list")
+        assert.deepStrictEqual(templates.resourceTemplates, [
+          { uriTemplate: "file:///notes/{param0}", name: "Notes", annotations: {} }
+        ])
+      }))
+
+    it.effect("should list resources, templates and prompts registered as plain objects", () =>
+      Effect.gen(function*() {
+        const icon = { src: "https://example.com/icon.png" }
+        const registrations = Layer.effectDiscard(Effect.gen(function*() {
+          const server = yield* McpServer.McpServer
+          yield* server.addResource({
+            resource: { uri: "file:///plain", name: "Plain", icons: [icon] },
+            annotations: Context.empty(),
+            handle: Effect.succeed({ contents: [] })
+          })
+          yield* server.addResourceTemplate({
+            template: { uriTemplate: "file:///plain/{id}", name: "PlainTemplate", icons: [icon] },
+            annotations: Context.empty(),
+            routerPath: "file:///plain/:id",
+            completions: {},
+            handle: () => Effect.succeed({ contents: [] })
+          })
+          yield* server.addPrompt({
+            prompt: { name: "PlainPrompt", icons: [icon] },
+            annotations: Context.empty(),
+            completions: {},
+            handle: () => Effect.succeed({ messages: [] })
+          })
+        }))
+        const harness = yield* makeHttpHarness(registrations.pipe(Layer.provideMerge(makeServerLayer({
+          name: "PlainDescriptorsServer",
+          protocols: [protocol]
+        }))))
+        const list = Effect.fnUntraced(function*(method: string) {
+          const response = yield* harness.post(request(method, method), headers(method))
+          return Schema.decodeUnknownSync(Schema.Struct({ result: Schema.JsonObject }))(
+            yield* readMcpHttpResponse(response)
+          ).result
+        })
+
+        const resources = yield* list("resources/list")
+        assert.deepStrictEqual(resources.resources, [{ uri: "file:///plain", name: "Plain", icons: [icon] }])
+        const templates = yield* list("resources/templates/list")
+        assert.deepStrictEqual(templates.resourceTemplates, [{
+          uriTemplate: "file:///plain/{id}",
+          name: "PlainTemplate",
+          icons: [icon]
+        }])
+        const prompts = yield* list("prompts/list")
+        assert.deepStrictEqual(prompts.prompts, [{ name: "PlainPrompt", icons: [icon] }])
+      }))
+
+    // SEP-2549 cache hints are server-advertised freshness; omitted families and resource reads keep the stale default.
+    it.effect("should advertise configured cache hints and keep defaults for other results", () =>
+      Effect.gen(function*() {
+        const hint = (ttl: Duration.Input) => ({ ttl, cacheScope: "private" }) as const
+        // Structurally compatible hints can carry extra properties that must not reach the wire result.
+        const toolsHint = { ...hint("1 minute"), internalOnly: true }
+        const registrations = Layer.mergeAll(
+          McpServer.resource({ uri: "file:///cached", name: "Cached", content: Effect.succeed("cached") }),
+          McpServer.prompt({ name: "Cached", content: () => Effect.succeed("cached") })
+        )
+        const configs: ReadonlyArray<readonly [McpServer.CacheHints, Partial<Record<string, number>>]> = [
+          [{ tools: toolsHint }, { "tools/list": 60_000 }],
+          [
+            {
+              discover: hint(1),
+              tools: hint("2 millis"),
+              resources: hint(Duration.millis(3)),
+              resourceTemplates: hint(4),
+              // Sub-millisecond remainders round down so the wire ttlMs stays an integer.
+              prompts: hint("5999 micros")
+            },
+            {
+              "server/discover": 1,
+              "tools/list": 2,
+              "resources/list": 3,
+              "resources/templates/list": 4,
+              "prompts/list": 5
+            }
+          ]
+        ]
+        const cases = [
+          ["server/discover", {}, undefined],
+          ["tools/list", {}, undefined],
+          ["resources/list", {}, undefined],
+          ["resources/templates/list", {}, undefined],
+          ["prompts/list", {}, undefined],
+          ["resources/read", { uri: "file:///cached" }, "file:///cached"]
+        ] as const
+        for (const mode of ["server", "request"] as const) {
+          for (const [cacheHints, ttls] of configs) {
+            const harness = yield* makeHttpHarness(registrations.pipe(Layer.provideMerge(makeServerLayer({
+              name: "CacheHintServer",
+              protocols: [protocol],
+              mode,
+              cacheHints
+            }))))
+            for (const [method, params, name] of cases) {
+              const response = yield* harness.post(request(method, method, params), headers(method, name))
+              const body = yield* readMcpHttpResponse(response)
+              const message = Schema.decodeUnknownSync(Schema.Struct({
+                result: Schema.Struct({ ttlMs: Schema.Int, cacheScope: Schema.String })
+              }))(body)
+              for (const property of ["ttl", "internalOnly"]) {
+                assert.notProperty((body as { readonly result: object }).result, property, `${mode} ${method}`)
+              }
+              assert.deepStrictEqual(
+                message.result,
+                { ttlMs: ttls[method] ?? 0, cacheScope: "private" },
+                `${mode} ${method}`
+              )
+            }
+          }
+        }
+      }))
+
+    it.effect("should fail layer construction when a cache hint cannot be advertised", () =>
+      Effect.gen(function*() {
+        const invalid = [
+          { ttl: "-1 seconds", cacheScope: "private" },
+          { ttl: "Infinity", cacheScope: "private" },
+          { ttl: 2 ** 53, cacheScope: "private" },
+          { ttl: "soon", cacheScope: "private" },
+          { ttl: 1, cacheScope: "public" }
+        ]
+        for (const mode of ["server", "request"] as const) {
+          for (const tools of invalid) {
+            const error = yield* makeServerLayer({
+              name: "InvalidCacheHintServer",
+              protocols: [protocol],
+              mode,
+              cacheHints: { tools: tools as unknown as McpServer.CacheHint }
+            }).pipe(Layer.provide(HttpRouter.layer), Layer.build, Effect.scoped, Effect.flip)
+
+            assert.strictEqual(error._tag, "IllegalArgumentError", `${mode} ${JSON.stringify(tools)}`)
+            assert.match(error.message, /cacheHints\.tools/)
+          }
         }
       }))
 

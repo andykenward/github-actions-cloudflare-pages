@@ -40,6 +40,7 @@ export function toFormatter<T>(ast: SchemaAST.AST, options?: {
   return recur(ast)
 
   function recur(ast: SchemaAST.AST): Formatter<any> {
+    ast = SchemaAST.toType(ast)
     let formatter = compiled.get(ast)
     if (formatter === undefined) {
       formatter = compile(ast)
@@ -110,9 +111,9 @@ export function toFormatter<T>(ast: SchemaAST.AST, options?: {
             return (map: globalThis.ReadonlyMap<unknown, unknown>) => {
               const size = map.size
               if (size === 0) return "ReadonlyMap(0) {}"
-              const entries = globalThis.Array.from(map.entries()).sort().map(([key_, value_]) =>
+              const entries = globalThis.Array.from(map.entries()).map(([key_, value_]) =>
                 `${key(key_)} => ${value(value_)}`
-              )
+              ).sort()
               return `ReadonlyMap(${size}) { ${entries.join(", ")} }`
             }
           }
@@ -121,7 +122,7 @@ export function toFormatter<T>(ast: SchemaAST.AST, options?: {
             return (map: HashMap.HashMap<unknown, unknown>) => {
               const size = HashMap.size(map)
               if (size === 0) return "HashMap(0) {}"
-              const entries = HashMap.toEntries(map).sort().map(([key_, value_]) => `${key(key_)} => ${value(value_)}`)
+              const entries = HashMap.toEntries(map).map(([key_, value_]) => `${key(key_)} => ${value(value_)}`).sort()
               return `HashMap(${size}) { ${entries.join(", ")} }`
             }
           }
@@ -130,7 +131,7 @@ export function toFormatter<T>(ast: SchemaAST.AST, options?: {
             return (set: globalThis.ReadonlySet<unknown>) => {
               const size = set.size
               if (size === 0) return "ReadonlySet(0) {}"
-              const values = globalThis.Array.from(set.values()).sort().map((item) => `${value(item)}`)
+              const values = globalThis.Array.from(set.values()).map((item) => `${value(item)}`).sort()
               return `ReadonlySet(${size}) { ${values.join(", ")} }`
             }
           }
@@ -139,7 +140,7 @@ export function toFormatter<T>(ast: SchemaAST.AST, options?: {
             return (set: HashSet.HashSet<unknown>) => {
               const size = HashSet.size(set)
               if (size === 0) return "HashSet(0) {}"
-              const values = globalThis.Array.from(set).sort().map((item) => `${value(item)}`)
+              const values = globalThis.Array.from(set).map((item) => `${value(item)}`).sort()
               return `HashSet(${size}) { ${values.join(", ")} }`
             }
           }
@@ -148,7 +149,7 @@ export function toFormatter<T>(ast: SchemaAST.AST, options?: {
             return (chunk: Chunk.Chunk<unknown>) => {
               const size = Chunk.size(chunk)
               if (size === 0) return "Chunk(0) {}"
-              const values = globalThis.Array.from(chunk).sort().map((item) => `${value(item)}`)
+              const values = globalThis.Array.from(chunk).map((item) => `${value(item)}`)
               return `Chunk(${size}) { ${values.join(", ")} }`
             }
           }
@@ -216,9 +217,9 @@ export function toFormatter<T>(ast: SchemaAST.AST, options?: {
         }
       }
       case "Union": {
-        const types = SchemaAST.toType(ast).types
+        const types = ast.types
         const index = SchemaAST.getCandidateIndex(types)
-        const compiled = types.map((candidate, i) => [SchemaParser._is(candidate), recur(ast.types[i])] as const)
+        const compiled = types.map((candidate) => [SchemaParser._is(candidate), recur(candidate)] as const)
         return (value) => {
           const candidates = index(value, false)
           for (let i = 0; i < candidates.length; i++) {

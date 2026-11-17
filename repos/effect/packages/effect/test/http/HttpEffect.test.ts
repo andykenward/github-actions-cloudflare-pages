@@ -1,9 +1,8 @@
 import { describe, it, test } from "@effect/vitest"
-import { deepStrictEqual, strictEqual } from "@effect/vitest/utils"
+import { assertTrue, deepStrictEqual, strictEqual } from "@effect/vitest/utils"
 import { Cause, Context, Effect, Exit, Option, References, Scope, Stream, Tracer } from "effect"
 import { identity } from "effect/Function"
-import { HttpEffect, HttpServerRequest, HttpServerResponse } from "effect/http"
-import { appendPreResponseHandlerUnsafe, requestPreResponseHandlers } from "effect/http/internal/preResponseHandler"
+import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http"
 import * as Layer from "effect/Layer"
 
 const TestValue = Context.Reference<number>("test/TestValue", { defaultValue: () => 0 })
@@ -68,6 +67,54 @@ describe("HttpEffect", () => {
       Effect.provideService(References.TracerEnabled, false)
     )
   })
+
+  it.effect.each(["plain", "failure", "stream"] as const)(
+    "a disabled, untransferred request scope stays open until the host closes it: %s",
+    (responseKind) =>
+      Effect.gen(function*() {
+        let requestScope!: Scope.Closeable
+        let response!: HttpServerResponse.HttpServerResponse
+        const exits: Array<Exit.Exit<unknown, unknown>> = []
+        const handledExit = yield* HttpEffect.toHandled(
+          Effect.gen(function*() {
+            requestScope = (yield* Effect.scope) as Scope.Closeable
+            HttpEffect.scopeDisableClose(requestScope)
+            yield* Effect.addFinalizer((exit) =>
+              Effect.sync(() => {
+                exits.push(exit)
+              })
+            )
+            if (responseKind === "failure") return yield* Effect.fail(new Error("handler failed"))
+            return responseKind === "stream"
+              ? HttpServerResponse.stream(Stream.make("body").pipe(Stream.encodeText))
+              : HttpServerResponse.text("body")
+          }),
+          (_, handled) =>
+            Effect.sync(() => {
+              response = handled
+            })
+        ).pipe(Effect.exit)
+        strictEqual(Exit.isFailure(handledExit), responseKind === "failure")
+        deepStrictEqual(exits, [])
+        strictEqual(response.status, responseKind === "failure" ? 500 : 200)
+        if (responseKind === "stream") {
+          assertTrue(response.body._tag === "Stream")
+          strictEqual(yield* Stream.mkString(Stream.decodeText(response.body.stream)), "body")
+          deepStrictEqual(exits, [])
+        }
+        const hostExit = Exit.fail(new Error("host background work failed"))
+        yield* Scope.close(requestScope, hostExit)
+        deepStrictEqual(exits, [hostExit])
+        yield* Scope.close(requestScope, Exit.void)
+        deepStrictEqual(exits, [hostExit])
+      }).pipe(
+        Effect.provideService(
+          HttpServerRequest.HttpServerRequest,
+          HttpServerRequest.fromWeb(new Request("http://localhost:3000/"))
+        ),
+        Effect.provideService(References.TracerEnabled, false)
+      )
+  )
 
   describe("toWebHandler", () => {
     test("skips the server span with the default tracer", async () => {
@@ -160,6 +207,75 @@ describe("HttpEffect", () => {
       strictEqual(response.headers.get("content-length"), "9007199254740993")
     })
 
+    test.each(["before the request", "while the handler starts"] as const)(
+      "an abort %s interrupts the handler as a client abort",
+      async (when) => {
+        const controller = new AbortController()
+        if (when === "before the request") controller.abort()
+        let interrupted = false
+        const handler = HttpEffect.toWebHandler(
+          Effect.sync(() => {
+            if (when === "while the handler starts") controller.abort()
+          }).pipe(
+            Effect.andThen(Effect.never),
+            Effect.onInterrupt(() =>
+              Effect.sync(() => {
+                interrupted = true
+              })
+            ),
+            // Handlers are uninterruptible unless they opt in, as router routes do.
+            Effect.interruptible
+          )
+        )
+        const response = await handler(new Request("http://localhost:3000/", { signal: controller.signal }))
+        strictEqual(response.status, 499)
+        strictEqual(interrupted, true)
+      }
+    )
+
+    test.each(["after reading a chunk", "while the unread body is full"] as const)(
+      "an abort %s releases the request scope owned by a streamed body",
+      async (when) => {
+        const controller = new AbortController()
+        let finalized = false
+        let pulledSecond = false
+        const handler = HttpEffect.toWebHandler(Effect.gen(function*() {
+          yield* Effect.addFinalizer(() =>
+            Effect.sync(() => {
+              finalized = true
+            })
+          )
+          return HttpServerResponse.stream(
+            Stream.make("first").pipe(
+              Stream.concat(Stream.fromEffect(Effect.sync(() => {
+                pulledSecond = true
+                return "second"
+              }))),
+              Stream.concat(Stream.never),
+              Stream.encodeText
+            )
+          )
+        }))
+        const waitFor = (predicate: () => boolean) =>
+          new Promise<void>((resolve) => {
+            const deadline = Date.now() + 1000
+            const poll = () => predicate() || Date.now() > deadline ? resolve() : setImmediate(poll)
+            poll()
+          })
+        const response = await handler(new Request("http://localhost:3000/", { signal: controller.signal }))
+        if (when === "after reading a chunk") {
+          await response.body!.getReader().read()
+        } else {
+          // The body has taken its second chunk and now waits for a read that never comes.
+          await waitFor(() => pulledSecond)
+        }
+
+        controller.abort()
+        await waitFor(() => finalized)
+        strictEqual(finalized, true)
+      }
+    )
+
     test("stream scope", async () => {
       let order = 0
       let streamFinalized = 0
@@ -183,6 +299,130 @@ describe("HttpEffect", () => {
       const response = await handler(new Request("http://localhost:3000/"))
       strictEqual(await response.text(), "foobar")
       strictEqual(streamFinalized < handlerFinalized, true)
+    })
+
+    test("a streamed body that exits during the request closes the request scope after the request ends", async () => {
+      const events: Array<string> = []
+      let scopeExit: Exit.Exit<unknown, unknown> | undefined
+      const tracer = Tracer.make({
+        span: (options) => {
+          const span = new Tracer.NativeSpan(options)
+          const end = span.end.bind(span)
+          span.end = (endTime, exit) => {
+            events.push("span ended")
+            end(endTime, exit)
+          }
+          return span
+        }
+      })
+      const controller = new AbortController()
+      // A pre-aborted signal interrupts the body while the response is still being handled.
+      controller.abort()
+      const handler = HttpEffect.toWebHandler(Effect.gen(function*() {
+        yield* Effect.addFinalizer((exit) =>
+          Effect.sync(() => {
+            events.push("scope closed")
+            scopeExit = exit
+          })
+        )
+        return HttpServerResponse.stream(Stream.make("body").pipe(Stream.encodeText))
+      }))
+
+      await handler(
+        new Request("http://localhost:3000/", { signal: controller.signal }),
+        Context.make(Tracer.Tracer, tracer)
+      )
+
+      deepStrictEqual(events, ["span ended", "scope closed"])
+      strictEqual(scopeExit !== undefined && Exit.hasInterrupts(scopeExit), true)
+    })
+
+    test("a streamed body that exits before middleware finishes closes the request scope after the middleware", async () => {
+      const events: Array<string> = []
+      let release!: () => void
+      const released = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      const handler = HttpEffect.toWebHandler(
+        Effect.gen(function*() {
+          yield* Effect.addFinalizer(() => Effect.sync(() => events.push("scope closed")))
+          return HttpServerResponse.stream(Stream.make("body").pipe(Stream.encodeText))
+        }),
+        (app) =>
+          Effect.tap(app, () =>
+            Effect.promise(() => released).pipe(
+              Effect.andThen(Effect.sync(() => events.push("middleware finished")))
+            ))
+      )
+
+      const response = await handler(new Request("http://localhost:3000/"))
+      strictEqual(await response.text(), "body")
+      release()
+      await new Promise<void>((resolve) => {
+        const deadline = Date.now() + 1000
+        const poll = () => events.length === 2 || Date.now() > deadline ? resolve() : setImmediate(poll)
+        poll()
+      })
+
+      deepStrictEqual(events, ["middleware finished", "scope closed"])
+    })
+
+    test("a streamed body closes the request scope after the handler disables closing", async () => {
+      let finalized = false
+      const handler = HttpEffect.toWebHandler(Effect.gen(function*() {
+        HttpEffect.scopeDisableClose(yield* Effect.scope)
+        yield* Effect.addFinalizer(() =>
+          Effect.sync(() => {
+            finalized = true
+          })
+        )
+        return HttpServerResponse.stream(Stream.make("body").pipe(Stream.encodeText))
+      }))
+
+      const response = await handler(new Request("http://localhost:3000/"))
+      strictEqual(await response.text(), "body")
+
+      strictEqual(finalized, true)
+    })
+
+    test("a transferred body keeps its first exit when a later transfer succeeds before the request ends", async () => {
+      let release!: () => void
+      const released = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      const failure = new Error("body failed")
+      let scopeExit: Exit.Exit<unknown, unknown> | undefined
+      const handler = HttpEffect.toWebHandler(
+        Effect.gen(function*() {
+          yield* Effect.addFinalizer((exit) =>
+            Effect.sync(() => {
+              scopeExit = exit
+            })
+          )
+          // A helper transfers a failing body, an outer layer recovers it, and the web
+          // handler transfers the recovered response again.
+          const transferred = HttpEffect.scopeTransferToStream(HttpServerResponse.stream(Stream.fail(failure)))
+          const failing = transferred.body._tag === "Stream" ? transferred.body.stream : Stream.empty
+          return HttpServerResponse.stream(
+            Stream.catchCause(failing, () => Stream.make("fallback").pipe(Stream.encodeText))
+          )
+        }),
+        (app) => Effect.tap(app, () => Effect.promise(() => released))
+      )
+
+      const response = await handler(new Request("http://localhost:3000/"))
+      strictEqual(await response.text(), "fallback")
+      release()
+      await new Promise<void>((resolve) => {
+        const deadline = Date.now() + 1000
+        const poll = () => scopeExit !== undefined || Date.now() > deadline ? resolve() : setImmediate(poll)
+        poll()
+      })
+
+      strictEqual(
+        scopeExit !== undefined && Exit.isFailure(scopeExit) && Cause.squash(scopeExit.cause) === failure,
+        true
+      )
     })
 
     test("streaming HEAD closes the request scope", async () => {
@@ -252,17 +492,31 @@ describe("HttpEffect", () => {
       strictEqual(await response.text(), "420")
     })
 
-    test("pre-response handlers are keyed by request source", () => {
-      const request = HttpServerRequest.fromWeb(new Request("http://localhost:3000/"))
-      const modified = request.modify({ url: "/updated" })
-      const handler = (
-        _request: HttpServerRequest.HttpServerRequest,
-        response: HttpServerResponse.HttpServerResponse
-      ) => Effect.succeed(response)
+    test("runs pre-response handlers registered in a prefix-sliced route", async () => {
+      const { dispose, handler } = HttpRouter.toWebHandler(
+        HttpRouter.use((router) =>
+          router.prefixed("/api").add(
+            "GET",
+            "/hello",
+            Effect.gen(function*() {
+              const request = yield* HttpServerRequest.HttpServerRequest
+              yield* HttpEffect.appendPreResponseHandler((_request, response) =>
+                Effect.succeed(HttpServerResponse.setHeader(response, "x-pre-response", "applied"))
+              )
+              return HttpServerResponse.text(request.url)
+            })
+          )
+        ),
+        { disableLogger: true }
+      )
 
-      appendPreResponseHandlerUnsafe(request, handler)
-
-      strictEqual(requestPreResponseHandlers.get(modified.source), handler)
+      try {
+        const response = await handler(new Request("http://localhost/api/hello"))
+        strictEqual(await response.text(), "/hello")
+        strictEqual(response.headers.get("x-pre-response"), "applied")
+      } finally {
+        await dispose()
+      }
     })
   })
 

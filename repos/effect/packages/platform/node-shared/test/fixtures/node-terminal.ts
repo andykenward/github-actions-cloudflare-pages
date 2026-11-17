@@ -52,7 +52,21 @@ const readLines = Effect.gen(function*() {
 
 const unused = Effect.gen(function*() {
   yield* Terminal.Terminal
-  return { dataListeners: process.stdin.listenerCount("data") }
+  return ioReads
+})
+
+const output = Effect.gen(function*() {
+  const terminal = yield* Terminal.Terminal
+  yield* terminal.display("")
+  yield* terminal.columns
+  yield* terminal.rows
+  yield* Effect.scoped(terminal.size)
+  // Read when the result is printed, after the layer has been released.
+  return {
+    get stdin() {
+      return ioReads.stdin
+    }
+  }
 })
 
 const readLineAfterEnd = Effect.gen(function*() {
@@ -79,9 +93,69 @@ const readLineDisposed = Effect.gen(function*() {
   return { line, duringTtl, dataListeners: process.stdin.listenerCount("data") }
 })
 
+// The fixture's stdin is a pipe, so pretend it is a TTY and record raw mode
+// changes instead.
+const rawModeCalls: Array<boolean> = []
+const simulateTty = Effect.sync(() => {
+  process.stdin.isTTY = true
+  process.stdin.setRawMode = (mode) => {
+    rawModeCalls.push(mode)
+    return process.stdin
+  }
+})
+
+const ttyReadLine = Effect.gen(function*() {
+  yield* simulateTty
+  const terminal = yield* Terminal.Terminal
+  const line = yield* terminal.readLine
+  return { line, rawMode: rawModeCalls.slice() }
+})
+
+const ttyReadInput = Effect.gen(function*() {
+  yield* simulateTty
+  const terminal = yield* Terminal.Terminal
+  const input = yield* Effect.scoped(Effect.flatMap(terminal.readInput, Queue.take))
+  yield* Effect.sleep("20 millis")
+  return { input: Option.getOrNull(input.input), rawMode: rawModeCalls.slice() }
+})
+
 const mode = process.argv[2]
+const ioReads = { stdin: 0, stdout: 0 }
+if (mode === "unused" || mode === "output") {
+  for (const name of ["stdin", "stdout"] as const) {
+    const descriptor = Object.getOwnPropertyDescriptor(process, name)!
+    Object.defineProperty(process, name, {
+      ...descriptor,
+      get() {
+        ioReads[name]++
+        return descriptor.get!.call(process)
+      }
+    })
+  }
+}
+const select = Prompt.run(Prompt.Select({
+  message: "Pick fruit",
+  choices: [
+    { title: "Apple", value: "apple" },
+    { title: "Banana", value: "banana" }
+  ]
+})).pipe(
+  Effect.catchTag("QuitError", () => Effect.succeed("QuitError")),
+  // Bound the regression without closing stdin: EOF would mask ignored Esc.
+  Effect.timeoutOption("2 seconds"),
+  Effect.map(Option.getOrElse(() => "TimedOut"))
+)
+
 const program = Effect.gen(function*() {
-  if (mode === "prompts") {
+  if (mode === "select" || mode === "select-custom-quit") {
+    return yield* select.pipe(Effect.provide(Layer.mergeAll(
+      mode === "select-custom-quit"
+        ? Layer.effect(Terminal.Terminal, NodeTerminal.make(() => false))
+        : NodeTerminal.layer,
+      FileSystem.layerNoop({}),
+      Path.layer
+    )))
+  } else if (mode === "prompts") {
     return yield* prompts
   } else if (mode === "read-input") {
     return yield* readInput
@@ -91,10 +165,16 @@ const program = Effect.gen(function*() {
     return yield* readLines
   } else if (mode === "unused") {
     return yield* unused
+  } else if (mode === "output") {
+    return yield* output
   } else if (mode === "read-line-after-end") {
     return yield* readLineAfterEnd
   } else if (mode === "read-line-disposed") {
     return yield* readLineDisposed
+  } else if (mode === "tty-read-line") {
+    return yield* ttyReadLine
+  } else if (mode === "tty-read-input") {
+    return yield* ttyReadInput
   }
   return yield* Effect.die(`Unknown mode: ${mode}`)
 })

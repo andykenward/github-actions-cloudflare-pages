@@ -1,12 +1,14 @@
 import type { D1Result } from "@cloudflare/workers-types"
 import { D1Client } from "@effect/sql-d1"
 import { assert, describe, it } from "@effect/vitest"
-import { Cause, Effect } from "effect"
+import { Cause, Effect, Tracer } from "effect"
 import * as Reactivity from "effect/reactivity/Reactivity"
 import { Statement } from "effect/sql"
 import { D1Miniflare } from "./utils.ts"
 
-describe("Client", () => {
+// Each test starts its own Miniflare instance. Concurrent startups compete for
+// CPU and share one running timeout, so run them one at a time.
+describe("Client", { concurrent: false, timeout: 30_000 }, () => {
   it.effect("raw preserves the native result envelope", () =>
     Effect.gen(function*() {
       const sql = yield* D1Client.D1Client
@@ -206,6 +208,28 @@ describe("Client", () => {
       assert.deepStrictEqual(rows, [])
       assert.equal(Cause.hasDies(res), true)
     }).pipe(Effect.provide(D1Miniflare.layerClient)))
+
+  it.effect("names batches with the configured target", () =>
+    Effect.gen(function*() {
+      const db = {
+        prepare: () => ({ bind: () => ({}) }),
+        batch: async (statements: Array<unknown>) => statements.map(() => ({ results: [] }))
+      } as any
+      const sql = yield* D1Client.make({ db, spanAttributes: { "db.namespace": "app" } })
+      const spans: Array<Tracer.Span> = []
+      const tracer = Tracer.make({
+        span: (options) => {
+          const span = new Tracer.NativeSpan(options)
+          spans.push(span)
+          return span
+        }
+      })
+      yield* sql.batch([sql`SELECT 1`, sql`SELECT 2`]).pipe(Effect.withTracer(tracer))
+      assert.deepStrictEqual(spans.map((span) => span.name), ["BATCH app"])
+    }).pipe(
+      Effect.scoped,
+      Effect.provide(Reactivity.layer)
+    ))
 
   it.effect("should defect when batching in a transaction", () =>
     Effect.gen(function*() {

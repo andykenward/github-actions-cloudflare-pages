@@ -191,16 +191,16 @@ export type WithOptionalResponse<
     ? A
     : A | [A, HttpClientResponse.HttpClientResponse]
 
-export const make = (
-  httpClient: HttpClient.HttpClient,
+export const make = <E, R>(
+  httpClient: HttpClient.HttpClient.With<E, R>,
   options: {
     readonly transformClient?:
       | ((
-          client: HttpClient.HttpClient
-        ) => Effect.Effect<HttpClient.HttpClient>)
+          client: HttpClient.HttpClient.With<E, R>
+        ) => Effect.Effect<HttpClient.HttpClient.With<E, R>>)
       | undefined
   } = {}
-): CloudflarePages => {
+): CloudflarePages<E, R> => {
   const unexpectedStatus = (response: HttpClientResponse.HttpClientResponse) =>
     Effect.flatMap(
       Effect.orElseSucceed(response.json, () => 'Unexpected status code'),
@@ -226,7 +226,7 @@ export const make = (
       ) => Effect.Effect<any, any>
     ): ((
       request: HttpClientRequest.HttpClientRequest
-    ) => Effect.Effect<any, any>) => {
+    ) => Effect.Effect<any, any, R>) => {
       const withOptionalResponse = (
         config?.includeResponse
           ? (response: HttpClientResponse.HttpClientResponse) =>
@@ -407,8 +407,11 @@ export const make = (
   }
 }
 
-export interface CloudflarePages {
-  readonly httpClient: HttpClient.HttpClient
+export interface CloudflarePages<
+  E = HttpClientError.HttpClientError,
+  R = never
+> {
+  readonly httpClient: HttpClient.HttpClient.With<E, R>
   /**
    * List the production or preview deployments for a Cloudflare Pages project.
    */
@@ -422,11 +425,13 @@ export interface CloudflarePages {
       }
     ): Effect.Effect<
       WithOptionalResponse<PagesDeploymentGetDeployments200, Config>,
+      | E
       | HttpClientError.HttpClientError
       | CloudflarePagesError<
           'PagesDeploymentGetDeployments4XX',
           PagesDeploymentGetDeployments4XX
-        >
+        >,
+      R
     >
     <Config extends OperationConfig | undefined = undefined>(
       accountId: string,
@@ -442,11 +447,13 @@ export interface CloudflarePages {
         PagesDeploymentGetDeployments200,
         Config | undefined
       >,
+      | E
       | HttpClientError.HttpClientError
       | CloudflarePagesError<
           'PagesDeploymentGetDeployments4XX',
           PagesDeploymentGetDeployments4XX
-        >
+        >,
+      R
     >
   }
   /**
@@ -460,11 +467,13 @@ export interface CloudflarePages {
       options: {readonly config: Config}
     ): Effect.Effect<
       WithOptionalResponse<PagesDeploymentGetDeploymentInfo200, Config>,
+      | E
       | HttpClientError.HttpClientError
       | CloudflarePagesError<
           'PagesDeploymentGetDeploymentInfo4XX',
           PagesDeploymentGetDeploymentInfo4XX
-        >
+        >,
+      R
     >
     <Config extends OperationConfig | undefined = undefined>(
       accountId: string,
@@ -476,11 +485,13 @@ export interface CloudflarePages {
         PagesDeploymentGetDeploymentInfo200,
         Config | undefined
       >,
+      | E
       | HttpClientError.HttpClientError
       | CloudflarePagesError<
           'PagesDeploymentGetDeploymentInfo4XX',
           PagesDeploymentGetDeploymentInfo4XX
-        >
+        >,
+      R
     >
   }
   /**
@@ -497,11 +508,13 @@ export interface CloudflarePages {
       }
     ): Effect.Effect<
       WithOptionalResponse<PagesDeploymentDeleteDeployment200, Config>,
+      | E
       | HttpClientError.HttpClientError
       | CloudflarePagesError<
           'PagesDeploymentDeleteDeployment4XX',
           PagesDeploymentDeleteDeployment4XX
-        >
+        >,
+      R
     >
     <Config extends OperationConfig | undefined = undefined>(
       accountId: string,
@@ -518,11 +531,13 @@ export interface CloudflarePages {
         PagesDeploymentDeleteDeployment200,
         Config | undefined
       >,
+      | E
       | HttpClientError.HttpClientError
       | CloudflarePagesError<
           'PagesDeploymentDeleteDeployment4XX',
           PagesDeploymentDeleteDeployment4XX
-        >
+        >,
+      R
     >
   }
 }

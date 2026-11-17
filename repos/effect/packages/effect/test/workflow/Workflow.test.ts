@@ -1,7 +1,71 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Effect, Exit, Fiber, Scheduler } from "effect"
-import { Workflow } from "effect/workflow"
+import { Deferred, Effect, Exit, Fiber, Scheduler } from "effect"
+import { Activity, Workflow } from "effect/workflow"
 import { WorkflowInstance } from "effect/workflow/WorkflowEngine"
+
+// Execution ids and activity idempotency keys are persisted, so they must stay
+// byte-for-byte stable. Expected values are the first 16 bytes of SHA-256 in hex,
+// computed with node:crypto.
+describe("persisted ids", () => {
+  it.effect("keep their SHA-256 derived values", () =>
+    Effect.gen(function*() {
+      const workflow = Workflow.make("Order", {
+        payload: {},
+        idempotencyKey: () => "42"
+      })
+      const executionId = yield* workflow.executionId({})
+      assert.strictEqual(executionId, "0f62355133496e612090fb5d4307a4d2")
+
+      const instance = WorkflowInstance.initial(workflow, executionId)
+      assert.strictEqual(
+        yield* Activity.idempotencyKey("charge").pipe(Effect.provideService(WorkflowInstance, instance)),
+        "c250939b26740218d8122b4cf6a3d2e1"
+      )
+      assert.strictEqual(
+        yield* Activity.idempotencyKey("charge", { includeAttempt: true }).pipe(
+          Effect.provideService(WorkflowInstance, instance),
+          Effect.provideService(Activity.CurrentAttempt, 3)
+        ),
+        "26241ff2cf66bbddd1be618b7ccdf48f"
+      )
+    }))
+})
+
+describe("Workflow.intoResult", () => {
+  it.effect("waits for handler cleanup before workflow finalizers on immediate interruption", () =>
+    Effect.gen(function*() {
+      const workflow = Workflow.make("CleanupOrder", {
+        payload: {},
+        idempotencyKey: () => "one"
+      })
+      const instance = WorkflowInstance.initial(workflow, "one")
+      const started = yield* Deferred.make<void>()
+      const order: Array<string> = []
+      const handler = Effect.gen(function*() {
+        yield* Workflow.addFinalizer(() =>
+          Effect.sync(() => {
+            order.push("workflow-finalizer")
+          })
+        )
+        yield* Deferred.succeed(started, undefined)
+        return yield* Effect.never
+      }).pipe(Effect.onExit(() =>
+        Effect.sync(() => {
+          order.push("handler-finalizer")
+        })
+      ))
+      const running = yield* handler.pipe(
+        Workflow.intoResult,
+        Effect.provideService(WorkflowInstance, instance),
+        Effect.forkChild
+      )
+      yield* Deferred.await(started)
+      // Do not yield between startup and interruption: that would hide the race.
+      order.push("interrupt")
+      yield* Fiber.interrupt(running)
+      assert.deepStrictEqual(order, ["interrupt", "handler-finalizer", "workflow-finalizer"])
+    }))
+})
 
 describe("Workflow.wrapActivityResult", () => {
   it.effect("releases acquisition interrupted before the body starts", () =>

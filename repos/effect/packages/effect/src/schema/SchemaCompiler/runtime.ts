@@ -58,19 +58,27 @@ const makeObjectBase = (
         parser = compileField(property.type)
         parsers.set(property.type, parser)
       }
-      return { parser, name: property.name, type: property.type }
+      return {
+        parser,
+        name: property.name,
+        type: property.type,
+        ownOnly: SchemaAST.requiresOwnProperty(property.name)
+      }
     })
   }
   let fallback: SchemaIssueParser | undefined
   const runFallback: SchemaIssueParser = (input, options) =>
     (fallback ??= ast.getParser(compile, compileField))(input, options)
   const resume = (
-    state: ObjectParserState,
+    snapshot: ObjectParserState,
     index: number,
     pending: Effect.Effect<unknown, SchemaIssue.Issue, any>
   ): Effect.Effect<unknown, SchemaIssue.Issue, any> => {
     const property = properties![index]
-    return Effect.flatMap(Effect.exit(pending), (exit) => {
+    return Effect.flatMap(Effect.exit(pending), (exit): Effect.Effect<unknown, SchemaIssue.Issue, any> => {
+      // Each execution gets its own output; `issues` is still undefined here
+      // because `errors: "all"` is routed to the fallback before suspending.
+      const state: ObjectParserState = { ...snapshot, out: { ...snapshot.out } }
       const terminal = SchemaAST.stepProperty(state, property, exit)
       if (terminal) return terminal
       const done = () => InternalParser.succeed(state.out)
@@ -263,7 +271,7 @@ export const runtime = {
   invalid,
   missing: InternalParser.missing,
   missingExit: InternalParser.missingExit,
-  sameExit: InternalParser.sameExit,
+  isSameExit: InternalParser.isSameExit,
   args: InternalParser.args,
   succeed: InternalParser.succeed,
   effectIsExit,

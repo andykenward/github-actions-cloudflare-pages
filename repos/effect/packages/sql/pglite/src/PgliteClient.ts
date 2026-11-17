@@ -16,11 +16,10 @@ import { PGlite, type PGliteInterface, type PGliteOptions } from "@electric-sql/
 import * as Config from "effect/Config"
 import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
-import * as Fiber from "effect/Fiber"
 import * as Layer from "effect/Layer"
 import * as Queue from "effect/Queue"
 import * as Reactivity from "effect/reactivity/Reactivity"
-import * as Scope from "effect/Scope"
+import type * as Scope from "effect/Scope"
 import * as Semaphore from "effect/Semaphore"
 import * as Client from "effect/sql/SqlClient"
 import type { Connection } from "effect/sql/SqlConnection"
@@ -67,7 +66,7 @@ export type TypeId = "~@effect/sql-pglite/PgliteClient"
  * @category services
  * @since 4.0.0
  */
-export interface PgliteClient extends Client.SqlClient {
+export interface PgliteClient extends Client.Base {
   readonly [TypeId]: TypeId
   readonly config: PgliteClientConfig
   readonly pglite: PGliteInterface
@@ -100,7 +99,9 @@ export interface PgliteClient extends Client.SqlClient {
  * @category services
  * @since 4.0.0
  */
-export const PgliteClient = Context.Service<PgliteClient>("@effect/sql-pglite/PgliteClient")
+export const PgliteClient = Context.Service<PgliteClient, PgliteClient & Client.SqlClient>(
+  "@effect/sql-pglite/PgliteClient"
+)
 
 /**
  * Configuration for a PGlite client, either by supplying PGlite creation options or an existing live PGlite client.
@@ -176,7 +177,7 @@ export declare namespace PgliteClientConfig {
  */
 export const make = (
   options: PgliteClientConfig = {}
-): Effect.Effect<PgliteClient, SqlError, Scope.Scope | Reactivity.Reactivity> =>
+): Effect.Effect<PgliteClient & Client.SqlClient, SqlError, Scope.Scope | Reactivity.Reactivity> =>
   Effect.gen(function*() {
     const pglite = "liveClient" in options
       ? options.liveClient
@@ -209,7 +210,7 @@ export const fromClient = (
     & {
       readonly liveClient: PGliteInterface
     }
-): Effect.Effect<PgliteClient, SqlError, Scope.Scope | Reactivity.Reactivity> =>
+): Effect.Effect<PgliteClient & Client.SqlClient, SqlError, Scope.Scope | Reactivity.Reactivity> =>
   Effect.gen(function*() {
     const pglite = options.liveClient
     const compiler = makeCompiler(options.transformQueryNames, options.transformJson)
@@ -224,24 +225,18 @@ export const fromClient = (
 
     const connection = new PgliteConnection(pglite)
     const semaphore = Semaphore.makeUnsafe(1)
-    const acquirer = semaphore.withPermits(1)(Effect.succeed(connection))
-    const transactionAcquirer = Effect.uninterruptibleMask((restore) => {
-      const fiber = Fiber.getCurrent()!
-      const scope = Context.getUnsafe(fiber.context, Scope.Scope)
-      return Effect.as(
-        Effect.tap(
-          restore(semaphore.take(1)),
-          () => Scope.addFinalizer(scope, semaphore.release(1))
-        ),
-        connection
-      )
-    })
+    // Statements, streams and transactions hold the permit until their scope
+    // closes, so no other fiber can use the connection while they run.
+    const acquirer = Effect.as(
+      Effect.acquireRelease(semaphore.take(1), () => semaphore.release(1), { interruptible: true }),
+      connection
+    )
 
     const config = options as PgliteClientConfig
     const client = yield* Client.make({
+      driver: "pglite",
       acquirer,
       compiler,
-      transactionAcquirer,
       releaseSavepoint: (name) => `RELEASE SAVEPOINT ${name}`,
       spanAttributes,
       transformRows
@@ -374,7 +369,7 @@ class PgliteConnection implements Connection {
  * @since 4.0.0
  */
 export const layerFrom = <E, R>(
-  acquire: Effect.Effect<PgliteClient, E, R>
+  acquire: Effect.Effect<PgliteClient & Client.SqlClient, E, R>
 ): Layer.Layer<PgliteClient | Client.SqlClient, E, Exclude<R, Scope.Scope | Reactivity.Reactivity>> =>
   Layer.effectContext(
     Effect.map(acquire, (client) =>
