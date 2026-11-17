@@ -23,13 +23,24 @@ jobs:
       contents: read
       # Coverage report comment
       pull-requests: write
+      # Lint SARIF upload to code scanning
+      security-events: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
       - name: Lint
-        run: pnpm run lint --format=github
+        id: lint
+        # Code scanning annotates every finding; --format=github stops at 10 per step
+        run: pnpm --silent run lint --format=sarif > oxlint.sarif
+      - name: Upload lint results
+        # A fork PR's token can't upload, so it gets only the failing step
+        if: ${{ !cancelled() && steps.lint.outcome != 'skipped' && !github.event.pull_request.head.repo.fork }}
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 #v4.39.1
+        with:
+          sarif_file: oxlint.sarif
+          category: oxlint
       - name: Typecheck
         run: pnpm run tsc:check
       - name: Test
