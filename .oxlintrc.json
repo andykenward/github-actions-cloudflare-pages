@@ -30,6 +30,8 @@
     "repos"
   ],
   "rules": {
+    // @effect/vitest and effect/http are unstable but required here
+    "effecttsgo/unstable-api-usage": "off",
     "@typescript-eslint/await-thenable": "error",
     "@typescript-eslint/ban-ts-comment": "error",
     "@typescript-eslint/consistent-type-imports": "error",

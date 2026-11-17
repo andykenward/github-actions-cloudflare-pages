@@ -17,7 +17,10 @@ import {GitHubApi, GitHubApiError} from './api/client.js'
 import {GitHubContext} from './context.js'
 
 // oxlint-disable-next-line unicorn/throw-new-error
-class CommentError extends Schema.TaggedError<CommentError>()('CommentError', {
+class CommentError extends Schema.TaggedError<
+  CommentError,
+  {readonly brand: unique symbol}
+>()('CommentError', {
   message: Schema.String
 }) {}
 

@@ -61,7 +61,10 @@ const requestFailedMessage = (url: string): string =>
  * docs key on (e.g. `8000009`, not found).
  */
 // oxlint-disable-next-line unicorn/throw-new-error
-export class ApiErrors extends Schema.TaggedError<ApiErrors>()('ApiErrors', {
+export class ApiErrors extends Schema.TaggedError<
+  ApiErrors,
+  {readonly brand: unique symbol}
+>()('ApiErrors', {
   url: Schema.String,
   status: Schema.Number,
   errors: Schema.Array(FetchError)
@@ -73,7 +76,10 @@ export class ApiErrors extends Schema.TaggedError<ApiErrors>()('ApiErrors', {
 
 /** A non-2xx response without an envelope, e.g. an HTML 502 from the edge. */
 // oxlint-disable-next-line unicorn/throw-new-error
-export class HttpError extends Schema.TaggedError<HttpError>()('HttpError', {
+export class HttpError extends Schema.TaggedError<
+  HttpError,
+  {readonly brand: unique symbol}
+>()('HttpError', {
   url: Schema.String,
   status: Schema.Number,
   statusText: Schema.String
@@ -81,17 +87,17 @@ export class HttpError extends Schema.TaggedError<HttpError>()('HttpError', {
 
 /** A 2xx envelope without the `result` the caller needs. */
 // oxlint-disable-next-line unicorn/throw-new-error
-export class MissingResult extends Schema.TaggedError<MissingResult>()(
-  'MissingResult',
-  {url: Schema.String}
-) {}
+export class MissingResult extends Schema.TaggedError<
+  MissingResult,
+  {readonly brand: unique symbol}
+>()('MissingResult', {url: Schema.String}) {}
 
 /** The request itself failed: a network error, or an aborted fetch. */
 // oxlint-disable-next-line unicorn/throw-new-error
-export class RequestError extends Schema.TaggedError<RequestError>()(
-  'RequestError',
-  {cause: Schema.Defect()}
-) {}
+export class RequestError extends Schema.TaggedError<
+  RequestError,
+  {readonly brand: unique symbol}
+>()('RequestError', {cause: Schema.Defect()}) {}
 
 const reasonMessage = (
   reason: ApiErrors | HttpError | MissingResult | RequestError
@@ -134,13 +140,13 @@ const reasonMessage = (
  * the message. Nothing is annotated here: the caller reports the failure.
  */
 // oxlint-disable-next-line unicorn/throw-new-error
-export class CloudflareApiError extends Schema.TaggedError<CloudflareApiError>()(
-  'CloudflareApiError',
-  {
-    message: Schema.String,
-    reason: Schema.Union([ApiErrors, HttpError, MissingResult, RequestError])
-  }
-) {
+export class CloudflareApiError extends Schema.TaggedError<
+  CloudflareApiError,
+  {readonly brand: unique symbol}
+>()('CloudflareApiError', {
+  message: Schema.String,
+  reason: Schema.Union([ApiErrors, HttpError, MissingResult, RequestError])
+}) {
   static readonly from = (
     reason: CloudflareApiError['reason']
   ): CloudflareApiError =>

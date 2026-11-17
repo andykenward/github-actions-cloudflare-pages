@@ -54,13 +54,13 @@ export const formatGraphqlErrors = (
 ): string => JSON.stringify(errors)
 
 // oxlint-disable-next-line unicorn/throw-new-error
-export class GitHubApiError extends Schema.TaggedError<GitHubApiError>()(
-  'GitHubApiError',
-  {
-    message: Schema.String,
-    cause: Schema.Defect()
-  }
-) {
+export class GitHubApiError extends Schema.TaggedError<
+  GitHubApiError,
+  {readonly brand: unique symbol}
+>()('GitHubApiError', {
+  message: Schema.String,
+  cause: Schema.Defect()
+}) {
   static readonly from = (cause: unknown): GitHubApiError =>
     new GitHubApiError({message: errorMessage(cause), cause})
 

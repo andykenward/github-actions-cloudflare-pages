@@ -36,13 +36,13 @@ const BUILD_OUTCOMES = {
 } as const satisfies Record<BuildEndedStatus, string>
 
 // oxlint-disable-next-line unicorn/throw-new-error
-class CreateDeploymentError extends Schema.TaggedError<CreateDeploymentError>()(
-  'CreateDeploymentError',
-  {
-    message: Schema.String,
-    cause: Schema.optional(Schema.Defect())
-  }
-) {
+class CreateDeploymentError extends Schema.TaggedError<
+  CreateDeploymentError,
+  {readonly brand: unique symbol}
+>()('CreateDeploymentError', {
+  message: Schema.String,
+  cause: Schema.optional(Schema.Defect())
+}) {
   /** Prefixed, so a failed summary write is attributable in the annotation. */
   static readonly from = (cause: unknown): CreateDeploymentError =>
     new CreateDeploymentError({

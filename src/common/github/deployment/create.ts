@@ -19,10 +19,10 @@ import {deploymentStatusInput} from './deployment-status.js'
 import {PayloadV2} from './types.js'
 
 // oxlint-disable-next-line unicorn/throw-new-error
-class GitHubDeploymentError extends Schema.TaggedError<GitHubDeploymentError>()(
-  'GitHubDeploymentError',
-  {message: Schema.String}
-) {}
+class GitHubDeploymentError extends Schema.TaggedError<
+  GitHubDeploymentError,
+  {readonly brand: unique symbol}
+>()('GitHubDeploymentError', {message: Schema.String}) {}
 
 /**
  * Writes the payload through the same schema `getPayload` decodes it with, so
