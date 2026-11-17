@@ -36,8 +36,9 @@ jobs:
 
   pr-comment:
     needs: pr-status
-    # Fork and Dependabot PRs get a read-only token on `pull_request`.
-    if: ${{ !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' }}
+    # Fork PRs get a read-only token on `pull_request`. Dependabot PRs get the
+    # `permissions` below, as deploy.yml's PR comment shows.
+    if: ${{ !github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-slim
     timeout-minutes: 5
     permissions:
