@@ -12,6 +12,7 @@
  * @since 4.0.0
  */
 import type { NonEmptyReadonlyArray } from "../Array.ts"
+import * as Bytes from "../Bytes.ts"
 import * as Cause from "../Cause.ts"
 import * as Context from "../Context.ts"
 import * as Deferred from "../Deferred.ts"
@@ -30,6 +31,7 @@ import * as Option from "../Option.ts"
 import * as Predicate from "../Predicate.ts"
 import * as Pull from "../Pull.ts"
 import * as Queue from "../Queue.ts"
+import * as Runtime from "../Runtime.ts"
 import * as Schedule from "../Schedule.ts"
 import * as Schema from "../Schema.ts"
 import * as SchemaIssue from "../SchemaIssue.ts"
@@ -44,6 +46,7 @@ import type * as Types from "../Types.ts"
 import * as Transferable from "../workers/Transferable.ts"
 import type { WorkerError } from "../workers/WorkerError.ts"
 import * as WorkerRunner from "../workers/WorkerRunner.ts"
+import * as RpcTracing from "./internal/tracing.ts"
 import * as Rpc from "./Rpc.ts"
 import type * as RpcGroup from "./RpcGroup.ts"
 import type {
@@ -71,7 +74,9 @@ import { withRun } from "./Utils.ts"
  */
 export interface RpcServer<A extends Rpc.Any> {
   readonly write: (clientId: number, message: FromClient<A>, options?: {
-    readonly onRequest?: (<A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>) | undefined
+    readonly onRequest?:
+      | (<X, E, R>(effect: Effect.Effect<X, E, R>, request: Request<A>) => Effect.Effect<X, E, R>)
+      | undefined
   }) => Effect.Effect<void>
   readonly disconnect: (clientId: number) => Effect.Effect<void>
 }
@@ -80,6 +85,21 @@ export interface RpcServer<A extends Rpc.Any> {
  * Creates an RPC server for an already-decoded message channel, running
  * handlers for a group and sending decoded server responses through
  * `onFromServer`.
+ *
+ * **Details**
+ *
+ * If writing a stream `Chunk` fails with anything other than an interruption,
+ * the request fails with that cause. `onFromServer` is assumed to have already
+ * answered the client and reported it, so nothing else is sent or reported.
+ *
+ * A request with `isNotification` set runs like any other, but no `Exit`,
+ * `Chunk` or `Defect` is sent for it. Its failures are still reported.
+ *
+ * A request with `discard` set is acknowledged with a successful `Exit` once
+ * its handler starts, after the concurrency permit is taken and the
+ * middleware has run. Nothing else is sent for it after that, and its
+ * failures are only reported. A failure before the acknowledgement is sent as
+ * a failed `Exit` for that request.
  *
  * @stability unstable
  * @category constructors
@@ -117,7 +137,7 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
   const enableTracing = options.disableTracing !== true
   const enableSpanPropagation = options.disableSpanPropagation !== true
   const supportsAck = options.disableClientAcks !== true
-  const spanPrefix = options.spanPrefix ?? "RpcServer"
+  const spanPrefix = options.spanPrefix
   const concurrency = options.concurrency ?? "unbounded"
   const disableFatalDefects = options.disableFatalDefects ?? false
   const services = yield* Effect.context<Rpc.ToHandler<Rpcs> | Scope.Scope>()
@@ -187,7 +207,7 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
           clients.set(clientId, client)
         } else if (
           client.ended &&
-          (message._tag !== "Interrupt" || !client.fibers.has(message.requestId))
+          ((message._tag !== "Interrupt" && message._tag !== "Ack") || !client.fibers.has(message.requestId))
         ) {
           return Effect.interrupt
         }
@@ -198,7 +218,7 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
           }
           case "Ack": {
             const latch = client.latches?.get(message.requestId)
-            return latch ? latch.open : Effect.void
+            return latch ? Effect.asVoid(latch.open) : Effect.void
           }
           case "Interrupt": {
             const fiber = client.fibers.get(message.requestId)
@@ -247,16 +267,23 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
     if (client.fibers.has(request.id)) {
       return Effect.interrupt
     }
+    const isNotification = request.isNotification === true
+    const isDiscard = !isNotification && request.discard === true
+    let acknowledged = false
+    // a notification, or a discarded call once it has been acknowledged, gets
+    // no reply of any kind
+    const respond = (exit: Exit.Exit<any, any>): Effect.Effect<void> =>
+      isNotification || acknowledged ? Effect.void : options.onFromServer({
+        _tag: "Exit",
+        clientId: client.id,
+        requestId: request.id,
+        exit
+      })
     const rpc = group.requests.get(request.tag) as any as Rpc.AnyWithProps
     const entry = Context.getOrUndefinedUnsafe(services, rpc?.key) as Rpc.Handler<Rpcs["_tag"]>
     if (!rpc || !entry) {
       const write = Effect.catchDefect(
-        options.onFromServer({
-          _tag: "Exit",
-          clientId: client.id,
-          requestId: request.id,
-          exit: Exit.die(`Unknown request tag: ${request.tag}`)
-        }),
+        respond(Exit.die(`Unknown request tag: ${request.tag}`)),
         (defect) => sendDefect(client, defect)
       )
       if (!client.ended || client.fibers.size > 0) return write
@@ -270,7 +297,18 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
       headers: request.headers,
       payload: request.payload
     }
-    const result = entry.handler(request.payload, metadata)
+    let handlerResult: ReturnType<typeof entry.handler>
+    // a handler that throws while being constructed never starts, so it is
+    // neither streamed nor acknowledged
+    let constructionFailed = false
+    try {
+      handlerResult = entry.handler(request.payload, metadata)
+    } catch (defect) {
+      handlerResult = Effect.die(defect)
+      constructionFailed = true
+    }
+    // a const, so that the narrowing below can be aliased
+    const result = handlerResult
 
     // if the handler requested forking, then we skip the concurrency control
     const isWrapper = Rpc.isWrapper(result)
@@ -278,13 +316,35 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
     const isUninterruptible = isWrapper && result.uninterruptible
     // unwrap the fork data type
     const streamOrEffect = isWrapper ? result.value : result
-    const handler = isStream
-      ? (streamEffect(client, request, streamOrEffect) as Effect.Effect<{} | Deferred.Deferred<any, any>>)
+    // set when a chunk could not be written; the writer has already responded
+    let writeFailure: Cause.Cause<never> | undefined
+    let handler = isStream && !constructionFailed
+      ? (streamEffect(client, request, streamOrEffect, (cause) => {
+        writeFailure = cause
+      }) as Effect.Effect<{} | Deferred.Deferred<any, any>>)
       : (streamOrEffect as Effect.Effect<{} | Deferred.Deferred<any, any>>)
+    if (isDiscard && !constructionFailed) {
+      // the acknowledgement runs inside the middleware, so it is only sent
+      // once the permit is held and the middleware has started the handler
+      handler = Effect.andThen(
+        Effect.suspend(() => {
+          const ack = respond(Exit.void)
+          acknowledged = true
+          return ack
+        }),
+        handler
+      )
+    }
 
-    const withMiddleware = rpc.middlewares.size > 0
-      ? applyMiddleware(services, handler, metadata)
-      : handler
+    const withMiddleware = rpc.middlewares.size === 0
+      ? handler
+      : isStream
+      // middleware may rewrite or swallow a chunk write failure, so restore it
+      ? Effect.flatMap(
+        Effect.exit(applyMiddleware(services, handler, metadata)),
+        (exit) => writeFailure ? Effect.failCause(writeFailure) : exit
+      )
+      : applyMiddleware(services, handler, metadata)
     let responded = false
     const scope = Scope.makeUnsafe()
     let deferred: Deferred.Deferred<unknown, unknown> | undefined = undefined
@@ -296,26 +356,22 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
           deferred = exit.value
           write = Effect.void
         } else {
-          write = options.onFromServer({
-            _tag: "Exit",
-            clientId: client.id,
-            requestId: request.id,
-            exit: exit as any
-          })
+          write = respond(exit)
         }
+      } else if (writeFailure) {
+        // onFromServer has already answered the client and reported the failure
+        return Scope.closeUnsafe(scope, exit) ?? Effect.void
       } else if (
         !disableFatalDefects &&
+        // a notification or a discarded call only ever fails itself
+        !isNotification &&
+        !isDiscard &&
         Cause.hasDies(exit.cause) &&
         !Cause.hasInterrupts(exit.cause)
       ) {
         write = sendDefect(client, Cause.squash(exit.cause))
       } else {
-        write = options.onFromServer({
-          _tag: "Exit",
-          clientId: client.id,
-          requestId: request.id,
-          exit: exit as any
-        })
+        write = respond(exit)
       }
       const close = Scope.closeUnsafe(scope, exit)
       if (exit._tag === "Failure") {
@@ -324,16 +380,17 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
       return close ? Effect.ensuring(write, close) : write
     })
     if (opts?.onRequest) {
-      effect = opts.onRequest(effect)
+      effect = opts.onRequest(effect, request)
     }
     if (enableTracing) {
       const parentSpan = Context.getOrUndefined(
         requestFiber.context,
         Tracer.ParentSpan
       )
-      effect = Effect.withSpan(effect, `${spanPrefix}.${request.tag}`, {
+      effect = Effect.withSpan(effect, RpcTracing.spanName(spanPrefix, request.tag), {
         captureStackTrace: false,
-        attributes: options.spanAttributes,
+        kind: "server",
+        attributes: RpcTracing.spanAttributes(request.tag, options.spanAttributes),
         parent: enableSpanPropagation && request.spanId
           ? Tracer.externalSpan({
             traceId: request.traceId!,
@@ -359,36 +416,34 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
     )
     const fiber = trackFiber(
       runFork(
-        effect,
+        // Register before the handler runs to catch synchronous cancellation.
+        Effect.withFiber((fiber) => {
+          client.fibers.set(request.id, fiber)
+          return effect
+        }),
         isUninterruptible ? { uninterruptible: true } : undefined
       )
     )
-    client.fibers.set(request.id, fiber)
     fiber.addObserver(function onExit(exit: Exit.Exit<any, any>): void {
       if (deferred) {
-        const fiber = trackFiber(runFork(Effect.onExit(Deferred.await(deferred), (exit) =>
-          options.onFromServer({
-            _tag: "Exit",
-            clientId: client.id,
-            requestId: request.id,
-            exit: exit as any
-          }))))
+        const fiber = trackFiber(
+          runFork(
+            Effect.onExit(Deferred.await(deferred), (exit) => {
+              // a failure with no reply to carry it is only reported
+              if (exit._tag === "Failure" && (isNotification || acknowledged)) {
+                reportCauseUnsafe(Fiber.getCurrent()!, exit.cause)
+              }
+              return respond(exit)
+            })
+          )
+        )
         client.fibers.set(request.id, fiber)
         deferred = undefined
         fiber.addObserver(onExit)
         return
       }
-      if (!responded && exit._tag === "Failure") {
-        trackFiber(
-          runFork(
-            options.onFromServer({
-              _tag: "Exit",
-              clientId: client.id,
-              requestId: request.id,
-              exit: Exit.interrupt()
-            })
-          )
-        )
+      if (!responded && !isNotification && !acknowledged && exit._tag === "Failure") {
+        trackFiber(runFork(respond(Exit.interrupt())))
       }
       client.fibers.delete(request.id)
       client.latches?.delete(request.id)
@@ -404,10 +459,22 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
     request: Request<Rpcs>,
     stream:
       | Stream.Stream<any, any>
-      | Effect.Effect<Queue.Dequeue<any, any>, any, Scope.Scope>
+      | Effect.Effect<Queue.Dequeue<any, any>, any, Scope.Scope>,
+    onWriteFailure: (cause: Cause.Cause<never>) => void
   ) => {
+    // the chunks of a notification or a discarded call have no reader, so they
+    // are neither sent nor acknowledged
+    const silent = request.isNotification === true || request.discard === true
+    const writeChunk = (values: NonEmptyReadonlyArray<any>) =>
+      silent ? Effect.void : Effect.onError(
+        options.onFromServer({ _tag: "Chunk", clientId: client.id, requestId: request.id, values }),
+        (cause) => {
+          if (!Cause.hasInterruptsOnly(cause)) onWriteFailure(cause)
+          return Effect.void
+        }
+      )
     let latch: Latch.Latch | undefined
-    if (supportsAck) {
+    if (supportsAck && !silent) {
       client.latches ??= new Map()
       latch = client.latches.get(request.id)
       if (!latch) {
@@ -422,12 +489,7 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
             while: constTrue,
             body: constant(
               Effect.flatMap(Queue.takeAll(queue), (values) => {
-                const write = options.onFromServer({
-                  _tag: "Chunk",
-                  clientId: client.id,
-                  requestId: request.id,
-                  values
-                })
+                const write = writeChunk(values)
                 if (!latch) return write
                 latch.closeUnsafe()
                 return Effect.flatMap(write, () => latch.await)
@@ -441,12 +503,7 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
       )
     }
     return Stream.runForEachArray(stream, (values) => {
-      const write = options.onFromServer({
-        _tag: "Chunk",
-        clientId: client.id,
-        requestId: request.id,
-        values
-      })
+      const write = writeChunk(values)
       if (!latch) return write
       latch.closeUnsafe()
       return Effect.andThen(write, latch.await)
@@ -470,6 +527,59 @@ export const makeNoSerialization: <Rpcs extends Rpc.Any>(
     disconnect
   })
 })
+
+// Built-in JSON codecs depend only on the RPC schemas and can be shared.
+// Other factories may capture state at construction, so keep them per server.
+const isSharedCodecFor = (codecFor: RpcSerialization.CodecFor) => codecFor === RpcSerialization.json.codecFor
+
+interface RpcCodecs {
+  readonly decode: (u: unknown) => Effect.Effect<any, Schema.SchemaError>
+  readonly encodeChunk: (
+    u: NonEmptyReadonlyArray<unknown>
+  ) => Effect.Effect<NonEmptyReadonlyArray<unknown>, Schema.SchemaError>
+  readonly encodeExit: (u: unknown) => Effect.Effect<ResponseExitEncoded["exit"], Schema.SchemaError>
+}
+
+const sharedRpcCodecs = new WeakMap<Rpc.AnyWithProps, RpcCodecs>()
+
+const rpcCodecs = (codecFor: RpcSerialization.CodecFor, rpc: Rpc.AnyWithProps): RpcCodecs => {
+  const shared = isSharedCodecFor(codecFor)
+  let codecs = shared ? sharedRpcCodecs.get(rpc) : undefined
+  if (codecs === undefined) {
+    const streamSchemas = RpcSchema.getStreamSchemas(rpc.successSchema)
+    const parseOptions = Context.get(rpc.annotations, Rpc.ParseOptions)
+    codecs = {
+      decode: Schema.decodeUnknownEffect(codecFor(rpc.payloadSchema), parseOptions) as any,
+      encodeChunk: Schema.encodeUnknownEffect(
+        codecFor(
+          Schema.NonEmptyArray(Option.isSome(streamSchemas) ? streamSchemas.value.success : Schema.Any)
+        ),
+        parseOptions
+      ) as any,
+      encodeExit: Schema.encodeUnknownEffect(codecFor(Rpc.exitSchema(rpc as any)), parseOptions) as any
+    }
+    if (shared) sharedRpcCodecs.set(rpc, codecs)
+  }
+  return codecs
+}
+
+interface DefectCodecs {
+  readonly encodeDefectUnsafe: (defect: unknown) => unknown
+  readonly encodeUnknownRequestExit: (u: unknown) => Effect.Effect<ResponseExitEncoded["exit"], Schema.SchemaError>
+}
+
+let sharedDefectCodecs: DefectCodecs | undefined
+
+const makeDefectCodecs = (codecFor: RpcSerialization.CodecFor): DefectCodecs => ({
+  encodeDefectUnsafe: Schema.encodeSync(codecFor(Schema.Defect())),
+  // Unknown tags have no RPC schema, so use a defect-only exit schema.
+  encodeUnknownRequestExit: Schema.encodeUnknownEffect(
+    codecFor(Schema.Exit(Schema.Never, Schema.Never, Schema.Defect()))
+  ) as any
+})
+
+const defectCodecs = (codecFor: RpcSerialization.CodecFor): DefectCodecs =>
+  isSharedCodecFor(codecFor) ? (sharedDefectCodecs ??= makeDefectCodecs(codecFor)) : makeDefectCodecs(codecFor)
 
 // Merging the handler entry services with the request fiber services costs
 // O(services), so the merged context is cached per (entry, fiber context)
@@ -521,6 +631,35 @@ const applyMiddleware = <A, E, R>(
  * requests, invoking handlers, encoding responses, and managing in-flight
  * request lifetime.
  *
+ * **Details**
+ *
+ * The server consumes `Protocol.disconnects` to interrupt a disconnected
+ * client's requests, so use the `onDisconnect` option to observe disconnects
+ * instead of taking from that queue.
+ *
+ * `onRequest` wraps the effect that runs one decoded request: its middleware
+ * and handler and, when the handler returns its result directly, the response
+ * write. The wrapped effect is interrupted when the request is cancelled, its
+ * client disconnects or the server stops. It runs inside the request's tracing
+ * span unless tracing is disabled.
+ *
+ * `onDisconnect` is called for each disconnect reported by the `Protocol`,
+ * after the server has requested interruption of that client's in-flight
+ * requests. It does not wait for those requests to finish. It is not called
+ * when a client ends its input normally, or for clients still connected when
+ * the server stops.
+ *
+ * Each callback runs in its own fiber, so a slow callback does not delay
+ * cleanup for other clients, and callbacks may run concurrently. Pending
+ * callbacks are interrupted when the server stops. Failures are ignored and
+ * logged at `References.UnhandledLogLevel`.
+ *
+ * **Gotchas**
+ *
+ * When a handler succeeds with a `Deferred`, the effect wrapped by
+ * `onRequest` ends at that point. The reply is sent once the `Deferred`
+ * completes, outside the wrapped effect.
+ *
  * @stability unstable
  * @category running
  * @since 4.0.0
@@ -534,6 +673,10 @@ export const make: <Rpcs extends Rpc.Any>(
       readonly spanAttributes?: Record<string, unknown> | undefined
       readonly concurrency?: number | "unbounded" | undefined
       readonly disableFatalDefects?: boolean | undefined
+      readonly onRequest?:
+        | (<X, E, R>(effect: Effect.Effect<X, E, R>, request: Request<Rpcs>) => Effect.Effect<X, E, R>)
+        | undefined
+      readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined
     }
     | undefined
 ) => Effect.Effect<
@@ -551,6 +694,10 @@ export const make: <Rpcs extends Rpc.Any>(
     readonly spanAttributes?: Record<string, unknown> | undefined
     readonly concurrency?: number | "unbounded" | undefined
     readonly disableFatalDefects?: boolean | undefined
+    readonly onRequest?:
+      | (<X, E, R>(effect: Effect.Effect<X, E, R>, request: Request<Rpcs>) => Effect.Effect<X, E, R>)
+      | undefined
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined
   }
 ) {
   const {
@@ -563,10 +710,11 @@ export const make: <Rpcs extends Rpc.Any>(
     supportsSpanPropagation,
     supportsTransferables
   } = yield* Protocol
-  const encodeDefectUnsafe = Schema.encodeSync(codecFor(Schema.Defect()))
+  const { encodeDefectUnsafe, encodeUnknownRequestExit } = defectCodecs(codecFor)
   const services = yield* Effect.context<Rpc.ToHandler<Rpcs> | Rpc.Middleware<Rpcs>>()
   const scope = yield* Scope.make()
 
+  const writeOptions = options?.onRequest ? { onRequest: options.onRequest } : undefined
   const server = yield* makeNoSerialization(group, {
     ...options,
     disableClientAcks: !supportsAck,
@@ -610,13 +758,24 @@ export const make: <Rpcs extends Rpc.Any>(
   }).pipe(Scope.provide(scope))
 
   // handle disconnects
+  const onDisconnect = options?.onDisconnect
+  const handleDisconnect = onDisconnect
+    ? (clientId: number) =>
+      Effect.andThen(
+        server.disconnect(clientId),
+        Effect.ignoreCause(Effect.suspend(() => onDisconnect(clientId)), {
+          log: "Unhandled",
+          message: "RpcServer onDisconnect hook failed"
+        }).pipe(Effect.forkIn(scope))
+      )
+    : server.disconnect
   yield* Effect.forkChild(
     Effect.whileLoop({
       while: constTrue,
       body: constant(
         Effect.flatMap(Queue.take(disconnects), (clientId) => {
           clients.delete(clientId)
-          return server.disconnect(clientId)
+          return handleDisconnect(clientId)
         })
       ),
       step: constVoid
@@ -624,12 +783,12 @@ export const make: <Rpcs extends Rpc.Any>(
   )
 
   type Schemas = {
+    readonly tag: string
     readonly decode: (u: unknown) => Effect.Effect<Rpc.Payload<Rpcs>, Schema.SchemaError>
     readonly encodeChunk: (
       u: NonEmptyReadonlyArray<unknown>
     ) => Effect.Effect<NonEmptyReadonlyArray<unknown>, Schema.SchemaError>
     readonly encodeExit: (u: unknown) => Effect.Effect<ResponseExitEncoded["exit"], Schema.SchemaError>
-    readonly encodeDefect: (u: unknown) => Effect.Effect<unknown, Schema.SchemaError>
     readonly context: Context.Context<never>
     readonly collector?: Transferable.Collector["Service"] | undefined
   }
@@ -639,21 +798,33 @@ export const make: <Rpcs extends Rpc.Any>(
     let schemas = schemasCache.get(rpc)
     if (!schemas) {
       const entry = Context.getOrUndefinedUnsafe(services, rpc.key) as Rpc.Handler<Rpcs["_tag"]>
-      const streamSchemas = RpcSchema.getStreamSchemas(rpc.successSchema)
       schemas = {
-        decode: Schema.decodeUnknownEffect(codecFor(rpc.payloadSchema)) as any,
-        encodeChunk: Schema.encodeUnknownEffect(
-          codecFor(
-            Schema.NonEmptyArray(Option.isSome(streamSchemas) ? streamSchemas.value.success : Schema.Any)
-          )
-        ) as any,
-        encodeExit: Schema.encodeUnknownEffect(codecFor(Rpc.exitSchema(rpc as any))) as any,
-        encodeDefect: Schema.encodeUnknownEffect(codecFor(rpc.defectSchema)) as any,
+        tag: rpc._tag,
+        ...rpcCodecs(codecFor, rpc),
         context: entry.context
       }
       schemasCache.set(rpc, schemas)
     }
     return schemas
+  }
+
+  // The only successful Exit sent for a discarded call is its acknowledgement,
+  // which carries no value, so its Exits are encoded with a void success.
+  const discardSchemasCache = new WeakMap<any, Schemas>()
+  const getDiscardSchemas = (rpc: Rpc.AnyWithProps, schemas: Schemas) => {
+    let discardSchemas = discardSchemasCache.get(rpc)
+    if (!discardSchemas) {
+      const exitSchema = Rpc.exitSchema(rpc as any)
+      discardSchemas = {
+        ...schemas,
+        encodeExit: Schema.encodeUnknownEffect(
+          codecFor(Schema.Exit(Schema.Void, exitSchema.error, exitSchema.defect)),
+          Context.get(rpc.annotations, Rpc.ParseOptions)
+        ) as any
+      }
+      discardSchemasCache.set(rpc, discardSchemas)
+    }
+    return discardSchemas
   }
 
   type Client = {
@@ -679,23 +850,38 @@ export const make: <Rpcs extends Rpc.Any>(
     tag: "Chunk" | "Exit"
   ) => {
     const collector = schemas.collector
+    let encodeFailed = false
     // The schema encoders evaluate eagerly, so an encode that needs no
     // services is already a resolved success and can skip the effect wrappers.
     const write = Exit.isExit(effect) && Exit.isSuccess(effect)
       ? send(client.id, responseEnvelope(requestId, tag, effect.value), collector && collector.clearUnsafe())
       : Effect.flatMap(
-        Effect.provideContext(
-          collector ? Effect.provideService(effect, Transferable.Collector, collector) : effect,
-          schemas.context
+        Effect.catch(
+          Effect.provideContext(
+            collector ? Effect.provideService(effect, Transferable.Collector, collector) : effect,
+            schemas.context
+          ),
+          (error) =>
+            Effect.withFiber((fiber) => {
+              const defect = Cause.die(
+                `Failed to encode response for RPC "${schemas.tag}": ${SchemaIssue.defaultFormatter(error.issue)}`
+              )
+              reportCauseUnsafe(fiber, defect)
+              encodeFailed = true
+              return Effect.failCause(defect)
+            })
         ),
         (value) => send(client.id, responseEnvelope(requestId, tag, value), collector && collector.clearUnsafe())
       )
     return Effect.catchCause(write, (cause) => {
       client.schemas.delete(requestId)
-      const defect = Cause.squash(Cause.map(cause, (e) => SchemaIssue.defaultFormatter(e.issue)))
+      // An encode failure ends the request with the defect, so the request
+      // span records it. Other failures stop the request as a cancellation.
       return Effect.andThen(
-        sendRequestDefect(client, requestId, schemas.encodeDefect, defect),
-        server.write(client.id, { _tag: "Interrupt", requestId, interruptors: [] })
+        sendRequestDefect(client, requestId, schemas.encodeExit, Cause.squash(cause)),
+        encodeFailed
+          ? Effect.failCause(cause)
+          : server.write(client.id, { _tag: "Interrupt", requestId, interruptors: [] })
       )
     })
   }
@@ -703,22 +889,14 @@ export const make: <Rpcs extends Rpc.Any>(
   const sendRequestDefect = (
     client: Client,
     requestId: RequestId,
-    encodeDefect: (u: unknown) => Effect.Effect<unknown, Schema.SchemaError>,
+    encodeExit: Schemas["encodeExit"],
     defect: unknown
   ) =>
     Effect.catchCause(
-      Effect.flatMap(encodeDefect(defect), (encodedDefect) =>
-        send(client.id, {
-          _tag: "Exit",
-          requestId,
-          exit: {
-            _tag: "Failure",
-            cause: [{
-              _tag: "Die",
-              defect: encodedDefect
-            }]
-          }
-        })),
+      Effect.flatMap(
+        encodeExit(Exit.die(defect)),
+        (exit) => send(client.id, responseEnvelope(requestId, "Exit", exit))
+      ),
       (cause) => sendDefect(client, Cause.squash(cause))
     )
 
@@ -732,6 +910,13 @@ export const make: <Rpcs extends Rpc.Any>(
         })
     )
 
+  // a notification has no reply to carry the error, so it is only logged
+  const dropNotification = (reason: string) =>
+    Effect.annotateLogs(Effect.logDebug(`Dropped RPC notification: ${reason}`), {
+      module: "RpcServer",
+      method: "dropNotification"
+    })
+
   const writeDecodedRequest = (
     client: Client,
     requestId: RequestId,
@@ -739,23 +924,39 @@ export const make: <Rpcs extends Rpc.Any>(
     request: RequestEncoded,
     payload: unknown
   ) => {
-    client.schemas.set(
-      requestId,
-      supportsTransferables
-        ? {
-          ...schemas,
-          collector: Transferable.makeCollectorUnsafe()
-        }
-        : schemas
-    )
+    // the headers come from the wire unvalidated, and malformed input makes
+    // `Headers.fromInput` throw
+    let headers: Headers.Headers
+    try {
+      headers = Headers.fromInput(request.headers)
+    } catch {
+      const reason = "Invalid request headers"
+      return request.isNotification === true
+        ? dropNotification(reason)
+        : sendRequestDefect(client, requestId, schemas.encodeExit, reason)
+    }
+    // nothing is encoded for a notification, and only a reply would remove its schemas
+    if (request.isNotification !== true) {
+      client.schemas.set(
+        requestId,
+        supportsTransferables
+          ? {
+            ...schemas,
+            collector: Transferable.makeCollectorUnsafe()
+          }
+          : schemas
+      )
+    }
     // the envelope is owned by this protocol loop, so it is decoded in place
     // instead of copied for every request
     const decoded = request as Types.Mutable<RequestEncoded>
     decoded.id = requestId
     decoded.payload = payload
-    decoded.headers = Headers.fromInput(request.headers) as any
-    return server.write(client.id, decoded as any)
+    decoded.headers = headers as any
+    return server.write(client.id, decoded as any, writeOptions)
   }
+
+  let notificationCount = 0
 
   // main server loop
   return yield* run((clientId, request) => {
@@ -771,35 +972,51 @@ export const make: <Rpcs extends Rpc.Any>(
     switch (request._tag) {
       case "Request": {
         const tag = Object.hasOwn(request, "tag") ? (request.tag as string) : ""
+        const isNotification = request.isNotification === true
         let requestId: RequestId
-        switch (typeof request.id) {
-          case "number":
-          case "string": {
-            requestId = RequestId(request.id)
-            break
-          }
-          default: {
-            return sendDefect(client, `Invalid request id: ${request.id}`)
+        if (isNotification) {
+          // JSON-RPC notifications share an empty id, and no reply ever names one
+          requestId = RequestId(`@effect/rpc/notification/${notificationCount++}`)
+        } else {
+          switch (typeof request.id) {
+            case "number":
+            case "string": {
+              requestId = RequestId(request.id)
+              break
+            }
+            default: {
+              return sendDefect(client, `Invalid request id: ${request.id}`)
+            }
           }
         }
         const rpc = group.requests.get(tag)
         if (!rpc) {
-          return sendRequestDefect(client, requestId, (defect) => Effect.succeed(defect), `Unknown request tag: ${tag}`)
+          const reason = `Unknown request tag: ${tag}`
+          return isNotification
+            ? dropNotification(reason)
+            : sendRequestDefect(client, requestId, encodeUnknownRequestExit, reason)
         }
         const schemas = getSchemas(rpc as any)
+        const replySchemas = !isNotification && request.discard === true
+          ? getDiscardSchemas(rpc as any, schemas)
+          : schemas
         const decoded = schemas.decode(request.payload)
         // The schema decoders evaluate eagerly, so a decode that needs no
         // services is already a resolved success and can skip the effect
         // wrappers.
         if (Exit.isExit(decoded) && Exit.isSuccess(decoded)) {
-          return writeDecodedRequest(client, requestId, schemas, request, decoded.value)
+          return writeDecodedRequest(client, requestId, replySchemas, request, decoded.value)
         }
         return Effect.matchEffect(
           Effect.provideContext(decoded, schemas.context),
           {
-            onFailure: (error) =>
-              sendRequestDefect(client, requestId, schemas.encodeDefect, SchemaIssue.defaultFormatter(error.issue)),
-            onSuccess: (payload) => writeDecodedRequest(client, requestId, schemas, request, payload)
+            onFailure: (error) => {
+              const reason = SchemaIssue.defaultFormatter(error.issue)
+              return isNotification
+                ? dropNotification(reason)
+                : sendRequestDefect(client, requestId, replySchemas.encodeExit, reason)
+            },
+            onSuccess: (payload) => writeDecodedRequest(client, requestId, replySchemas, request, payload)
           }
         )
       }
@@ -847,6 +1064,7 @@ export const layer = <Rpcs extends Rpc.Any>(
     readonly spanAttributes?: Record<string, unknown> | undefined
     readonly concurrency?: number | "unbounded" | undefined
     readonly disableFatalDefects?: boolean | undefined
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined
   }
 ): Layer.Layer<
   never,
@@ -878,6 +1096,7 @@ export const layerHttp = <Rpcs extends Rpc.Any>(options: {
   readonly spanAttributes?: Record<string, unknown> | undefined
   readonly concurrency?: number | "unbounded" | undefined
   readonly disableFatalDefects?: boolean | undefined
+  readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined
   readonly streamBufferSize?: number | "unbounded" | undefined
 }): Layer.Layer<
   never,
@@ -1075,7 +1294,7 @@ export const makeProtocolWithHttpEffect: (
   RpcSerialization.RpcSerialization
 > = Effect.fnUntraced(function*(options = {}) {
   const serialization = yield* RpcSerialization.RpcSerialization
-  const encodeDefectUnsafe = Schema.encodeSync(serialization.codecFor(Schema.Defect()))
+  const { encodeDefectUnsafe } = defectCodecs(serialization.codecFor)
   const includesFraming = serialization.includesFraming
   const isBinary = !serialization.contentType.includes("json")
 
@@ -1138,42 +1357,49 @@ export const makeProtocolWithHttpEffect: (
       end: Queue.end(queue)
     }
 
-    yield* Scope.addFinalizerExit(scope, () => {
-      clients.delete(id)
-      clientIds.delete(id)
-      Queue.offerUnsafe(disconnects, id)
-      if (queue.state._tag === "Done") return Effect.void
-      return Effect.andThen(
-        Queue.shutdown(queue),
-        Effect.forEach(
+    // Ends an unfinished response, failing it with `cause` when given, and interrupts its requests.
+    const terminate = (cause?: Cause.Cause<never>) =>
+      Effect.suspend(() => {
+        if (queue.state._tag === "Done") return Effect.void
+        if (cause) Queue.failCauseUnsafe(queue, cause)
+        Queue.shutdownUnsafe(queue)
+        return Effect.forEach(
           requestIds,
           (requestId) => writeRequest(id, { _tag: "Interrupt", requestId }),
           { discard: true }
         )
-      )
+      })
+    yield* Scope.addFinalizerExit(scope, () => {
+      clients.delete(id)
+      clientIds.delete(id)
+      Queue.offerUnsafe(disconnects, id)
+      return terminate()
     })
     clients.set(id, client)
     clientIds.add(id)
 
-    // @effect-diagnostics-next-line tryCatchInEffectGen:off
-    try {
-      const decoded = parser.decode(data) as ReadonlyArray<FromClientEncoded>
-      for (let i = 0; i < decoded.length; i++) {
-        const message = decoded[i]
-        if (message._tag === "Request") {
-          requestIds.push(RequestId(message.id))
-          ;(message as Types.Mutable<RequestEncoded>).headers = requestHeaders.concat(message.headers)
+    const dispatch = Effect.gen(function*() {
+      // @effect-diagnostics-next-line tryCatchInEffectGen:off
+      try {
+        const decoded = parser.decode(data) as ReadonlyArray<FromClientEncoded>
+        for (let i = 0; i < decoded.length; i++) {
+          const message = decoded[i]
+          if (message._tag === "Request") {
+            requestIds.push(RequestId(message.id))
+            ;(message as Types.Mutable<RequestEncoded>).headers = requestHeaders.concat(message.headers)
+          }
+          yield* writeRequest(id, message)
         }
-        yield* writeRequest(id, message)
+      } catch (cause) {
+        yield* client.write(ResponseDefectEncoded(encodeDefectUnsafe(cause)))
       }
-    } catch (cause) {
-      yield* client.write(ResponseDefectEncoded(encodeDefectUnsafe(cause)))
-    }
-
-    yield* writeRequest(id, constEof)
+      yield* writeRequest(id, constEof)
+    })
 
     if (!includesFraming) {
-      const responses = yield* Queue.collect(queue)
+      yield* dispatch
+      // Allow request aborts during response waits without unmasking response construction.
+      const responses = yield* Effect.interruptible(Queue.collect(queue))
       // Notification-only batches encode without a response body.
       const encoded = parser.encode(responses)
       return HttpServerResponse.text(encoded === undefined ? "" : encoded as string, {
@@ -1181,9 +1407,17 @@ export const makeProtocolWithHttpEffect: (
       })
     }
 
-    const initialChunk = yield* Queue.takeAll(queue) as any as Effect.Effect<NonEmptyReadonlyArray<Uint8Array>>
+    // Dispatch concurrently so the bounded queue can drain; a failed dispatch fails the response.
+    yield* Effect.forkIn(Effect.onError(dispatch, terminate), scope, { startImmediately: true })
+
+    const initialChunk = yield* Effect.interruptible(Pull.catchDone(
+      Queue.takeAll(queue as Queue.Dequeue<Uint8Array, Cause.Done>),
+      () => Effect.succeed([])
+    ))
     if (queue.state._tag === "Done") {
-      return HttpServerResponse.uint8Array(mergeUint8Arrays(initialChunk), {
+      // A failed dispatch may have completed the queue after the initial chunk was taken.
+      yield* Pull.doneExitFromCause<Cause.Done>(queue.state.exit.cause)
+      return HttpServerResponse.uint8Array(initialChunk.length === 1 ? initialChunk[0] : Bytes.concat(initialChunk), {
         contentType: serialization.contentType
       })
     }
@@ -1224,19 +1458,6 @@ export const makeProtocolWithHttpEffect: (
 
   return { protocol, httpEffect } as const
 })
-
-const mergeUint8Arrays = (arrays: ReadonlyArray<Uint8Array>) => {
-  if (arrays.length === 0) return new Uint8Array(0)
-  if (arrays.length === 1) return arrays[0]
-  const length = arrays.reduce((acc, arr) => acc + arr.length, 0)
-  const result = new Uint8Array(length)
-  let offset = 0
-  for (const arr of arrays) {
-    result.set(arr, offset)
-    offset += arr.length
-  }
-  return result
-}
 
 /**
  * Creates an HTTP server `Protocol` and registers its request handler as a POST
@@ -1290,6 +1511,7 @@ export const toHttpEffect: <Rpcs extends Rpc.Any>(
     readonly spanPrefix?: string | undefined
     readonly spanAttributes?: Record<string, unknown> | undefined
     readonly disableFatalDefects?: boolean | undefined
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined
     readonly streamBufferSize?: number | "unbounded" | undefined
   } | undefined
 ) => Effect.Effect<
@@ -1307,6 +1529,7 @@ export const toHttpEffect: <Rpcs extends Rpc.Any>(
     readonly spanPrefix?: string | undefined
     readonly spanAttributes?: Record<string, unknown> | undefined
     readonly disableFatalDefects?: boolean | undefined
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined
     readonly streamBufferSize?: number | "unbounded" | undefined
   }
 ) {
@@ -1334,6 +1557,7 @@ export const toHttpEffectWebsocket: <Rpcs extends Rpc.Any>(
     readonly spanPrefix?: string | undefined
     readonly spanAttributes?: Record<string, unknown> | undefined
     readonly disableFatalDefects?: boolean | undefined
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined
   } | undefined
 ) => Effect.Effect<
   Effect.Effect<HttpServerResponse.HttpServerResponse, never, Scope.Scope | HttpServerRequest.HttpServerRequest>,
@@ -1350,6 +1574,7 @@ export const toHttpEffectWebsocket: <Rpcs extends Rpc.Any>(
     readonly spanPrefix?: string | undefined
     readonly spanAttributes?: Record<string, unknown> | undefined
     readonly disableFatalDefects?: boolean | undefined
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined
   }
 ) {
   const { httpEffect, protocol } = yield* makeProtocolWithHttpEffectWebsocket
@@ -1399,7 +1624,15 @@ export const makeProtocolStdio = Effect.gen(function*() {
     yield* Stream.fromQueue(queue).pipe(
       Stream.run(stdio.stdout()),
       Effect.retry(Schedule.spaced(500)),
-      Effect.ensuring(Effect.forkDetach(Fiber.interrupt(fiber), { startImmediately: true })),
+      Effect.onExit((exit) => {
+        if (Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause)) return Effect.void
+        return Effect.forkDetach(
+          Exit.isSuccess(exit)
+            ? Fiber.interruptAs(fiber, undefined, Context.make(Runtime.InterruptExitCode, 0))
+            : Fiber.interrupt(fiber),
+          { startImmediately: true }
+        )
+      }),
       Effect.forkScoped
     )
 
@@ -1429,6 +1662,14 @@ export const makeProtocolStdio = Effect.gen(function*() {
 /**
  * Provides a server `Protocol` that reads RPC messages from `Stdio.stdin` and
  * writes encoded responses to `Stdio.stdout`.
+ *
+ * **Gotchas**
+ *
+ * This layer is a module-level constant, and layers are memoized by reference
+ * within one layer graph. Providing it to several servers in the same graph
+ * yields one shared `Protocol` bound to the first `Stdio` that was built. To
+ * run more than one stdio server in a graph, wrap it in `Layer.fresh` or build
+ * a separate `Layer.effect(Protocol, makeProtocolStdio)` per server.
  *
  * @stability unstable
  * @category layers
@@ -1532,7 +1773,7 @@ const makeSocketProtocol: Effect.Effect<
   RpcSerialization.RpcSerialization
 > = Effect.gen(function*() {
   const serialization = yield* RpcSerialization.RpcSerialization
-  const encodeDefectUnsafe = Schema.encodeSync(serialization.codecFor(Schema.Defect()))
+  const { encodeDefectUnsafe } = defectCodecs(serialization.codecFor)
   const disconnects = yield* Queue.make<number>()
 
   let clientId = 0

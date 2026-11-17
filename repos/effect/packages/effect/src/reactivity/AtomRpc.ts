@@ -15,7 +15,6 @@ import * as Duration from "../Duration.ts"
 import * as Effect from "../Effect.ts"
 import * as Headers from "../http/Headers.ts"
 import * as Layer from "../Layer.ts"
-import type { ReadonlyRecord } from "../Record.ts"
 import type * as Rpc from "../rpc/Rpc.ts"
 import * as RpcClient from "../rpc/RpcClient.ts"
 import { RpcClientError } from "../rpc/RpcClientError.ts"
@@ -55,64 +54,76 @@ export interface AtomRpcClient<Self, Id extends string, Rpcs extends Rpc.Any> ex
 
   readonly runtime: Atom.AtomRuntime<Self>
 
-  readonly mutation: <Tag extends Rpc.Tag<Rpcs>>(
-    arg: Tag
-  ) => Rpcs extends Rpc.Rpc<
-    infer _Tag extends Tag,
-    infer _Payload,
-    infer _Success,
-    infer _Error,
-    infer _Middleware,
-    infer _Requires
-  > ? [_Success] extends [RpcSchema.Stream<infer _A, infer _E>] ? never
-    : Atom.AtomResultFn<
-      {
-        readonly payload: Rpc.PayloadConstructor<Rpcs>
-        readonly reactivityKeys?:
-          | ReadonlyArray<unknown>
-          | ReadonlyRecord<string, ReadonlyArray<unknown>>
-          | undefined
-        readonly headers?: Headers.Input | undefined
-      },
-      _Success["Type"],
-      _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]
-    >
-    : never
+  readonly mutation: <Tag extends Rpc.Tag<Rpcs>>(arg: Tag) => Mutation<Rpc.ExtractTag<Rpcs, Tag>>
 
   readonly query: <Tag extends Rpc.Tag<Rpcs>>(
     tag: Tag,
     payload: Rpc.PayloadConstructor<Rpc.ExtractTag<Rpcs, Tag>>,
     options?: {
       readonly headers?: Headers.Input | undefined
-      readonly reactivityKeys?:
-        | ReadonlyArray<unknown>
-        | ReadonlyRecord<string, ReadonlyArray<unknown>>
-        | undefined
+      readonly reactivityKeys?: Reactivity.KeysInput | undefined
       readonly timeToLive?: Duration.Input | undefined
       readonly serializationKey?: string | undefined
     }
-  ) => Rpcs extends Rpc.Rpc<
-    infer _Tag extends Tag,
-    infer _Payload,
-    infer _Success,
-    infer _Error,
-    infer _Middleware,
-    infer _Requires
-  > ? [_Success] extends [RpcSchema.Stream<infer _A, infer _E>] ? Atom.Writable<
-        Atom.PullResult<
-          _A["Type"],
-          _E["Type"] | _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]
-        >,
-        void
-      >
-    : Atom.Atom<
-      AsyncResult.AsyncResult<
-        _Success["Type"],
-        _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]
-      >
-    >
-    : never
+  ) => Query<Rpc.ExtractTag<Rpcs, Tag>>
 }
+
+/**
+ * The `AtomResultFn` produced by `mutation` for the given RPC(s). Distributes
+ * over a union of RPCs.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.1.3
+ */
+export type Mutation<Current> = Current extends Rpc.Rpc<
+  infer _Tag,
+  infer _Payload,
+  infer _Success,
+  infer _Error,
+  infer _Middleware,
+  infer _Requires
+> ? [_Success] extends [RpcSchema.Stream<infer _A, infer _E>] ? never
+  : Atom.AtomResultFn<
+    {
+      readonly payload: Rpc.PayloadConstructor<Current>
+      readonly reactivityKeys?: Reactivity.KeysInput | undefined
+      readonly headers?: Headers.Input | undefined
+    },
+    _Success["Type"],
+    _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]
+  >
+  : never
+
+/**
+ * The atom produced by `query` for the given RPC(s). Distributes over a union
+ * of RPCs.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.1.3
+ */
+export type Query<Current> = Current extends Rpc.Rpc<
+  infer _Tag,
+  infer _Payload,
+  infer _Success,
+  infer _Error,
+  infer _Middleware,
+  infer _Requires
+> ? [_Success] extends [RpcSchema.Stream<infer _A, infer _E>] ? Atom.Writable<
+      Atom.PullResult<
+        _A["Type"],
+        _E["Type"] | _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]
+      >,
+      void
+    >
+  : Atom.Atom<
+    AsyncResult.AsyncResult<
+      _Success["Type"],
+      _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]
+    >
+  >
+  : never
 
 declare global {
   interface ErrorConstructor {
@@ -196,22 +207,17 @@ export const Service = <Self>() =>
     const rpc = options.group.requests.get(tag)! as any as Rpc.AnyWithProps
     return self.runtime.fn<{
       readonly payload: Rpc.PayloadConstructor<Rpc.ExtractTag<Rpcs, Tag>>
-      readonly reactivityKeys?:
-        | ReadonlyArray<unknown>
-        | ReadonlyRecord<string, ReadonlyArray<unknown>>
-        | undefined
+      readonly reactivityKeys?: Reactivity.KeysInput | undefined
       readonly headers?: Headers.Input | undefined
     }>()(
       Effect.fnUntraced(function*({ headers, payload, reactivityKeys }) {
         const client = yield* self
-        const effect = client(tag, payload, { headers } as any)
-        return yield* (reactivityKeys
-          ? Reactivity.mutation(effect, reactivityKeys) as Effect.Effect<any>
-          : effect as any as Effect.Effect<any>)
+        const effect: Effect.Effect<any> = client(tag, payload, { headers } as any) as any
+        return yield* (reactivityKeys ? Reactivity.mutation(effect, reactivityKeys) : effect)
       })
     ).pipe(
       Atom.serializable({
-        key: `AtomRpc:mutation:${tag}`,
+        key: `AtomRpc:mutation:${JSON.stringify([id, tag])}`,
         schema: AsyncResult.Schema({
           success: rpc.successSchema,
           error: makeErrorSchema(rpc)
@@ -264,10 +270,7 @@ export const Service = <Self>() =>
     payload: Rpc.PayloadConstructor<Rpc.ExtractTag<Rpcs, Tag>>,
     options?: {
       readonly headers?: Headers.Input | undefined
-      readonly reactivityKeys?:
-        | ReadonlyArray<unknown>
-        | ReadonlyRecord<string, ReadonlyArray<unknown>>
-        | undefined
+      readonly reactivityKeys?: Reactivity.KeysInput | undefined
       readonly timeToLive?: Duration.Input | undefined
       readonly serializationKey?: string | undefined
     }
@@ -294,10 +297,7 @@ interface QueryKey {
   tag: string
   payload: any
   headers: Headers.Headers | undefined
-  reactivityKeys:
-    | ReadonlyArray<unknown>
-    | ReadonlyRecord<string, ReadonlyArray<unknown>>
-    | undefined
+  reactivityKeys: Reactivity.KeysInput | undefined
   timeToLive: Duration.Duration | undefined
   serializationKey: string | undefined
 }

@@ -40,6 +40,29 @@ export const suite = (protocol: McpProtocol.ProtocolAdapter, layer: McpConforman
           })
         }))
     })
+
+    describe("Base Protocol > Pagination", () => {
+      it.effect("should return a complete page and reject supplied cursors, including an empty string", () =>
+        Effect.gen(function*() {
+          const test = yield* McpConformance
+          const initialized = yield* test.initialize({ server: "features" })
+          yield* test.notifyInitialized(initialized)
+          let id = 2
+          for (const method of ["tools/list", "resources/list", "resources/templates/list", "prompts/list"] as const) {
+            const page = yield* test.send(initialized, { jsonrpc: "2.0", id: id++, method })
+            assert.notProperty((yield* test.decodeResult(page)).result, "nextCursor", method)
+            for (const cursor of ["unknown", ""]) {
+              const response = yield* test.send(initialized, { jsonrpc: "2.0", id: id++, method, params: { cursor } })
+              const error = yield* test.decodeError(response)
+              assert.strictEqual(
+                error.error.code,
+                McpSchema.INVALID_PARAMS_ERROR_CODE,
+                `${method} ${JSON.stringify(cursor)}`
+              )
+            }
+          }
+        }))
+    })
   })
 
 export const statelessModernSuite = (
@@ -208,7 +231,10 @@ export const statelessModernSuite = (
     })
   })
 
-export const statefulLegacySuite = (protocol: McpProtocol.ProtocolAdapter, layer: McpConformanceLayer) =>
+export const statefulLegacySuite = (
+  protocol: McpProtocol.ProtocolAdapter<McpProtocol.ProtocolVersion, McpProtocol.StatefulRuntimeDescriptor>,
+  layer: McpConformanceLayer
+) =>
   it.layer(layer)(`Mcp Conformance (${protocol.protocolVersion})`, (it) => {
     describe("Base Protocol", () => {
       // https://modelcontextprotocol.io/specification/2025-11-25/basic#meta
@@ -220,12 +246,11 @@ export const statefulLegacySuite = (protocol: McpProtocol.ProtocolAdapter, layer
             dependencies: [McpSchema.McpRequestContext, McpSchema.McpServerClient]
           }))
           const registration = McpServer.toolkit(toolkit).pipe(Layer.provide(toolkit.toLayer({
-            Metadata: () =>
-              Effect.gen(function*() {
-                const context = yield* McpSchema.McpRequestContext
-                const client = yield* McpSchema.McpServerClient
-                return JSON.stringify({ context: context.requestMetadata, client: client.requestMetadata })
-              })
+            Metadata: Effect.fnUntraced(function*() {
+              const context = yield* McpSchema.McpRequestContext
+              const client = yield* McpSchema.McpServerClient
+              return JSON.stringify({ context: context.requestMetadata, client: client.requestMetadata })
+            })
           })))
           const harness = yield* makeHttpHarness(
             registration.pipe(Layer.provideMerge(makeServerLayer({ name: "RequestMetadata", protocols: [protocol] })))
@@ -252,12 +277,11 @@ export const statefulLegacySuite = (protocol: McpProtocol.ProtocolAdapter, layer
             name: "metadata",
             content: () => Effect.succeed("content"),
             completion: {
-              name: () =>
-                Effect.gen(function*() {
-                  const context = yield* McpSchema.McpRequestContext
-                  const client = yield* McpSchema.McpServerClient
-                  return [JSON.stringify({ context: context.requestMetadata, client: client.requestMetadata })]
-                })
+              name: Effect.fnUntraced(function*() {
+                const context = yield* McpSchema.McpRequestContext
+                const client = yield* McpSchema.McpServerClient
+                return [JSON.stringify({ context: context.requestMetadata, client: client.requestMetadata })]
+              })
             }
           })
           const harness = yield* makeHttpHarness(

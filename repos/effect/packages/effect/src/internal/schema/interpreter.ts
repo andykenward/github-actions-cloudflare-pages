@@ -19,12 +19,23 @@ const flatMapTransformation = (
   current: unknown,
   f: (value: unknown) => Effect.Effect<unknown, SchemaIssue.Issue, unknown>
 ): Effect.Effect<unknown, SchemaIssue.Issue, unknown> =>
-  result === InternalParser.sameExit ? f(current) : Effect.flatMapEager(result, f)
+  InternalParser.isSameExit(result) ? f(current) : Effect.flatMapEager(result, f)
 
 function compileTransformation(transformation: SchemaAST.Link["transformation"]): ApplyTransformation {
+  const apply = compileTransformationUnsafe(transformation)
+  return (result, current, options) => {
+    try {
+      return apply(result, current, options)
+    } catch (error) {
+      return Effect.die(error)
+    }
+  }
+}
+
+function compileTransformationUnsafe(transformation: SchemaAST.Link["transformation"]): ApplyTransformation {
   if (transformation._tag === "Middleware") {
     return (result, current, options) => {
-      const transformed = result === InternalParser.sameExit
+      const transformed = InternalParser.isSameExit(result)
         ? transformation.decode(InternalParser.succeed(InternalParser.toOption(current)), options)
         : transformation.decode(Effect.mapEager(result, InternalParser.toOption), options)
       return fromOptionalEffect(transformed)
@@ -34,7 +45,7 @@ function compileTransformation(transformation: SchemaAST.Link["transformation"])
   const getter = transformation.decode
   switch (getter._tag) {
     case "Passthrough":
-      return (result, current) => result === InternalParser.sameExit ? InternalParser.succeed(current) : result
+      return (result, current) => InternalParser.isSameExit(result) ? InternalParser.succeed(current) : result
     case "Transform": {
       const transform = (value: unknown) =>
         value === InternalParser.missing
@@ -98,13 +109,13 @@ function withDefault(ast: SchemaAST.AST, parser: Parser): Parser {
     const result = defaultValue
     if (effectIsExit(result) && result._tag === "Success") {
       const local = parser((result as InternalParser.Success<unknown>)[InternalParser.args], options)
-      return local === InternalParser.sameExit ? result : local
+      return InternalParser.isSameExit(local) ? result : local
     }
     return Effect.flatMapEager(
       wrapEncoding(ast, input, options, result),
       (value) => {
         const local = parser(value, options)
-        return local === InternalParser.sameExit ? InternalParser.succeed(value) : local
+        return InternalParser.isSameExit(local) ? InternalParser.succeed(value) : local
       }
     )
   }
@@ -143,63 +154,65 @@ export function compile(
     return parser
   }
   let encodingParsers: ReadonlyArray<Parser> | undefined
-  const parseChecks = (
-    input: unknown,
-    options: SchemaAST.ParseOptions
-  ) => {
+  const parseChecks: Parser = (input, options) => {
+    // Keep lazy child compilation outside the callback exception boundary.
     let result = parser(input, options)
-    if (encodingChecks && !options.disableChecks) {
-      if (effectIsExit(result)) {
-        if (result._tag === "Success") {
-          const output = result === InternalParser.sameExit
-            ? input
-            : (result as InternalParser.Success<unknown, SchemaIssue.Issue>)[InternalParser.args]
-          if (input !== InternalParser.missing && output !== InternalParser.missing) {
-            const issues = SchemaAST.collectIssues(encodingChecks, input, undefined, ast, options)
-            if (issues) {
-              result = Effect.fail(new SchemaIssue.Composite(ast, issues, input, options))
+    try {
+      if (encodingChecks && !options.disableChecks) {
+        if (effectIsExit(result)) {
+          if (result._tag === "Success") {
+            const output = InternalParser.isSameExit(result)
+              ? input
+              : (result as InternalParser.Success<unknown, SchemaIssue.Issue>)[InternalParser.args]
+            if (input !== InternalParser.missing && output !== InternalParser.missing) {
+              const issues = SchemaAST.collectIssues(encodingChecks, input, undefined, ast, options)
+              if (issues) {
+                result = Effect.fail(new SchemaIssue.Composite(ast, issues, input, options))
+              }
             }
           }
+        } else {
+          result = Effect.flatMap(result, (value) => {
+            if (input !== InternalParser.missing && value !== InternalParser.missing) {
+              const issues = SchemaAST.collectIssues(encodingChecks, input, undefined, ast, options)
+              if (issues) {
+                return Effect.fail(new SchemaIssue.Composite(ast, issues, input, options))
+              }
+            }
+            return Effect.succeed(value)
+          })
         }
-      } else {
-        result = Effect.flatMap(result, (value) => {
-          if (input !== InternalParser.missing && value !== InternalParser.missing) {
-            const issues = SchemaAST.collectIssues(encodingChecks, input, undefined, ast, options)
-            if (issues) {
-              return Effect.fail(new SchemaIssue.Composite(ast, issues, input, options))
-            }
-          }
-          return Effect.succeed(value)
-        })
       }
-    }
 
-    if (checks && !options.disableChecks) {
-      if (effectIsExit(result)) {
-        if (result._tag === "Success") {
-          const value = result === InternalParser.sameExit
-            ? input
-            : (result as InternalParser.Success<unknown, SchemaIssue.Issue>)[InternalParser.args]
-          if (value === InternalParser.missing) return result
-          const issues = SchemaAST.collectIssues(checks, value, undefined, ast, options)
-          if (issues) {
-            result = Effect.fail(new SchemaIssue.Composite(ast, issues, value, options))
-          }
-        }
-      } else {
-        result = Effect.flatMap(result, (value) => {
-          if (value !== InternalParser.missing) {
+      if (checks && !options.disableChecks) {
+        if (effectIsExit(result)) {
+          if (result._tag === "Success") {
+            const value = InternalParser.isSameExit(result)
+              ? input
+              : (result as InternalParser.Success<unknown, SchemaIssue.Issue>)[InternalParser.args]
+            if (value === InternalParser.missing) return result
             const issues = SchemaAST.collectIssues(checks, value, undefined, ast, options)
             if (issues) {
-              return Effect.fail(new SchemaIssue.Composite(ast, issues, value, options))
+              result = Effect.fail(new SchemaIssue.Composite(ast, issues, value, options))
             }
           }
-          return Effect.succeed(value)
-        })
+        } else {
+          result = Effect.flatMap(result, (value) => {
+            if (value !== InternalParser.missing) {
+              const issues = SchemaAST.collectIssues(checks, value, undefined, ast, options)
+              if (issues) {
+                return Effect.fail(new SchemaIssue.Composite(ast, issues, value, options))
+              }
+            }
+            return Effect.succeed(value)
+          })
+        }
       }
-    }
 
-    return result
+      return result
+    } catch (error) {
+      return Effect.die(error)
+    }
   }
   const parseLocal = specialize === undefined ? parseChecks : specialize(parseChecks)
   if (!links) {
@@ -222,7 +235,7 @@ export function compile(
         } else {
           result = Effect.flatMapEager(result, (value) => {
             const nextResult = next(value, options)
-            return nextResult === InternalParser.sameExit ? InternalParser.succeed(value) : nextResult
+            return InternalParser.isSameExit(nextResult) ? InternalParser.succeed(value) : nextResult
           })
         }
       }
@@ -230,12 +243,12 @@ export function compile(
     if ((result as Exit.Exit<unknown, unknown>)._tag === "Success") {
       const value = (result as InternalParser.Success<unknown, SchemaIssue.Issue>)[InternalParser.args]
       const local = parseLocal(value, options)
-      return local === InternalParser.sameExit ? result : local
+      return InternalParser.isSameExit(local) ? result : local
     }
     result = wrapEncoding(ast, input, options, result)
     return Effect.flatMapEager(result, (value) => {
       const local = parseLocal(value, options)
-      return local === InternalParser.sameExit ? InternalParser.succeed(value) : local
+      return InternalParser.isSameExit(local) ? InternalParser.succeed(value) : local
     })
   }
 }

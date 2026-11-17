@@ -109,9 +109,12 @@ updates:
   # from its tag. `exclude-paths` above stops version updates only; security
   # updates come from alerts on the dependency graph, which still reads those
   # lockfiles, and honor `ignore` — so ignore everything in that directory.
+  # `**`, not `*`: the graph lists every workspace package.json as its own
+  # manifest (e.g. /repos/effect/packages/tools/utils), and `*` matches only
+  # one level, which let #967 through.
   - package-ecosystem: npm
     directories:
-      - '/repos/*'
+      - '/repos/**'
     schedule:
       interval: weekly
     open-pull-requests-limit: 0

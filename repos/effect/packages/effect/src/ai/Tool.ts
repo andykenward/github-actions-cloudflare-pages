@@ -115,7 +115,9 @@ export type DynamicTypeId = "~effect/ai/Tool/Dynamic"
  * execution will be returned in the error channel of the calling effect.
  *
  * If set to `"return"`, errors that occur during tool call handler execution
- * will be captured and returned as part of the tool call result.
+ * will be captured and returned as part of the tool call result. Like
+ * `Effect.catch`, only the first typed failure is returned, and a cause
+ * containing a defect is raised as a defect.
  *
  * @stability unstable
  * @category models
@@ -214,9 +216,11 @@ export interface Tool<
     readonly failure: Schema.Constraint
     readonly failureMode: FailureMode
   },
-  out Requirements = never
+  out Requirements = never,
+  out ExecutionMode extends Execution = Execution
 > {
   readonly [TypeId]: {
+    readonly _Config: Types.Covariant<Config>
     readonly _Requirements: Types.Covariant<Requirements>
   }
 
@@ -246,7 +250,9 @@ export interface Tool<
    * effect.
    *
    * If set to `"return"`, errors that occur during tool call handler execution
-   * will be captured and returned as part of the tool call result.
+   * will be captured and returned as part of the tool call result. Like
+   * `Effect.catch`, only the first typed failure is returned, and a cause
+   * containing a defect is raised as a defect.
    */
   readonly failureMode: FailureMode
 
@@ -287,11 +293,29 @@ export interface Tool<
   readonly needsApproval?: boolean | NeedsApprovalFunction<any> | undefined
 
   /**
+   * Maps a successful tool result to the content sent to the model in place
+   * of the encoded result. `setSuccess` removes the mapping.
+   */
+  readonly toModelOutput?: ((result: any) => ReadonlyArray<Prompt.ToolModelOutputPart>) | undefined
+
+  /**
+   * Where calls to this tool are executed.
+   *
+   * **Details**
+   *
+   * When `"client"`, the application that sent the request executes the tool
+   * and answers in a later request. `LanguageModel` emits its tool calls but
+   * never resolves them, and the tool needs no handler. When `undefined` or
+   * `"server"`, the tool's handler resolves its calls.
+   */
+  readonly execution?: ExecutionMode | undefined
+
+  /**
    * Set whether user approval is required before executing this tool.
    */
   setNeedsApproval(
     needsApproval: NeedsApproval<Config["parameters"]>
-  ): Tool<Name, Config, Requirements>
+  ): Tool<Name, Config, Requirements, ExecutionMode>
 
   /**
    * Adds a _request-level_ dependency which must be provided before the tool
@@ -305,7 +329,7 @@ export interface Tool<
    */
   addDependency<Identifier, Service>(
     tag: Context.Key<Identifier, Service>
-  ): Tool<Name, Config, Identifier | Requirements>
+  ): Tool<Name, Config, Identifier | Requirements, ExecutionMode>
 
   /**
    * Set the schema to use to validate the result of a tool call when successful.
@@ -320,7 +344,8 @@ export interface Tool<
       readonly failure: Config["failure"]
       readonly failureMode: Config["failureMode"]
     },
-    Requirements
+    Requirements,
+    ExecutionMode
   >
 
   /**
@@ -336,7 +361,8 @@ export interface Tool<
       readonly failure: FailureSchema
       readonly failureMode: Config["failureMode"]
     },
-    Requirements
+    Requirements,
+    ExecutionMode
   >
 
   /**
@@ -352,18 +378,19 @@ export interface Tool<
       readonly failure: Config["failure"]
       readonly failureMode: Config["failureMode"]
     },
-    Requirements
+    Requirements,
+    ExecutionMode
   >
 
   /**
    * Add an annotation to the tool.
    */
-  annotate<I, S>(tag: Context.Key<I, S>, value: S): Tool<Name, Config, Requirements>
+  annotate<I, S>(tag: Context.Key<I, S>, value: S): Tool<Name, Config, Requirements, ExecutionMode>
 
   /**
    * Add many annotations to the tool.
    */
-  annotateMerge<I>(context: Context.Context<I>): Tool<Name, Config, Requirements>
+  annotateMerge<I>(context: Context.Context<I>): Tool<Name, Config, Requirements, ExecutionMode>
 }
 
 /**
@@ -415,7 +442,8 @@ export interface ProviderDefined<
     readonly failure: Schema.Constraint
     readonly failureMode: FailureMode
   },
-  out RequiresHandler extends boolean = false
+  out RequiresHandler extends boolean = false,
+  out Requirements = never
 > extends
   Tool<
     Name,
@@ -424,7 +452,8 @@ export interface ProviderDefined<
       readonly success: Config["success"]
       readonly failure: Config["failure"]
       readonly failureMode: Config["failureMode"]
-    }
+    },
+    Requirements
   >
 {
   readonly [ProviderDefinedTypeId]: typeof ProviderDefinedTypeId
@@ -456,6 +485,93 @@ export interface ProviderDefined<
    * this tool into a `Layer`.
    */
   readonly requiresHandler: RequiresHandler
+
+  /**
+   * Set whether user approval is required before executing this tool.
+   */
+  setNeedsApproval(
+    needsApproval: NeedsApproval<Config["parameters"]>
+  ): ProviderDefined<Identifier, Name, Config, RequiresHandler, Requirements>
+
+  /**
+   * Adds a _request-level_ dependency which must be provided before the tool
+   * call handler can be executed.
+   */
+  addDependency<I, S>(
+    tag: Context.Key<I, S>
+  ): ProviderDefined<Identifier, Name, Config, RequiresHandler, I | Requirements>
+
+  /**
+   * Set the schema to use to validate the result of a tool call when successful.
+   */
+  setSuccess<SuccessSchema extends Schema.Constraint>(
+    schema: SuccessSchema
+  ): ProviderDefined<
+    Identifier,
+    Name,
+    {
+      readonly args: Config["args"]
+      readonly parameters: Config["parameters"]
+      readonly success: SuccessSchema
+      readonly failure: Config["failure"]
+      readonly failureMode: Config["failureMode"]
+    },
+    RequiresHandler,
+    Requirements
+  >
+
+  /**
+   * Set the schema to use to validate the result of a tool call when it fails.
+   */
+  setFailure<FailureSchema extends Schema.Constraint>(
+    schema: FailureSchema
+  ): ProviderDefined<
+    Identifier,
+    Name,
+    {
+      readonly args: Config["args"]
+      readonly parameters: Config["parameters"]
+      readonly success: Config["success"]
+      readonly failure: FailureSchema
+      readonly failureMode: Config["failureMode"]
+    },
+    RequiresHandler,
+    Requirements
+  >
+
+  /**
+   * Set the schema to use to validate the parameters of a tool call.
+   */
+  setParameters<ParametersSchema extends Schema.Constraint>(
+    schema: ParametersSchema
+  ): ProviderDefined<
+    Identifier,
+    Name,
+    {
+      readonly args: Config["args"]
+      readonly parameters: ParametersSchema
+      readonly success: Config["success"]
+      readonly failure: Config["failure"]
+      readonly failureMode: Config["failureMode"]
+    },
+    RequiresHandler,
+    Requirements
+  >
+
+  /**
+   * Add an annotation to the tool.
+   */
+  annotate<I, S>(
+    tag: Context.Key<I, S>,
+    value: S
+  ): ProviderDefined<Identifier, Name, Config, RequiresHandler, Requirements>
+
+  /**
+   * Add many annotations to the tool.
+   */
+  annotateMerge<I>(
+    context: Context.Context<I>
+  ): ProviderDefined<Identifier, Name, Config, RequiresHandler, Requirements>
 }
 
 /**
@@ -511,7 +627,8 @@ export interface Dynamic<
     readonly failure: Schema.Constraint
     readonly failureMode: FailureMode
   },
-  out Requirements = never
+  out Requirements = never,
+  out ExecutionMode extends Execution = Execution
 > extends
   Tool<
     Name,
@@ -521,7 +638,8 @@ export interface Dynamic<
       readonly failure: Config["failure"]
       readonly failureMode: Config["failureMode"]
     },
-    Requirements
+    Requirements,
+    ExecutionMode
   >
 {
   readonly [DynamicTypeId]: typeof DynamicTypeId
@@ -655,6 +773,58 @@ export const isProviderDefined = (
  */
 export const isDynamic = (u: unknown): u is Dynamic<string, any> => Predicate.hasProperty(u, DynamicTypeId)
 
+/**
+ * Returns whether calls to a tool are executed by the application that sent
+ * the request rather than by a handler.
+ *
+ * **Details**
+ *
+ * Narrows the tool to the same type with execution mode `"client"`, so it and
+ * the tools its combinators return need no handler.
+ *
+ * @stability unstable
+ * @category guards
+ * @since 4.1.0
+ */
+export const isClientExecuted = <T extends Any>(tool: T): tool is ClientExecutedOf<T> => tool.execution === "client"
+
+// The type of `T` with execution mode `"client"`, rebuilt from its members so
+// that interfaces extending `Tool` or `Dynamic`, such as `AnyDynamic`, narrow
+// too. Tools that rebuilding does not cover keep their type with a client
+// `execution`.
+type ClientExecutedOf<T extends Any> = RebuiltClientTool<T> extends T ? RebuiltClientTool<T>
+  : T & { readonly execution: "client" }
+
+type RebuiltClientTool<T extends Any> = T extends { readonly [DynamicTypeId]: typeof DynamicTypeId } ? Dynamic<
+    T["name"],
+    {
+      readonly parameters: T extends { readonly jsonSchema: undefined } ? T["parametersSchema"]
+        : JsonSchema.JsonSchema
+      readonly success: T["successSchema"]
+      readonly failure: T["failureSchema"]
+      readonly failureMode: FailureModeOf<T>
+    },
+    RequirementsOf<T>,
+    "client"
+  > :
+  Tool<
+    T["name"],
+    {
+      readonly parameters: T["parametersSchema"]
+      readonly success: T["successSchema"]
+      readonly failure: T["failureSchema"]
+      readonly failureMode: FailureModeOf<T>
+    },
+    RequirementsOf<T>,
+    "client"
+  >
+
+type RequirementsOf<T extends Any> = T[TypeId]["_Requirements"] extends Types.Covariant<infer R> ? R : never
+
+// The `failureMode` member is typed as any `FailureMode`, so the configured
+// mode is read from the type arguments where they can be inferred
+type FailureModeOf<T extends Any> = T extends Tool<any, infer Config, any, any> ? Config["failureMode"] : FailureMode
+
 // =============================================================================
 // utility types
 // =============================================================================
@@ -683,13 +853,19 @@ export interface Any extends
  * @since 4.0.0
  */
 export interface AnyProviderDefined extends
-  ProviderDefined<any, any, {
-    readonly args: Schema.Top
-    readonly parameters: Schema.Top
-    readonly success: Schema.Top
-    readonly failure: Schema.Top
-    readonly failureMode: FailureMode
-  }, any>
+  ProviderDefined<
+    any,
+    any,
+    {
+      readonly args: Schema.Top
+      readonly parameters: Schema.Top
+      readonly success: Schema.Top
+      readonly failure: Schema.Top
+      readonly failureMode: FailureMode
+    },
+    any,
+    any
+  >
 {}
 
 /**
@@ -908,17 +1084,36 @@ export type ResultEncoded<T> = SuccessEncoded<T> | FailureResultEncoded<T>
  * @category utility types
  * @since 4.0.0
  */
-export type HandlerServices<T> = T extends Tool<
+export type HandlerServices<T> = SchemaServices<T> | Requirements<T>
+
+/**
+ * A utility type to extract the request-level dependencies a `Tool` declares
+ * with `dependencies` or `Tool.addDependency`.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export type Requirements<T> = T extends Tool<
   infer _Name,
   infer _Config,
   infer _Requirements
-> ? // Parameters must be decoded when received from a model
-    | _Config["parameters"]["DecodingServices"]
-    // A tool call `result`, whether success or failure, is encoded and returned
-    // as the `encodedResult` along with the `result`
-    | ResultEncodingServices<T>
-    // Per-request requirements
-    | _Requirements
+> ? _Requirements
+  : never
+
+/**
+ * A utility type to extract the services needed to decode the parameters of a
+ * `Tool` call and encode its result, whether success or failure.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export type SchemaServices<T> = T extends Tool<
+  infer _Name,
+  infer _Config,
+  infer _Requirements
+> ? _Config["parameters"]["DecodingServices"] | ResultEncodingServices<T>
   : never
 
 /**
@@ -949,6 +1144,20 @@ export type ResultDecodingServices<T> = T extends Tool<
   infer _Config,
   infer _Requirements
 > ? _Config["success"]["DecodingServices"] | _Config["failure"]["DecodingServices"]
+  : never
+
+/**
+ * Extracts the services required to decode tool parameters.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export type ParametersDecodingServices<T> = T extends Tool<
+  infer _Name,
+  infer _Config,
+  infer _Requirements
+> ? _Config["parameters"]["DecodingServices"]
   : never
 
 /**
@@ -1007,11 +1216,15 @@ export interface HandlerResult<Tool extends Any> {
    */
   readonly result: Result<Tool>
   /**
-   * The pre-encoded tool call result of executing the handler for a particular
-   * tool as a JSON-serializable value. The encoded result can be incorporated
-   * into subsequent requests to the large language model.
+   * The tool call result encoded with the JSON codec of the tool's success or
+   * failure schema. The encoded result can be incorporated into subsequent
+   * requests to the large language model.
    */
   readonly encodedResult: unknown
+  /**
+   * The output of the tool's `toModelOutput` mapping for a successful result.
+   */
+  readonly modelOutput?: ReadonlyArray<Prompt.ToolModelOutputPart> | undefined
   /**
    * Whether the result of executing the tool call handler was an error or not.
    */
@@ -1085,11 +1298,36 @@ export type HandlersFor<Tools extends Record<string, Any>> = {
  * @since 4.0.0
  */
 export type RequiresHandler<Tool extends Any> = Tool extends ProviderDefined<
+  infer _Identifier,
   infer _Name,
   infer _Config,
-  infer _RequiresHandler
-> ? _RequiresHandler
+  infer _RequiresHandler,
+  infer _Requirements
+> ? [_RequiresHandler] extends [false] ? false : true
+  // A tool type that allows either mode, such as `Tool.Any`, requires a handler
+  : Tool extends { readonly execution?: "client" | undefined } ? false
   : true
+
+/**
+ * Where calls to a tool are executed: by its handler on the `"server"`, or
+ * by the application that sent the request on the `"client"`.
+ *
+ * **Details**
+ *
+ * A tool's type records its execution mode as its last type parameter, which
+ * defaults to either mode. Tools created with `execution: "client"` carry
+ * `"client"` through every combinator, so they keep needing no handler.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.1.0
+ */
+export type Execution = "server" | "client"
+
+// Only an execution that is definitely given records its mode. One that may
+// be `undefined` creates a server-executed tool when it is, so it records
+// either mode, which keeps the handler requirement.
+type ExecutionFrom<E extends Execution | undefined> = undefined extends E ? Execution : Exclude<E, undefined>
 
 // =============================================================================
 // Constructors
@@ -1102,7 +1340,7 @@ const clone = (self: Any, overrides?: Record<string, unknown>): any =>
   Object.assign(Object.create(Object.getPrototypeOf(self)), self, overrides)
 
 const Proto = {
-  [TypeId]: { _Requirements: identity },
+  [TypeId]: { _Config: identity, _Requirements: identity },
   pipe() {
     return pipeArguments(this, arguments)
   },
@@ -1113,7 +1351,7 @@ const Proto = {
     return clone(this, { parametersSchema, jsonSchema: undefined })
   },
   setSuccess(this: Any, successSchema: Schema.Constraint) {
-    return clone(this, { successSchema })
+    return clone(this, { successSchema, toModelOutput: undefined })
   },
   setFailure(this: Any, failureSchema: Schema.Constraint) {
     return clone(this, { failureSchema })
@@ -1154,6 +1392,8 @@ const userDefinedProto = <
   readonly annotations: Context.Context<never>
   readonly failureMode: Mode
   readonly needsApproval?: NeedsApproval<Parameters> | undefined
+  readonly toModelOutput?: ((result: any) => ReadonlyArray<Prompt.ToolModelOutputPart>) | undefined
+  readonly execution?: Execution | undefined
 }): Tool<
   Name,
   {
@@ -1216,7 +1456,9 @@ const dynamicProto = <
   readonly annotations: Context.Context<never>
   readonly failureMode: Mode
   readonly needsApproval?: NeedsApproval<any> | undefined
+  readonly toModelOutput?: ((result: any) => ReadonlyArray<Prompt.ToolModelOutputPart>) | undefined
   readonly jsonSchema: JsonSchema.JsonSchema | undefined
+  readonly execution?: Execution | undefined
 }): Dynamic<
   Name,
   {
@@ -1229,6 +1471,81 @@ const dynamicProto = <
   const self = Object.assign(Object.create(DynamicProto), options)
   self.id = `effect/ai/Tool/${options.name}`
   return self
+}
+
+// Options accepted by `Tool.make`. When the options object may be absent, the
+// second overload records either execution mode, since absent options create
+// a server-executed tool.
+interface MakeOptions<
+  Parameters extends Schema.Constraint,
+  Success extends Schema.Constraint,
+  Failure extends Schema.Constraint,
+  Mode extends FailureMode | undefined,
+  Dependencies extends Array<Context.Key<any, any> | Context.Key<never, any>>,
+  Exec extends Execution | undefined
+> {
+  /**
+   * An optional description explaining what the tool does.
+   */
+  readonly description?: string | undefined
+  /**
+   * Schema defining the parameters this tool accepts.
+   */
+  readonly parameters?: Parameters | undefined
+  /**
+   * Schema for successful tool execution results.
+   */
+  readonly success?: Success | undefined
+  /**
+   * Schema for tool execution failures.
+   */
+  readonly failure?: Failure | undefined
+  /**
+   * The strategy used for handling errors returned from tool call handler
+   * execution.
+   *
+   * **Details**
+   *
+   * If set to `"error"` (the default), errors that occur during tool call handler
+   * execution will be returned in the error channel of the calling effect.
+   *
+   * If set to `"return"`, errors that occur during tool call handler execution
+   * will be captured and returned as part of the tool call result. Like
+   * `Effect.catch`, only the first typed failure is returned, and a cause
+   * containing a defect is raised as a defect.
+   */
+  readonly failureMode?: Mode
+  /**
+   * Service dependencies required by the tool handler.
+   */
+  readonly dependencies?: Dependencies | undefined
+  /**
+   * Specifies whether user approval is required before executing this tool.
+   *
+   * **Details**
+   *
+   * - If `undefined` or `false`, the tool executes immediately.
+   * - If `true`, the tool always requires approval.
+   * - If a function, it is called with the tool parameters and context to
+   *   dynamically determine if approval is needed.
+   */
+  readonly needsApproval?: NeedsApproval<Parameters> | undefined
+  /**
+   * Maps a successful tool result to the content sent to the model in place
+   * of the encoded result, such as images or files. The application still
+   * receives the typed result.
+   */
+  readonly toModelOutput?: ((result: Success["Type"]) => ReadonlyArray<Prompt.ToolModelOutputPart>) | undefined
+  /**
+   * Where calls to this tool are executed.
+   *
+   * **Details**
+   *
+   * Set to `"client"` for a tool the application that sent the request
+   * executes, such as a frontend tool. Its calls are emitted but never
+   * resolved, and it needs no handler. Defaults to `"server"`.
+   */
+  readonly execution?: Exec
 }
 
 /**
@@ -1261,68 +1578,61 @@ const dynamicProto = <
  * @category constructors
  * @since 4.0.0
  */
-export const make = <
-  const Name extends string,
-  Parameters extends Schema.Constraint = typeof EmptyParams,
-  Success extends Schema.Constraint = typeof Schema.Void,
-  Failure extends Schema.Constraint = typeof Schema.Never,
-  Mode extends FailureMode | undefined = undefined,
-  Dependencies extends Array<Context.Key<any, any> | Context.Key<never, any>> = []
->(name: Name, options?: {
-  /**
-   * An optional description explaining what the tool does.
-   */
-  readonly description?: string | undefined
-  /**
-   * Schema defining the parameters this tool accepts.
-   */
-  readonly parameters?: Parameters | undefined
-  /**
-   * Schema for successful tool execution results.
-   */
-  readonly success?: Success | undefined
-  /**
-   * Schema for tool execution failures.
-   */
-  readonly failure?: Failure | undefined
-  /**
-   * The strategy used for handling errors returned from tool call handler
-   * execution.
-   *
-   * **Details**
-   *
-   * If set to `"error"` (the default), errors that occur during tool call handler
-   * execution will be returned in the error channel of the calling effect.
-   *
-   * If set to `"return"`, errors that occur during tool call handler execution
-   * will be captured and returned as part of the tool call result.
-   */
-  readonly failureMode?: Mode
-  /**
-   * Service dependencies required by the tool handler.
-   */
-  readonly dependencies?: Dependencies | undefined
-  /**
-   * Specifies whether user approval is required before executing this tool.
-   *
-   * **Details**
-   *
-   * - If `undefined` or `false`, the tool executes immediately.
-   * - If `true`, the tool always requires approval.
-   * - If a function, it is called with the tool parameters and context to
-   *   dynamically determine if approval is needed.
-   */
-  readonly needsApproval?: NeedsApproval<Parameters> | undefined
-}): Tool<
-  Name,
-  {
-    readonly parameters: Parameters
-    readonly success: Success
-    readonly failure: Failure
-    readonly failureMode: Mode extends undefined ? "error" : Mode
-  },
-  Context.Service.Identifier<Dependencies[number]>
-> => {
+export const make: {
+  <
+    const Name extends string,
+    Parameters extends Schema.Constraint = typeof EmptyParams,
+    Success extends Schema.Constraint = typeof Schema.Void,
+    Failure extends Schema.Constraint = typeof Schema.Never,
+    Mode extends FailureMode | undefined = undefined,
+    Dependencies extends Array<Context.Key<any, any> | Context.Key<never, any>> = [],
+    const Exec extends Execution | undefined = undefined
+  >(
+    name: Name,
+    options: MakeOptions<Parameters, Success, Failure, Mode, Dependencies, Exec>
+  ): Tool<
+    Name,
+    {
+      readonly parameters: Parameters
+      readonly success: Success
+      readonly failure: Failure
+      readonly failureMode: Mode extends undefined ? "error" : Mode
+    },
+    Context.Service.Identifier<Dependencies[number]>,
+    ExecutionFrom<Exec>
+  >
+  <
+    const Name extends string,
+    Parameters extends Schema.Constraint = typeof EmptyParams,
+    Success extends Schema.Constraint = typeof Schema.Void,
+    Failure extends Schema.Constraint = typeof Schema.Never,
+    Mode extends FailureMode | undefined = undefined,
+    Dependencies extends Array<Context.Key<any, any> | Context.Key<never, any>> = []
+  >(
+    name: Name,
+    options?: MakeOptions<Parameters, Success, Failure, Mode, Dependencies, Execution | undefined> | undefined
+  ): Tool<
+    Name,
+    {
+      readonly parameters: Parameters
+      readonly success: Success
+      readonly failure: Failure
+      readonly failureMode: Mode extends undefined ? "error" : Mode
+    },
+    Context.Service.Identifier<Dependencies[number]>,
+    Execution
+  >
+} = (
+  name: string,
+  options?: MakeOptions<
+    Schema.Constraint,
+    Schema.Constraint,
+    Schema.Constraint,
+    FailureMode | undefined,
+    any,
+    Execution | undefined
+  >
+): any => {
   const successSchema = options?.success ?? Schema.Void
   const failureSchema = options?.failure ?? Schema.Never
   return userDefinedProto({
@@ -1333,7 +1643,9 @@ export const make = <
     failureSchema,
     failureMode: options?.failureMode ?? "error",
     annotations: Context.empty(),
-    needsApproval: options?.needsApproval as any
+    needsApproval: options?.needsApproval as any,
+    toModelOutput: options?.toModelOutput,
+    execution: options?.execution
   }) as any
 }
 
@@ -1385,44 +1697,22 @@ export const make = <
  * @since 4.0.0
  */
 export const dynamic: {
-  <
-    const Name extends string,
-    const Options extends {
-      readonly description?: string | undefined
-      readonly parameters?: Schema.Constraint | JsonSchema.JsonSchema | undefined
-      readonly success?: Schema.Constraint | undefined
-      readonly failure?: Schema.Constraint | undefined
-      readonly failureMode?: FailureMode | undefined
-      readonly needsApproval?: NeedsApproval<any> | undefined
-    }
-  >(
+  <const Name extends string, const Options extends DynamicOptions>(
     name: Name,
-    options?: Options
+    options: Options
   ): Dynamic<
     Name,
-    {
-      readonly parameters: Options extends { readonly parameters: infer P } ? P extends Schema.Constraint ? P
-        : P extends JsonSchema.JsonSchema ? P
-        : typeof Schema.Unknown
-        : typeof Schema.Unknown
-      readonly success: Options extends { readonly success: infer S extends Schema.Constraint } ? S
-        : typeof Schema.Unknown
-      readonly failure: Options extends { readonly failure: infer F extends Schema.Constraint } ? F
-        : typeof Schema.Never
-      readonly failureMode: Options extends { readonly failureMode: infer M extends FailureMode } ? M : "error"
-    }
+    DynamicConfig<Options>,
+    never,
+    Options extends { readonly execution: infer E extends Execution } ? E : Execution
   >
-} = <
-  const Name extends string,
-  const Options extends {
-    readonly description?: string | undefined
-    readonly parameters?: Schema.Constraint | JsonSchema.JsonSchema | undefined
-    readonly success?: Schema.Constraint | undefined
-    readonly failure?: Schema.Constraint | undefined
-    readonly failureMode?: FailureMode | undefined
-    readonly needsApproval?: NeedsApproval<any> | undefined
-  }
->(name: Name, options?: Options): any => {
+  // When the options object may be absent, either execution mode is recorded,
+  // since absent options create a server-executed tool
+  <const Name extends string, const Options extends DynamicOptions>(
+    name: Name,
+    options?: Options | undefined
+  ): Dynamic<Name, DynamicConfig<Options>, never, Execution>
+} = (name: string, options?: DynamicOptions): any => {
   const successSchema = options?.success ?? Schema.Unknown
   const failureSchema = options?.failure ?? Schema.Never
   const rawParameters = options?.parameters ?? Schema.Unknown
@@ -1438,8 +1728,35 @@ export const dynamic: {
     failureMode: options?.failureMode ?? "error",
     annotations: Context.empty(),
     needsApproval: options?.needsApproval,
-    jsonSchema
+    toModelOutput: options?.toModelOutput,
+    jsonSchema,
+    execution: options?.execution
   })
+}
+
+// The tool configuration `Tool.dynamic` derives from its options
+type DynamicConfig<Options extends DynamicOptions> = {
+  readonly parameters: Options extends { readonly parameters: infer P } ? P extends Schema.Constraint ? P
+    : P extends JsonSchema.JsonSchema ? P
+    : typeof Schema.Unknown
+    : typeof Schema.Unknown
+  readonly success: Options extends { readonly success: infer S extends Schema.Constraint } ? S
+    : typeof Schema.Unknown
+  readonly failure: Options extends { readonly failure: infer F extends Schema.Constraint } ? F
+    : typeof Schema.Never
+  readonly failureMode: Options extends { readonly failureMode: infer M extends FailureMode } ? M : "error"
+}
+
+// Options accepted by `Tool.dynamic`
+interface DynamicOptions {
+  readonly description?: string | undefined
+  readonly parameters?: Schema.Constraint | JsonSchema.JsonSchema | undefined
+  readonly success?: Schema.Constraint | undefined
+  readonly failure?: Schema.Constraint | undefined
+  readonly failureMode?: FailureMode | undefined
+  readonly needsApproval?: NeedsApproval<any> | undefined
+  readonly toModelOutput?: ((result: any) => ReadonlyArray<Prompt.ToolModelOutputPart>) | undefined
+  readonly execution?: Execution | undefined
 }
 
 /**
@@ -1534,7 +1851,9 @@ export const providerDefined = <
          * execution will be returned in the error channel of the calling effect.
          *
          * If set to `"return"`, errors that occur during tool call handler execution
-         * will be captured and returned as part of the tool call result.
+         * will be captured and returned as part of the tool call result. Like
+         * `Effect.catch`, only the first typed failure is returned, and a cause
+         * containing a defect is raised as a defect.
          */
         readonly failureMode?: Mode | undefined
       }
@@ -1989,8 +2308,9 @@ export const getStrictMode = <T extends Any>(tool: T): boolean | undefined => Co
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-const suspectProtoRx = /"__proto__"\s*:/
-const suspectConstructorRx = /"constructor"\s*:/
+// Text that may decode to a forbidden key. `JSON.parse` decodes Unicode
+// escapes (e.g. `"\u005f_proto__"`), so any `\u` escape also triggers the scan.
+const suspectRx = /"__proto__"\s*:|"constructor"\s*:|\\u/
 
 function _parse(text: string) {
   // Parse normally
@@ -2001,15 +2321,8 @@ function _parse(text: string) {
     return obj
   }
 
-  if (
-    suspectProtoRx.test(text) === false &&
-    suspectConstructorRx.test(text) === false
-  ) {
-    return obj
-  }
-
   // Scan result for proto keys
-  return filter(obj)
+  return suspectRx.test(text) ? filter(obj) : obj
 }
 
 function filter(obj: any) {
@@ -2026,6 +2339,7 @@ function filter(obj: any) {
 
       if (
         Object.hasOwn(node, "constructor") &&
+        node.constructor !== null &&
         Object.hasOwn(node.constructor, "prototype")
       ) {
         throw new SyntaxError("Object contains forbidden prototype property")

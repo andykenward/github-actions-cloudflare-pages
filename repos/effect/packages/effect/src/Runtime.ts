@@ -7,9 +7,11 @@
  * exit codes and already-reported failures. Application code usually calls the
  * platform-provided runner instead of using this module directly.
  *
+ * @stability stable
  * @since 4.0.0
  */
 import * as Cause from "effect/Cause"
+import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
 import * as Exit from "effect/Exit"
 import { constVoid, dual } from "effect/Function"
@@ -54,12 +56,61 @@ import type * as Fiber from "./Fiber.ts"
  * await completed // => [Exit.succeed("Hello, World!"), 0]
  * ```
  *
+ * @stability stable
  * @category models
  * @since 4.0.0
  */
 export interface Teardown {
   <E, A>(exit: Exit.Exit<E, A>, onExit: (code: number) => void): void
 }
+
+/**
+ * Annotation specifying the exit code for an interruption handled by
+ * {@link defaultTeardown}.
+ *
+ * **When to use**
+ *
+ * Use when a component finishes a program by interrupting its main fiber on
+ * purpose, such as a stdio server shutting down after stdin closes, and that
+ * shutdown should not report the `130` code reserved for external interruption.
+ *
+ * **Details**
+ *
+ * Pass the annotation through `Fiber.interruptAs`. {@link defaultTeardown}
+ * reads it from the interrupt reasons of the final `Cause`.
+ *
+ * **Gotchas**
+ *
+ * The annotation is read from the `Cause`, not from the running effect's
+ * services, so providing it with `Effect.provideService` has no effect.
+ *
+ * **Example** (Exiting with 0 after an intentional interruption)
+ *
+ * ```ts import.meta.vitest
+ * import { Context, Effect, Fiber, Runtime } from "effect"
+ *
+ * const program = Effect.gen(function*() {
+ *   const main = yield* Effect.forkChild(Effect.never)
+ *   yield* Fiber.interruptAs(main, undefined, Context.make(Runtime.InterruptExitCode, 0))
+ *   return yield* Fiber.await(main)
+ * })
+ *
+ * const exitCodes: Array<number> = []
+ * Runtime.defaultTeardown(await Effect.runPromise(program), (code) => exitCodes.push(code))
+ *
+ * exitCodes // => [0]
+ * ```
+ *
+ * @see {@link defaultTeardown} for how annotated and unannotated interruptions combine
+ * @see {@link errorExitCode} for the equivalent marker on failures
+ *
+ * @stability stable
+ * @category annotations
+ * @since 4.1.3
+ */
+export class InterruptExitCode
+  extends Context.Service<InterruptExitCode, number>()("effect/Runtime/InterruptExitCode")
+{}
 
 /**
  * The default teardown function that determines exit codes from an Effect exit.
@@ -74,15 +125,17 @@ export interface Teardown {
  * This teardown follows these exit-code rules:
  *
  * - `0` for successful completion.
- * - `130` for interruption-only failures.
+ * - The largest {@link InterruptExitCode} when every reason is an annotated interruption.
+ * - `130` for interruption-only failures with any unannotated reason.
  * - The squashed error's {@link errorExitCode} value for other failures when
  *   present.
  * - `1` for other failures.
  *
  * **Gotchas**
  *
- * The `130` code is used only when the Cause contains interruptions and no
- * other failure reasons. Mixed causes use the squashed error path instead.
+ * Interruption codes apply only when the Cause contains nothing but
+ * interruptions. A Cause that mixes interruptions with errors or defects uses
+ * the squashed error path instead.
  *
  * **Example** (Referencing default teardown)
  *
@@ -100,8 +153,30 @@ export interface Teardown {
  * exitCodes // => [0, 1, 130]
  * ```
  *
+ * **Example** (Distinguishing completion from external interruption)
+ *
+ * ```ts import.meta.vitest
+ * import { Cause, Context, Exit, Runtime } from "effect"
+ *
+ * const completed = Cause.annotate(Cause.interrupt(1), Context.make(Runtime.InterruptExitCode, 0))
+ * const custom = Cause.annotate(Cause.interrupt(2), Context.make(Runtime.InterruptExitCode, 7))
+ * const external = Cause.interrupt(3)
+ * const exitCodes: Array<number> = []
+ * const collectExitCode = (cause: Cause.Cause<never>) =>
+ *   Runtime.defaultTeardown(Exit.failCause(cause), (code) => exitCodes.push(code))
+ *
+ * collectExitCode(completed)
+ * collectExitCode(Cause.combine(completed, custom))
+ * collectExitCode(Cause.combine(custom, completed))
+ * collectExitCode(Cause.combine(completed, external))
+ * collectExitCode(Cause.combine(external, completed))
+ *
+ * exitCodes // => [0, 7, 7, 130, 130]
+ * ```
+ *
  * @see {@link errorExitCode} for customizing failure exit codes
  *
+ * @stability stable
  * @category running
  * @since 4.0.0
  */
@@ -110,7 +185,15 @@ export const defaultTeardown: Teardown = <E, A>(
   onExit: (code: number) => void
 ) => {
   if (Exit.isSuccess(exit)) return onExit(0)
-  if (Cause.hasInterruptsOnly(exit.cause)) return onExit(130)
+  if (Cause.hasInterruptsOnly(exit.cause)) {
+    let code = -Infinity
+    for (const reason of exit.cause.reasons) {
+      const annotated = Context.getOrUndefined(Cause.reasonAnnotations(reason), InterruptExitCode)
+      if (annotated === undefined) return onExit(130)
+      code = Math.max(code, annotated)
+    }
+    return onExit(code)
+  }
   return onExit(getErrorExitCode(Cause.squash(exit.cause)))
 }
 
@@ -123,9 +206,9 @@ export const defaultTeardown: Teardown = <E, A>(
  *
  * **Details**
  *
- * The runner executes Effect programs as main entry points. The provided
- * function receives a forked fiber and a teardown callback so it can install
- * platform-specific signal handling, fiber observers, and final exit behavior.
+ * The setup function runs before user code and receives the main fiber and a
+ * teardown callback to install platform-specific signal handlers, observers,
+ * and exit behavior.
  *
  * Most applications should use a platform-provided runner, such as
  * `NodeRuntime.runMain`, rather than constructing one directly.
@@ -175,6 +258,7 @@ export const defaultTeardown: Teardown = <E, A>(
  * events // => ["Starting program", "Program completed", "Custom teardown logic"]
  * ```
  *
+ * @stability stable
  * @category running
  * @since 4.0.0
  */
@@ -204,23 +288,24 @@ export const makeRunMain = (
     readonly disableErrorReporting?: boolean | undefined
     readonly teardown?: Teardown | undefined
   }) => {
-    const fiber = options?.disableErrorReporting === true
-      ? Effect.runFork(effect)
-      : Effect.runFork(
-        Effect.tapCause(effect, (cause) => {
-          if (Cause.hasInterruptsOnly(cause)) return Effect.void
-          const isReported = getErrorReported(Cause.squash(cause))
-          return isReported ? Effect.logError(cause) : Effect.void
-        })
-      )
-    try {
-      const keepAlive = globalThis.setInterval(constVoid, 2_147_483_647)
-      fiber.addObserver(() => {
-        clearInterval(keepAlive)
+    const main = options?.disableErrorReporting === true
+      ? effect
+      : Effect.tapCause(effect, (cause) => {
+        if (Cause.hasInterruptsOnly(cause)) return Effect.void
+        const isReported = getErrorReported(Cause.squash(cause))
+        return isReported ? Effect.logError(cause) : Effect.void
       })
-    } catch {}
     const teardown = options?.teardown ?? defaultTeardown
-    return f({ fiber, teardown })
+    Effect.runFork(Effect.withFiber((fiber) => {
+      try {
+        const keepAlive = globalThis.setInterval(constVoid, 2_147_483_647)
+        fiber.addObserver(() => {
+          clearInterval(keepAlive)
+        })
+      } catch {}
+      f({ fiber, teardown })
+      return main
+    }))
   })
 
 declare global {
@@ -238,6 +323,7 @@ declare global {
  * Use to type properties keyed by `Runtime.errorExitCode` on custom error
  * values.
  *
+ * @stability stable
  * @category symbols
  * @since 4.0.0
  */
@@ -279,6 +365,7 @@ export type errorExitCode = "~effect/Runtime/errorExitCode"
  * @see {@link defaultTeardown} for the default failure exit-code rules that read this marker
  * @see {@link getErrorExitCode} for reading the marker from unknown error values
  *
+ * @stability stable
  * @category symbols
  * @since 4.0.0
  */
@@ -305,6 +392,7 @@ export const errorExitCode: errorExitCode = "~effect/Runtime/errorExitCode"
  *
  * @see {@link errorExitCode} for the marker read by this function
  *
+ * @stability stable
  * @category getters
  * @since 4.0.0
  */
@@ -326,6 +414,7 @@ export const getErrorExitCode = (u: unknown): number => {
  * Use to type properties keyed by `Runtime.errorReported` on custom error
  * values.
  *
+ * @stability stable
  * @category symbols
  * @since 4.0.0
  */
@@ -368,6 +457,7 @@ export type errorReported = "~effect/Runtime/errorReported"
  * @see {@link errorExitCode} for controlling failure exit codes
  * @see {@link getErrorReported} for reading the marker from unknown error values
  *
+ * @stability stable
  * @category symbols
  * @since 4.0.0
  */
@@ -393,6 +483,7 @@ export const errorReported: errorReported = "~effect/Runtime/errorReported"
  *
  * @see {@link errorReported} for the marker read by this function
  *
+ * @stability stable
  * @category getters
  * @since 4.0.0
  */

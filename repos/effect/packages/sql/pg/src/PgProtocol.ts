@@ -15,6 +15,7 @@
  * are held, but holding one keeps its whole pool buffer alive, so copy
  * anything that has to outlive the message it came from.
  *
+ * @stability unstable
  * @since 4.0.0
  */
 import * as Data from "effect/Data"
@@ -23,6 +24,7 @@ import * as Result from "effect/Result"
 /**
  * Default `maxMessageSize` for `makeParser`: 16 MiB.
  *
+ * @stability unstable
  * @category constants
  * @since 4.0.0
  */
@@ -34,6 +36,7 @@ const maxBufferSize = 64 * 1024
 /**
  * An incremental decoder for the post-startup backend message stream.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -46,9 +49,18 @@ export interface Parser<A = Uint8Array | null> {
   readField: FieldReader<A> | undefined
 
   /**
+   * Receives an error other than `ParseError` thrown by `readField`. The
+   * `DataRow` is fully consumed, so the parser drops it and carries on with
+   * the next message. Without a handler, the default, such errors are
+   * terminal, like parse errors.
+   */
+  onFieldError: ((error: unknown) => void) | undefined
+
+  /**
    * Decodes a chunk and returns every complete message. A partial message is
-   * retained for the next call. Parse and field-reader errors are terminal and
-   * discard messages decoded earlier in the same call.
+   * retained for the next call. Parse errors are terminal and discard
+   * messages decoded earlier in the same call, as are field-reader errors
+   * when no `onFieldError` handler is set.
    *
    * **Details**
    *
@@ -76,6 +88,7 @@ export interface Parser<A = Uint8Array | null> {
  * Special pre-startup replies have no type byte. Use `decodeSslResponse` for
  * those replies.
  *
+ * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
@@ -125,6 +138,7 @@ export const makeParser = <A = Uint8Array | null>(options?: {
 
   const parser: Parser<A> = {
     readField: options?.readField,
+    onFieldError: undefined,
     push(chunk) {
       const messages: Array<BackendMessage<A>> = []
       parser.pushEach(chunk, (message) => {
@@ -156,7 +170,17 @@ export const makeParser = <A = Uint8Array | null>(options?: {
           start = limit
           if (type === BackendType.DataRow) {
             // `buffer` always starts at byte 0 of `store`, so offsets index both.
-            onMessage(decodeDataRow<A>(buffer, store, 0, body, limit, parser.readField))
+            let row: DataRow<A>
+            try {
+              row = decodeDataRow<A>(buffer, store, 0, body, limit, parser.readField)
+            } catch (error) {
+              // `start` is already past the row, so the stream stays framed.
+              const onFieldError = parser.onFieldError
+              if (onFieldError === undefined || error instanceof ParseError) throw error
+              onFieldError(error)
+              continue
+            }
+            onMessage(row)
           } else {
             reader.reset(buffer, body, limit)
             const message = decodeBackend(type, reader)
@@ -182,6 +206,7 @@ export const makeParser = <A = Uint8Array | null>(options?: {
 /**
  * Prepares a named or unnamed statement.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -196,6 +221,7 @@ export interface Parse {
  * Binds parameter values to a prepared statement and creates a portal.
  * Parameters and results use the binary format.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -209,6 +235,7 @@ export interface Bind {
 /**
  * Runs a portal, optionally limiting the number of rows returned.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -221,6 +248,7 @@ export interface Execute {
 /**
  * Which kind of object a `Describe` or `Close` message names.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -229,6 +257,7 @@ export type DescribeTarget = "statement" | "portal"
 /**
  * Asks for the parameter and row shape of a statement or portal.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -241,6 +270,7 @@ export interface Describe {
 /**
  * Drops a prepared statement or portal.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -253,6 +283,7 @@ export interface Close {
 /**
  * Closes the current transaction block and requests a `ReadyForQuery`.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -263,6 +294,7 @@ export interface Sync {
 /**
  * Asks the backend to deliver buffered output without ending the transaction.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -273,6 +305,7 @@ export interface Flush {
 /**
  * Ends the session.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -283,6 +316,7 @@ export interface Terminate {
 /**
  * Answers a cleartext or MD5 password request.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -294,6 +328,7 @@ export interface PasswordMessage {
 /**
  * Selects a SASL mechanism and carries its opaque initial response.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -306,6 +341,7 @@ export interface SASLInitialResponse {
 /**
  * Carries an opaque SASL continuation payload.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -317,6 +353,7 @@ export interface SASLResponse {
 /**
  * Any message the client sends after startup.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -336,6 +373,7 @@ export type FrontendMessage =
 /**
  * Error produced when bytes cannot be interpreted as a protocol message.
  *
+ * @stability unstable
  * @category errors
  * @since 4.0.0
  */
@@ -346,6 +384,7 @@ export class ParseError extends Data.TaggedError("PgProtocolParseError")<{
 /**
  * Error returned when a frontend message cannot be encoded.
  *
+ * @stability unstable
  * @category errors
  * @since 4.0.0
  */
@@ -683,8 +722,8 @@ const empty = (type: number): Uint8Array => {
 
 const targetByte = (target: DescribeTarget): number => target === "statement" ? 0x53 : 0x50
 
-const requireInt16Count = (count: number, name: string): number => {
-  if (count > 0x7fff) throw new EncodeError({ message: `${name} count exceeds 32767: ${count}` })
+const requireUint16Count = (count: number, name: string): number => {
+  if (count > 0xffff) throw new EncodeError({ message: `${name} count exceeds 65535: ${count}` })
   return count
 }
 
@@ -699,7 +738,7 @@ const encodeResult = <A>(evaluate: () => A): Result.Result<A, EncodeError> => {
 
 /**
  * Encodes a `Parse` message, returning `EncodeError` when its parameter count
- * is outside the signed int16 wire range.
+ * is outside the unsigned int16 wire range.
  *
  * @category encoding
  * @since 4.0.0
@@ -709,7 +748,7 @@ const encodeParseUnsafe = (options: Omit<Parse, "_tag">): Uint8Array => {
   writer.cString(options.name)
   writer.cString(options.query)
   const parameterTypes = options.parameterTypes
-  const count = requireInt16Count(parameterTypes.length, "Parse parameter type")
+  const count = requireUint16Count(parameterTypes.length, "Parse parameter type")
   writer.reserve(2 + count * 4)
   const bytes = writer.bytes
   let offset = writer.offset
@@ -731,6 +770,7 @@ const encodeParseUnsafe = (options: Omit<Parse, "_tag">): Uint8Array => {
 /**
  * Encodes a `Parse` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -740,7 +780,7 @@ export const encodeParse = (options: Omit<Parse, "_tag">): Result.Result<Uint8Ar
 /**
  * Encodes a `Bind` message using the binary format code for parameters and
  * results, returning `EncodeError` when its parameter count is outside the
- * signed int16 wire range.
+ * unsigned int16 wire range.
  *
  * @category encoding
  * @since 4.0.0
@@ -750,7 +790,7 @@ const encodeBindUnsafe = (options: Omit<Bind, "_tag">): Uint8Array => {
   writer.cString(options.portal)
   writer.cString(options.statement)
   const parameters = options.parameters
-  const count = requireInt16Count(parameters.length, "Bind parameter")
+  const count = requireUint16Count(parameters.length, "Bind parameter")
   // Sizing the rest of the frame up front turns every remaining write into a
   // plain store: one bounds check for the message instead of one per field.
   let size = 10 + count * 4
@@ -804,6 +844,7 @@ const encodeBindUnsafe = (options: Omit<Bind, "_tag">): Uint8Array => {
 /**
  * Encodes a `Bind` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -815,6 +856,7 @@ export const encodeBind = (options: Omit<Bind, "_tag">): Result.Result<Uint8Arra
  * and backfills each parameter length. `PgTypes.writeParameter` supports
  * OID-typed values.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -859,6 +901,7 @@ const valueWriterUnsafe = Symbol.for("@effect/sql-pg/PgProtocol/ValueWriter/unsa
  * const frame = encodeBind({ portal: "", statement: "s1", parameters: [PgTypes.int4(1)] })
  * ```
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -876,7 +919,7 @@ export const makeBindEncoder = <A, E = never>(
     writer.cString(options.portal)
     writer.cString(options.statement)
     const parameters = options.parameters
-    const count = requireInt16Count(parameters.length, "Bind parameter")
+    const count = requireUint16Count(parameters.length, "Bind parameter")
     let textCount = 0
     if (textFormat !== undefined) {
       for (let index = 0; index < count; index++) {
@@ -941,6 +984,7 @@ export const makeBindEncoder = <A, E = never>(
 /**
  * Encodes an `Execute` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -954,6 +998,7 @@ export const encodeExecute = (options: Omit<Execute, "_tag">): Uint8Array => {
 /**
  * Encodes a `Describe` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -967,6 +1012,7 @@ export const encodeDescribe = (options: Omit<Describe, "_tag">): Uint8Array => {
 /**
  * Encodes a `Close` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -980,6 +1026,7 @@ export const encodeClose = (options: Omit<Close, "_tag">): Uint8Array => {
 /**
  * Encodes a `Sync` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -988,6 +1035,7 @@ export const encodeSync = (): Uint8Array => empty(0x53)
 /**
  * Encodes a `Flush` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -996,6 +1044,7 @@ export const encodeFlush = (): Uint8Array => empty(0x48)
 /**
  * Encodes a `Terminate` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -1005,6 +1054,7 @@ export const encodeTerminate = (): Uint8Array => empty(0x58)
  * Encodes a `PasswordMessage`. The password is sent verbatim, so MD5 hashing
  * belongs to the caller - see `PgAuth.md5Password`.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -1017,6 +1067,7 @@ export const encodePasswordMessage = (options: Omit<PasswordMessage, "_tag">): U
 /**
  * Encodes a `SASLInitialResponse` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -1035,6 +1086,7 @@ export const encodeSASLInitialResponse = (options: Omit<SASLInitialResponse, "_t
 /**
  * Encodes a `SASLResponse` message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -1047,6 +1099,7 @@ export const encodeSASLResponse = (options: Omit<SASLResponse, "_tag">): Uint8Ar
 /**
  * Encodes any frontend message.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -1089,6 +1142,7 @@ const CANCEL_REQUEST_CODE = 80877102
  * Startup parameters. `user` is required; any other run-time parameter the
  * server accepts may be passed alongside it.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1103,6 +1157,7 @@ export interface StartupParameters {
  * Encodes an `SSLRequest`. It has no type byte and is only valid before
  * startup.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -1117,6 +1172,7 @@ export const encodeSslRequest = (): Uint8Array => {
  * Decodes the single byte the server sends in reply to an `SSLRequest`. `"S"`
  * means the server will speak TLS, `"N"` means it will not.
  *
+ * @stability unstable
  * @category decoding
  * @since 4.0.0
  */
@@ -1131,6 +1187,7 @@ export const decodeSslResponse = (byte: number): Result.Result<"S" | "N", ParseE
  * Encodes a `StartupMessage` for protocol 3.0. It has no type byte.
  * `client_encoding` defaults to `UTF8` because this codec always writes UTF-8.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -1157,6 +1214,7 @@ export const encodeStartupMessage = (parameters: StartupParameters): Uint8Array 
  * Encodes a `CancelRequest`. It has no type byte and is sent on a separate
  * connection, using the `pid` and `secret` from `BackendKeyData`.
  *
+ * @stability unstable
  * @category encoding
  * @since 4.0.0
  */
@@ -1180,6 +1238,7 @@ export const encodeCancelRequest = (options: {
 /**
  * Authentication succeeded.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1190,6 +1249,7 @@ export interface AuthenticationOk {
 /**
  * The server wants the password in the clear.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1200,6 +1260,7 @@ export interface AuthenticationCleartextPassword {
 /**
  * The server wants an MD5-hashed password, salted with these four bytes.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1211,6 +1272,7 @@ export interface AuthenticationMD5Password {
 /**
  * The server offers these SASL mechanisms.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1222,6 +1284,7 @@ export interface AuthenticationSASL {
 /**
  * An opaque SASL challenge.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1233,6 +1296,7 @@ export interface AuthenticationSASLContinue {
 /**
  * The opaque final SASL payload, carrying the server signature.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1245,6 +1309,7 @@ export interface AuthenticationSASLFinal {
  * An authentication request this codec does not model, such as GSSAPI or
  * SSPI. The `method` is the raw sub-type integer.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1257,6 +1322,7 @@ export interface AuthenticationUnsupported {
 /**
  * Reports a run-time parameter value, at startup or whenever it changes.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1269,6 +1335,7 @@ export interface ParameterStatus {
 /**
  * The identity a `CancelRequest` needs.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1282,6 +1349,7 @@ export interface BackendKeyData {
  * Transaction status: idle, in a transaction block, or in a failed
  * transaction block.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1290,6 +1358,7 @@ export type TransactionStatus = "I" | "T" | "E"
 /**
  * The backend is ready for a new query cycle.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1301,6 +1370,7 @@ export interface ReadyForQuery {
 /**
  * One column of a `RowDescription`.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1317,6 +1387,7 @@ export interface FieldDescription {
 /**
  * Describes the columns a portal will return.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1329,6 +1400,7 @@ export interface RowDescription {
  * One result row. Values stay raw bytes; `null` is SQL NULL. Decoding them
  * requires the OIDs from the matching `RowDescription`.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1346,6 +1418,7 @@ export interface DataRow<out A = Uint8Array | null> {
  * from `offset` through `offset + size` belong to the field. A thrown error
  * permanently fails the parser.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1354,6 +1427,7 @@ export type FieldReader<A> = (bytes: Uint8Array, offset: number, size: number, c
 /**
  * A command finished, reporting its tag such as `SELECT 3`.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1365,6 +1439,7 @@ export interface CommandComplete {
 /**
  * The query string was empty.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1375,6 +1450,7 @@ export interface EmptyQueryResponse {
 /**
  * The statement or portal returns no rows.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1385,6 +1461,7 @@ export interface NoData {
 /**
  * A `Parse` succeeded.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1395,6 +1472,7 @@ export interface ParseComplete {
 /**
  * A `Bind` succeeded.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1405,6 +1483,7 @@ export interface BindComplete {
 /**
  * A `Close` succeeded.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1415,6 +1494,7 @@ export interface CloseComplete {
 /**
  * An `Execute` stopped at its row limit; the portal can be executed again.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1425,6 +1505,7 @@ export interface PortalSuspended {
 /**
  * The parameter OIDs of a described statement.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1437,6 +1518,7 @@ export interface ParameterDescription {
  * The fields of an `ErrorResponse` or `NoticeResponse`. Unrecognised field
  * codes are kept under their raw single-character key.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1465,6 +1547,7 @@ export interface ErrorFields {
 /**
  * An error. `code` is the SQLSTATE.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1476,6 +1559,7 @@ export interface ErrorResponse {
 /**
  * A warning or notice. Same field set as `ErrorResponse`.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1487,6 +1571,7 @@ export interface NoticeResponse {
 /**
  * A `LISTEN`/`NOTIFY` message.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1501,6 +1586,7 @@ export interface NotificationResponse {
  * The server speaks an older minor protocol version, or did not recognise
  * some startup options.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1513,6 +1599,7 @@ export interface NegotiateProtocolVersion {
 /**
  * The server is ready to receive `COPY` data.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1525,6 +1612,7 @@ export interface CopyInResponse {
 /**
  * The server is about to send `COPY` data.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1537,6 +1625,7 @@ export interface CopyOutResponse {
 /**
  * The connection entered bidirectional `COPY` mode, as used by replication.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1549,6 +1638,7 @@ export interface CopyBothResponse {
 /**
  * A chunk of `COPY` data.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1560,6 +1650,7 @@ export interface CopyData {
 /**
  * The `COPY` stream ended.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1571,6 +1662,7 @@ export interface CopyDone {
  * A message whose type byte this codec does not know. The payload excludes
  * the type byte and the length prefix.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */
@@ -1583,6 +1675,7 @@ export interface Unknown {
 /**
  * Any message the server sends after startup.
  *
+ * @stability unstable
  * @category models
  * @since 4.0.0
  */

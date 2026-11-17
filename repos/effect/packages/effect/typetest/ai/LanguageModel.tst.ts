@@ -67,7 +67,36 @@ describe("LanguageModel", () => {
       type ProgramSuccess = typeof program extends Effect.Effect<infer A, any, any> ? A : never
       type ToolCallParams = ProgramSuccess["toolCalls"][number]["params"]
 
-      expect<ToolCallParams>().type.toBe<string>()
+      expect<ToolCallParams>().type.toBe<Schema.Json>()
+    })
+
+    it("types encoded tool parameters as JSON when tool call resolution is disabled", () => {
+      const toolkit = Toolkit.make(Tool.make("Schedule", { parameters: Schema.Struct({ at: Schema.Date }) }))
+      const program = LanguageModel.generateText({
+        prompt: "hello",
+        toolkit,
+        disableToolCallResolution: true
+      })
+
+      type ProgramSuccess = typeof program extends Effect.Effect<infer A, any, any> ? A : never
+      type ToolCallParams = ProgramSuccess["toolCalls"][number]["params"]
+
+      expect<ToolCallParams>().type.toBeAssignableTo<Schema.Json>()
+    })
+
+    it("does not type JSON-encoded number parameters as numbers when tool call resolution is disabled", () => {
+      const toolkit = Toolkit.make(Tool.make("Measure", { parameters: Schema.Struct({ value: Schema.Number }) }))
+      const program = LanguageModel.generateText({
+        prompt: "hello",
+        toolkit,
+        disableToolCallResolution: true
+      })
+
+      type ProgramSuccess = typeof program extends Effect.Effect<infer A, any, any> ? A : never
+      type ToolCallParams = ProgramSuccess["toolCalls"][number]["params"]
+
+      // The JSON codec encodes non-finite numbers as strings, e.g. "Infinity"
+      expect<ToolCallParams>().type.not.toBeAssignableTo<{ readonly value: number }>()
     })
 
     it("uses opaque tool parameters when tool call resolution is enabled", () => {
@@ -96,6 +125,44 @@ describe("LanguageModel", () => {
       type ToolCallParams = ProgramSuccess["toolCalls"][number]["params"]
 
       expect<ToolCallParams>().type.toBe<unknown>()
+    })
+
+    it("returns undeclared tool names for a non-literal resolution flag when tool call validation is deferred", () => {
+      const toolkit = Toolkit.make(TransformTool)
+      const disableToolCallResolution = null as unknown as boolean
+      const program = LanguageModel.generateText({
+        prompt: "hello",
+        toolkit,
+        disableToolCallResolution,
+        toolCallValidation: "deferred"
+      })
+
+      type ProgramSuccess = typeof program extends Effect.Effect<infer A, any, any> ? A : never
+      type ToolCall = ProgramSuccess["toolCalls"][number]
+
+      expect<ToolCall["name"]>().type.toBe<string>()
+      expect<ToolCall["params"]>().type.toBe<unknown>()
+    })
+
+    it("returns tool calls without a toolkit for union options that may defer tool call validation", () => {
+      const options = null as unknown as
+        | {
+          readonly prompt: string
+          readonly disableToolCallResolution: true
+          readonly toolCallValidation: "strict"
+        }
+        | {
+          readonly prompt: string
+          readonly disableToolCallResolution: true
+          readonly toolCallValidation: "deferred"
+        }
+      const program = LanguageModel.generateText(options)
+
+      type ProgramSuccess = typeof program extends Effect.Effect<infer A, any, any> ? A : never
+      type ToolCall = ProgramSuccess["toolCalls"][number]
+
+      expect<ToolCall["name"]>().type.toBe<string>()
+      expect<ToolCall["params"]>().type.toBe<unknown>()
     })
 
     it("returns an empty tool record when no toolkit is provided", () => {
@@ -272,7 +339,23 @@ describe("LanguageModel", () => {
       type StreamPart = typeof stream extends Stream.Stream<infer A, any, any> ? A : never
       type ToolCallParams = Extract<StreamPart, { readonly type: "tool-call" }>["params"]
 
-      expect<ToolCallParams>().type.toBe<string>()
+      expect<ToolCallParams>().type.toBe<Schema.Json>()
+    })
+
+    it("returns undeclared tool names with opaque parameters when tool call validation is deferred", () => {
+      const toolkit = Toolkit.make(TransformTool)
+      const stream = LanguageModel.streamText({
+        prompt: "hello",
+        toolkit,
+        disableToolCallResolution: true,
+        toolCallValidation: "deferred"
+      })
+
+      type StreamPart = typeof stream extends Stream.Stream<infer A, any, any> ? A : never
+      type ToolCall = Extract<StreamPart, { readonly type: "tool-call" }>
+
+      expect<ToolCall["name"]>().type.toBe<string>()
+      expect<ToolCall["params"]>().type.toBe<unknown>()
     })
 
     it("returns an empty tool record when no toolkit is provided", () => {
@@ -334,7 +417,7 @@ describe("LanguageModel", () => {
       type ProgramSuccess = typeof program extends Effect.Effect<infer A, any, any> ? A : never
       type ToolCallParams = ProgramSuccess["toolCalls"][number]["params"]
 
-      expect<ToolCallParams>().type.toBe<string>()
+      expect<ToolCallParams>().type.toBe<Schema.Json>()
     })
   })
 
@@ -351,7 +434,7 @@ describe("LanguageModel", () => {
       type ProgramSuccess = typeof program extends Effect.Effect<infer A, any, any> ? A : never
       type ToolCallParams = ProgramSuccess["toolCalls"][number]["params"]
 
-      expect<ToolCallParams>().type.toBe<string>()
+      expect<ToolCallParams>().type.toBe<Schema.Json>()
     })
   })
 })
