@@ -36,7 +36,10 @@ const HEADING = 'andykenward/github-actions-cloudflare-pages'
 
 /** See the note on `DeployError` in `src/deploy/main.ts`. */
 // oxlint-disable-next-line unicorn/throw-new-error
-class DeleteError extends Schema.TaggedError<DeleteError>()('DeleteError', {
+class DeleteError extends Schema.TaggedError<
+  DeleteError,
+  {readonly brand: unique symbol}
+>()('DeleteError', {
   message: Schema.String,
   cause: Schema.optional(Schema.Defect())
 }) {

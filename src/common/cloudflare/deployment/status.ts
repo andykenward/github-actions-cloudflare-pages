@@ -68,16 +68,16 @@ type StatusResult = {
  * transport or envelope failure.
  */
 // oxlint-disable-next-line unicorn/throw-new-error
-class DeploymentPendingError extends Schema.TaggedError<DeploymentPendingError>()(
-  'DeploymentPendingError',
-  {reason: Schema.String}
-) {}
+class DeploymentPendingError extends Schema.TaggedError<
+  DeploymentPendingError,
+  {readonly brand: unique symbol}
+>()('DeploymentPendingError', {reason: Schema.String}) {}
 
 // oxlint-disable-next-line unicorn/throw-new-error
-class DeploymentPollTimeoutError extends Schema.TaggedError<DeploymentPollTimeoutError>()(
-  'DeploymentPollTimeoutError',
-  {message: Schema.String}
-) {}
+class DeploymentPollTimeoutError extends Schema.TaggedError<
+  DeploymentPollTimeoutError,
+  {readonly brand: unique symbol}
+>()('DeploymentPollTimeoutError', {message: Schema.String}) {}
 
 export type DeploymentTarget = CloudflareApiEndpoint & {
   /**

@@ -27,7 +27,10 @@ const SUPPORTED_EVENT_NAMES = new Set<string>([
  * surface it via `setFailed`.
  */
 // oxlint-disable-next-line unicorn/throw-new-error
-class DeployError extends Schema.TaggedError<DeployError>()('DeployError', {
+class DeployError extends Schema.TaggedError<
+  DeployError,
+  {readonly brand: unique symbol}
+>()('DeployError', {
   message: Schema.String
 }) {}
 

@@ -44,13 +44,13 @@ export const WranglerTimeout = Context.Reference<Duration.Duration>(
 )
 
 // oxlint-disable-next-line unicorn/throw-new-error
-class WranglerError extends Schema.TaggedError<WranglerError>()(
-  'WranglerError',
-  {
-    message: Schema.String,
-    cause: Schema.Defect()
-  }
-) {
+class WranglerError extends Schema.TaggedError<
+  WranglerError,
+  {readonly brand: unique symbol}
+>()('WranglerError', {
+  message: Schema.String,
+  cause: Schema.Defect()
+}) {
   /**
    * Wrangler's own stderr is the message when there is one: a rejected
    * `execFile` carries it, and its `Error` message only prepends the command

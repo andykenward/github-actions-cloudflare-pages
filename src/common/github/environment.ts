@@ -11,10 +11,10 @@ import {GitHubContext} from './context.js'
 const PREFIX = `GitHub Environment:`
 
 // oxlint-disable-next-line unicorn/throw-new-error
-class EnvironmentError extends Schema.TaggedError<EnvironmentError>()(
-  'EnvironmentError',
-  {message: Schema.String}
-) {}
+class EnvironmentError extends Schema.TaggedError<
+  EnvironmentError,
+  {readonly brand: unique symbol}
+>()('EnvironmentError', {message: Schema.String}) {}
 
 /** An existing GitHub Environment, and the ref to create the deployment on. */
 export interface Environment {

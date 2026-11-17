@@ -177,13 +177,13 @@ const getGitHubContext = (): GitHubContextShape => {
 }
 
 // oxlint-disable-next-line unicorn/throw-new-error
-class GitHubContextError extends Schema.TaggedError<GitHubContextError>()(
-  'GitHubContextError',
-  {
-    message: Schema.String,
-    cause: Schema.Defect()
-  }
-) {
+class GitHubContextError extends Schema.TaggedError<
+  GitHubContextError,
+  {readonly brand: unique symbol}
+>()('GitHubContextError', {
+  message: Schema.String,
+  cause: Schema.Defect()
+}) {
   static readonly from = (cause: unknown): GitHubContextError =>
     new GitHubContextError({message: errorMessage(cause), cause})
 }

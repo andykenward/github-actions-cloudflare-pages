@@ -6,7 +6,10 @@ import * as Schema from 'effect/Schema'
 import {expect, test, vi} from 'vitest'
 
 // oxlint-disable-next-line unicorn/throw-new-error
-class RunError extends Schema.TaggedError<RunError>()('RunError', {
+class RunError extends Schema.TaggedError<
+  RunError,
+  {readonly brand: unique symbol}
+>()('RunError', {
   message: Schema.String
 }) {}
 

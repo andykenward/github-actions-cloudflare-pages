@@ -9,7 +9,10 @@ import type {PayloadGithubDeploymentV2} from './types.js'
 import {PayloadV1, PayloadV2} from './types.js'
 
 // oxlint-disable-next-line unicorn/throw-new-error
-class PayloadError extends Schema.TaggedError<PayloadError>()('PayloadError', {
+class PayloadError extends Schema.TaggedError<
+  PayloadError,
+  {readonly brand: unique symbol}
+>()('PayloadError', {
   message: Schema.String
 }) {}
 
