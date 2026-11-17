@@ -63,9 +63,8 @@ updates:
       # versioned global symbol (`Symbol.for('undici.globalDispatcher.N')`), so
       # the devDependency must stay on the same major as Node's bundled copy
       # (`process.versions.undici`) or `MockAgent` silently stops intercepting
-      # and tests hit the real network. undici 7.30+ and 8.12+ register both
-      # `.1` and `.2`, so 7.x works with Node 24 (bundles 7.x) and Node 26
-      # (bundles 8.x); check again before any other major.
+      # and tests hit the real network. Tests run on Node 26, which bundles
+      # undici 8.x; only raise this once Node's bundled major moves.
       - dependency-name: undici
         update-types: ['version-update:semver-major']
       # The action runs on `using: node24` while the repo develops on Node 26;
