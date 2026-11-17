@@ -6,7 +6,7 @@ inputs:
   node-version:
     description: 'Version of Node'
     required: false
-    default: '24'
+    default: '26'
 runs:
   using: 'composite'
   steps:
