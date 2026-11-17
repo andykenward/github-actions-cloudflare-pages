@@ -1,7 +1,7 @@
 import { NodeFileSystem } from "@effect/platform-node"
 import { SqliteClient } from "@effect/sql-sqlite-node"
 import { assert, describe, it } from "@effect/vitest"
-import { Cause, Duration, Effect, Exit, Fiber, FileSystem, Option } from "effect"
+import { Cause, Deferred, Duration, Effect, Exit, Fiber, FileSystem, Option, References } from "effect"
 import { Reactivity } from "effect/reactivity"
 import { ConnectionError, SqlError } from "effect/sql/SqlError"
 import { TestClock } from "effect/testing"
@@ -37,7 +37,23 @@ const makeLockedDatabase = Effect.gen(function*() {
   return { filename, unlock: () => lock.exec("ROLLBACK") }
 }).pipe(Effect.provide(NodeFileSystem.layer))
 
-describe("Client", () => {
+// node:sqlite blocks the Vitest worker; concurrent tests would share a running
+// timeout while waiting for each other's queries.
+describe("Client", { concurrent: false }, () => {
+  it.effect("should disable query-only transforms", () =>
+    Effect.gen(function*() {
+      const sql = yield* SqliteClient.make({
+        filename: ":memory:",
+        transformQueryNames: (name) => name === "firstName" ? "first_name" : name
+      }).pipe(Effect.provide(Reactivity.layer))
+      const withoutTransforms = sql.withoutTransforms()
+      yield* sql`CREATE TABLE test (first_name TEXT, "firstName" TEXT)`
+      yield* sql`INSERT INTO test (first_name, "firstName") VALUES ('John', 'Jane')`
+
+      const select = withoutTransforms`SELECT ${withoutTransforms("firstName")} FROM test`
+      assert.deepStrictEqual(yield* select, [{ firstName: "Jane" }])
+    }))
+
   it.effect("releases completed nested savepoints", () =>
     Effect.gen(function*() {
       const sql = yield* makeClient
@@ -168,6 +184,126 @@ describe("Client", () => {
       assert.deepStrictEqual(rows, [{ id: 1, name: "hello" }])
     }))
 
+  it.effect("keeps a fiber that outlives its transaction out of another transaction", () =>
+    Effect.gen(function*() {
+      const sql = yield* makeClient
+      yield* sql`CREATE TABLE t (who TEXT)`
+      const go = yield* Deferred.make<void>()
+      const done = yield* Deferred.make<void>()
+      const idle = yield* Deferred.make<void>()
+
+      const stale = yield* sql.withTransaction(Effect.forkChild(
+        Effect.all([
+          Effect.andThen(Deferred.await(go), Effect.flip(sql`INSERT INTO t VALUES ('stale fiber')`)).pipe(
+            Effect.ensuring(Deferred.succeed(done, undefined))
+          ),
+          // On an idle connection, a stale SAVEPOINT would start a transaction and block the next BEGIN.
+          Effect.andThen(Deferred.await(idle), Effect.flip(sql.withTransaction(Effect.void)))
+        ])
+      ))
+      const other = yield* Effect.forkChild(Effect.exit(sql.withTransaction(Effect.gen(function*() {
+        yield* sql`INSERT INTO t VALUES ('other transaction')`
+        yield* Deferred.succeed(go, undefined)
+        yield* Deferred.await(done)
+        return yield* Effect.fail("rollback")
+      }))))
+
+      yield* Fiber.join(other)
+      yield* Deferred.succeed(idle, undefined)
+      const errors = yield* Fiber.join(stale)
+      for (const error of errors) {
+        assert.deepStrictEqual(
+          [error.reason._tag, error.reason.message, error.isRetryable],
+          ["UnknownError", "SqlClient: the transaction has already ended", false]
+        )
+      }
+      assert.deepStrictEqual(yield* sql`SELECT who FROM t`, [])
+      // The connection is still usable for new transactions.
+      yield* sql.withTransaction(sql`INSERT INTO t VALUES ('after')`)
+      assert.deepStrictEqual(yield* sql`SELECT who FROM t`, [{ who: "after" }])
+    }))
+
+  it.effect.each(["ABORT", "ROLLBACK", "nested ROLLBACK"] as const)(
+    "preserves a typed constraint failure and reuses the connection after %s",
+    (mode) =>
+      Effect.gen(function*() {
+        const sql = yield* SqliteClient.make({ filename: ":memory:" }).pipe(Effect.provide(Reactivity.layer))
+        yield* sql`CREATE TABLE items (id INTEGER PRIMARY KEY)`
+        yield* sql`INSERT INTO items VALUES (1)`
+
+        const insert = mode === "ABORT"
+          ? sql`INSERT INTO items VALUES (1)`
+          : sql`INSERT OR ROLLBACK INTO items VALUES (1)`
+        const transaction = sql.withTransaction(
+          mode === "nested ROLLBACK" ? sql.withTransaction(insert) : insert
+        )
+        const exit = yield* Effect.exit(transaction)
+        assert.isTrue(Exit.isFailure(exit))
+        if (!Exit.isFailure(exit)) return
+        assert.isFalse(
+          Cause.hasDies(exit.cause),
+          `expected only a typed constraint failure:\n${Cause.pretty(exit.cause)}`
+        )
+        const error = Option.getOrThrow(Cause.findErrorOption(exit.cause))
+        assert.strictEqual(error._tag, "SqlError")
+        assert.strictEqual(error.reason._tag, "ConstraintError")
+
+        const recovered = yield* transaction.pipe(
+          Effect.as(false),
+          Effect.catchTag("SqlError", () => Effect.succeed(true))
+        )
+        assert.isTrue(recovered)
+        yield* sql.withTransaction(sql`INSERT INTO items VALUES (2)`)
+        assert.deepStrictEqual(yield* sql`SELECT id FROM items ORDER BY id`, [{ id: 1 }, { id: 2 }])
+      })
+  )
+
+  it.effect.each(["missing savepoint", "unrelated cleanup error"] as const)(
+    "keeps a %s as a defect and rolls back the outer transaction",
+    (mode) =>
+      Effect.gen(function*() {
+        const sql = yield* SqliteClient.make({ filename: ":memory:" }).pipe(Effect.provide(Reactivity.layer))
+        yield* sql`CREATE TABLE items (id INTEGER PRIMARY KEY)`
+        const error = new SqlError({
+          reason: new ConnectionError({
+            message: "injected cleanup failure",
+            operation: "rollback",
+            cause: new Error("injected cleanup failure")
+          })
+        })
+        if (mode === "unrelated cleanup error") {
+          const conn = yield* Effect.scoped(sql.reserve)
+          const executeUnprepared = conn.executeUnprepared
+          Object.defineProperty(conn, "executeUnprepared", {
+            configurable: true,
+            value: (...args: Parameters<typeof executeUnprepared>) =>
+              args[0].startsWith("ROLLBACK TO SAVEPOINT")
+                ? Effect.fail(error)
+                : executeUnprepared(...args)
+          })
+        }
+
+        const exit = yield* Effect.exit(sql.withTransaction(
+          sql.withTransaction(Effect.gen(function*() {
+            yield* sql`INSERT INTO items VALUES (1)`
+            if (mode === "missing savepoint") {
+              yield* sql`RELEASE SAVEPOINT effect_sql_1`.unprepared
+            }
+            return yield* Effect.fail(error)
+          })).pipe(Effect.catchTag("SqlError", () => Effect.void))
+        ))
+
+        assert.deepStrictEqual(yield* sql`SELECT id FROM items`, [])
+        assert.isTrue(Exit.isFailure(exit))
+        if (!Exit.isFailure(exit)) return
+        assert.isTrue(Cause.hasDies(exit.cause))
+        assert.match(
+          Cause.pretty(exit.cause),
+          mode === "missing savepoint" ? /no such savepoint/i : /injected cleanup failure/i
+        )
+      })
+  )
+
   it.effect("recovers a failed deferred commit without losing an in-memory database", () =>
     Effect.gen(function*() {
       const sql = yield* SqliteClient.make({ filename: ":memory:" }).pipe(Effect.provide(Reactivity.layer))
@@ -238,6 +374,8 @@ describe("Client", () => {
       failRollback = false
       assert.deepStrictEqual(yield* sql`SELECT * FROM parent`, [{ id: 1 }])
       assert.deepStrictEqual(yield* sql`SELECT * FROM child`, [])
+      yield* sql`INSERT INTO child VALUES (1)`
+      assert.deepStrictEqual(yield* sql`SELECT * FROM child`, [{ parent_id: 1 }])
     }))
 
   it.effect("does not poison a connection already rolled back before failed commit cleanup", () =>
@@ -269,6 +407,50 @@ describe("Client", () => {
       )
       const rows = yield* sql`SELECT * FROM test`
       assert.deepStrictEqual(rows, [])
+    }))
+
+  it.effect("keeps a plain write out of another fiber's rolled back transaction", () =>
+    Effect.gen(function*() {
+      // Sweep the acquisition/execution gap without relying on one scheduler offset.
+      for (let delay = 0; delay < 31; delay++) {
+        yield* Effect.scoped(Effect.gen(function*() {
+          const sql = yield* makeClient
+          yield* sql`CREATE TABLE race (kind TEXT NOT NULL)`
+          const plain = yield* sql`INSERT INTO race VALUES ('plain')`.pipe(
+            Effect.provideService(References.MaxOpsBeforeYield, 3),
+            Effect.forkChild
+          )
+          for (let i = 0; i < delay; i++) yield* Effect.yieldNow
+          const transaction = yield* sql.withTransaction(Effect.gen(function*() {
+            yield* sql`INSERT INTO race VALUES ('rolled back')`
+            for (let i = 0; i < 1000; i++) yield* Effect.yieldNow
+            return yield* Effect.fail("rollback")
+          })).pipe(Effect.ignore, Effect.forkChild)
+          yield* Fiber.join(plain)
+          yield* Fiber.join(transaction)
+          assert.deepStrictEqual(yield* sql`SELECT kind FROM race`, [{ kind: "plain" }])
+        }))
+      }
+    }), { timeout: 30_000 })
+
+  it.effect("releases the connection when a queued transaction is interrupted", () =>
+    Effect.gen(function*() {
+      // Sweep the interrupt across the gap between taking the connection and registering its release.
+      for (let delay = 0; delay < 31; delay++) {
+        yield* Effect.scoped(Effect.gen(function*() {
+          const sql = yield* SqliteClient.make({ filename: ":memory:" }).pipe(Effect.provide(Reactivity.layer))
+          const holder = yield* Effect.forkChild(sql`SELECT 1`)
+          const queued = yield* sql.withTransaction(sql`SELECT 2`).pipe(
+            Effect.provideService(References.MaxOpsBeforeYield, 3),
+            Effect.forkChild
+          )
+          for (let i = 0; i < delay; i++) yield* Effect.yieldNow
+          yield* Fiber.interrupt(queued)
+          yield* Fiber.join(holder)
+          const next = yield* Effect.forkChild(sql`SELECT 3`, { startImmediately: true })
+          assert.isDefined(next.pollUnsafe(), `connection leaked at delay ${delay}`)
+        }))
+      }
     }))
 
   it.effect("uses a 5 second busy timeout", () =>
@@ -394,4 +576,22 @@ describe("Client", () => {
       const sql = yield* SqliteClient.make({ filename, readonly: true })
       assert.deepStrictEqual(yield* sql`PRAGMA journal_mode`, [{ journal_mode: "delete" }])
     }).pipe(Effect.provide([NodeFileSystem.layer, Reactivity.layer])))
+
+  it.effect("works when node:sqlite does not provide enableLoadExtension", () =>
+    Effect.gen(function*() {
+      const prototype: Partial<Pick<DatabaseSync, "enableLoadExtension">> = DatabaseSync.prototype
+      const descriptor = Object.getOwnPropertyDescriptor(prototype, "enableLoadExtension")
+      yield* Effect.acquireRelease(
+        Effect.sync(() => delete prototype.enableLoadExtension),
+        () =>
+          Effect.sync(() => {
+            if (descriptor) Object.defineProperty(prototype, "enableLoadExtension", descriptor)
+          })
+      )
+
+      const sql = yield* makeClient
+      assert.deepStrictEqual(yield* sql`SELECT 1 AS value`, [{ value: 1 }])
+      const error = yield* Effect.flip(sql.loadExtension(sql.config.filename + ".missing-extension"))
+      assert.strictEqual(error._tag, "SqlError")
+    }), { concurrent: false })
 })

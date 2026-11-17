@@ -21,27 +21,22 @@ import type { HttpBody } from "../http/HttpBody.ts"
 import * as HttpClient from "../http/HttpClient.ts"
 import * as HttpClientError from "../http/HttpClientError.ts"
 import * as HttpClientRequest from "../http/HttpClientRequest.ts"
+import * as Latch from "../Latch.ts"
 import * as Layer from "../Layer.ts"
-import * as Num from "../Number.ts"
-import * as Option from "../Option.ts"
+import * as Result from "../Result.ts"
 import * as Schedule from "../Schedule.ts"
 import * as Scope from "../Scope.ts"
+import * as Version from "../Version.ts"
 
+// A missing or invalid Retry-After falls back to a fixed delay.
 const retryAfterDelay = (value: string | undefined): Effect.Effect<Duration.Duration> => {
-  const seconds = Option.fromUndefinedOr(value).pipe(Option.flatMap(Num.parse))
-  if (Option.isSome(seconds)) {
-    return Effect.succeed(Duration.seconds(seconds.value))
-  }
-  if (value === undefined) {
-    return Effect.succeed(Duration.seconds(5))
-  }
-  const timestamp = Date.parse(value)
-  if (Number.isNaN(timestamp)) {
+  const retryAfter = value === undefined ? undefined : Headers.parseRetryAfter(value)
+  if (retryAfter === undefined || Result.isFailure(retryAfter)) {
     return Effect.succeed(Duration.seconds(5))
   }
   return Effect.map(
     Clock,
-    (clock) => Duration.millis(Math.max(timestamp - clock.currentTimeMillisUnsafe(), 1))
+    (clock) => Headers.retryAfterDelay(retryAfter.success, clock.currentTimeMillisUnsafe())
   )
 }
 
@@ -160,6 +155,16 @@ export const layerFlusher: Layer.Layer<Flusher> = Layer.sync(Flusher, () => {
  * after unhandled failures, and flushes during scope finalization up to
  * `shutdownTimeout`.
  *
+ * The export interval starts with the first push and stops once an export
+ * empties the buffer, so an idle exporter keeps no timer pending. With
+ * `exportEmpty` and batching disabled, it exports on every interval instead.
+ *
+ * Optional gzip compression uses `HttpClientRequest.compressBody` before the
+ * retry loop, so retries reuse the compressed bytes. Bodies smaller than 1KB
+ * remain uncompressed. Compression requires runtime `CompressionStream` support;
+ * compression failures follow the same temporary-disable behavior as transport
+ * failures and do not fail flushing or shutdown.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
@@ -168,6 +173,8 @@ export const make: (
   options: {
     readonly url: string
     readonly headers: Headers.Input | undefined
+    /** Gzip uses the default 1KB minimum body size; smaller batches remain uncompressed. */
+    readonly compression?: "gzip" | "none" | undefined
     readonly label: string
     readonly exportInterval: Duration.Input
     readonly maxBatchSize: number | "disabled"
@@ -184,7 +191,6 @@ export const make: (
   const clock = Context.get(services, Clock)
   const scope = Context.get(services, Scope.Scope)
   const exportInterval = Duration.max(Duration.fromInputUnsafe(options.exportInterval), Duration.zero)
-  let disabledUntil: number | undefined = undefined
 
   const client = Context.get(services, HttpClient.HttpClient).pipe(
     HttpClient.tap((response) => Effect.ignore(response.arrayBuffer)),
@@ -194,30 +200,39 @@ export const make: (
     HttpClient.retryTransient({ schedule: policy, times: 3 })
   )
 
-  let headers = Headers.fromRecordUnsafe({
-    "user-agent": `effect-opentelemetry-${options.label}/0.0.0`
-  })
-  if (options.headers) {
-    headers = Headers.merge(Headers.fromInput(options.headers), headers)
-  }
+  const exporterUserAgent = `OTel-OTLP-Exporter-JavaScript-Effect-${options.label}/${Version.getCurrentVersion()}`
+  const userHeaders = Headers.fromInput(options.headers)
+  const userAgent = userHeaders["user-agent"]
+  const headers = Headers.set(
+    userHeaders,
+    "user-agent",
+    userAgent ? `${userAgent} ${exporterUserAgent}` : exporterUserAgent
+  )
 
   const request = HttpClientRequest.post(options.url, { headers })
+  const exportsEmpty = options.maxBatchSize === "disabled" && options.exportEmpty === true
   let buffer: Array<any> = []
+  let disabledUntil: number | undefined = undefined
+  const isDisabled = () => {
+    if (disabledUntil === undefined) return false
+    if (clock.currentTimeMillisUnsafe() < disabledUntil) return true
+    disabledUntil = undefined
+    return false
+  }
+
   const runExport = Effect.suspend(() => {
-    if (disabledUntil !== undefined && clock.currentTimeMillisUnsafe() < disabledUntil) {
-      return Effect.void
-    } else if (disabledUntil !== undefined) {
-      disabledUntil = undefined
-    }
-    if (buffer.length === 0 && (options.maxBatchSize !== "disabled" || options.exportEmpty !== true)) {
+    if (isDisabled() || (buffer.length === 0 && !exportsEmpty)) {
       return Effect.void
     }
     const items = buffer
     buffer = []
     const [body, onSuccess] = options.body(items)
-    return client.execute(
-      HttpClientRequest.setBody(request, body)
-    ).pipe(
+    const batchRequest = HttpClientRequest.setBody(request, body)
+    // Compress before client.execute so transient retries reuse the encoded bytes.
+    const response = options.compression === "gzip"
+      ? HttpClientRequest.compressBody(batchRequest, "gzip").pipe(Effect.flatMap(client.execute))
+      : client.execute(batchRequest)
+    return response.pipe(
       Effect.andThen(onSuccess),
       Effect.asVoid,
       Effect.withTracerEnabled(false)
@@ -238,9 +253,6 @@ export const make: (
   const exportFibers = yield* FiberSet.make<void, never>()
   const runExportFork = yield* FiberSet.runtime(exportFibers)<never>()
 
-  const flusher = yield* Flusher
-  yield* flusher.register(runExport)
-
   yield* Scope.addFinalizer(
     scope,
     Effect.suspend(() => {
@@ -254,19 +266,38 @@ export const make: (
     )
   )
 
-  yield* Effect.sleep(exportInterval).pipe(
-    Effect.andThen(FiberSet.run(exportFibers, runExport)),
-    Effect.flatMap(Fiber.await),
-    Effect.forever,
-    Effect.forkIn(scope)
-  )
+  // `armed` is open while there is something to export. It changes in the
+  // same synchronous step as the buffer check, so a push is never stranded.
+  const armed = yield* Latch.make(exportsEmpty)
+  const wake = yield* Latch.make()
+  const disarmIfEmpty = Effect.sync(() => {
+    if (exportsEmpty || buffer.length > 0 || !armed.closeUnsafe()) return
+    wake.openUnsafe()
+  })
+  // Forked after the shutdown finalizer, so the loop stops before the shutdown flush.
+  yield* Effect.gen(function*() {
+    while (true) {
+      wake.closeUnsafe()
+      yield* armed.await
+      yield* Effect.race(Effect.sleep(exportInterval), wake.await)
+      yield* Fiber.await(yield* FiberSet.run(exportFibers, runExport))
+      yield* disarmIfEmpty
+    }
+  }).pipe(Effect.forkIn(scope))
+  const exportNow = Effect.andThen(runExport, disarmIfEmpty)
+
+  const flusher = yield* Flusher
+  yield* flusher.register(exportNow)
 
   return {
     push(data) {
-      if (disabledUntil !== undefined) return
+      // With no idle timer, the next push ends the disabled window.
+      if (isDisabled()) return
       buffer.push(data)
       if (options.maxBatchSize !== "disabled" && buffer.length >= options.maxBatchSize) {
-        runExportFork(runExport)
+        runExportFork(exportNow)
+      } else {
+        armed.openUnsafe()
       }
     }
   }

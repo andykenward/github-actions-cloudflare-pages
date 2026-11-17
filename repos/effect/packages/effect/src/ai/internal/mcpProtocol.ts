@@ -16,11 +16,14 @@ import * as Schema from "../../Schema.ts"
 import type * as Scope from "../../Scope.ts"
 import type * as PublicMcpProtocol from "../McpProtocol.ts"
 import * as PublicMcpSchema from "../McpSchema.ts"
+import type * as PublicMcpServer from "../McpServer.ts"
 import * as McpCore from "./mcpCore.ts"
 
 const LEGACY_RESOURCE_NOT_FOUND_ERROR_CODE = -32002
-const BASE64_SENTINEL_PREFIX = "=?base64?"
-const BASE64_SENTINEL_SUFFIX = "?="
+/** @internal */
+export const BASE64_SENTINEL_PREFIX = "=?base64?"
+/** @internal */
+export const BASE64_SENTINEL_SUFFIX = "?="
 // A leading U+FEFF belongs to the header value and must survive comparison with the JSON body.
 const routingHeaderDecoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true })
 
@@ -94,6 +97,22 @@ export const invocationFromClient = (
 })
 
 /**
+ * Runs a core list operation for the legacy client of the current request.
+ *
+ * @internal
+ */
+export const listForClient = <A>(
+  list: (invocation: McpCore.McpInvocation) => Effect.Effect<A, McpCore.RequestRejected>,
+  cursor: string | undefined
+): Effect.Effect<A, ProtocolError, PublicMcpSchema.McpServerClient> =>
+  Effect.andThen(
+    rejectCursor(cursor),
+    PublicMcpSchema.McpServerClient.use((request) =>
+      list(invocationFromClient(request)).pipe(Effect.mapError(ProtocolError.fromFeature))
+    )
+  )
+
+/**
  * @internal
  */
 export const invocationFromRequestContext = (
@@ -119,6 +138,24 @@ export const requireCompleteOperation = <A>(
   outcome._tag === "Complete"
     ? Effect.succeed(outcome.value)
     : Effect.fail(new McpCore.UnsupportedByProtocol({ protocolVersion, feature: "Client input" }))
+
+/**
+ * Projects boolean property schemas to equivalent objects for pre-June adapters.
+ * Their dated tool descriptors require object-valued direct property schemas.
+ *
+ * @internal
+ */
+export const projectLegacyToolInputSchema = (inputSchema: PublicMcpSchema.ToolJson) => ({
+  ...inputSchema,
+  properties: inputSchema.properties === undefined
+    ? undefined
+    : Object.fromEntries<Readonly<Record<string, unknown>>>(
+      Object.entries(inputSchema.properties).map(([name, schema]) => [
+        name,
+        typeof schema === "boolean" ? schema ? {} : { not: {} } : schema
+      ])
+    )
+})
 
 /**
  * Unquotes an exact text mirror when the protocol drops string `structuredContent`.
@@ -192,6 +229,9 @@ export class ProtocolError extends Data.TaggedError("ProtocolError")<{
   static fromTool(
     error: McpCore.ToolError | McpCore.UnsupportedByProtocol
   ): ProtocolError {
+    if (error._tag === "RequestRejected") {
+      return new ProtocolError({ code: error.code, message: error.message, data: error.data })
+    }
     const message = Match.value(error).pipe(
       Match.tag("ToolNotFound", (error) => `Tool '${error.name}' not found`),
       Match.tag(
@@ -221,6 +261,20 @@ export class ProtocolError extends Data.TaggedError("ProtocolError")<{
           message: `Prompt '${error.name}' not found`
         })
       }
+      if (error._tag === "SkillNotFound" && Predicate.hasProperty(error, "uri") && Predicate.isString(error.uri)) {
+        return new ProtocolError({
+          code: PublicMcpSchema.INVALID_PARAMS_ERROR_CODE,
+          message: `Skill '${error.uri}' not found`
+        })
+      }
+      if (
+        error._tag === "DirectoryNotFound" && Predicate.hasProperty(error, "uri") && Predicate.isString(error.uri)
+      ) {
+        return new ProtocolError({
+          code: PublicMcpSchema.INVALID_PARAMS_ERROR_CODE,
+          message: `Directory '${error.uri}' not found`
+        })
+      }
       if (error._tag === "ResourceNotFound" && Predicate.hasProperty(error, "uri") && Predicate.isString(error.uri)) {
         return new ProtocolError({
           code: LEGACY_RESOURCE_NOT_FOUND_ERROR_CODE,
@@ -248,6 +302,19 @@ const decodeProtocolErrorFields = Schema.decodeUnknownResult(ProtocolErrorFields
 
 const isReverseOperationUnsupported = (cause: unknown): cause is PublicMcpSchema.McpReverseOperationUnsupported =>
   Predicate.isTagged(cause, "McpReverseOperationUnsupported")
+
+const unknownCursor = new ProtocolError({
+  code: PublicMcpSchema.INVALID_PARAMS_ERROR_CODE,
+  message: "Unknown cursor"
+})
+
+/**
+ * Rejects supplied cursors because lists return a complete page without issuing cursors.
+ *
+ * @internal
+ */
+export const rejectCursor = (cursor: string | undefined) =>
+  cursor === undefined ? Effect.void : Effect.fail(unknownCursor)
 
 /**
  * @internal
@@ -382,6 +449,8 @@ export interface HandlerInstallationContext {
     never,
     Scope.Scope
   >
+  /** Current list-change revision; subscriptions ignore changes emitted at or before it. */
+  readonly getListChangeRevision?: (() => number) | undefined
   readonly sendNotification?: (
     protocolVersion: string,
     clientId: number,
@@ -397,6 +466,8 @@ export interface HandlerInstallationContext {
     clientId: number,
     requestId: RpcMessage.RequestId
   ) => Effect.Effect<void>
+  /** Resolves once the client's transport session has ended, e.g. stdin EOF. */
+  readonly awaitClientEnd?: Effect.Effect<void> | undefined
   readonly supportedVersions: ReadonlyArray<string>
   readonly serverInfo: {
     readonly name: string
@@ -406,12 +477,26 @@ export interface HandlerInstallationContext {
     readonly websiteUrl?: string | undefined
     readonly icons?: ReadonlyArray<PublicMcpSchema.Icon> | undefined
     readonly extensions?: PublicMcpSchema.ServerCapabilities["extensions"] | undefined
+    readonly cacheHints?: CacheHints | undefined
   }
   readonly registrationPresence: Effect.Effect<{
     readonly tools: boolean
     readonly resources: boolean
     readonly prompts: boolean
+    readonly skills: boolean
   }>
+}
+
+/**
+ * Cache hints normalized to wire values when the server is constructed.
+ *
+ * @internal
+ */
+export type CacheHints = {
+  readonly [Family in keyof PublicMcpServer.CacheHints]?: {
+    readonly ttlMs: number
+    readonly cacheScope: "private"
+  }
 }
 
 /**
@@ -419,6 +504,7 @@ export interface HandlerInstallationContext {
  */
 export interface CanonicalServerNotification {
   readonly notification: SubscriptionServerNotification
+  readonly listChangeRevision?: number | undefined
   readonly targetClientId?: number | undefined
 }
 

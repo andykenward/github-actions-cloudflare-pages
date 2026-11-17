@@ -43,9 +43,12 @@ v4 includes **unstable modules** under `effect/*` import paths. Their paths no
 longer contain an `unstable` segment, but their API documentation is marked
 with `@stability unstable`.
 
-`@stability unstable` means an API may receive breaking changes in minor
-releases. `@stability experimental` means it may receive breaking changes
-across patch versions. APIs without a stability tag follow strict semver.
+`@stability unstable` means an API may receive new features in patch releases
+and breaking changes in minor releases. `@stability experimental` means it may
+receive new features and breaking changes across patch versions. `@stability
+stable` and APIs without a stability tag follow strict semver. Every module and
+directly importable export declares its stability explicitly. Modules in
+packages other than `effect` are currently `@stability unstable`.
 
 APIs that expose a third-party dependency are also marked `@stability
 unstable`, because that dependency's own releases can change them. This covers
@@ -68,9 +71,8 @@ Moving these modules does not stabilize their APIs.
 ### Performance and Bundle Size
 
 The fiber runtime has been rewritten for reduced memory overhead and faster
-execution. The core `effect` package supports aggressive tree-shaking — a
-minimal Effect program bundles to ~6.3 KB (minified + gzipped). With Schema,
-~15 KB.
+execution. The core `effect` package supports aggressive tree-shaking. A
+minimal Effect program bundles to 7.1 kB (minified + gzipped).
 
 ---
 

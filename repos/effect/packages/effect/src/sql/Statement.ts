@@ -11,6 +11,7 @@
  * @stability unstable
  * @since 4.0.0
  */
+import type * as Arr from "../Array.ts"
 import { Clock } from "../Clock.ts"
 import * as Context from "../Context.ts"
 import * as Effect from "../Effect.ts"
@@ -19,6 +20,7 @@ import type * as Fiber from "../Fiber.ts"
 import { constUndefined } from "../Function.ts"
 import * as internalEffect from "../internal/effect.ts"
 import * as InternalRecord from "../internal/record.ts"
+import { recordConnectionWait, waitClock } from "../internal/sql.ts"
 import { hasProperty } from "../Predicate.ts"
 import { TracerTimingEnabled } from "../References.ts"
 import * as Stream from "../Stream.ts"
@@ -26,7 +28,41 @@ import * as Tracer from "../Tracer.ts"
 import type { Acquirer, Borrower, Connection, Row } from "./SqlConnection.ts"
 import type { SqlError } from "./SqlError.ts"
 
-const FragmentTypeId = "~effect/sql/Statement/Fragment"
+/**
+ * Runtime type identifier for SQL `Fragment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export const FragmentTypeId: unique symbol = Symbol.for("~effect/sql/Statement/Fragment")
+
+/**
+ * Type of the unique symbol used to brand SQL `Fragment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export type FragmentTypeId = typeof FragmentTypeId
+
+/**
+ * Runtime type identifier for SQL `Segment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export const SegmentTypeId: unique symbol = Symbol.for("~effect/sql/Statement/Segment")
+
+/**
+ * Type of the unique symbol used to brand SQL `Segment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export type SegmentTypeId = typeof SegmentTypeId
 
 /**
  * Composable SQL fragment represented as low-level segments that can be
@@ -37,7 +73,7 @@ const FragmentTypeId = "~effect/sql/Statement/Fragment"
  * @since 4.0.0
  */
 export interface Fragment {
-  readonly [FragmentTypeId]: typeof FragmentTypeId
+  readonly [FragmentTypeId]: FragmentTypeId
   readonly segments: ReadonlyArray<Segment>
 }
 
@@ -114,8 +150,15 @@ export const CurrentTransformer = Context.Reference<Transformer | undefined>("ef
 })
 
 /**
- * Parents driver spans under `sql.execute` for every client in the current scope,
- * including acquisition and stream pulls. Defaults to `false`; ignored when tracing is disabled.
+ * Parents driver spans under the statement span for every client in the current scope,
+ * including acquisition and stream pulls, and records how long each statement
+ * waited for a connection as `db.client.connection.wait_time_ms`. Defaults to
+ * `false`; ignored when tracing is disabled.
+ *
+ * **Details**
+ *
+ * A top-level transaction also records how long it waited for its
+ * connection on its `sql.transaction` span.
  *
  * @stability unstable
  * @category services
@@ -144,7 +187,7 @@ export const isFragment = (u: unknown): u is Fragment => hasProperty(u, Fragment
 export const isCustom = <A extends Custom<any, any, any, any>>(
   kind: A["kind"]
 ) =>
-(u: unknown): u is A => hasProperty(u, "_tag") && u._tag === "Custom" && (u as any).kind === kind
+(u: unknown): u is A => isSegment(u) && u._tag === "Custom" && u.kind === kind
 
 /**
  * Union of low-level segment types that make up a SQL `Fragment`.
@@ -172,6 +215,7 @@ export type Segment =
  * @since 4.0.0
  */
 export interface Literal {
+  readonly [SegmentTypeId]: SegmentTypeId
   readonly _tag: "Literal"
   readonly value: string
   readonly params?: ReadonlyArray<unknown> | undefined
@@ -186,6 +230,7 @@ export interface Literal {
  * @since 4.0.0
  */
 export const literal = (value: string, params?: ReadonlyArray<unknown> | undefined): Literal => ({
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "Literal",
   value,
   params
@@ -199,6 +244,7 @@ export const literal = (value: string, params?: ReadonlyArray<unknown> | undefin
  * @since 4.0.0
  */
 export interface Identifier {
+  readonly [SegmentTypeId]: SegmentTypeId
   readonly _tag: "Identifier"
   readonly value: string
 }
@@ -212,6 +258,7 @@ export interface Identifier {
  * @since 4.0.0
  */
 export const identifier = (value: string): Identifier => ({
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "Identifier",
   value
 })
@@ -225,6 +272,7 @@ export const identifier = (value: string): Identifier => ({
  * @since 4.0.0
  */
 export interface Parameter {
+  readonly [SegmentTypeId]: SegmentTypeId
   readonly _tag: "Parameter"
   readonly value: unknown
 }
@@ -237,6 +285,7 @@ export interface Parameter {
  * @since 4.0.0
  */
 export const parameter = (value: unknown): Parameter => ({
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "Parameter",
   value
 })
@@ -250,6 +299,7 @@ export const parameter = (value: unknown): Parameter => ({
  * @since 4.0.0
  */
 export interface ArrayHelper {
+  readonly [SegmentTypeId]: SegmentTypeId
   readonly _tag: "ArrayHelper"
   readonly value: ReadonlyArray<unknown | Fragment>
 }
@@ -262,6 +312,7 @@ export interface ArrayHelper {
  * @since 4.0.0
  */
 export const arrayHelper = (value: ReadonlyArray<unknown | Fragment>): ArrayHelper => ({
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "ArrayHelper",
   value
 })
@@ -275,8 +326,9 @@ export const arrayHelper = (value: ReadonlyArray<unknown | Fragment>): ArrayHelp
  * @since 4.0.0
  */
 export interface RecordInsertHelper {
+  readonly [SegmentTypeId]: SegmentTypeId
   readonly _tag: "RecordInsertHelper"
-  readonly value: ReadonlyArray<Record<string, unknown>>
+  readonly value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>
   /**
    * @internal
    */
@@ -285,6 +337,7 @@ export interface RecordInsertHelper {
 }
 
 const RecordInsertHelperProto = {
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "RecordInsertHelper" as const,
   returning(this: RecordInsertHelper, sql: string | Identifier | Fragment) {
     const self = Object.create(Object.getPrototypeOf(this))
@@ -303,7 +356,7 @@ const RecordInsertHelperProto = {
  * @since 4.0.0
  */
 export const recordInsertHelper = (
-  value: ReadonlyArray<Record<string, unknown>>
+  value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>
 ): RecordInsertHelper =>
   Object.assign(Object.create(RecordInsertHelperProto), {
     value,
@@ -319,8 +372,9 @@ export const recordInsertHelper = (
  * @since 4.0.0
  */
 export interface RecordUpdateHelper {
+  readonly [SegmentTypeId]: SegmentTypeId
   readonly _tag: "RecordUpdateHelper"
-  readonly value: ReadonlyArray<Record<string, unknown>>
+  readonly value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>
   readonly alias: string
   /**
    * @internal
@@ -343,7 +397,7 @@ const RecordUpdateHelperProto = {
  * @since 4.0.0
  */
 export const recordUpdateHelper = (
-  value: ReadonlyArray<Record<string, unknown>>,
+  value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>,
   alias: string
 ): RecordUpdateHelper =>
   Object.assign(Object.create(RecordUpdateHelperProto), {
@@ -361,6 +415,7 @@ export const recordUpdateHelper = (
  * @since 4.0.0
  */
 export interface RecordUpdateHelperSingle {
+  readonly [SegmentTypeId]: SegmentTypeId
   readonly _tag: "RecordUpdateHelperSingle"
   readonly value: Record<string, unknown>
   readonly omit: ReadonlyArray<string>
@@ -408,6 +463,7 @@ export interface Custom<
   B = void,
   C = void
 > {
+  readonly [SegmentTypeId]: SegmentTypeId
   readonly _tag: "Custom"
   readonly kind: T
   readonly paramA: A
@@ -430,7 +486,7 @@ export const custom = <C extends Custom<any, any, any, any>>(
   paramA: C["paramA"],
   paramB: C["paramB"],
   paramC: C["paramC"]
-): C => ({ _tag: "Custom", kind, paramA, paramB, paramC } as C)
+): C => ({ [SegmentTypeId]: SegmentTypeId, _tag: "Custom", kind, paramA, paramB, paramC } as C)
 
 /**
  * Names the primitive value categories recognized by SQL statement helpers and
@@ -500,7 +556,7 @@ export interface Constructor {
 
   readonly insert: {
     (
-      value: ReadonlyArray<Record<string, unknown>>
+      value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>
     ): RecordInsertHelper
     (value: Record<string, unknown>): RecordInsertHelper
   }
@@ -517,9 +573,12 @@ export interface Constructor {
    * **Gotchas**
    *
    * Not supported in sqlite.
+   *
+   * The alias is escaped as an identifier and is not passed through name
+   * transforms.
    */
   readonly updateValues: (
-    value: ReadonlyArray<Record<string, unknown>>,
+    value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>,
     alias: string
   ) => RecordUpdateHelper
 
@@ -570,7 +629,7 @@ export interface Constructor {
 }
 
 /**
- * Creates a cached SQL statement constructor from a connection acquirer,
+ * Creates a SQL statement constructor from a connection acquirer,
  * compiler, tracing attributes, and optional row transformation function.
  *
  * @stability unstable
@@ -584,23 +643,19 @@ export const make = (
   transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined,
   borrower?: Borrower | undefined
 ): Constructor => {
-  const cache = transformRows === undefined ? constructorCache.noTransforms : constructorCache.transforms
-  if (cache.has(acquirer)) {
-    return cache.get(acquirer)!
-  }
-  const self = Object.assign(
+  const self: Constructor = Object.assign(
     function sql(strings: unknown, ...args: Array<any>): any {
       if (typeof strings === "string") {
         return identifier(strings)
       } else if (Array.isArray(strings) && "raw" in strings) {
-        return statement(
+        return makeUnsafe(
+          templateSegments(strings as TemplateStringsArray, args),
           acquirer,
           compiler,
-          strings as TemplateStringsArray,
-          args,
           spanAttributes,
           transformRows,
-          borrower
+          borrower,
+          self
         )
       }
 
@@ -617,7 +672,8 @@ export const make = (
           compiler,
           spanAttributes,
           transformRows,
-          borrower
+          borrower,
+          self
         )
       },
       literal(sql: string) {
@@ -626,7 +682,7 @@ export const make = (
       in: in_,
       insert(value: any) {
         return recordInsertHelper(
-          Array.isArray(value) ? value : [value]
+          Array.isArray(value) ? value as Arr.NonEmptyArray<Record<string, unknown>> : [value]
         )
       },
       update(value: any, omit: any) {
@@ -648,14 +704,7 @@ export const make = (
     }
   )
 
-  cache.set(acquirer, self)
-
   return self
-}
-
-const constructorCache = {
-  transforms: new WeakMap<Acquirer, Constructor>(),
-  noTransforms: new WeakMap<Acquirer, Constructor>()
 }
 
 /**
@@ -675,7 +724,10 @@ export const statement = <A = Row>(
   spanAttributes: ReadonlyArray<readonly [string, unknown]>,
   transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined,
   borrower?: Borrower | undefined
-): Statement<A> => {
+): Statement<A> =>
+  makeUnsafe(templateSegments(strings, args), acquirer, compiler, spanAttributes, transformRows, borrower, undefined)
+
+const templateSegments = (strings: TemplateStringsArray, args: Array<any>): Array<Segment> => {
   const segments: Array<Segment> = strings[0].length > 0 ? [literal(strings[0])] : []
 
   for (let i = 0; i < args.length; i++) {
@@ -694,7 +746,7 @@ export const statement = <A = Row>(
     }
   }
 
-  return makeUnsafe(segments, acquirer, compiler, spanAttributes, transformRows, borrower)
+  return segments
 }
 
 /**
@@ -820,6 +872,10 @@ export type CompilerOptions<C extends Custom<any, any, any, any> = any> = {
   readonly dialect: Dialect
   readonly placeholder: (index: number, value: unknown) => string
   readonly onIdentifier: (value: string, withoutTransform: boolean) => string
+  /**
+   * Renders `updateValues`. The `alias` is already escaped with
+   * `onIdentifier(alias, true)` and must be inserted as is.
+   */
   readonly onRecordUpdate: (
     placeholders: string,
     alias: string,
@@ -927,6 +983,19 @@ const CompilerProto = {
         }
 
         case "ArrayHelper": {
+          if (segment.value.length === 0) {
+            const inKeyword = emptyInKeyword.exec(sql)
+            if (inKeyword === null || isInLineComment(sql, inKeyword.index)) {
+              sql += "()"
+            } else if (this.dialect === "pg") {
+              // an empty subquery is typed as text in postgres, so compare with an
+              // empty array, which takes the type of the left operand instead
+              sql = sql.slice(0, inKeyword.index) + (inKeyword[1] ? "<> ALL('{}')" : "= ANY('{}')")
+            } else {
+              sql += "(SELECT NULL WHERE 1=0)"
+            }
+            break
+          }
           sql += `(${placeholders(segment.value)})`
           binds.push.apply(binds, segment.value as any)
           break
@@ -1070,7 +1139,7 @@ const CompilerProto = {
           }
           const [s, b] = opts.onRecordUpdate(
             placeholders,
-            segment.alias,
+            opts.onIdentifier(segment.alias, true),
             generateColumns(keys, opts.onIdentifier, withoutTransform),
             values,
             typeof segment.returningIdentifier === "string"
@@ -1204,7 +1273,7 @@ export const defaultTransforms = (
 ) => {
   const transformValue = (value: any) => {
     if (Array.isArray(value)) {
-      if (value.length === 0 || value[0].constructor !== Object) {
+      if (value.length === 0 || value[0]?.constructor !== Object) {
         return value
       }
       return array(value)
@@ -1230,6 +1299,8 @@ export const defaultTransforms = (
       const row = rows[i]
       if (Array.isArray(row)) {
         newRows[i] = transformArrayNested(row) as any
+      } else if (row === null || typeof row !== "object") {
+        newRows[i] = row
       } else {
         const obj: any = {}
         for (const [key, value] of Object.entries(row)) {
@@ -1249,6 +1320,8 @@ export const defaultTransforms = (
       const row = rows[i]
       if (Array.isArray(row)) {
         newRows[i] = transformArray(row) as any
+      } else if (row === null || typeof row !== "object") {
+        newRows[i] = row
       } else {
         const obj: any = {}
         for (const [key, value] of Object.entries(row)) {
@@ -1269,10 +1342,62 @@ export const defaultTransforms = (
   } as const
 }
 
+/**
+ * Returns the OpenTelemetry database span target for a client with the given
+ * span attributes: `db.namespace`, then `server.address[:server.port]`, or
+ * `undefined` when neither is set.
+ *
+ * @stability unstable
+ * @category tracing
+ * @since 4.0.1
+ */
+export const spanTarget = (spanAttributes: ReadonlyArray<readonly [string, unknown]>): string | undefined => {
+  const namespace = spanAttribute(spanAttributes, "db.namespace")
+  if (isNonEmptyString(namespace)) {
+    return namespace
+  }
+  const address = spanAttribute(spanAttributes, "server.address")
+  if (isNonEmptyString(address)) {
+    const port = spanAttribute(spanAttributes, "server.port")
+    return port === undefined ? address : `${address}:${port}`
+  }
+  return undefined
+}
+
+/**
+ * Returns the span name for statements run by a client with the given span
+ * attributes, following the OpenTelemetry database span conventions: the
+ * {@link spanTarget}, then `db.system.name`, falling back to `sql.execute`.
+ *
+ * @stability unstable
+ * @category tracing
+ * @since 4.0.1
+ */
+export const spanName = (spanAttributes: ReadonlyArray<readonly [string, unknown]>): string => {
+  const target = spanTarget(spanAttributes)
+  if (target !== undefined) {
+    return target
+  }
+  const system = spanAttribute(spanAttributes, "db.system.name")
+  return isNonEmptyString(system) ? system : "sql.execute"
+}
+
 // internal
 
-const ATTR_DB_OPERATION_NAME = "db.operation.name"
 const ATTR_DB_QUERY_TEXT = "db.query.text"
+const ATTR_SQL_METHOD = "effect.sql.method"
+
+// the last value wins, matching the order the attributes are applied to spans
+const spanAttribute = (spanAttributes: ReadonlyArray<readonly [string, unknown]>, key: string): unknown => {
+  for (let i = spanAttributes.length - 1; i >= 0; i--) {
+    if (spanAttributes[i][0] === key) {
+      return spanAttributes[i][1]
+    }
+  }
+  return undefined
+}
+
+const isNonEmptyString = (u: unknown): u is string => typeof u === "string" && u.length > 0
 
 interface StatementImpl<A> extends Statement<A> {
   readonly segments: ReadonlyArray<Segment>
@@ -1281,6 +1406,7 @@ interface StatementImpl<A> extends Statement<A> {
   readonly spanAttributes: ReadonlyArray<readonly [string, unknown]>
   readonly transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined
   readonly borrower: Borrower | undefined
+  readonly sql: Constructor | undefined
 
   withConnection<XA, E>(
     operation: string,
@@ -1309,7 +1435,8 @@ const makeUnsafe = <A = Row>(
   compiler: Compiler,
   spanAttributes: ReadonlyArray<readonly [string, unknown]>,
   transformRows: (<A extends object>(row: ReadonlyArray<A>) => ReadonlyArray<A>) | undefined,
-  borrower: Borrower | undefined
+  borrower: Borrower | undefined,
+  sql: Constructor | undefined
 ): StatementImpl<A> => {
   const self = Object.create(StatementProto)
   self.segments = segments
@@ -1318,13 +1445,14 @@ const makeUnsafe = <A = Row>(
   self.spanAttributes = spanAttributes
   self.transformRows = transformRows
   self.borrower = borrower
+  self.sql = sql
   return self
 }
 
 // TODO: figure out why these diagnostics are emitted
 const StatementProto: Omit<
   StatementImpl<any>,
-  "segments" | "acquirer" | "compiler" | "spanAttributes" | "transformRows" | "borrower"
+  "segments" | "acquirer" | "compiler" | "spanAttributes" | "transformRows" | "borrower" | "sql"
 > = {
   [FragmentTypeId]: FragmentTypeId,
   withConnection<XA, E>(
@@ -1338,7 +1466,7 @@ const StatementProto: Omit<
     withoutTransform = false
   ): Effect.Effect<XA, E | SqlError> {
     return Effect.useSpan(
-      "sql.execute",
+      spanName(this.spanAttributes),
       { kind: "client" },
       (span) =>
         this.withConnectionSpan(
@@ -1365,14 +1493,23 @@ const StatementProto: Omit<
       for (const [key, value] of this.spanAttributes) {
         span.attribute(key, value)
       }
-      span.attribute(ATTR_DB_OPERATION_NAME, operation)
+      span.attribute(ATTR_SQL_METHOD, operation)
       span.attribute(ATTR_DB_QUERY_TEXT, sql)
+      const propagate = fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled)
+      // Measured from the span's start, so the wait also covers compiling the
+      // statement and any `CurrentTransformer` run first.
+      const clock = propagate ? waitClock(fiber) : undefined
+      const run = clock === undefined
+        ? (connection: Connection) => f(connection, sql, params)
+        : (connection: Connection) =>
+          Effect.suspend(() => {
+            recordConnectionWait(span, clock)
+            return f(connection, sql, params)
+          })
       const execute = this.borrower === undefined
-        ? Effect.scoped(Effect.flatMap(this.acquirer, (_) => f(_, sql, params)))
-        : this.borrower((connection: Connection) => f(connection, sql, params))
-      return fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled)
-        ? Effect.provideService(execute, Tracer.ParentSpan, span)
-        : execute
+        ? Effect.scoped(Effect.flatMap(this.acquirer, run))
+        : this.borrower(run)
+      return propagate ? Effect.provideService(execute, Tracer.ParentSpan, span) : execute
     })
   },
 
@@ -1395,17 +1532,22 @@ const StatementProto: Omit<
   get stream(): Stream.Stream<any, SqlError> {
     const self = this as StatementImpl<any>
     return Stream.unwrap(Effect.flatMap(
-      Effect.makeSpanScoped("sql.execute", { kind: "client" }),
+      Effect.makeSpanScoped(spanName(self.spanAttributes), { kind: "client" }),
       (span) =>
         withStatement(self, span, (statement, fiber) => {
           const [sql, params] = statement.compile()
           for (const [key, value] of self.spanAttributes) {
             span.attribute(key, value)
           }
-          span.attribute(ATTR_DB_OPERATION_NAME, "executeStream")
+          span.attribute(ATTR_SQL_METHOD, "executeStream")
           span.attribute(ATTR_DB_QUERY_TEXT, sql)
-          const acquire = Effect.map(self.acquirer, (_) => _.executeStream(sql, params, self.transformRows))
-          return fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled)
+          const propagate = fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled)
+          const clock = propagate ? waitClock(fiber) : undefined
+          const acquire = Effect.map(self.acquirer, (connection) => {
+            if (clock !== undefined) recordConnectionWait(span, clock)
+            return connection.executeStream(sql, params, self.transformRows)
+          })
+          return propagate
             ? Effect.succeed(Stream.provideService(Stream.unwrap(acquire), Tracer.ParentSpan, span))
             : acquire
         })
@@ -1440,7 +1582,7 @@ const StatementProto: Omit<
   ...Effectable.Prototype<StatementImpl<any>>({
     label: "Statement",
     evaluate(fiber) {
-      const span = internalEffect.makeSpanUnsafe(fiber, "sql.execute", { kind: "client" })
+      const span = internalEffect.makeSpanUnsafe(fiber, spanName(this.spanAttributes), { kind: "client" })
       const clock = fiber.getRef(Clock)
       const timingEnabled = fiber.getRef(TracerTimingEnabled)
       return Effect.onExit(
@@ -1485,7 +1627,7 @@ const withStatement = <A, X, E, R>(
     return Effect.flatMap(
       transform(
         self,
-        make(self.acquirer, self.compiler, self.spanAttributes, self.transformRows, self.borrower),
+        self.sql ?? make(self.acquirer, self.compiler, self.spanAttributes, self.transformRows, self.borrower),
         fiber,
         span
       ) as Effect.Effect<StatementImpl<A>>,
@@ -1493,24 +1635,7 @@ const withStatement = <A, X, E, R>(
     )
   })
 
-const isSegment = (u: unknown): u is Segment => {
-  if (!hasProperty(u, "_tag")) {
-    return false
-  }
-  switch (u._tag) {
-    case "Literal":
-    case "Parameter":
-    case "ArrayHelper":
-    case "RecordInsertHelper":
-    case "RecordUpdateHelper":
-    case "RecordUpdateHelperSingle":
-    case "Identifier":
-    case "Custom":
-      return true
-    default:
-      return false
-  }
-}
+const isSegment = (u: unknown): u is Segment => hasProperty(u, SegmentTypeId)
 
 function convertLiteralOrFragment(clause: string | Fragment): Array<Segment> {
   if (typeof clause === "string") {
@@ -1591,3 +1716,7 @@ function in_(): Fragment | ArrayHelper {
 }
 
 const neverFragment = fragment([literal("1=0")])
+
+const emptyInKeyword = /\b(NOT\s+)?IN\s*$/i
+
+const isInLineComment = (sql: string, index: number) => sql.lastIndexOf("--", index) > sql.lastIndexOf("\n", index)

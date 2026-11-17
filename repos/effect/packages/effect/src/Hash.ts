@@ -7,10 +7,11 @@
  * reference-based hashes, plus functions for combining and optimizing numeric
  * hash values.
  *
+ * @stability stable
  * @since 2.0.0
  */
 import { dual } from "./Function.ts"
-import { byReferenceInstances, getAllObjectKeys, viewBytes } from "./internal/equal.ts"
+import { bufferBytes, byReferenceInstances, getAllObjectKeys, isArrayBufferLike, viewBytes } from "./internal/equal.ts"
 import { addBackEdge, backEdges } from "./internal/hash.ts"
 import { hasProperty } from "./Predicate.ts"
 
@@ -26,6 +27,7 @@ import { hasProperty } from "./Predicate.ts"
  * @see {@link isHash} for checking whether a value implements `Hash`
  * @see {@link hash} for computing hash values
  *
+ * @stability stable
  * @category symbols
  * @since 2.0.0
  */
@@ -59,6 +61,7 @@ export const symbol = "~effect/Hash"
  * new MyClass(42)[Hash.symbol]() // => 42
  * ```
  *
+ * @stability stable
  * @category models
  * @since 2.0.0
  */
@@ -98,6 +101,7 @@ export interface Hash {
  * Hash.hash([1, 2, 3]) === Hash.hash([1, 2, 3]) // => true
  * ```
  *
+ * @stability stable
  * @category hashing
  * @since 2.0.0
  */
@@ -136,10 +140,13 @@ export const hash: <A>(self: A) => number = <A>(self: A) => {
         const seen = backEdges
         let h: number
         try {
-          if (symbol in self) {
+          if (isHash(self)) {
             h = (self as Hash)[symbol]()
           } else if (typeof self === "function") {
             h = random(self)
+          } else if (isArrayBufferLike(self)) {
+            const bytes = bufferBytes(self)
+            h = bytes === undefined ? random(self) : array(bytes)
           } else if (self instanceof DataView) {
             h = array(viewBytes(self))
           } else if (Array.isArray(self) || ArrayBuffer.isView(self)) {
@@ -191,6 +198,7 @@ export const hash: <A>(self: A) => number = <A>(self: A) => {
  * typeof Hash.random(obj2) // => "number"
  * ```
  *
+ * @stability stable
  * @category hashing
  * @since 2.0.0
  */
@@ -237,6 +245,7 @@ const mix = (h: number): number => {
  * @see {@link hash} for computing hash values from arbitrary inputs
  * @see {@link structureKeys} for hashing selected object fields without manual combination
  *
+ * @stability stable
  * @category hashing
  * @since 2.0.0
  */
@@ -265,6 +274,7 @@ export const combine: {
  * Hash.optimize(1234567890) // => 160826066
  * ```
  *
+ * @stability stable
  * @category hashing
  * @since 2.0.0
  */
@@ -279,8 +289,9 @@ export const optimize = (n: number): number => (n & 0xbfffffff) | ((n >>> 1) & 0
  *
  * **Details**
  *
- * This function determines whether a given value has the Hash symbol property,
- * indicating that it can provide its own hash value implementation.
+ * This function determines whether a given value has a function under the Hash
+ * symbol, indicating that it can provide its own hash value implementation.
+ * Data that merely carries the key, such as parsed JSON, is hashed as data.
  *
  * **Example** (Checking for Hash support)
  *
@@ -298,10 +309,11 @@ export const optimize = (n: number): number => (n & 0xbfffffff) | ((n >>> 1) & 0
  * Hash.isHash("string") // => false
  * ```
  *
+ * @stability stable
  * @category guards
  * @since 2.0.0
  */
-export const isHash = (u: unknown): u is Hash => hasProperty(u, symbol)
+export const isHash = (u: unknown): u is Hash => hasProperty(u, symbol) && typeof u[symbol] === "function"
 
 const float64 = new DataView(new ArrayBuffer(8))
 
@@ -329,6 +341,7 @@ const float64 = new DataView(new ArrayBuffer(8))
  * Hash.number(100) === Hash.number(100) // => true
  * ```
  *
+ * @stability stable
  * @category hashing
  * @since 2.0.0
  */
@@ -366,6 +379,7 @@ export const number = (n: number) => {
  * Hash.string("test") === Hash.string("test") // => true
  * ```
  *
+ * @stability stable
  * @category hashing
  * @since 2.0.0
  */
@@ -408,6 +422,7 @@ export const string = (str: string) => {
  * hash1 === hash3 // => true
  * ```
  *
+ * @stability stable
  * @category hashing
  * @since 2.0.0
  */
@@ -446,6 +461,7 @@ export const structureKeys = (o: object, keys: Iterable<PropertyKey>) => {
  * Hash.structure(obj1) === Hash.structure(obj3) // => true
  * ```
  *
+ * @stability stable
  * @category hashing
  * @since 2.0.0
  */
@@ -490,6 +506,7 @@ const unordered = (seed: number, f: (el: any) => number) => (iter: Iterable<any>
  *
  * @see {@link hash} for the general-purpose hash dispatcher
  *
+ * @stability stable
  * @category hashing
  * @since 2.0.0
  */

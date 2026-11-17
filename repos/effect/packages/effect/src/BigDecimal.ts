@@ -5,6 +5,10 @@
  * divide, round, and format decimal values such as money, quantities, and
  * measurements.
  *
+ * Parsed scales are limited to ±10,000, and operations that align scales throw
+ * a `RangeError` when the scales differ by more than 20,000.
+ *
+ * @stability stable
  * @since 2.0.0
  */
 
@@ -20,6 +24,9 @@ import { type Pipeable, pipeArguments } from "./Pipeable.ts"
 import { hasProperty } from "./Predicate.ts"
 
 const DEFAULT_PRECISION = 100
+const MAX_SCALE = 10_000
+// Allows aligning values parsed at opposite bounds
+const MAX_SCALE_ALIGNMENT = 2 * MAX_SCALE
 const FINITE_INT_REGEXP = /^[+-]?\d+$/
 
 const TypeId = "~effect/BigDecimal"
@@ -43,6 +50,7 @@ const TypeId = "~effect/BigDecimal"
  * d.scale // => 2
  * ```
  *
+ * @stability stable
  * @category models
  * @since 2.0.0
  */
@@ -100,6 +108,7 @@ const BigDecimalProto: Omit<BigDecimal, "value" | "scale" | "normalized"> = {
  * BigDecimal.isBigDecimal("123.45") // => false
  * ```
  *
+ * @stability stable
  * @category guards
  * @since 2.0.0
  */
@@ -133,6 +142,7 @@ export const isBigDecimal = (u: unknown): u is BigDecimal => hasProperty(u, Type
  *
  * @see {@link fromBigInt} for constructing an integer decimal from a `bigint`
  *
+ * @stability stable
  * @category constructors
  * @since 2.0.0
  */
@@ -197,6 +207,7 @@ const one = makeNormalizedUnsafe(bigint1, 0)
  *
  * @see {@link format} for rendering normalized decimals as strings
  *
+ * @stability stable
  * @category scaling
  * @since 2.0.0
  */
@@ -206,13 +217,25 @@ export const normalize = (self: BigDecimal): BigDecimal => {
       self.normalized = zero
     } else {
       const digits = `${self.value}`
-      let end = digits.length
-      while (digits[end - 1] === "0") end--
-      self.normalized = makeNormalized(BigInt(digits.slice(0, end)), self.scale - (digits.length - end))
+      const zeros = trailingZeros(digits)
+      self.normalized = makeNormalized(BigInt(digits.slice(0, digits.length - zeros)), self.scale - zeros)
     }
   }
 
   return self.normalized
+}
+
+const trailingZeros = (digits: string): number => {
+  let end = digits.length
+  while (digits[end - 1] === "0") end--
+  return digits.length - end
+}
+
+const powerOfTen = (exponent: number): bigint => {
+  if (exponent > MAX_SCALE_ALIGNMENT) {
+    throw new RangeError(`Scale alignment must not exceed ${MAX_SCALE_ALIGNMENT} digits, got ${exponent}`)
+  }
+  return bigint10 ** BigInt(exponent)
 }
 
 /**
@@ -227,6 +250,10 @@ export const normalize = (self: BigDecimal): BigDecimal => {
  * Increasing the scale appends decimal zeros. Decreasing the scale discards
  * digits beyond the target scale by `bigint` division, which truncates toward
  * zero.
+ *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the scale changes by more than 20,000.
  *
  * **Example** (Scaling decimal precision)
  *
@@ -246,6 +273,7 @@ export const normalize = (self: BigDecimal): BigDecimal => {
  *
  * @see {@link round} for changing scale with configurable rounding
  *
+ * @stability stable
  * @category scaling
  * @since 2.0.0
  */
@@ -254,11 +282,11 @@ export const scale: {
   (self: BigDecimal, scale: number): BigDecimal
 } = dual(2, (self: BigDecimal, scale: number): BigDecimal => {
   if (scale > self.scale) {
-    return make(self.value * bigint10 ** BigInt(scale - self.scale), scale)
+    return make(self.value * powerOfTen(scale - self.scale), scale)
   }
 
   if (scale < self.scale) {
-    return make(self.value / bigint10 ** BigInt(self.scale - scale), scale)
+    return make(self.value / powerOfTen(self.scale - scale), scale)
   }
 
   return self
@@ -271,6 +299,10 @@ export const scale: {
  *
  * Use when you need a decimal addition function for piping or higher-order APIs
  * while preserving decimal precision.
+ *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the operands' scales differ by more than 20,000.
  *
  * **Example** (Adding decimals)
  *
@@ -285,6 +317,7 @@ export const scale: {
  *
  * @see {@link sumAll} for summing an iterable of `BigDecimal` values
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -319,6 +352,10 @@ export const sum: {
  * Use when you need to aggregate decimal quantities with decimal precision
  * instead of converting through JavaScript numbers.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the operands' scales differ by more than 20,000.
+ *
  * **Example** (Adding multiple decimals)
  *
  * ```ts import.meta.vitest
@@ -333,6 +370,7 @@ export const sum: {
  *
  * @see {@link sum} for adding two `BigDecimal` values
  *
+ * @stability stable
  * @category math
  * @since 3.16.0
  */
@@ -364,6 +402,7 @@ export const sumAll = (collection: Iterable<BigDecimal>): BigDecimal => {
  *
  * @see {@link multiplyAll} for multiplying an iterable of `BigDecimal` values
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -399,6 +438,7 @@ export const multiply: {
  *
  * @see {@link multiply} for multiplying two `BigDecimal` values
  *
+ * @stability stable
  * @category math
  * @since 4.0.0
  */
@@ -420,6 +460,10 @@ export const multiplyAll = (collection: Iterable<BigDecimal>): BigDecimal => {
  *
  * Use to subtract one `BigDecimal` value from another.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the operands' scales differ by more than 20,000.
+ *
  * **Example** (Subtracting decimals)
  *
  * ```ts import.meta.vitest
@@ -431,6 +475,7 @@ export const multiplyAll = (collection: Iterable<BigDecimal>): BigDecimal => {
  * ) // => BigDecimal.fromBigInt(-1n)
  * ```
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -554,6 +599,7 @@ export const roundTerminal = (n: bigint): bigint => {
  * @see {@link divideUnsafe} for division that throws when the divisor is zero
  * @see {@link remainder} for the decimal remainder operation
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -605,6 +651,7 @@ export const divide: {
  *
  * @see {@link divide} for division that returns `Option.none` when the divisor is zero
  *
+ * @stability stable
  * @category math
  * @since 4.0.0
  */
@@ -684,6 +731,7 @@ const compare = (self: BigDecimal, that: BigDecimal): Ordering => {
  * BigDecimal.Order(a, c) // => 0
  * ```
  *
+ * @stability stable
  * @category instances
  * @since 2.0.0
  */
@@ -710,6 +758,7 @@ export const Order: order.Order<BigDecimal> = order.make(compare)
  * BigDecimal.isLessThan(four, three) // => false
  * ```
  *
+ * @stability stable
  * @category predicates
  * @since 4.0.0
  */
@@ -739,6 +788,7 @@ export const isLessThan: {
  * BigDecimal.isLessThanOrEqualTo(four, three) // => false
  * ```
  *
+ * @stability stable
  * @category predicates
  * @since 4.0.0
  */
@@ -768,6 +818,7 @@ export const isLessThanOrEqualTo: {
  * BigDecimal.isGreaterThan(four, three) // => true
  * ```
  *
+ * @stability stable
  * @category predicates
  * @since 4.0.0
  */
@@ -797,6 +848,7 @@ export const isGreaterThan: {
  * BigDecimal.isGreaterThanOrEqualTo(four, three) // => true
  * ```
  *
+ * @stability stable
  * @category predicates
  * @since 4.0.0
  */
@@ -829,6 +881,7 @@ export const isGreaterThanOrEqualTo: {
  *
  * @see {@link clamp} for forcing a `BigDecimal` into an inclusive range
  *
+ * @stability stable
  * @category predicates
  * @since 2.0.0
  */
@@ -873,6 +926,7 @@ export const between: {
  *
  * @see {@link between} for checking whether a `BigDecimal` is already inside a range
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -907,6 +961,7 @@ export const clamp: {
  *
  * @see {@link max} for selecting the larger value
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -935,6 +990,7 @@ export const min: {
  *
  * @see {@link min} for selecting the smaller value
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -960,6 +1016,7 @@ export const max: {
  * BigDecimal.sign(BigDecimal.fromStringUnsafe("5")) // => 1
  * ```
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -982,6 +1039,7 @@ export const sign = (n: BigDecimal): Ordering => n.value === bigint0 ? 0 : n.val
  * BigDecimal.abs(BigDecimal.fromStringUnsafe("5")) // => BigDecimal.fromBigInt(5n)
  * ```
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -1003,6 +1061,7 @@ export const abs = (n: BigDecimal): BigDecimal => n.value < bigint0 ? make(-n.va
  * BigDecimal.negate(BigDecimal.fromStringUnsafe("-6")) // => BigDecimal.fromBigInt(6n)
  * ```
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -1021,6 +1080,10 @@ export const negate = (n: BigDecimal): BigDecimal => make(-n.value, n.scale)
  *
  * If the divisor is `0`, the result will be `Option.none()`.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the operands' scales differ by more than 20,000.
+ *
  * **Example** (Computing remainders safely)
  *
  * ```ts import.meta.vitest
@@ -1037,6 +1100,7 @@ export const negate = (n: BigDecimal): BigDecimal => make(-n.value, n.scale)
  * @see {@link remainderUnsafe} for remainder calculation that throws when the divisor is zero
  * @see {@link divide} for decimal quotient calculation
  *
+ * @stability stable
  * @category math
  * @since 2.0.0
  */
@@ -1063,7 +1127,8 @@ export const remainder: {
  *
  * **Gotchas**
  *
- * Throws a `RangeError` if the divisor is `0`.
+ * Throws a `RangeError` if the divisor is `0` or the operands' scales differ by
+ * more than 20,000.
  *
  * **Example** (Computing remainders unsafely)
  *
@@ -1078,6 +1143,7 @@ export const remainder: {
  *
  * @see {@link remainder} for returning `Option.none` when the divisor is zero
  *
+ * @stability stable
  * @category math
  * @since 4.0.0
  */
@@ -1114,6 +1180,7 @@ export const remainderUnsafe: {
  * BigDecimal.Equivalence(a, c) // => false
  * ```
  *
+ * @stability stable
  * @category instances
  * @since 2.0.0
  */
@@ -1141,6 +1208,7 @@ export const Equivalence: Equ.Equivalence<BigDecimal> = Equ.make((self, that) =>
  *
  * @see {@link Equivalence} for passing decimal equality to APIs that require an `Equivalence`
  *
+ * @stability stable
  * @category predicates
  * @since 2.0.0
  */
@@ -1170,6 +1238,7 @@ export const equals: {
  *
  * @see {@link make} for constructing a decimal with an explicit scale
  *
+ * @stability stable
  * @category constructors
  * @since 2.0.0
  */
@@ -1200,6 +1269,7 @@ export const fromBigInt = (n: bigint): BigDecimal => make(n, 0)
  *
  * @see {@link fromNumber} for returning `Option.none` when the number is not finite
  *
+ * @stability stable
  * @category constructors
  * @since 4.0.0
  */
@@ -1236,6 +1306,7 @@ export const fromNumberUnsafe = (n: number): BigDecimal => {
  * @see {@link fromNumberUnsafe} for throwing when the number is not finite
  * @see {@link fromString} for parsing decimal strings directly
  *
+ * @stability stable
  * @category constructors
  * @since 2.0.0
  */
@@ -1263,8 +1334,9 @@ export const fromNumber = (n: number): Option.Option<BigDecimal> => {
  * **Details**
  *
  * Returns `Option.some` for valid decimal or exponent notation and
- * `Option.none` when the string cannot be parsed or would produce an unsafe
- * scale. The empty string parses as zero.
+ * `Option.none` otherwise, including when the scale, before or after removing
+ * trailing zeros, is outside ±10,000 (for example, more than 10,000 fractional
+ * digits). The empty string parses as zero.
  *
  * **Example** (Parsing decimal strings safely)
  *
@@ -1278,6 +1350,7 @@ export const fromNumber = (n: number): Option.Option<BigDecimal> => {
  * @see {@link fromStringUnsafe} for parsing that throws on invalid input
  * @see {@link fromNumber} for converting finite JavaScript numbers
  *
+ * @stability stable
  * @category constructors
  * @since 2.0.0
  */
@@ -1307,6 +1380,9 @@ export const fromString = (s: string): Option.Option<BigDecimal> => {
   if (dot !== -1) {
     const lead = base.slice(0, dot)
     const trail = base.slice(dot + 1)
+    if (!/^\d*$/.test(trail)) {
+      return Option.none()
+    }
     digits = `${lead}${trail}`
     offset = trail.length
   } else {
@@ -1319,11 +1395,14 @@ export const fromString = (s: string): Option.Option<BigDecimal> => {
   }
 
   const scale = offset - exp
-  if (!Number.isSafeInteger(scale)) {
+  const value = BigInt(digits)
+  // Keeps `format` output parseable
+  const normalizedScale = value === bigint0 ? scale : scale - trailingZeros(digits)
+  if (scale > MAX_SCALE || normalizedScale < -MAX_SCALE) {
     return Option.none()
   }
 
-  return Option.some(make(BigInt(digits), scale))
+  return Option.some(make(value, scale))
 }
 
 /**
@@ -1336,8 +1415,9 @@ export const fromString = (s: string): Option.Option<BigDecimal> => {
  *
  * **Details**
  *
- * Accepts the same syntax as `fromString`. Use `fromString` when invalid input
- * should be represented as `Option.none` instead of throwing.
+ * Accepts the same syntax and scale limits as `fromString`. Use `fromString`
+ * when invalid input should be represented as `Option.none` instead of
+ * throwing.
  *
  * **Example** (Parsing decimal strings unsafely)
  *
@@ -1350,6 +1430,7 @@ export const fromString = (s: string): Option.Option<BigDecimal> => {
  *
  * @see {@link fromString} for returning `Option.none` on invalid input
  *
+ * @stability stable
  * @category constructors
  * @since 4.0.0
  */
@@ -1382,6 +1463,7 @@ export const fromStringUnsafe = (s: string): BigDecimal => {
  *
  * @see {@link toExponential} for always rendering scientific notation
  *
+ * @stability stable
  * @category converting
  * @since 2.0.0
  */
@@ -1418,6 +1500,7 @@ export const format = (n: BigDecimal): string => {
  *
  * @see {@link format} for plain decimal formatting when possible
  *
+ * @stability stable
  * @category converting
  * @since 3.11.0
  */
@@ -1459,6 +1542,7 @@ export const toExponential = (n: BigDecimal): string => {
  *
  * @see {@link format} for preserving decimal precision as text
  *
+ * @stability stable
  * @category converting
  * @since 4.0.0
  */
@@ -1481,6 +1565,7 @@ export const toNumberUnsafe = (n: BigDecimal): number => Number(format(n))
  * BigDecimal.isInteger(BigDecimal.fromStringUnsafe("1.1")) // => false
  * ```
  *
+ * @stability stable
  * @category predicates
  * @since 2.0.0
  */
@@ -1502,6 +1587,7 @@ export const isInteger = (n: BigDecimal): boolean => normalize(n).scale <= 0
  * BigDecimal.isZero(BigDecimal.fromStringUnsafe("1")) // => false
  * ```
  *
+ * @stability stable
  * @category predicates
  * @since 2.0.0
  */
@@ -1524,6 +1610,7 @@ export const isZero = (n: BigDecimal): boolean => n.value === bigint0
  * BigDecimal.isNegative(BigDecimal.fromStringUnsafe("1")) // => false
  * ```
  *
+ * @stability stable
  * @category predicates
  * @since 2.0.0
  */
@@ -1546,6 +1633,7 @@ export const isNegative = (n: BigDecimal): boolean => n.value < bigint0
  * BigDecimal.isPositive(BigDecimal.fromStringUnsafe("1")) // => true
  * ```
  *
+ * @stability stable
  * @category predicates
  * @since 2.0.0
  */
@@ -1579,6 +1667,7 @@ const isBigDecimalArgs = (args: IArguments) => isBigDecimal(args[0])
  * @see {@link floor} for fixed rounding toward negative infinity
  * @see {@link truncate} for fixed rounding toward zero
  *
+ * @stability stable
  * @category math
  * @since 3.16.0
  */
@@ -1601,6 +1690,15 @@ export type RoundingMode =
  *
  * Use to round a decimal at a requested scale with an explicit rounding mode.
  *
+ * **Details**
+ *
+ * Values already at or below the target scale are returned unchanged.
+ *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the value's scale exceeds the target scale by more
+ * than 20,000.
+ *
  * **Example** (Rounding decimals)
  *
  * ```ts import.meta.vitest
@@ -1617,6 +1715,7 @@ export type RoundingMode =
  * @see {@link floor} for fixed rounding toward negative infinity
  * @see {@link truncate} for fixed rounding toward zero
  *
+ * @stability stable
  * @category math
  * @since 3.16.0
  */
@@ -1626,6 +1725,10 @@ export const round: {
 } = dual(isBigDecimalArgs, (self: BigDecimal, options?: { scale?: number; mode?: RoundingMode }): BigDecimal => {
   const mode = options?.mode ?? "half-from-zero"
   const scale = options?.scale ?? 0
+
+  if (self.scale <= scale) {
+    return self
+  }
 
   switch (mode) {
     case "ceil":
@@ -1679,6 +1782,11 @@ export const round: {
  * Use when you need to discard fractional digits beyond a scale rather than
  * round half up, half down, or toward an infinity.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the value's scale exceeds the target scale by more
+ * than 20,000.
+ *
  * **Example** (Truncating decimals)
  *
  * ```ts import.meta.vitest
@@ -1692,6 +1800,7 @@ export const round: {
  * @see {@link ceil} for rounding toward positive infinity
  * @see {@link floor} for rounding toward negative infinity
  *
+ * @stability stable
  * @category math
  * @since 3.16.0
  */
@@ -1704,7 +1813,7 @@ export const truncate: {
   }
 
   // BigInt division truncates towards zero
-  return make(self.value / (bigint10 ** BigInt(self.scale - scale)), scale)
+  return make(self.value / powerOfTen(self.scale - scale), scale)
 })
 
 /**
@@ -1720,6 +1829,11 @@ export const truncate: {
  * decimal point, and negative scales round positions to the left of the decimal
  * point.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the value's scale exceeds the target scale by more
+ * than 20,000.
+ *
  * @see {@link floor} for rounding toward negative infinity
  * @see {@link truncate} for rounding toward zero
  * @see {@link round} for configurable rounding modes
@@ -1733,6 +1847,7 @@ export const truncate: {
  * BigDecimal.ceil(BigDecimal.fromStringUnsafe("-14.5")) // => BigDecimal.fromBigInt(-14n)
  * ```
  *
+ * @stability stable
  * @category math
  * @since 3.16.0
  */
@@ -1764,7 +1879,7 @@ export const digitAt: {
     return bigint0
   }
 
-  const scaled = self.value / (bigint10 ** BigInt(self.scale - scale))
+  const scaled = self.value / powerOfTen(self.scale - scale)
   return scaled % bigint10
 })
 
@@ -1774,6 +1889,11 @@ export const digitAt: {
  * **When to use**
  *
  * Use to round a decimal toward negative infinity at a requested scale.
+ *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the value's scale exceeds the target scale by more
+ * than 20,000.
  *
  * **Example** (Rounding decimals down)
  *
@@ -1788,6 +1908,7 @@ export const digitAt: {
  * @see {@link truncate} for rounding toward zero
  * @see {@link round} for configurable rounding modes
  *
+ * @stability stable
  * @category math
  * @since 3.16.0
  */

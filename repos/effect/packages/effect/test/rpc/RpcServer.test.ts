@@ -1,10 +1,42 @@
 import { assert, describe, it } from "@effect/vitest"
-import { Deferred, Effect, Exit, Fiber, Layer, Queue, Ref, Schema, Scope, Sink, Stdio, Stream } from "effect"
-import { Headers, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http"
+import {
+  Cause,
+  Context,
+  Deferred,
+  Effect,
+  ErrorReporter,
+  Exit,
+  Fiber,
+  Layer,
+  Queue,
+  Ref,
+  RequestResolver,
+  Runtime,
+  Schema,
+  SchemaTransformation,
+  Scope,
+  Sink,
+  Stdio,
+  Stream,
+  Tracer
+} from "effect"
+import { Headers, HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http"
 import * as NetAddress from "effect/net/NetAddress"
-import { Rpc, RpcGroup, RpcSerialization, RpcServer } from "effect/rpc"
+import * as EffectRequest from "effect/Request"
+import { Rpc, RpcGroup, RpcMiddleware, RpcSchema, RpcSerialization, RpcServer } from "effect/rpc"
 import * as RpcMessage from "effect/rpc/RpcMessage"
 import { Socket, SocketServer } from "effect/socket"
+import * as TestClock from "effect/testing/TestClock"
+
+const exitCode = (exit: Exit.Exit<unknown, unknown>): number => {
+  let code = -1
+  Runtime.defaultTeardown(exit, (value) => {
+    code = value
+  })
+  return code
+}
+
+class GetUser extends EffectRequest.Class<{ id: number }, string> {}
 
 const producedWithoutReadingFramedBody = Effect.fnUntraced(function*(
   streamBufferSize?: number | "unbounded"
@@ -48,6 +80,279 @@ const producedWithoutReadingFramedBody = Effect.fnUntraced(function*(
 })
 
 describe("RpcServer", () => {
+  for (
+    const [name, serialization] of [
+      ["ndjson", RpcSerialization.layerNdjson],
+      ["json", RpcSerialization.layerJson]
+    ] as const
+  ) {
+    it.live(`finalizes an aborted ${name} HTTP RPC before output`, () =>
+      Effect.gen(function*() {
+        const started = yield* Deferred.make<void>()
+        const finalized = yield* Deferred.make<Exit.Exit<unknown, unknown>>()
+        const group = RpcGroup.make(
+          Rpc.make("events", { payload: Schema.Struct({}), success: Schema.Number, stream: true })
+        )
+        const httpEffect = yield* RpcServer.toHttpEffect(group).pipe(
+          Effect.provide(Layer.mergeAll(
+            group.toLayer({
+              events: () =>
+                Stream.fromEffect(Effect.gen(function*() {
+                  yield* Effect.addFinalizer((exit) => Deferred.succeed(finalized, exit))
+                  yield* Deferred.succeed(started, undefined)
+                  return yield* Effect.never
+                }))
+            }),
+            serialization
+          ))
+        )
+        const handler = HttpEffect.toWebHandler(httpEffect)
+        const controller = new AbortController()
+        yield* Effect.addFinalizer(() => Effect.sync(() => controller.abort()))
+        const request = yield* Effect.promise(() =>
+          handler(
+            new Request("http://test/rpc", {
+              method: "POST",
+              body: `{"_tag":"Request","id":1,"tag":"events","payload":{},"headers":[]}\n`,
+              signal: controller.signal
+            })
+          )
+        ).pipe(Effect.forkScoped)
+        yield* Deferred.await(started).pipe(Effect.timeout("2 seconds"))
+        controller.abort()
+        const exit = yield* Deferred.await(finalized).pipe(Effect.timeout("2 seconds"))
+        assert.isTrue(Exit.isFailure(exit) && Cause.hasInterrupts(exit.cause))
+        yield* Fiber.join(request).pipe(Effect.timeout("2 seconds"))
+      }))
+  }
+
+  for (
+    const [name, serialization] of [
+      ["ndjson", RpcSerialization.layerNdjson],
+      ["ndJsonRpc", RpcSerialization.layerNdJsonRpc()],
+      ["schemaBinary", RpcSerialization.layerSchemaBinary()]
+    ] as const
+  ) {
+    it.effect(`returns HTTP 200 with an empty body for an empty ${name} POST`, () =>
+      Effect.gen(function*() {
+        const group = RpcGroup.make(Rpc.make("ping", { success: Schema.String }))
+        const httpEffect = yield* RpcServer.toHttpEffect(group).pipe(
+          Effect.provide(Layer.mergeAll(
+            group.toLayer({ ping: () => Effect.succeed("pong") }),
+            serialization
+          ))
+        )
+        const handler = HttpEffect.toWebHandler(httpEffect)
+        const response = yield* Effect.promise(() =>
+          handler(new Request("http://test/rpc", { method: "POST", body: "" }))
+        )
+        const body = yield* Effect.promise(() => response.text())
+
+        assert.strictEqual(response.status, 200)
+        assert.strictEqual(body, "")
+      }))
+  }
+
+  it.effect("reports success encode failures with the rpc tag", () => {
+    const reports: Array<string> = []
+    return Effect.gen(function*() {
+      const group = RpcGroup.make(Rpc.make("getUserAge", { payload: Schema.Struct({}), success: Schema.Number }))
+      const handler = HttpEffect.toWebHandler(
+        yield* RpcServer.toHttpEffect(group).pipe(
+          Effect.provide(Layer.mergeAll(
+            group.toLayer({ getUserAge: () => Effect.succeed("not a number" as unknown as number) }),
+            RpcSerialization.layerNdjson
+          ))
+        )
+      )
+      const body = yield* Effect.promise(() =>
+        handler(
+          new Request("http://test/rpc", {
+            method: "POST",
+            body: `{"_tag":"Request","id":1,"tag":"getUserAge","payload":{},"headers":[]}\n`
+          })
+        ).then((response) => response.text())
+      )
+
+      const message = `Failed to encode response for RPC "getUserAge": Expected number\n  at ["value"]`
+      const response: RpcMessage.ResponseExitEncoded = JSON.parse(body)
+      assert.deepStrictEqual(response.exit, { _tag: "Failure", cause: [{ _tag: "Die", defect: message }] })
+      assert.deepStrictEqual(reports, [message])
+    }).pipe(Effect.provide(ErrorReporter.layer([ErrorReporter.make(({ error }) => reports.push(error.message))])))
+  })
+
+  it.effect("fails requests with malformed headers, whether the payload decodes synchronously or not", () =>
+    Effect.gen(function*() {
+      const success = Schema.String
+      const group = RpcGroup.make(
+        Rpc.make("sync", { payload: Schema.Struct({}), success }),
+        Rpc.make("async", {
+          payload: Schema.Struct({
+            page: Schema.Finite.pipe(Schema.withDecodingDefaultType(Effect.as(Effect.yieldNow, 1)))
+          }),
+          success
+        })
+      )
+      const handler = HttpEffect.toWebHandler(
+        yield* RpcServer.toHttpEffect(group).pipe(
+          Effect.provide(Layer.mergeAll(
+            group.toLayer({
+              sync: (_, { headers }) => Effect.succeed(headers["x-a"]),
+              async: (_, { headers }) => Effect.succeed(headers["x-a"])
+            }),
+            RpcSerialization.layerNdjson
+          ))
+        )
+      )
+      const post = (tag: string, headers: unknown) =>
+        Effect.promise(async () => {
+          const response = await handler(
+            new Request("http://test/rpc", {
+              method: "POST",
+              body: JSON.stringify({ _tag: "Request", id: "1", tag, payload: {}, headers }) + "\n"
+            })
+          )
+          return { status: response.status, body: await response.text() }
+        })
+
+      for (const tag of ["sync", "async"]) {
+        const valid = yield* post(tag, [["X-A", "b"]])
+        assert.strictEqual(valid.status, 200)
+        assert.deepStrictEqual(JSON.parse(valid.body).exit, { _tag: "Success", value: "b" })
+
+        for (const headers of [[{}], [[1, "b"]]]) {
+          const { body, status } = yield* post(tag, headers)
+          assert.strictEqual(status, 200)
+          const response: RpcMessage.ResponseExitEncoded = JSON.parse(body)
+          assert.strictEqual(response._tag, "Exit")
+          assert.strictEqual(response.requestId, "1")
+          assert.strictEqual(response.exit._tag, "Failure")
+          assert.strictEqual((response.exit as any).cause[0]._tag, "Die")
+        }
+      }
+    }))
+
+  it.effect("decodes payloads with the ParseOptions annotation", () =>
+    Effect.gen(function*() {
+      const batches: Array<ReadonlyArray<number>> = []
+      const resolver = RequestResolver.make<GetUser>((entries) =>
+        Effect.sync(() => {
+          batches.push(entries.map((entry) => entry.request.id))
+          for (const entry of entries) entry.completeUnsafe(Exit.succeed(`user-${entry.request.id}`))
+        })
+      )
+      const User = Schema.Number.pipe(Schema.decodeTo(
+        Schema.String,
+        SchemaTransformation.transformEffect({
+          decode: (id) => Effect.request(new GetUser({ id }), resolver),
+          encode: (name) => Effect.succeed(Number(name.slice("user-".length)))
+        })
+      ))
+      const group = RpcGroup.make(
+        Rpc.make("getUsers", {
+          payload: { users: Schema.Array(User) },
+          success: Schema.Array(Schema.String)
+        }).annotate(Rpc.ParseOptions, { concurrency: "unbounded" })
+      )
+      const handler = HttpEffect.toWebHandler(
+        yield* RpcServer.toHttpEffect(group).pipe(
+          Effect.provide(Layer.mergeAll(
+            group.toLayer({ getUsers: ({ users }) => Effect.succeed(users) }),
+            RpcSerialization.layerNdjson
+          ))
+        )
+      )
+      const body = yield* Effect.promise(() =>
+        handler(
+          new Request("http://test/rpc", {
+            method: "POST",
+            body: `{"_tag":"Request","id":1,"tag":"getUsers","payload":{"users":[1,2,3]},"headers":[]}\n`
+          })
+        ).then((response) => response.text())
+      )
+
+      const response: RpcMessage.ResponseExitEncoded = JSON.parse(body)
+      assert.deepStrictEqual(response.exit, { _tag: "Success", value: ["user-1", "user-2", "user-3"] })
+      assert.deepStrictEqual(batches, [[1, 2, 3]])
+    }))
+
+  it.effect("records effect and stream encode defects on server spans, even when middleware swallows them", () =>
+    Effect.gen(function*() {
+      const ended = yield* Queue.unbounded<Tracer.NativeSpan>()
+      const tracer = Tracer.make({
+        span(options) {
+          const span = new Tracer.NativeSpan(options)
+          if (span.kind === "server") {
+            const end = span.end.bind(span)
+            span.end = (endTime, exit) => {
+              end(endTime, exit)
+              Queue.offerUnsafe(ended, span)
+            }
+          }
+          return span
+        }
+      })
+      class Swallow extends RpcMiddleware.Service<Swallow>()("Swallow") {}
+      const group = RpcGroup.make(
+        Rpc.make("getUserAge", { payload: Schema.Struct({}), success: Schema.Number }),
+        Rpc.make("ages", { payload: Schema.Struct({}), success: Schema.Number, stream: true }).middleware(Swallow)
+      )
+      const handler = HttpEffect.toWebHandler(
+        yield* RpcServer.toHttpEffect(group).pipe(
+          Effect.provide(Layer.mergeAll(
+            group.toLayer({
+              getUserAge: () => Effect.succeed("not a number" as unknown as number),
+              ages: () => Stream.make("not a number" as unknown as number)
+            }),
+            Layer.succeed(
+              Swallow,
+              (effect) => Effect.catchDefect(effect, () => Effect.succeed({} as RpcMiddleware.SuccessValue))
+            ),
+            RpcSerialization.layerNdjson
+          ))
+        )
+      )
+      yield* Effect.promise(() =>
+        handler(
+          new Request("http://test/rpc", {
+            method: "POST",
+            body: `{"_tag":"Request","id":1,"tag":"getUserAge","payload":{},"headers":[]}\n` +
+              `{"_tag":"Request","id":2,"tag":"ages","payload":{},"headers":[]}\n`
+          }),
+          Context.make(Tracer.Tracer, tracer)
+        ).then((response) => response.text())
+      )
+
+      const exits = Object.fromEntries((yield* Queue.takeN(ended, 2)).map((span) => {
+        const exit = span.status._tag === "Ended" ? span.status.exit : undefined
+        if (exit && Exit.isFailure(exit)) {
+          assert.strictEqual(Context.getOrUndefined(Cause.annotations(exit.cause), RpcSchema.ClientAbort), undefined)
+        }
+        return [
+          span.name,
+          exit && Exit.isFailure(exit)
+            ? exit.cause.reasons.map((reason) => Cause.isDieReason(reason) ? reason.defect : reason._tag)
+            : exit?._tag
+        ]
+      }))
+      assert.deepStrictEqual(exits, {
+        getUserAge: [`Failed to encode response for RPC "getUserAge": Expected number\n  at ["value"]`],
+        ages: [`Failed to encode response for RPC "ages": Expected number\n  at [0]`]
+      })
+    }))
+
+  it.effect("should exit successfully when stdin is empty", () =>
+    Effect.gen(function*() {
+      const server = yield* Layer.launch(
+        RpcServer.layer(RpcGroup.make()).pipe(
+          Layer.provide(RpcServer.layerProtocolStdio),
+          Layer.provide(RpcSerialization.layerNdjson),
+          Layer.provide(Stdio.layerTest({ stdin: Stream.empty }))
+        )
+      ).pipe(Effect.forkScoped)
+      assert.strictEqual(exitCode(yield* Fiber.await(server)), 0)
+    }))
+
   it.effect("should drain the response when stdin ends during request startup", () =>
     Effect.gen(function*() {
       const started = yield* Deferred.make<void>()
@@ -75,10 +380,11 @@ describe("RpcServer", () => {
       ).pipe(Effect.forkScoped)
       yield* Deferred.await(started)
       yield* Deferred.succeed(finishRequest, undefined)
-      yield* Fiber.await(server)
+      const exit = yield* Fiber.await(server)
       assert.deepStrictEqual(output.join("").trim().split("\n").map((line) => JSON.parse(line)), [
         { _tag: "Exit", requestId: 1, exit: { _tag: "Success", value: "finished" } }
       ])
+      assert.strictEqual(exitCode(exit), 0)
     }))
 
   it.effect("should shut down when stdin ends after the STDIO response is written", () =>
@@ -94,7 +400,8 @@ describe("RpcServer", () => {
           Layer.provide(RpcSerialization.layerNdjson),
           Layer.provide(Stdio.layerTest({
             stdin: Stream.make(
-              new TextEncoder().encode(`{"_tag":"Request","id":1,"tag":"hello","payload":{},"headers":[]}\n`)
+              // raw clients may omit the headers field, which means no headers
+              new TextEncoder().encode(`{"_tag":"Request","id":1,"tag":"hello","payload":{}}\n`)
             ).pipe(Stream.concat(Stream.fromEffect(Deferred.await(closeStdin)).pipe(Stream.drain))),
             stdout: () =>
               Sink.forEach((data) =>
@@ -110,7 +417,29 @@ describe("RpcServer", () => {
         { _tag: "Exit", requestId: 1, exit: { _tag: "Success", value: "world" } }
       ])
       yield* Deferred.succeed(closeStdin, undefined)
-      yield* Fiber.await(server)
+      assert.strictEqual(exitCode(yield* Fiber.await(server)), 0)
+    }))
+
+  it.effect("should shut down unsuccessfully when STDIO writing defects", () =>
+    Effect.gen(function*() {
+      const writeStarted = yield* Deferred.make<void>()
+      const server = yield* Layer.launch(
+        RpcServer.layer(RpcGroup.make()).pipe(
+          Layer.provide(RpcServer.layerProtocolStdio),
+          Layer.provide(RpcSerialization.layerNdjson),
+          Layer.provide(Stdio.layerTest({
+            stdin: Stream.make(new TextEncoder().encode(`{"_tag":"Ping"}\n`)),
+            stdout: () =>
+              Sink.forEach(() =>
+                Deferred.succeed(writeStarted, undefined).pipe(Effect.andThen(Effect.die("stdout defect")))
+              )
+          }))
+        )
+      ).pipe(Effect.forkScoped)
+      yield* Deferred.await(writeStarted)
+      const terminated = yield* Fiber.await(server).pipe(Effect.timeout("1 second"), Effect.forkChild)
+      yield* TestClock.adjust("1 second")
+      assert.notStrictEqual(exitCode(yield* Fiber.join(terminated)), 0)
     }))
 
   it.effect("should wait for a blocked STDIO write before shutting down", () =>
@@ -144,7 +473,7 @@ describe("RpcServer", () => {
       }])
     }))
 
-  it.effect("should accept only cancellation of an active request when client input has ended", () =>
+  it.effect("should accept cancellation of an active request and reject new requests when client input has ended", () =>
     Effect.gen(function*() {
       const entered = yield* Deferred.make<void>()
       const interrupted = yield* Deferred.make<void>()
@@ -178,7 +507,7 @@ describe("RpcServer", () => {
       for (
         const message of [
           { ...request, id: RpcMessage.RequestId("new") },
-          { _tag: "Ack" as const, requestId: request.id },
+          { _tag: "Ack" as const, requestId: RpcMessage.RequestId("unknown") },
           RpcMessage.constEof,
           { _tag: "Interrupt" as const, requestId: RpcMessage.RequestId("unknown"), interruptors: [] }
         ]
@@ -206,6 +535,203 @@ describe("RpcServer", () => {
         exit: Exit.succeed("kept")
       })
       assert.deepStrictEqual(yield* Queue.take(messages), { _tag: "ClientEnd", clientId: 2 })
+    }))
+
+  it.effect("isolates synchronous handler throws when fatal defects are disabled", () =>
+    Effect.gen(function*() {
+      const started = yield* Deferred.make<void>()
+      const release = yield* Deferred.make<void>()
+      const group = RpcGroup.make(
+        Rpc.make("pending", { success: Schema.String }),
+        Rpc.make("throws", { success: Schema.String }),
+        Rpc.make("throwsStream", { success: Schema.String, stream: true })
+      )
+      const messages = yield* Queue.unbounded<RpcMessage.FromServer<RpcGroup.Rpcs<typeof group>>>()
+      const server = yield* RpcServer.makeNoSerialization(group, {
+        disableFatalDefects: true,
+        onFromServer: (message) => Queue.offer(messages, message).pipe(Effect.asVoid)
+      }).pipe(Effect.provide(group.toLayer({
+        pending: () =>
+          Deferred.succeed(started, undefined).pipe(Effect.andThen(Deferred.await(release)), Effect.as("served")),
+        throws: (): Effect.Effect<string> => {
+          throw "boom"
+        },
+        throwsStream: (): Stream.Stream<string> => {
+          throw "boom stream"
+        }
+      })))
+      const request = (id: string, tag: "pending" | "throws" | "throwsStream") => ({
+        _tag: "Request" as const,
+        id: RpcMessage.RequestId(id),
+        tag,
+        payload: undefined,
+        headers: Headers.empty
+      })
+      yield* server.write(1, request("1", "pending"))
+      yield* Deferred.await(started)
+      yield* server.write(1, request("2", "throws"))
+      yield* server.write(1, request("3", "throwsStream"))
+      const summarize = (message: RpcMessage.FromServer<RpcGroup.Rpcs<typeof group>>): ReadonlyArray<unknown> =>
+        message._tag === "Exit"
+          ? [
+            message.requestId,
+            Exit.isSuccess(message.exit)
+              ? ["Success", message.exit.value]
+              : message.exit.cause.reasons.map((reason) =>
+                Cause.isDieReason(reason) ? ["Die", reason.defect] : [reason._tag]
+              )
+          ]
+          : [message._tag]
+      assert.deepStrictEqual(summarize(yield* Queue.take(messages)), ["2", [["Die", "boom"]]])
+      assert.deepStrictEqual(summarize(yield* Queue.take(messages)), ["3", [["Die", "boom stream"]]])
+      yield* Deferred.succeed(release, undefined)
+      assert.deepStrictEqual(summarize(yield* Queue.take(messages)), ["1", ["Success", "served"]])
+    }))
+
+  class Guard extends RpcMiddleware.Service<Guard>()("Guard") {}
+  const DiscardGroup = RpcGroup.make(
+    Rpc.make("events", { success: Schema.String, stream: true }),
+    Rpc.make("guarded", { success: Schema.String }).middleware(Guard),
+    Rpc.make("boom", { success: Schema.String })
+  )
+  const makeDiscardServer = Effect.fnUntraced(function*(release: Deferred.Deferred<void>) {
+    const messages = yield* Queue.unbounded<RpcMessage.FromServer<RpcGroup.Rpcs<typeof DiscardGroup>>>()
+    const server = yield* RpcServer.makeNoSerialization(DiscardGroup, {
+      onFromServer: (message) => Queue.offer(messages, message).pipe(Effect.asVoid)
+    }).pipe(Effect.provide(Layer.mergeAll(
+      DiscardGroup.toLayer({
+        events: () =>
+          Stream.make("a", "b").pipe(
+            Stream.concat(Stream.fromEffect(Effect.andThen(Deferred.await(release), Effect.die("boom"))))
+          ),
+        guarded: () => Effect.succeed("done"),
+        boom: (): Effect.Effect<string> => {
+          throw new Error("boom")
+        }
+      }),
+      Layer.succeed(Guard, () => Effect.die("denied"))
+    )))
+    const request = (id: string, tag: "events" | "guarded" | "boom", marker: object) =>
+      server.write(0, {
+        _tag: "Request",
+        id: RpcMessage.RequestId(id),
+        tag,
+        payload: undefined,
+        headers: Headers.empty,
+        ...marker
+      })
+    const takeUntilClientEnd = Effect.gen(function*() {
+      yield* server.write(0, RpcMessage.constEof)
+      const sent: Array<RpcMessage.FromServer<RpcGroup.Rpcs<typeof DiscardGroup>>> = []
+      while (sent.at(-1)?._tag !== "ClientEnd") sent.push(yield* Queue.take(messages))
+      return sent
+    })
+    return { messages, request, takeUntilClientEnd }
+  })
+
+  for (
+    const [name, marker] of [["notification", { isNotification: true }], ["discarded call", { discard: true }]] as const
+  ) {
+    it.effect(`sends nothing for a running ${name}, but reports its failure`, () => {
+      const reports: Array<string> = []
+      return Effect.gen(function*() {
+        const release = yield* Deferred.make<void>()
+        const { messages, request, takeUntilClientEnd } = yield* makeDiscardServer(release)
+        yield* request("id", "events", marker)
+        if ("discard" in marker) {
+          // acknowledged once the handler starts, not when it ends
+          assert.deepStrictEqual(yield* Queue.take(messages), {
+            _tag: "Exit",
+            clientId: 0,
+            requestId: RpcMessage.RequestId("id"),
+            exit: Exit.void
+          })
+        }
+        // no chunks, no result and no Defect, which would fail the client's other calls
+        yield* Deferred.succeed(release, undefined)
+        assert.deepStrictEqual(yield* takeUntilClientEnd, [{ _tag: "ClientEnd", clientId: 0 }])
+        assert.deepStrictEqual(reports, ["boom"])
+      }).pipe(Effect.provide(ErrorReporter.layer([ErrorReporter.make(({ error }) => reports.push(error.message))])))
+    })
+  }
+
+  it.effect("fails a discarded call with its own Exit, not a Defect, when it fails before its acknowledgement", () =>
+    Effect.gen(function*() {
+      const { request, takeUntilClientEnd } = yield* makeDiscardServer(yield* Deferred.make<void>())
+      yield* request("middleware", "guarded", { discard: true })
+      yield* request("construction", "boom", { discard: true })
+
+      const sent = yield* takeUntilClientEnd
+      assert.deepStrictEqual(
+        sent.map((message) =>
+          message._tag === "Exit" && Exit.isFailure(message.exit)
+            ? [message.requestId, String(Cause.squash(message.exit.cause))]
+            : message._tag
+        ),
+        [["middleware", "denied"], ["construction", "Error: boom"], "ClientEnd"]
+      )
+    }).pipe(Effect.provide(ErrorReporter.layer([]))))
+
+  // Feeds the lines to an ndJSON-RPC server over stdio, waits until `waits` handlers of `wait` are
+  // running and the request with id 1 is answered, then returns every line the server wrote.
+  const ndJsonRpcOutput = Effect.fnUntraced(function*(lines: ReadonlyArray<object>, waits: number) {
+    const entered = yield* Queue.unbounded<void>()
+    const release = yield* Deferred.make<void>()
+    const answered = yield* Deferred.make<void>()
+    const closeStdin = yield* Deferred.make<void>()
+    const output: Array<string> = []
+    const group = RpcGroup.make(
+      Rpc.make("wait", { payload: Schema.Struct({}), success: Schema.String }),
+      Rpc.make("ping", { payload: { n: Schema.Number }, success: Schema.String })
+    )
+    const server = yield* Layer.launch(
+      RpcServer.layer(group).pipe(
+        Layer.provide(group.toLayer({
+          wait: () =>
+            Queue.offer(entered, void 0).pipe(
+              Effect.andThen(Deferred.await(release)),
+              Effect.as("released")
+            ),
+          ping: () => Effect.succeed("pong")
+        })),
+        Layer.provide(RpcServer.layerProtocolStdio),
+        Layer.provide(RpcSerialization.layerNdJsonRpc()),
+        Layer.provide(Stdio.layerTest({
+          stdin: Stream.make(
+            new TextEncoder().encode(lines.map((line) => JSON.stringify(line) + "\n").join(""))
+          ).pipe(Stream.concat(Stream.fromEffect(Deferred.await(closeStdin)).pipe(Stream.drain))),
+          stdout: () =>
+            Sink.forEach((data) =>
+              Effect.sync(() => output.push(String(data))).pipe(
+                Effect.andThen(Deferred.succeed(answered, undefined))
+              )
+            )
+        }))
+      )
+    ).pipe(Effect.forkScoped)
+
+    yield* Queue.takeN(entered, waits)
+    yield* Deferred.await(answered)
+    yield* Deferred.succeed(release, undefined)
+    yield* Deferred.succeed(closeStdin, undefined)
+    yield* Fiber.await(server)
+    return output.join("").trim().split("\n").map((line) => JSON.parse(line))
+  })
+  const ping = { jsonrpc: "2.0", id: 1, method: "ping", params: { n: 1 } }
+  const pong = { jsonrpc: "2.0", id: 1, result: "pong" }
+
+  it.effect("runs overlapping JSON-RPC notifications and drops invalid ones, without replying to any", () =>
+    Effect.gen(function*() {
+      // Both `wait` notifications arrive with the empty id, and both must run.
+      const output = yield* ndJsonRpcOutput([
+        { jsonrpc: "2.0", method: "wait", params: {} },
+        { jsonrpc: "2.0", method: "wait", params: {} },
+        { jsonrpc: "2.0", method: "missing", params: {} },
+        { jsonrpc: "2.0", method: "ping", params: { n: "not a number" } },
+        { jsonrpc: "2.0", method: "ping", params: { n: 1 }, headers: [{}] },
+        ping
+      ], 2)
+      assert.deepStrictEqual(output, [pong])
     }))
 
   it.effect("should backpressure STDIO sends when the output buffer is full", () =>
@@ -327,6 +853,54 @@ describe("RpcServer", () => {
       ])
     }))
 
+  it.effect("keeps interrupting disconnected clients while an onDisconnect callback is pending", () =>
+    Effect.gen(function*() {
+      const group = RpcGroup.make(Rpc.make("wait", { payload: Schema.Struct({}) }))
+      const started = yield* Queue.unbounded<number>()
+      const interrupted = yield* Queue.unbounded<number>()
+      const observed = yield* Queue.unbounded<number>()
+      const disconnects = yield* Queue.unbounded<number>()
+      let writeRequest!: (clientId: number, message: RpcMessage.FromClientEncoded) => Effect.Effect<void>
+      const protocol = yield* RpcServer.Protocol.make((writeRequest_) => {
+        writeRequest = writeRequest_
+        return Effect.succeed({
+          disconnects,
+          send: () => Effect.void,
+          end: () => Effect.void,
+          clientIds: Effect.succeed(new Set([1, 2])),
+          initialMessage: Effect.succeedNone,
+          supportsAck: false,
+          supportsTransferables: false,
+          supportsSpanPropagation: false,
+          supportsNotifications: false,
+          codecFor: RpcSerialization.json.codecFor
+        })
+      })
+      yield* RpcServer.make(group, {
+        onDisconnect: (clientId) => Queue.offer(observed, clientId).pipe(Effect.andThen(Effect.never))
+      }).pipe(
+        Effect.provideService(RpcServer.Protocol, protocol),
+        Effect.provide(group.toLayer({
+          wait: (_, { client }) =>
+            Queue.offer(started, client.id).pipe(
+              Effect.andThen(Effect.never),
+              Effect.onInterrupt(() => Queue.offer(interrupted, client.id))
+            )
+        })),
+        Effect.forkScoped
+      )
+
+      for (const clientId of [1, 2]) {
+        yield* writeRequest(clientId, { _tag: "Request", id: "1", tag: "wait", payload: {}, headers: [] })
+        assert.strictEqual(yield* Queue.take(started), clientId)
+      }
+      yield* Queue.offer(disconnects, 1)
+      yield* Queue.offer(disconnects, 2)
+
+      assert.deepStrictEqual([yield* Queue.take(interrupted), yield* Queue.take(interrupted)], [1, 2])
+      assert.deepStrictEqual([yield* Queue.take(observed), yield* Queue.take(observed)], [1, 2])
+    }))
+
   it.effect("applies backpressure to framed HTTP responses by default", () =>
     Effect.gen(function*() {
       const produced = yield* producedWithoutReadingFramedBody()
@@ -341,6 +915,88 @@ describe("RpcServer", () => {
 
       assert.isAbove(produced, 0)
       assert.isBelow(produced, 16)
+    }))
+
+  it.effect("drains framed HTTP responses while dispatching a batch larger than the buffer", () =>
+    Effect.gen(function*() {
+      const Rpcs = RpcGroup.make(Rpc.make("ping"))
+      const Server = RpcServer.layerHttp({
+        group: Rpcs,
+        path: "/rpc",
+        protocol: "http",
+        streamBufferSize: 1
+      }).pipe(
+        Layer.provide(Rpcs.toLayer({ ping: () => Effect.void })),
+        Layer.provide(RpcSerialization.layerNdjson)
+      )
+      const { dispose, handler } = HttpRouter.toWebHandler(Server)
+      yield* Effect.addFinalizer(() => Effect.promise(dispose))
+      const post = (body: string) =>
+        Effect.promise(() => handler(new Request("http://test/rpc", { method: "POST", body })).then((r) => r.text()))
+      // the first request starts the server's message loop
+      yield* post("")
+
+      const body = yield* post(
+        `{"_tag":"Request","id":1,"tag":"unknown","payload":{},"headers":[]}\n` +
+          `{"_tag":"Request","id":2,"tag":"unknown","payload":{},"headers":[]}\n`
+      )
+
+      assert.deepStrictEqual(body.trim().split("\n").map((line) => JSON.parse(line).requestId), [1, 2])
+    }))
+
+  it.effect("terminates a framed HTTP request that reuses an active request id", () =>
+    Effect.gen(function*() {
+      const finalized = yield* Deferred.make<Exit.Exit<unknown, unknown>>()
+      const Rpcs = RpcGroup.make(Rpc.make("wait", { payload: Schema.Struct({}) }))
+      const Server = RpcServer.layerHttp({ group: Rpcs, path: "/rpc", protocol: "http", streamBufferSize: 1 }).pipe(
+        Layer.provide(
+          Rpcs.toLayer({ wait: () => Effect.onExit(Effect.never, (exit) => Deferred.succeed(finalized, exit)) })
+        ),
+        Layer.provide(RpcSerialization.layerNdjson)
+      )
+      const { dispose, handler } = HttpRouter.toWebHandler(Server)
+      yield* Effect.addFinalizer(() => Effect.promise(dispose))
+      // true only for a successful status and a complete body
+      const post = (body: string) =>
+        Effect.promise(() =>
+          handler(new Request("http://test/rpc", { method: "POST", body })).then((r) =>
+            r.ok && r.text().then(() => true, () => false)
+          )
+        )
+      // the first request starts the server's message loop
+      yield* post("")
+
+      const unknown = (id: number) => `{"_tag":"Request","id":${id},"tag":"unknown","payload":{},"headers":[]}\n`
+      const wait = `{"_tag":"Request","id":100,"tag":"wait","payload":{},"headers":[]}\n`
+      assert.isFalse(yield* post(unknown(1) + unknown(2) + wait + wait))
+
+      const exit = yield* Deferred.await(finalized)
+      assert.isTrue(Exit.isFailure(exit) && Cause.hasInterrupts(exit.cause))
+    }))
+
+  it.effect("fails a framed HTTP request with its dispatch defect", () =>
+    Effect.gen(function*() {
+      const defect = new Error("decode defect")
+      const Rpcs = RpcGroup.make(Rpc.make("boom", {
+        payload: Schema.Struct({ value: Schema.String.pipe(Schema.withDecodingDefaultKey(Effect.die(defect))) })
+      }))
+      const Server = RpcServer.layerHttp({ group: Rpcs, path: "/rpc", protocol: "http", streamBufferSize: 1 }).pipe(
+        Layer.provide(Rpcs.toLayer({ boom: () => Effect.void })),
+        Layer.provide(RpcSerialization.layerNdjson)
+      )
+      const { dispose, handler } = HttpRouter.toWebHandler(Server)
+      yield* Effect.addFinalizer(() => Effect.promise(dispose))
+      const post = (body: string) =>
+        Effect.promise(() => handler(new Request("http://test/rpc", { method: "POST", body })))
+      // the first request starts the server's message loop
+      yield* post("")
+
+      const boom = `{"_tag":"Request","id":100,"tag":"boom","payload":{},"headers":[]}\n`
+      assert.strictEqual((yield* post(boom)).status, 500)
+
+      const unknown = (id: number) => `{"_tag":"Request","id":${id},"tag":"unknown","payload":{},"headers":[]}\n`
+      const streamed = yield* post(unknown(1) + unknown(2) + unknown(3) + boom)
+      assert.strictEqual(yield* Effect.promise(() => streamed.text().then(() => undefined, (error) => error)), defect)
     }))
 
   it.effect("allows unbounded framed HTTP response buffering", () =>
