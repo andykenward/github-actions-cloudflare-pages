@@ -63,9 +63,13 @@ updates:
       # versioned global symbol (`Symbol.for('undici.globalDispatcher.N')`), so
       # the devDependency must stay on the same major as Node's bundled copy
       # (`process.versions.undici`) or `MockAgent` silently stops intercepting
-      # and tests hit the real network. Node 24 bundles undici 7.x; only raise
-      # this once Node's bundled major moves.
+      # and tests hit the real network. Tests run on Node 26, which bundles
+      # undici 8.x; only raise this once Node's bundled major moves.
       - dependency-name: undici
+        update-types: ['version-update:semver-major']
+      # The action runs on `using: node24` while the repo develops on Node 26;
+      # Node 24 types keep `src/` off Node 26-only APIs.
+      - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
     groups:
       graphql:
