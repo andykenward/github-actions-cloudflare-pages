@@ -35,6 +35,12 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-pnpm
+      # Fails if an operation no longer validates against schema/github/ (e.g. the
+      # weekly schema PR removed a field), or the committed output is stale.
+      - name: Regenerate GraphQL types
+        run: |
+          pnpm run codegen
+          git diff --exit-code __generated__/gql/
       - name: Rebuild the dist/ directory
         run: pnpm run build
 

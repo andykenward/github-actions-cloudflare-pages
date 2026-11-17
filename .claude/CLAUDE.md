@@ -37,7 +37,7 @@ The scripts whose name doesn't say what they do; the rest are in `package.json`.
 
 ## Before you finish
 
-- Run `pnpm run all` before opening a PR — CI's `test.yml` only runs `lint`, `tsc:check` and `test:ci`, so knip, format and codegen drift go unchecked.
+- Run `pnpm run all` before opening a PR — CI's `test.yml` only runs `lint`, `tsc:check` and `test:ci`, and `check-dist.yml` adds `gql` codegen drift, so knip, the events and Cloudflare codegen and format go unchecked.
 - Added or changed `src/` code → check its uncovered lines with `pnpm run test:coverage --coverage.include=<file> --coverage.reporter=text` (see the testing rule).
 - User-visible change (input, output, behavior) → update `README.md` (deploy) or `delete/README.md` (delete).
 - `wrangler` version changed → follow [wrangler-upgrade.md](rules/wrangler-upgrade.md) and report what the new version allows.
