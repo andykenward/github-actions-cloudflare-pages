@@ -1,5 +1,15 @@
 # github-actions-cloudflare-pages
 
+## 3.7.0
+
+### Minor Changes
+
+- [#959](https://github.com/andykenward/github-actions-cloudflare-pages/pull/959) [`f5cdf2c`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/f5cdf2c3967629eade5b12ce4fa0732637c2d130) Thanks [@dependabot](https://github.com/apps/dependabot)! - Default Wrangler is now 4.160.0, which needs Node.js 22.12 or later on the runner's `PATH` (it was 22.0). It also picks up Wrangler's patched undici (GHSA-xjj6-f33q-929c). To keep an older Node.js, set `wrangler-version: 4.158.0`.
+
+### Patch Changes
+
+- [#945](https://github.com/andykenward/github-actions-cloudflare-pages/pull/945) [`2e4d756`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/2e4d756b70f6e50a6e6d5a8caeba26e34aa00821) Thanks [@dependabot](https://github.com/apps/dependabot)! - chore(deps): bump `effect` from 4.0.1 to 4.1.3
+
 ## 3.6.1
 
 ### Patch Changes
