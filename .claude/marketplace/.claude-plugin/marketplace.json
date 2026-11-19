@@ -14,8 +14,8 @@
       "source": {
         "source": "github",
         "repo": "DietrichGebert/ponytail",
-        "ref": "v5.3.2",
-        "sha": "16352ac229eb08a9598dcae48fe9f2b342567d86"
+        "ref": "v5.3.3",
+        "sha": "7801d061243d7b753bad0e0b3c057cd250b11755"
       },
       "description": "Lazy senior dev mode"
     }
