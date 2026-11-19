@@ -18,6 +18,7 @@ flag exists).
 Human output from `gh` is column-formatted. If you want structured data:
 
 - Add `--json field1,field2,...` for structured output.
+- For `gh issue view` and `gh pr view`, use `--json ...,comments` to include comments in structured data; use `--comments` only with the human-readable view.
 - Run a command with `--json` and **no field list** to print the full set of
   available fields, then pick what you need.
 - Use `--jq '<expr>'` for filtering without piping through a separate `jq`.
@@ -96,7 +97,8 @@ blocked-by/blocking relationships.
 ## Attaching images and videos
 
 `--attach <path>` is available on `gh issue create`, `gh issue edit`,
-`gh issue comment`, `gh pr create`, `gh pr edit`, and `gh pr comment`.
+`gh issue comment`, `gh pr create`, `gh pr edit`, `gh pr comment`,
+`gh issue artifact create`, and `gh issue artifact edit`.
 
 - Repeat `--attach` to upload multiple files:
   `gh issue comment 12 --attach ./before.png --attach ./after.png`.
@@ -109,7 +111,10 @@ blocked-by/blocking relationships.
   `gh pr create --attach './login.png#The login error state'`. Without alt
   text, the filename is used.
 - `--attach` paths and local Markdown destinations may be absolute or relative
-  to the directory where `gh` runs.
+  to the directory where `gh` runs. When the body comes from a file with
+  `--body-file`, or from a file argument to `gh issue artifact create`,
+  relative destinations resolve against that file's directory first, then the
+  directory where `gh` runs.
 - If the body references an attached path, `gh` rewrites that Markdown
   reference to the uploaded URL. The reference keeps its existing alt text.
   Otherwise, `gh` appends the attachment to the body. For example:
@@ -124,12 +129,23 @@ blocked-by/blocking relationships.
 - `gh issue comment` and `gh pr comment`: `--attach` cannot be used with
   `--web` or `--delete-last`. It works alone, with `--edit-last`, or with one
   of `--body`, `--body-file`, or `--editor`.
-- Uploads require GitHub.com or a GHE.com tenant, an OAuth token, classic PAT,
-  or fine-grained PAT, and `WRITE`, `MAINTAIN`, or `ADMIN` repository
-  permission. GitHub Enterprise Server and GitHub App tokens are unsupported.
+- `gh issue artifact create` and `gh issue artifact edit`: `--attach` works
+  only on Markdown documents, not links or HTML documents. With several
+  Markdown documents, `create` uploads each file once and points every
+  document that references it at the upload, and a file that no document
+  references is an error before anything uploads. `edit` with only
+  `--attach` appends the files to the artifact's current content.
+- Uploads require GitHub.com or a GHE.com tenant and `WRITE`, `MAINTAIN`, or
+  `ADMIN` repository permission. GitHub Enterprise Server is unsupported. The
+  upload endpoint accepts tokens from only some GitHub Apps, and refuses the
+  rest with the same error as missing write access.
 - Uploads stop at the first failure. If earlier files uploaded, `gh` still
-  writes those attachments and exits non-zero. Create and edit commands also
-  print the issue or pull request URL.
+  writes those attachments and exits non-zero. `gh issue create`,
+  `gh issue edit`, `gh pr create`, and `gh pr edit` also print the issue or
+  pull request URL. `gh issue artifact create` and `edit` still save an
+  artifact that is missing some of its files if any of them uploaded, with
+  the upload error as the reason on its `created` or `updated` line. If none
+  of them uploaded, the artifact isn't saved and gets a `failed` line.
 
 ## Discussions (`gh discussion`)
 
@@ -157,6 +173,107 @@ Preview command set, subject to change. Subcommands:
   needs a comment ID or URL. `--yes` skips the `--delete` confirmation.
 - `--json`/`--jq`/`--template` are available on `list` and `view` only;
   `create` and `edit` print the discussion URL. `comment` prints the discussion comment (or reply) URL.
+
+## Issue artifacts (`gh issue artifact`)
+
+Preview command set, subject to change. Issue artifacts are Markdown documents
+(type `generic` or `plan`), HTML documents (type `embedded_html`), and links
+(type `link`) attached to an issue. Each has a number on its issue, and
+commands address artifacts by that number, since names aren't unique. They
+are not GitHub Actions artifacts, which `gh run download` handles.
+Subcommands:
+
+- `gh issue artifact list {<issue-number>|<issue-url>} [--type generic|plan|link|embedded_html] [--limit N] [--json <fields>]`
+  (alias `ls`) lists artifacts in number order. There is no default limit:
+  every artifact is listed unless `--limit` is set. `--type generic` and
+  `--type plan` both list every Markdown document, and each keeps its stored
+  type. Piped output is tab-separated number, name, type, and RFC 3339
+  update time. `--json` fields include `body`, so one call can return every
+  artifact's content.
+- `gh issue artifact view {<issue> <artifact-number> | <artifact-url>} [--version N] [--json <fields>] [--web]`
+  shows one artifact and its edit history. In a terminal, it ends with the
+  artifact's URL. Piped output is `name:`, `number:`, `version:`, `type:`,
+  `creator:`, `created:`, `updated-by:`, `updated:`, and `url:` lines, in
+  that order, then `--` and the raw body. `--version N` shows that version
+  from the edit history. `--version`, `--json`, and `--web` are mutually
+  exclusive. `--json versions` returns the edit history. `--web` opens a
+  document's page on GitHub, or a link's URL.
+- `gh issue artifact create {<issue-number>|<issue-url>} [<file>[#<name>] | <url>]... [--body <text> | --body-file <path>] [--name <name>] [--type generic|plan|embedded_html] [--attach <path>]...`
+  (alias `new`) creates one artifact per file or URL, in argument
+  order. A text file becomes a document named after the file, or after the
+  text following `#`:
+  `gh issue artifact create 142 'docs/signin-plan.md#Sign-in plan'`. A
+  `.html` or `.htm` file becomes an HTML document. An
+  `http(s)` URL becomes a link named after its host, and a `.url` Internet
+  Shortcut file becomes a link to its URL. Names can't contain some
+  characters, such as parentheses. `gh` drops them from names it takes from
+  file names (`plan (1).md` becomes `plan 1.md`), but sends a name given with
+  `#` or `--name` as typed. Instead of file or URL arguments, `--body <text>`
+  creates one document and `--body-file <path>` creates one artifact from a
+  file. Neither can be combined with file or URL arguments. `--name` names a
+  single artifact. It's required with `--body` or `--body-file -`, and can't
+  be combined with a `#<name>` suffix. Documents are `generic`, and HTML
+  documents `embedded_html`. `--type` sets the type of every document
+  instead, whatever the file extension, so `--type embedded_html` makes
+  `--body` or `--body-file -` an HTML document. A plan currently behaves the
+  same as a generic document. `--type` is refused if any artifact is a link.
+- `gh issue artifact edit {<issue> <artifact-number> | <artifact-url>} [--name <name>] [--body <text> | --body-file <path>] [--attach <path>]... [--restore-version N]`
+  renames an artifact or replaces its content, saving a new version. At least
+  one of `--name`, `--body`, `--body-file`, `--attach`, or `--restore-version`
+  is required, and a `--body-file` never renames the artifact. The type never
+  changes: a link's new content must be an `http(s)` URL or a `.url` file, and
+  a document can't take a `.url` file. `--restore-version N` saves the name
+  and content of version N from the edit history as a new version. It works
+  for any version `view` lists, and can't be combined with `--name`,
+  `--body`, `--body-file`, or `--attach`. If the artifact already matches
+  that version, nothing is saved and `gh` exits 0, with a `skipped` line when
+  piped.
+- `gh issue artifact delete {<issue> <artifact-number>... | <artifact-url>...} [--yes]`
+  deletes artifacts, which can't be restored. In a terminal, `gh` asks once
+  for all of them. `--yes` skips the prompt and is required when `gh` can't
+  prompt. Without `--yes`, a failed lookup stops the command before the
+  prompt, and nothing is deleted. With `--yes`, every number is attempted.
+- `gh issue artifact download {<issue> [<artifact-number>...] | <artifact-url>...} [--dir <dir> | --output <path>] [--clobber | --skip-existing] [--version N]`
+  writes the given artifacts, or every artifact on the issue, to files in
+  `--dir` (default `.`). Each file is named `<number>-<name>`, with path
+  separators, whitespace, control characters, and characters Windows forbids
+  replaced by `-`. Markdown documents end in `.md`, HTML documents in
+  `.html` or `.htm`, and links are saved as `.url` Internet Shortcut files,
+  which `create` and `edit` read back as links. An existing file fails that
+  artifact unless `--clobber` overwrites it or `--skip-existing` skips it.
+  `--output <path>` and `--version N` (an earlier version from the edit
+  history) need exactly one artifact number, and `--output -` prints its
+  stored body (a link's URL) with nothing else. Without numbers, an issue
+  with no artifacts is an error.
+- The issue argument is a number or an issue URL, and a URL selects its own
+  repository. An artifact URL,
+  `https://github.com/<owner>/<repo>/issues/<issue>/artifacts/<number>`, can
+  replace the issue and number, and selects its repository the same way.
+  Artifact URLs in one command must be on the same issue. Pull requests are
+  refused, and so is GitHub Enterprise Server.
+- `--json`/`--jq`/`--template` are available on `list` and `view` only. The
+  `id` field is a global ID that no command accepts; commands take `number`,
+  or `url`, the artifact's page on GitHub.
+- `create`, `edit`, and `download` (except with `--output -`) report each
+  artifact on its own line. When piped, every line goes to stdout with five
+  tab-separated columns, empty ones included: status (`created`, `updated`,
+  `restored`, `written`, `skipped`, or `failed`), artifact number, name (the
+  file path for `download`), source (the file, URL, or `-` given to
+  `create`, or the `--body-file` value given to `edit`), and the reason for a
+  skip, a failure, or `--attach` files that didn't upload. In a terminal,
+  failures go to stderr. A failed artifact doesn't stop the others, and the
+  command exits 1 after any failure or failed upload. After `create` exits 1,
+  retry only the `failed` lines, since the others were created.
+- `delete` reports on stderr. In a terminal, each deleted or failed artifact
+  gets a line. When piped, a deleted artifact prints nothing, and each
+  failure prints `<number>: <reason>`. Any failure exits 1.
+- `create` and `edit` read and check every file before any request, so a
+  missing, empty, or binary file fails the whole command, and nothing is
+  saved. Standard input is read only through `--body-file -`, and `create`
+  refuses a `-` argument.
+- `view`, `edit`, and `download` refuse an artifact whose type this version
+  of `gh` doesn't know, with a message to upgrade `gh`. `list` and `delete`
+  work with any type.
 
 ## Reading files and directories (`gh repo read-file` / `read-dir`)
 
@@ -192,11 +309,69 @@ Sometimes useful data isn't on the typed commands. Examples:
   `{owner}/{repo}` placeholder is filled in for you when run from a repo
   with detected remotes; pass them literally if you want determinism.
 
+## Waiting for pull request changes (preview)
+
+Use `gh event listen` rather than repeated `gh pr view` or `gh api` reads when waiting for a review, approval, merge, or close. It waits without polling and prints one CloudEvent JSON object per line on stdout as events arrive.
+
+```sh
+gh event listen --resource https://github.com/OWNER/REPO/pull/NUMBER --event com.github.pull_request.review.submitted.v1 --timeout 30m
+gh event listen --resource https://github.com/OWNER/REPO/pull/NUMBER --event com.github.pull_request.state.changed.v1 --timeout 30m
+```
+
+`--resource` takes the pull request URL. `--event` takes full event type names, separated by commas or by repeating the flag: `com.github.pull_request.review.submitted.v1` (a review was submitted), `com.github.pull_request.state.changed.v1` (merged, closed, reopened, marked ready for review, or converted to draft), `com.github.pull_request.head.changed.v1` (the head branch changed), `com.github.pull_request.merge_conflict.v1` (a merge conflict appeared), and `com.github.pull_request.check_suite.status.changed.v1` (a check suite, such as a CI workflow, completed). By default the command exits after the first event; `--count N` exits after N events, and `--follow` keeps listening until stopped. For a one-off wait, such as a single review, merge, or close, use the default, and once the event arrives and you have read the result, finish the task instead of waiting for more. A background listener with `--follow` never exits, so it cannot wake you when an event arrives; read its output yourself, or use the default one-shot listener when you need to be woken by the event. `--timeout` takes seconds or a duration such as `10m`, and exits with code 8 when no event arrived in time; a timeout is not confirmation that anything happened.
+
+Events are thin: the `type` says what kind of change happened and `data.api_url` points at the object that changed, such as the review, the pull request, or the check suite. Read it once after each event to learn what changed, for example `gh api URL` or `gh pr view NUMBER --json reviews,state,mergedAt`. A comment or requested change is not an approval, and a pull request closed without merging is not permission to pull. If you were waiting for a merge and the pull request closes without merging, stop and tell the user rather than waiting for it to be reopened. Initial inspection and event-triggered reads are not polling. An event can occasionally be delivered more than once, so treat each event as a cue to read the current state, not as a new change by itself.
+
+To wait for CI, listen for `com.github.pull_request.check_suite.status.changed.v1`. A pull request usually has several check suites, and each sends its own event when it completes, with `data.conclusion` such as `success` or `failure`. One event does not mean all checks are done: after each event, read the checks once with `gh pr checks NUMBER`, and stop when none are pending. Use `--follow`, or run the one-shot listener again, to wait for the remaining suites.
+
+The API is live-only: events that happened before the stream attached are never delivered. Start the listener as a separate first tool call, before inspecting the PR. Do not launch the stream and initial snapshot in the same parallel batch. Wait until stderr reports that the listener is listening for events, then take the initial snapshot. A generic "background command started" message is not enough. This ordering closes the gap between reading the state and listening for changes.
+
+### Responding to reviews until approval
+
+Use this only when you must handle several rounds of review on the same pull request. To wait for a single review, use the one-shot listener above. For a review loop, start one long-running listener in the background with `--follow`:
+
+```sh
+gh event listen --resource https://github.com/OWNER/REPO/pull/NUMBER --event com.github.pull_request.review.submitted.v1,com.github.pull_request.state.changed.v1 --follow --timeout 30m
+```
+
+1. After the listener reports that it is listening, read the reviews once (`gh pr view NUMBER --json reviews,reviewDecision,headRefOid`) and address any change requests you have not handled. Remember the review IDs you have handled.
+2. Push the fix, then check the listener's output for new events. Each review event means one more read of the reviews; handle any review you have not seen. Events that arrived while you were working are already in the output.
+3. Stop when the newest review approves the current head and there is no outstanding change request. Then stop the listener.
+
+Do not re-read the PR without a new event; the listener tells you when to look.
+
+The command creates a subscription for the PR and event types, or reuses an existing one for the same set, and reconnects on its own if the stream drops. Events during a reconnect are lost, so each time the listener reports that it is listening again, read the state once. Subscriptions expire after 24 hours, and each account can hold a limited number at a time, so reuse the same set of event types rather than creating variations. To attach another listener to an existing subscription, pass its ID with `--subscription`. `--jq` and `--template` format each event, for example `--jq '.data.api_url'`. Events are only available on github.com, and this preview needs a user account enabled for the Event Subscriptions API.
+
+### Managing subscriptions
+
+```sh
+gh event subscription list
+gh event subscription view ID
+gh event subscription create --resource https://github.com/OWNER/REPO/pull/NUMBER --event com.github.pull_request.review.submitted.v1
+gh event subscription delete ID
+```
+
+`list` shows your active subscriptions with their resource, event types, and expiry, and `view` shows one of them. `list`, `view`, and `create` support `--json` with the fields `id`, `resourceUrl`, `eventTypes`, `createdAt`, `expiresAt`, `url`, and `eventsUrl`. If creating a subscription fails because the subscription limit may have been reached, list the subscriptions, delete one, and try again. Deleting a subscription only stops its events, and every subscription expires within 24 hours anyway. There is no need to delete a subscription after a listener finishes; it expires on its own. `create` takes the same `--resource` and `--event` as `gh event listen` and does not listen. It prints only the subscription ID to stdout, so another process can attach with `gh event listen --subscription ID`. Creation is idempotent: the same resource and event types give the same subscription.
+
 ## Authentication
 
 - `gh auth status` prints the active host(s), user, and which env var (if
   any) is being honored.
 - `gh auth status --json` is supported.
+- Stored credentials may be expiring tokens that gh refreshes automatically.
+  `gh auth status --json hosts` reports these with `"refreshable": true` and a
+  `tokenExpiresAt` timestamp.
+- Expiring tokens are not available on every host. So far only github.com
+  and GHE.com (`*.ghe.com`) hosts support them; other hosts keep using
+  regular tokens.
+- Do not cache the output of `gh auth token`: an expiring token can stop
+  working at any time because gh rotates it on refresh. Run `gh auth token`
+  again each time you need one, or prefer `gh api` over raw HTTP calls so gh
+  handles the refresh for you.
+- A `refresh_expired` state in `gh auth status --json hosts` means the refresh
+  token was rejected. Recovery needs an interactive `gh auth login` or
+  `gh auth refresh`, so ask the user to run it instead of retrying.
+- Tokens from `GH_TOKEN` or `GITHUB_TOKEN` are used as is and never refreshed.
 
 ## Other notes
 
