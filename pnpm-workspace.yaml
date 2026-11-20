@@ -8,3 +8,7 @@ minimumReleaseAge: 10080
 # pnpm 12 prepends a boot document that GitHub's dependency graph reads as an
 # empty lockfile, so alerts and security PRs stop (dependabot-core#15904).
 pmOnFail: ignore
+overrides:
+  # Dependabot alert #373 (GHSA globparts DoS, fixed in 11.0.1). graphql-config
+  # (via @graphql-codegen/cli) still requires ^10; drop once it allows 11.
+  minimatch: ^11.0.1
