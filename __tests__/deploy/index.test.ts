@@ -52,4 +52,32 @@ describe('deploy entry point', () => {
     )
     expect(runStub).not.toHaveBeenCalled()
   })
+
+  test('interrupts run on SIGINT, so it can record the cancellation', async () => {
+    expect.assertions(2)
+
+    let interrupted = false
+    runStub.mockReturnValue(
+      Effect.never.pipe(
+        Effect.onInterrupt(() =>
+          Effect.sync(() => {
+            interrupted = true
+          })
+        )
+      )
+    )
+
+    const done = runEntryPoint(importEntryPoint)
+    // The listener is registered before `run` starts; never signal without it.
+    await vi.waitFor(() => {
+      if (runStub.mock.calls.length === 0) {
+        throw new Error('run has not started')
+      }
+    })
+    process.emit('SIGINT')
+    const {setFailed} = await done
+
+    expect(interrupted).toBe(true)
+    expect(setFailed).not.toHaveBeenCalled()
+  })
 })

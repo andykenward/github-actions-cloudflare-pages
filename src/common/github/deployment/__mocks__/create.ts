@@ -1,8 +1,12 @@
 import * as Effect from 'effect/Effect'
 import {vi} from 'vitest'
 
-import type {createGitHubDeployment as originalCreateGitHubDeployment} from '../create.js'
+import type * as Original from '../create.js'
 
 export const createGitHubDeployment = vi.fn<
-  typeof originalCreateGitHubDeployment
->(() => Effect.undefined)
+  typeof Original.createGitHubDeployment
+>(() => Effect.succeed('mock-github-deployment-id'))
+
+export const setGitHubDeploymentStatus = vi.fn<
+  typeof Original.setGitHubDeploymentStatus
+>(() => Effect.void)

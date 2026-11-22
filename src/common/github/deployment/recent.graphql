@@ -1,0 +1,37 @@
+# The newest deployments of one environment: the deploy filters them to its
+# branch to find the previous comment, to sweep runs that never finished, and
+# to check it is still the newest before editing the shared comment.
+# GraphQL `deployments` can't filter by branch, so `ref` is read instead.
+query GetRecentDeployments(
+  $owner: String!
+  $repo: String!
+  $environment: String!
+) {
+  repository(owner: $owner, name: $repo) {
+    deployments(
+      environments: [$environment]
+      first: 100
+      orderBy: {field: CREATED_AT, direction: DESC}
+    ) {
+      nodes {
+        id
+        createdAt
+        payload
+        ref {
+          id
+          name
+        }
+        commit {
+          id
+          oid
+        }
+        latestStatus {
+          id
+          state
+          description
+          logUrl
+        }
+      }
+    }
+  }
+}

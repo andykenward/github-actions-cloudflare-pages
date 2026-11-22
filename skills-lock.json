@@ -42,6 +42,12 @@
       "sourceType": "github",
       "skillPath": ".agents/skills/write-pr-description/SKILL.md",
       "computedHash": "8524241b7f7a4fcbd6c786f873953764beab9d98c6a2a3334f27b270708e567b"
+    },
+    "zig-tiger-style": {
+      "source": "zigcc/skills",
+      "sourceType": "github",
+      "skillPath": "zig-tiger-style/SKILL.md",
+      "computedHash": "620dcd09e810b1ed39b619eb26811ea3e7fd5fc63bfa37eabdb9f7051095fcb2"
     }
   }
 }

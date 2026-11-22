@@ -31,7 +31,10 @@ const TEST_ENV_VARS = (
   GITHUB_REPOSITORY_ID: 'R_kgDOJn0nrA',
   GITHUB_EVENT_PATH: getPayload(eventName),
   GITHUB_GRAPHQL_URL: 'https://api.github.com/graphql',
-  GITHUB_API_URL: 'https://api.github.com'
+  GITHUB_API_URL: 'https://api.github.com',
+  // Set in CI; pinned so the run log link is the same everywhere.
+  GITHUB_SERVER_URL: 'https://github.com',
+  GITHUB_RUN_ID: '1234567890'
 })
 
 export const stubTestEnvVars = (

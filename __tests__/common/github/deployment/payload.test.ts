@@ -1,6 +1,6 @@
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
-import {describe, expect, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 
 import type {
   PayloadGithubDeploymentV1,
@@ -8,7 +8,10 @@ import type {
 } from '@/common/github/deployment/types.js'
 
 import {errorMessage} from '@/common/errors.js'
-import {getPayload} from '@/common/github/deployment/payload.js'
+import {
+  getPayload,
+  payloadCommentId
+} from '@/common/github/deployment/payload.js'
 import {PayloadV1Inputs} from '@/common/inputs.js'
 import {
   INPUT_KEY_CLOUDFLARE_ACCOUNT_ID,
@@ -31,6 +34,12 @@ const PAYLOAD_V2 = {
   commentId: 'comment-id-123',
   url: 'https://example.com'
 } as const satisfies PayloadGithubDeploymentV2
+
+const PAYLOAD_V3 = {
+  version: 3,
+  commentId: 'comment-id-123',
+  cloudflare: {accountId: 'cf-account-id', projectName: 'cf-project'}
+} as const
 
 /** A fresh `PayloadV1Inputs` per call, so env stubbed beforehand is read. */
 const decode = (payload: unknown) =>
@@ -58,6 +67,36 @@ describe('getPayload', () => {
           "url": "https://example.com",
         }
       `)
+      })
+  )
+
+  it.effect.each([
+    {form: 'an object', payload: PAYLOAD_V3},
+    {form: 'a JSON string', payload: JSON.stringify(PAYLOAD_V3)}
+  ])(
+    'decodes a v3 payload supplied as $form, without an id or url',
+    ({payload}) =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        expect(yield* decode(payload)).toStrictEqual({
+          commentId: 'comment-id-123',
+          cloudflare: {accountId: 'cf-account-id', projectName: 'cf-project'}
+        })
+      })
+  )
+
+  it.effect(
+    'names the action to upgrade for a payload from a newer release',
+    () =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        const error = yield* Effect.flip(decode({...PAYLOAD_V3, version: 4}))
+
+        expect(errorMessage(error)).toBe(
+          'Payload version 4 is newer than this delete action supports; upgrade andykenward/github-actions-cloudflare-pages/delete to the version your deploy action uses.'
+        )
       })
   )
 
@@ -182,5 +221,29 @@ describe('getPayload', () => {
         expect(cloudflare.accountId).toBe('mock-cloudflare-account-id')
       })
     )
+  })
+})
+
+describe(payloadCommentId, () => {
+  test.each([
+    {name: 'a v1 object', payload: PAYLOAD_V1, expected: 'comment-id-123'},
+    {
+      name: 'a v2 string',
+      payload: JSON.stringify(PAYLOAD_V2),
+      expected: 'comment-id-123'
+    },
+    {name: 'a v3 object', payload: PAYLOAD_V3, expected: 'comment-id-123'},
+    {
+      name: "GraphQL's twice-encoded string",
+      payload: JSON.stringify(JSON.stringify(PAYLOAD_V3)),
+      expected: 'comment-id-123'
+    },
+    {name: 'no comment', payload: {url: 'x'}, expected: undefined},
+    {name: 'invalid JSON', payload: '{', expected: undefined},
+    {name: 'null', payload: null, expected: undefined}
+  ])('reads $name', ({payload, expected}) => {
+    expect.assertions(1)
+
+    expect(payloadCommentId(payload)).toBe(expected)
   })
 })

@@ -13,7 +13,8 @@ import {DEPLOYMENT} from '@/fixtures/github-deployment.js'
 import {
   DeactivateAndDeleteGitHubDeploymentAndCommentDocument,
   DeactivateAndDeleteGitHubDeploymentDocument,
-  DeploymentStatusState
+  DeploymentStatusState,
+  GetDeploymentLatestStatusDocument
 } from '@/gql/graphql.js'
 import RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE from '@/responses/api.cloudflare.com/pages/deployments/deployments-delete.response.json' with {type: 'json'}
 import RESPONSE_CLOUDFLARE_UNAUTHORIZED from '@/responses/api.cloudflare.com/unauthorized.response.json' with {type: 'json'}
@@ -41,6 +42,23 @@ const ROW = {
   environmentUrl: ENVIRONMENT_URL
 }
 
+/** The status a known Cloudflare deployment's records carry. */
+const STATUS = {
+  environmentUrl: ENVIRONMENT_URL,
+  logUrl: `https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/${MOCK_DEPLOYMENT_ID}`,
+  description: `Cloudflare Pages Deployment: ${MOCK_DEPLOYMENT_ID}`
+}
+
+/** A deployment the deploy recorded before wrangler ran. */
+const DEPLOYMENT_V3 = {
+  ...DEPLOYMENT,
+  payload: JSON.stringify({
+    version: 3,
+    commentId: 'IC_kwDOJn0nrM55B77z',
+    cloudflare: {accountId: MOCK_ACCOUNT_ID, projectName: MOCK_PROJECT_NAME}
+  })
+}
+
 const errorAt = (field: string): GitHubGraphQLError => ({
   type: 'FORBIDDEN',
   path: [field],
@@ -59,27 +77,31 @@ describe('batchDelete', () => {
   const interceptDeletes = ({
     errors,
     withComment = true,
-    withData = true
+    withData = true,
+    status = STATUS
   }: {
     errors?: GitHubGraphQLError[]
     withComment?: boolean
     /** `false` for a request GitHub rejected before running any mutation. */
     withData?: boolean
+    /** What the `INACTIVE` status records; without an id, no Cloudflare DELETE. */
+    status?: {environmentUrl?: string; logUrl?: string; description?: string}
   } = {}): void => {
-    mockApi.interceptCloudflare<boolean>(
-      MOCK_API_PATH_DEPLOYMENTS_DELETE,
-      RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE,
-      200,
-      'DELETE'
-    )
+    if (status.description) {
+      mockApi.interceptCloudflare<boolean>(
+        MOCK_API_PATH_DEPLOYMENTS_DELETE,
+        RESPONSE_CLOUDFLARE_DEPLOYMENT_DELETE,
+        200,
+        'DELETE'
+      )
+    }
 
     // Same key order as `batchDelete` sends: the body must match exactly.
     const variables = {
       status: {
         deploymentId: 'DE_kwDOJn0nrM5U35aT',
         environment: 'preview',
-        environmentUrl: ENVIRONMENT_URL,
-        logUrl: `https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/${MOCK_DEPLOYMENT_ID}`,
+        ...status,
         state: DeploymentStatusState.Inactive,
         autoInactive: false
       },
@@ -112,9 +134,90 @@ describe('batchDelete', () => {
     }
   }
 
+  /** The latest status of `DEPLOYMENT_V3`, where its Cloudflare id lives. */
+  const interceptLatestStatus = (
+    latestStatus: {
+      id: string
+      environmentUrl: string | null
+      logUrl: string | null
+      description: string | null
+    } | null
+  ) =>
+    mockApi.interceptGithub(
+      {
+        query: GetDeploymentLatestStatusDocument,
+        variables: {id: 'DE_kwDOJn0nrM5U35aT'}
+      },
+      {data: {node: {id: 'DE_kwDOJn0nrM5U35aT', latestStatus}}}
+    )
+
   beforeEach(() => {
     mockApi = setMockApi()
   })
+
+  it.effect.each([
+    {where: 'the description', latestStatus: {id: 'DS_1', ...STATUS}},
+    {
+      where: 'the log URL',
+      latestStatus: {id: 'DS_1', ...STATUS, description: null}
+    }
+  ])(
+    'deletes a v3 deployment by the id in $where of its status',
+    ({latestStatus}) =>
+      Effect.gen(function* () {
+        expect.assertions(1)
+
+        interceptLatestStatus(latestStatus)
+        // The `INACTIVE` status re-records the id for a retry.
+        interceptDeletes()
+
+        expect(yield* batchDelete(DEPLOYMENT_V3)).toStrictEqual({
+          ...ROW,
+          success: true
+        })
+      }).pipe(Effect.provide(TestLayer))
+  )
+
+  it.effect.each([
+    {
+      name: 'a run that failed before Cloudflare',
+      latestStatus: {
+        id: 'DS_1',
+        environmentUrl: null,
+        logUrl: 'https://github.com/o/r/actions/runs/1',
+        description: null
+      },
+      status: {logUrl: 'https://github.com/o/r/actions/runs/1'}
+    },
+    {name: 'a deployment with no status', latestStatus: null, status: {}}
+  ])('deletes only the GitHub records of $name', ({latestStatus, status}) =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      interceptLatestStatus(latestStatus)
+      // No Cloudflare interceptor: a DELETE would fail the test.
+      interceptDeletes({status})
+
+      const {environmentUrl: _omitted, ...row} = ROW
+      expect(yield* batchDelete(DEPLOYMENT_V3)).toStrictEqual({
+        ...row,
+        success: true
+      })
+    }).pipe(Effect.provide(TestLayer))
+  )
+
+  it.effect('keeps a comment another deployment still uses', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      interceptDeletes({withComment: false})
+
+      expect(yield* batchDelete(DEPLOYMENT, false)).toStrictEqual({
+        ...ROW,
+        success: true
+      })
+    }).pipe(Effect.provide(TestLayer))
+  )
 
   afterEach(async () => {
     mockApi.mockAgent.assertNoPendingInterceptors()

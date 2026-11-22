@@ -40,8 +40,8 @@ paths:
 - Always `vi.mock(import('@/...'))` with path aliases, to match vitest's aliases. `vi.mock(import('@actions/core'))` auto-loads the `__mocks__` file.
 - Manual mocks sit beside their source in `src/**/__mocks__/` and are picked up by a bare `vi.mock(import(...))`:
   - `src/common/__mocks__/utils.ts` — the real module with only `execFileAsync` replaced by `vi.fn()`. `DeployInputs` still checks `working-directory` exists, so a stubbed one must.
-  - `src/common/github/__mocks__/comment.ts` — two `vi.fn`s returning Effects.
-  - `src/common/github/deployment/__mocks__/create.ts` — a `vi.fn` returning an Effect.
+  - `src/common/github/__mocks__/comment.ts` — `vi.fn`s returning Effects, with the real `commentBody` (via `vi.importActual`) so tests can assert what a comment says.
+  - `src/common/github/deployment/__mocks__/create.ts` — `createGitHubDeployment` (succeeds with `'mock-github-deployment-id'`) and `setGitHubDeploymentStatus`.
 - Update a mock when the real export's signature changes. An export that is an Effect _value_ can't be auto-mocked (vitest would mock the Effect's own methods) — give it a manual mock, or stub the service it reads.
 
 ## Wrangler and polling

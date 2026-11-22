@@ -20,6 +20,7 @@ const config: CodegenConfig = {
         documentMode: 'string',
         // https://docs.github.com/en/graphql/reference/scalars
         scalars: {
+          DateTime: 'string',
           GitObjectID: 'string',
           URI: 'string'
         }

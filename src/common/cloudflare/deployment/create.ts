@@ -1,5 +1,6 @@
 import {setOutput} from '@actions/core'
 import * as Effect from 'effect/Effect'
+import * as Ref from 'effect/Ref'
 import * as Schema from 'effect/Schema'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
@@ -128,6 +129,21 @@ const createCloudflareDeploymentSummary =
       ])
   }
 
+type CreateCloudflareDeploymentOptions = {
+  accountId: string
+  projectName: string
+  directory: string
+  workingDirectory?: string
+  branch?: string
+  wranglerVersion: string
+  /**
+   * Set to the Cloudflare deployment id as soon as it is known — before
+   * polling — so a failed or cancelled run can still record which deployment
+   * it made.
+   */
+  deploymentIdRef: Ref.Ref<string | undefined>
+}
+
 export const createCloudflareDeployment = Effect.fn(
   'createCloudflareDeployment'
 )(function* ({
@@ -136,15 +152,9 @@ export const createCloudflareDeployment = Effect.fn(
   directory,
   workingDirectory = '',
   branch: branchOverride,
-  wranglerVersion
-}: {
-  accountId: string
-  projectName: string
-  directory: string
-  workingDirectory?: string
-  branch?: string
-  wranglerVersion: string
-}) {
+  wranglerVersion,
+  deploymentIdRef
+}: CreateCloudflareDeploymentOptions) {
   const {cloudflareApiToken} = yield* CommonInputs
   const {repo, branch: contextBranch, sha: commitHash} = yield* GitHubContext
 
@@ -161,6 +171,7 @@ export const createCloudflareDeployment = Effect.fn(
     workingDirectory
   })
   logVerbatim(stdout)
+  yield* Ref.set(deploymentIdRef, deploymentId)
 
   // Poll the deployment wrangler created until it reaches a terminal stage.
   const {deployment, status} = yield* statusCloudflareDeployment({
@@ -168,6 +179,9 @@ export const createCloudflareDeployment = Effect.fn(
     projectName,
     deploymentId
   })
+
+  // Found by commit hash when wrangler reported no id.
+  yield* Ref.set(deploymentIdRef, deployment.id)
 
   const alias = getCloudflareDeploymentAlias(deployment)
   createCloudflareDeploymentOutputs(deployment, alias, stdout)

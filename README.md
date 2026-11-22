@@ -2,13 +2,13 @@
 
 # GitHub Action — Cloudflare Pages
 
-Deploy your build output to [Cloudflare Pages] with [Wrangler], while tracking every release through [GitHub Environments] and [GitHub Deployment]. On a [pull request], it creates a preview deployment and comments the URL on the PR.
+Deploy your build output to [Cloudflare Pages] with [Wrangler], while tracking every release through [GitHub Environments] and [GitHub Deployment]. On a [pull request], it creates a preview deployment and keeps one comment on the PR up to date with its status and URLs.
 
 **Features**
 
 - Deploy to [Cloudflare Pages] and wait for the deployment to finish — the step fails if the build fails or isn't live within 10 minutes.
 - Track releases with [GitHub Environments] & [GitHub Deployment].
-- Comment the deployment URL on pull requests.
+- Keep one pull request comment up to date: building, ready with its URLs, or failed with a link to the build log.
 - Write a [job summary] of each deployment.
 - Delete old deployments with the companion [`/delete`](./delete/README.md) action.
 - Run Wrangler from a subfolder via the `working-directory` input — handy for monorepos where `functions` isn't in the repo root.
@@ -29,6 +29,13 @@ on:
 
 # Deny all permissions by default; grant only what each job needs.
 permissions: {}
+
+# A newer push to a pull request cancels its deploy still running; the
+# cancelled run marks its deployment as an error and leaves the comment to the
+# newer one. Pushes to main each get their own group, so none is cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -158,11 +165,14 @@ Or point the agent at this section.
 
 ## How it works
 
-1. **Checks while uploading.** While Wrangler uploads `directory`, the action checks that `github-environment` exists and finds the pull request to comment on. If either fails, the upload is stopped and the step fails straight away, so no orphaned Cloudflare deployment is left behind. An upload still running after 30 minutes is stopped too.
-2. **Waits for Cloudflare.** It polls the deployment Wrangler just created every second, for up to 10 minutes, until it's live. A build still running after 10 minutes fails the step. So does a failed, canceled or skipped build, once the outputs and job summary are written: the error links to the Cloudflare build log, and no pull request comment or GitHub Deployment is created.
-3. **Reports.** It sets the [outputs](#outputs) and writes a [job summary] with the environment, branch, commit, status, URLs and Wrangler output.
-4. **Comments** on the pull request, if there is one — see [below](#which-pull-request-gets-the-comment). Set `wrangler-comment-output: false` to leave the Wrangler output out of the comment. If posting the comment fails, the step warns and carries on, so the deployment is still recorded.
-5. **Records a [GitHub Deployment]** in `github-environment`, with a success status that links to the deployment URL and its Cloudflare build log.
+1. **Checks first.** The action checks that `github-environment` exists and finds the pull request to comment on. If either fails, the step fails before anything is uploaded.
+2. **Comments and records the deployment as in progress.** It posts the pull request comment, if there is one — see [below](#which-pull-request-gets-the-comment) — or edits the one an earlier run on the branch posted, so a pull request keeps a single comment. Then it creates a [GitHub Deployment] in `github-environment` with an `in_progress` status. If posting the comment fails, the step warns and carries on, so the deployment is still recorded.
+3. **Uploads and waits for Cloudflare.** Wrangler uploads `directory`; an upload still running after 30 minutes is stopped. The action then polls the deployment every second, for up to 10 minutes, until it's live. A build still running after 10 minutes fails the step, as does a failed, canceled or skipped build.
+4. **Reports.** It sets the [outputs](#outputs) and writes a [job summary] with the environment, branch, commit, status, URLs and Wrangler output — for a failed build too.
+5. **Marks the deployment successful or failed**, and updates the comment to match: on success with the preview URLs (and the Wrangler output, unless `wrangler-comment-output` is `false`); on failure with a link to the build log — Cloudflare's when the build reached Cloudflare, otherwise this workflow run's. The status follows what Cloudflare reports, not how the step ended: a deployment that went live after the step failed is marked successful, with a note in the comment saying why the step failed.
+6. **Handles cancellation.** A cancelled run, or one past its `timeout-minutes`, marks its deployment as an error and the comment as cancelled. A run killed outright stays `in_progress` until the next deploy on the branch settles it from Cloudflare's state.
+
+Only the newest deployment on a branch updates the comment, so an older run that finishes late doesn't overwrite a newer one.
 
 ### Supported events
 
@@ -310,27 +320,40 @@ This creates a Cloudflare Pages preview deployment with a branch name like `pr-1
 
 ## Pull request comment
 
-![pull request comment example](./docs/comment.png)
+One comment per pull request, edited in place as each deploy moves on:
+
+| Name               | Result                                                                                        |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| Status             | 🔄 Building / ✅ Ready / ❌ Failed / ⏹ Cancelled or timed out                                 |
+| Environment        | The GitHub Environment                                                                        |
+| Project            | The Cloudflare Pages project                                                                  |
+| Commit             | The short SHA, linked to the commit                                                           |
+| Event              | The event that triggered the run                                                              |
+| Preview URL        | The deployment's URL, once ready                                                              |
+| Branch Preview URL | The branch alias URL, once ready                                                              |
+| Build log          | On failure: the Cloudflare build log, or this workflow run's log if the build never got there |
 
 ## Deleting deployments
 
 Use the companion sub-action [`andykenward/github-actions-cloudflare-pages/delete`](./delete/README.md) to remove old deployments.
 
-The GitHub Deployment payload this action creates includes the Cloudflare metadata the delete action needs:
+The GitHub Deployment payload this action creates includes the Cloudflare metadata the delete action needs. It is written before Wrangler runs, so the Cloudflare deployment's id and URL are recorded on the deployment's final status instead (its description, log URL and environment URL):
 
 ```json
 {
   "payload": {
+    "version": 3,
+    "commentId": "1234",
     "cloudflare": {
-      "id": "123",
-      "projectName": "cloudflare-pages-project-name",
-      "accountId": "123"
-    },
-    "url": "https://example.com",
-    "commentId": "1234"
+      "accountId": "123",
+      "projectName": "cloudflare-pages-project-name"
+    }
   }
 }
 ```
+
+> [!IMPORTANT]
+> Update the deploy and delete actions together. A delete action older than this payload version can't read it, and fails each such deployment with `Payload is not valid`.
 
 ## Troubleshooting
 

@@ -9,6 +9,7 @@ import * as Schema from 'effect/Schema'
 import type {WorkflowEvent} from './workflow-event/types.js'
 
 import {errorMessage} from '../errors.js'
+import {url} from '../html.js'
 import {raise} from '../utils.js'
 import {getWorkflowEvent} from './workflow-event/workflow-event.js'
 
@@ -52,6 +53,11 @@ interface GitHubContextShape {
    * refs/heads/feature-branch-1.
    */
   ref: string
+  /**
+   * This workflow run's page, with its logs — or the repository's Actions
+   * page when `GITHUB_RUN_ID` is unset (running the built action locally).
+   */
+  runUrl: string
 }
 
 const getGitHubContextRepo = (event: WorkflowEvent): Repo => {
@@ -140,6 +146,18 @@ const getGitHubContextRef = (event: WorkflowEvent): string => {
   return raise('context: no ref')
 }
 
+const getGitHubContextRunUrl = ({owner, repo}: Repo): string => {
+  const serverUrl = process.env['GITHUB_SERVER_URL'] || 'https://github.com'
+  const runId = process.env['GITHUB_RUN_ID']
+  return url(
+    serverUrl,
+    owner,
+    repo,
+    'actions',
+    ...(runId ? ['runs', runId] : [])
+  )
+}
+
 const getGitHubContext = (): GitHubContextShape => {
   const event = getWorkflowEvent()
 
@@ -148,14 +166,16 @@ const getGitHubContext = (): GitHubContextShape => {
     process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/graphql'
   const apiUrl = process.env.GITHUB_API_URL || 'https://api.github.com'
 
+  const repo = getGitHubContextRepo(event)
   const context = {
     event,
-    repo: getGitHubContextRepo(event),
+    repo,
     branch: getGitHubContextBranch(event),
     sha: getGitHubContextSha(event),
     graphqlEndpoint,
     apiUrl,
-    ref: getGitHubContextRef(event)
+    ref: getGitHubContextRef(event),
+    runUrl: getGitHubContextRunUrl(repo)
   }
   // Each field was checked where it was read; this pairs those checks.
   assert.ok(context.repo.owner.length > 0)
@@ -163,6 +183,7 @@ const getGitHubContext = (): GitHubContextShape => {
   assert.match(context.sha, COMMIT_SHA)
   assert.ok(URL.canParse(context.apiUrl))
   assert.ok(URL.canParse(context.graphqlEndpoint))
+  assert.ok(URL.canParse(context.runUrl))
 
   if (isDebug()) {
     const debugContext = {

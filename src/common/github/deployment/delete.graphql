@@ -30,3 +30,18 @@ mutation DeactivateAndDeleteGitHubDeploymentAndComment(
     clientMutationId
   }
 }
+
+# A V3 payload has no Cloudflare id: the deploy records it on the final status.
+query GetDeploymentLatestStatus($id: ID!) {
+  node(id: $id) {
+    ... on Deployment {
+      id
+      latestStatus {
+        id
+        environmentUrl
+        logUrl
+        description
+      }
+    }
+  }
+}
