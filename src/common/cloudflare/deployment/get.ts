@@ -38,8 +38,9 @@ export const getCloudflareDeployment = Effect.fn('getCloudflareDeployment')(
 )
 
 /**
- * Find the latest deployment by commitHash — the fallback when wrangler
- * reports no deployment id. On a re-run for the same commit this can match the
+ * Find the latest deployment by commitHash — the context commit unless given
+ * — the fallback when wrangler reports no deployment id, and how the deploy's
+ * sweep finds a run that never recorded one. On a re-run for the same commit this can match the
  * previous deployment until Cloudflare lists the new one.
  *
  * Succeeds with `undefined` rather than failing when nothing matches:
@@ -49,8 +50,13 @@ export const getCloudflareDeployment = Effect.fn('getCloudflareDeployment')(
  */
 export const findCloudflareLatestDeployment = Effect.fn(
   'findCloudflareLatestDeployment'
-)(function* ({accountId, projectName}: CloudflareApiEndpoint) {
-  const {sha: commitHash} = yield* GitHubContext
+)(function* ({
+  accountId,
+  projectName,
+  commitHash: commitHashGiven
+}: CloudflareApiEndpoint & {commitHash?: string | undefined}) {
+  const {sha} = yield* GitHubContext
+  const commitHash = commitHashGiven ?? sha
   const cloudflare = yield* CloudflareApi
 
   const deployments = yield* cloudflare.result(client =>

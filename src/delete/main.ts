@@ -6,12 +6,14 @@ import * as Layer from 'effect/Layer'
 import * as Schema from 'effect/Schema'
 
 import type {BatchDeleteItem} from '@/common/batch-delete.js'
+import type {GitHubDeployment} from '@/common/github/deployment/get.js'
 import type {Summary} from '@/common/summary.js'
 
 import {batchDelete, PREFIX} from '@/common/batch-delete.js'
 import {errorMessage} from '@/common/errors.js'
 import {GitHubRestApi} from '@/common/github/api/paginate.js'
 import {getGitHubDeployments} from '@/common/github/deployment/get.js'
+import {payloadCommentId} from '@/common/github/deployment/payload.js'
 import {code, escapeHtml, headerRow, link} from '@/common/html.js'
 import {PayloadV1Inputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
@@ -95,6 +97,33 @@ export const DeleteLayer = Layer.mergeAll(
   PayloadV1Inputs.layer
 )
 
+/**
+ * Whether each deployment to delete may also delete its comment. The deploy
+ * edits one comment per pull request, so deployments share it: delete it only
+ * once, and only when no deployment left in place still uses it.
+ */
+const runDeleteComments = (
+  deploymentsListed: ReadonlyArray<GitHubDeployment>,
+  deploymentsToDelete: ReadonlyArray<GitHubDeployment>
+): Array<boolean> => {
+  const deleting = new Set(deploymentsToDelete)
+  const claimed = new Set(
+    deploymentsListed
+      .filter(deployment => !deleting.has(deployment))
+      .map(deployment => payloadCommentId(deployment.payload))
+  )
+  const deleteComments = deploymentsToDelete.map(deployment => {
+    const commentId = payloadCommentId(deployment.payload)
+    if (commentId === undefined || claimed.has(commentId)) {
+      return false
+    }
+    claimed.add(commentId)
+    return true
+  })
+  assert.equal(deleteComments.length, deploymentsToDelete.length)
+  return deleteComments
+}
+
 /** See the note on `run` in `src/deploy/main.ts`. */
 export const run = Effect.gen(function* () {
   const {keepLatest, gitHubEnvironment} = yield* DeleteInputs
@@ -130,12 +159,16 @@ export const run = Effect.gen(function* () {
     return
   }
 
+  const deleteComments = runDeleteComments(
+    deploymentsListed,
+    deploymentsToDelete
+  )
   // `unicorn/no-array-for-each` matches on the name; this is Effect's
   // bounded-concurrency combinator, not `Array#forEach`.
   // oxlint-disable-next-line unicorn/no-array-for-each
   const rows = yield* Effect.forEach(
     deploymentsToDelete,
-    deployment => batchDelete(deployment),
+    (deployment, index) => batchDelete(deployment, deleteComments[index]),
     {concurrency: DELETE_CONCURRENCY}
   )
 

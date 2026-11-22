@@ -58,6 +58,25 @@ export type DeploymentStatus = Exclude<
   'idle' | 'active'
 >
 
+/**
+ * Where the deployment ended, or `undefined` while it is still running. Any
+ * stage failing, canceled or skipped ends the deploy; only the `deploy`
+ * stage succeeding completes it. Anything else — an earlier stage done, or a
+ * stage `idle` / `active` — is still running, as wrangler also treats it.
+ * A skipped stage never resumes, so waiting on it only ends in the timeout.
+ */
+export const deploymentOutcome = ({
+  latest_stage: {name, status}
+}: PagesDeployment): DeploymentStatus | undefined => {
+  if (status === 'failure' || status === 'canceled' || status === 'skipped') {
+    return status
+  }
+  if (status === 'success' && name === 'deploy') {
+    return status
+  }
+  return undefined
+}
+
 type StatusResult = {
   deployment: PagesDeployment
   status: DeploymentStatus
@@ -113,15 +132,9 @@ const pollOnce = Effect.fn('pollOnce')(function* (
 
   debug(`${PREFIX} ${JSON.stringify(latest_stage)}`)
 
-  // Any stage failing, canceled or skipped ends the deploy; only the `deploy`
-  // stage succeeding completes it. Anything else — an earlier stage done, or
-  // a stage `idle` / `active` — is still running, as wrangler also treats it.
-  // A skipped stage never resumes, so waiting on it only ends in the timeout.
-  if (status === 'failure' || status === 'canceled' || status === 'skipped') {
-    return {deployment, status}
-  }
-  if (status === 'success' && name === 'deploy') {
-    return {deployment, status}
+  const outcome = deploymentOutcome(deployment)
+  if (outcome !== undefined) {
+    return {deployment, status: outcome}
   }
   return yield* new DeploymentPendingError({
     reason: `stage '${name}' is ${status}`

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import * as Effect from 'effect/Effect'
 import * as Schema from 'effect/Schema'
 
-import type {PagesDeployment} from '@/common/cloudflare/types.js'
+import type {CloudflareApiEndpoint} from '@/common/cloudflare/api/endpoints.js'
 
 import {
   CreateGitHubDeploymentDocument,
@@ -12,11 +12,12 @@ import {
 } from '@/gql/graphql.js'
 
 import type {Environment} from '../environment.js'
+import type {CloudflareStatusFields} from './deployment-status.js'
 
 import {GitHubApi} from '../api/client.js'
 import {GitHubContext} from '../context.js'
 import {deploymentStatusInput} from './deployment-status.js'
-import {PayloadV2} from './types.js'
+import {PAYLOAD_VERSION, PayloadV3} from './types.js'
 
 // oxlint-disable-next-line unicorn/throw-new-error
 class GitHubDeploymentError extends Schema.TaggedError<
@@ -28,33 +29,48 @@ class GitHubDeploymentError extends Schema.TaggedError<
  * Writes the payload through the same schema `getPayload` decodes it with, so
  * the two cannot drift.
  */
-const encodePayload = Schema.encodeSync(Schema.fromJsonString(PayloadV2))
+const encodePayload = Schema.encodeSync(Schema.fromJsonString(PayloadV3))
 
+/** Sets the status of the GitHub Deployment `deploymentId`. */
+export const setGitHubDeploymentStatus = Effect.fn('setGitHubDeploymentStatus')(
+  function* (
+    status: {
+      deploymentId: string
+      environment: string
+      state: DeploymentStatusState
+    } & CloudflareStatusFields
+  ) {
+    assert.ok(status.deploymentId.length > 0)
+    const github = yield* GitHubApi
+    yield* github.request({
+      query: CreateGitHubDeploymentStatusDocument,
+      variables: {input: deploymentStatusInput(status)}
+    })
+  }
+)
+
+/**
+ * Records the GitHub Deployment before wrangler runs, as `IN_PROGRESS`, so a
+ * failed build still shows on the pull request. `autoMerge` and
+ * `requiredContexts` are off: the deployment records what Cloudflare deploys.
+ * Returns its node id, for the final status.
+ */
 export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
   function* ({
-    cloudflareDeployment: {id, url, project_name: projectName},
-    cloudflareAccountId: accountId,
+    cloudflare,
     commentId,
     environment: {name, refId}
   }: {
-    cloudflareDeployment: PagesDeployment
-    cloudflareAccountId: string
+    cloudflare: CloudflareApiEndpoint
     commentId: string | undefined
     environment: Environment
   }) {
-    assert.ok(id.length > 0)
     assert.ok(refId.length > 0)
-    assert.ok(URL.canParse(url))
+    assert.ok(cloudflare.projectName.length > 0)
 
     const {repo} = yield* GitHubContext
     const github = yield* GitHubApi
 
-    const cloudflare = {id, projectName, accountId}
-
-    /**
-     * Create GitHub Deployment. `autoMerge` and `requiredContexts` are off:
-     * the deployment records what Cloudflare already deployed.
-     */
     const deployment = yield* github.request({
       query: CreateGitHubDeploymentDocument,
       variables: {
@@ -62,32 +78,30 @@ export const createGitHubDeployment = Effect.fn('createGitHubDeployment')(
           repositoryId: repo.node_id,
           refId,
           environment: name,
-          description: `Cloudflare Pages Deployment: ${id}`,
-          payload: encodePayload({url, commentId, cloudflare}),
+          description: `Cloudflare Pages: ${cloudflare.projectName}`,
+          payload: encodePayload({
+            version: PAYLOAD_VERSION,
+            commentId,
+            cloudflare
+          }),
           autoMerge: false,
           requiredContexts: []
         }
       }
     })
-    const gitHubDeploymentId = deployment.data?.createDeployment?.deployment?.id
+    const deploymentId = deployment.data?.createDeployment?.deployment?.id
 
-    if (!gitHubDeploymentId) {
+    if (!deploymentId) {
       return yield* new GitHubDeploymentError({
         message: 'GitHub Deployment: GitHub deployment id is required'
       })
     }
 
-    yield* github.request({
-      query: CreateGitHubDeploymentStatusDocument,
-      variables: {
-        input: deploymentStatusInput({
-          deploymentId: gitHubDeploymentId,
-          environment: name,
-          url,
-          cloudflare,
-          state: DeploymentStatusState.Success
-        })
-      }
+    yield* setGitHubDeploymentStatus({
+      deploymentId,
+      environment: name,
+      state: DeploymentStatusState.InProgress
     })
+    return deploymentId
   }
 )

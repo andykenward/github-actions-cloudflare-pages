@@ -2,20 +2,26 @@ import {info} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
-import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
 import type {MockApi} from '@/tests/helpers/api.js'
 
 import {GitHubApi} from '@/common/github/api/client.js'
-import {addComment, pullRequestToComment} from '@/common/github/comment.js'
+import {
+  commentBody,
+  pullRequestToComment,
+  upsertComment
+} from '@/common/github/comment.js'
 import {GitHubContext} from '@/common/github/context.js'
 import {CommonInputs} from '@/common/inputs.js'
 import {CommonLayer} from '@/common/layer.js'
 import {
   AddPullRequestCommentDocument,
   GetOpenPullRequestByBranchDocument,
-  GetPullRequestIdDocument
+  GetPullRequestCommentDocument,
+  GetPullRequestIdDocument,
+  UpdatePullRequestCommentDocument
 } from '@/gql/graphql.js'
 import RESPONSE_DEPLOYMENTS from '@/responses/api.cloudflare.com/pages/deployments/deployments.response.json' with {type: 'json'}
 import {setMockApi} from '@/tests/helpers/api.js'
@@ -25,22 +31,7 @@ vi.mock(import('@actions/core'))
 type Context = GitHubContext['Service']
 
 /**
- * Resolves the pull request — from `pullRequestNumber` when given, else the event —
- * then comments on it, as the deploy does.
- */
-const comment = (
-  deployment: PagesDeployment,
-  output: string | undefined,
-  pullRequestNumber?: number
-) =>
-  pullRequestToComment(pullRequestNumber).pipe(
-    Effect.flatMap(pullRequestId =>
-      addComment(pullRequestId, deployment, output)
-    )
-  )
-
-/**
- * The services `addComment` needs, with the GitHub context replaced — for
+ * The services `pullRequestToComment` needs, with the GitHub context replaced — for
  * events and pull request lists the payload fixtures don't cover.
  */
 const withContext = (context: Pick<Context, 'event'> & Partial<Context>) =>
@@ -61,6 +52,8 @@ const withContext = (context: Pick<Context, 'event'> & Partial<Context>) =>
             graphqlEndpoint: 'https://api.github.com/graphql',
             apiUrl: 'https://api.github.com',
             ref: 'master',
+            runUrl:
+              'https://github.com/andykenward/github-actions-cloudflare-pages/actions',
             ...context
           })
         )
@@ -70,8 +63,7 @@ const withContext = (context: Pick<Context, 'event'> & Partial<Context>) =>
 
 // `Effect.fn` returns an anonymous function, so the title is a string.
 // oxlint-disable-next-line vitest/prefer-describe-function-title
-describe('addComment', () => {
-  const mockData = RESPONSE_DEPLOYMENTS.result[0] as unknown as PagesDeployment
+describe('pullRequestToComment', () => {
   let mockApi: MockApi
 
   beforeEach(() => {
@@ -84,66 +76,13 @@ describe('addComment', () => {
   })
 
   describe('eventName: pull_request', () => {
-    it.effect('should add comment', () =>
+    it.effect('resolves the payload pull request', () =>
       Effect.gen(function* () {
         expect.assertions(1)
 
-        mockApi.interceptGithub(
-          {
-            query: AddPullRequestCommentDocument,
-            variables: {
-              input: {
-                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-                body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** ffac537e6cbbf934b08745a378932722df287a53\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
-              }
-            }
-          },
-          {
-            data: {
-              addComment: {
-                commentEdge: {
-                  node: {
-                    id: '1'
-                  }
-                }
-              }
-            }
-          }
+        expect(yield* pullRequestToComment()).toBe(
+          'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3'
         )
-
-        expect(yield* comment(mockData, 'success')).toBe('1')
-      }).pipe(Effect.provide(CommonLayer))
-    )
-
-    it.effect('leaves the Wrangler Output section out when given none', () =>
-      Effect.gen(function* () {
-        expect.assertions(1)
-
-        mockApi.interceptGithub(
-          {
-            query: AddPullRequestCommentDocument,
-            variables: {
-              input: {
-                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-                body: '## Cloudflare Pages Deployment\n**Event Name:** pull_request\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** ffac537e6cbbf934b08745a378932722df287a53\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev'
-              }
-            }
-          },
-          {
-            data: {
-              addComment: {
-                commentEdge: {
-                  node: {
-                    id: '1'
-                  }
-                }
-              }
-            }
-          }
-        )
-
-        // oxlint-disable-next-line unicorn/no-useless-undefined
-        expect(yield* comment(mockData, undefined)).toBe('1')
       }).pipe(Effect.provide(CommonLayer))
     )
 
@@ -154,19 +93,16 @@ describe('addComment', () => {
       )
 
       return Effect.gen(function* () {
-        expect.assertions(2)
+        expect.assertions(1)
 
         // No interceptors: any GitHub request would fail the test.
-        expect(yield* comment(mockData, 'success')).toBeUndefined()
-        expect(info).toHaveBeenCalledWith(
-          'addComment - No Pull Request could be found to post comment.'
-        )
+        expect(yield* pullRequestToComment()).toBeUndefined()
       }).pipe(Effect.provide(CommonLayer))
     })
   })
 
   describe('eventName: workflow_run', () => {
-    it.effect('should add comment', () =>
+    it.effect('resolves the pull request', () =>
       Effect.gen(function* () {
         expect.assertions(1)
 
@@ -190,30 +126,9 @@ describe('addComment', () => {
           }
         )
 
-        mockApi.interceptGithub(
-          {
-            query: AddPullRequestCommentDocument,
-            variables: {
-              input: {
-                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_run\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** 3484a3fb816e0859fd6e1cea078d76385ff50625\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
-              }
-            }
-          },
-          {
-            data: {
-              addComment: {
-                commentEdge: {
-                  node: {
-                    id: '1'
-                  }
-                }
-              }
-            }
-          }
+        expect(yield* pullRequestToComment()).toBe(
+          'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3'
         )
-
-        expect(yield* comment(mockData, 'success')).toBe('1')
       }).pipe(
         Effect.provide(
           withContext({
@@ -270,7 +185,7 @@ describe('addComment', () => {
         Effect.gen(function* () {
           expect.assertions(1)
 
-          const error = yield* Effect.flip(comment(mockData, 'success'))
+          const error = yield* Effect.flip(pullRequestToComment())
 
           expect(error.message).toBe(
             'No pull request found in workflow_run event matching head branch and sha'
@@ -299,7 +214,7 @@ describe('addComment', () => {
         Effect.gen(function* () {
           expect.assertions(1)
 
-          const error = yield* Effect.flip(comment(mockData, 'success'))
+          const error = yield* Effect.flip(pullRequestToComment())
 
           expect(error.message).toBe(
             'Multiple pull requests found in workflow_run event matching head branch and sha'
@@ -363,31 +278,10 @@ describe('addComment', () => {
           }
         )
 
-        mockApi.interceptGithub(
-          {
-            query: AddPullRequestCommentDocument,
-            variables: {
-              input: {
-                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** ffac537e6cbbf934b08745a378932722df287a53\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
-              }
-            }
-          },
-          {
-            data: {
-              addComment: {
-                commentEdge: {
-                  node: {
-                    id: '1'
-                  }
-                }
-              }
-            }
-          }
-        )
-
         // No branch lookup: the input wins over the event.
-        expect(yield* comment(mockData, 'success', 123)).toBe('1')
+        expect(yield* pullRequestToComment(123)).toBe(
+          'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3'
+        )
       }).pipe(
         Effect.provide(
           withContext({
@@ -430,7 +324,7 @@ describe('addComment', () => {
             }
           )
 
-          const error = yield* Effect.flip(comment(mockData, 'success', 999))
+          const error = yield* Effect.flip(pullRequestToComment(999))
 
           // README.md's Troubleshooting table quotes this message.
           expect(error._tag).toBe('CommentError')
@@ -463,7 +357,7 @@ describe('addComment', () => {
           {data: {repository: {pullRequest: null}}, errors}
         )
 
-        const error = yield* Effect.flip(comment(mockData, 'success', 999))
+        const error = yield* Effect.flip(pullRequestToComment(999))
 
         expect(error._tag).toBe('GitHubApiError')
         expect(error.message).toBe(JSON.stringify(errors))
@@ -481,7 +375,7 @@ describe('addComment', () => {
       ref: 'refs/heads/feature-branch'
     })
 
-    it.effect('should add comment', () =>
+    it.effect('resolves the pull request', () =>
       Effect.gen(function* () {
         expect.assertions(1)
 
@@ -505,30 +399,9 @@ describe('addComment', () => {
           }
         )
 
-        mockApi.interceptGithub(
-          {
-            query: AddPullRequestCommentDocument,
-            variables: {
-              input: {
-                subjectId: 'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3',
-                body: '## Cloudflare Pages Deployment\n**Event Name:** workflow_dispatch\n**Environment:** production\n**Project:** cloudflare-pages-action\n**Built with commit:** ffac537e6cbbf934b08745a378932722df287a53\n**Preview URL:** https://206e215c.cloudflare-pages-action-a5z.pages.dev\n**Branch Preview URL:** https://unknown-branch.cloudflare-pages-action-a5z.pages.dev\n\n### Wrangler Output\n```\nsuccess\n```'
-              }
-            }
-          },
-          {
-            data: {
-              addComment: {
-                commentEdge: {
-                  node: {
-                    id: '1'
-                  }
-                }
-              }
-            }
-          }
+        expect(yield* pullRequestToComment()).toBe(
+          'MDExOlB1bGxSZXF1ZXN0Mjc5MTQ3NDM3'
         )
-
-        expect(yield* comment(mockData, 'success')).toBe('1')
       }).pipe(Effect.provide(WORKFLOW_DISPATCH))
     )
 
@@ -558,7 +431,7 @@ describe('addComment', () => {
             }
           )
 
-          const error = yield* Effect.flip(comment(mockData, 'success'))
+          const error = yield* Effect.flip(pullRequestToComment())
 
           expect(error.message).toBe(
             'No pull request node id found for workflow_dispatch event'
@@ -578,7 +451,7 @@ describe('addComment', () => {
         expect.assertions(1)
 
         // No interceptors: any GitHub request would fail the test.
-        expect(yield* comment(mockData, 'success')).toBeUndefined()
+        expect(yield* pullRequestToComment()).toBeUndefined()
       }).pipe(
         Effect.provide(
           withContext({
@@ -591,4 +464,230 @@ describe('addComment', () => {
       )
     )
   })
+})
+
+describe(commentBody, () => {
+  const deployment = RESPONSE_DEPLOYMENTS
+    .result[0] as unknown as PagesDeployment
+  const context = {
+    sha: 'ffac537e6cbbf934b08745a378932722df287a53',
+    repo: {
+      owner: 'andykenward',
+      repo: 'github-actions-cloudflare-pages',
+      node_id: 'repo_node_id'
+    },
+    event: {eventName: 'push' as const, payload: {}}
+  }
+  const base = {environment: 'preview', projectName: 'cloudflare-pages-action'}
+
+  test('shows a building deployment without URLs', () => {
+    expect.assertions(1)
+
+    expect(commentBody({...base, state: 'building'}, context))
+      .toMatchInlineSnapshot(`
+        "## Cloudflare Pages Deployment
+
+        | Name | Result |
+        | --- | --- |
+        | Status | 🔄 Building |
+        | Environment | preview |
+        | Project | cloudflare-pages-action |
+        | Commit | [\`ffac537\`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/ffac537e6cbbf934b08745a378932722df287a53) |
+        | Event | push |"
+      `)
+  })
+
+  test('links the URLs and appends the wrangler output when ready', () => {
+    expect.assertions(1)
+
+    expect(
+      commentBody(
+        {...base, state: 'ready', deployment, wranglerOutput: 'success'},
+        context
+      )
+    ).toMatchInlineSnapshot(`
+      "## Cloudflare Pages Deployment
+
+      | Name | Result |
+      | --- | --- |
+      | Status | ✅ Ready |
+      | Environment | preview |
+      | Project | cloudflare-pages-action |
+      | Commit | [\`ffac537\`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/ffac537e6cbbf934b08745a378932722df287a53) |
+      | Event | push |
+      | Preview URL | [https://206e215c.cloudflare-pages-action-a5z.pages.dev](https://206e215c.cloudflare-pages-action-a5z.pages.dev) |
+      | Branch Preview URL | [https://unknown-branch.cloudflare-pages-action-a5z.pages.dev](https://unknown-branch.cloudflare-pages-action-a5z.pages.dev) |
+
+      ### Wrangler Output
+      \`\`\`
+      success
+      \`\`\`"
+    `)
+  })
+
+  test('links the build log and escapes table cells when failed', () => {
+    expect.assertions(1)
+
+    expect(
+      commentBody(
+        {
+          ...base,
+          environment: 'a | b',
+          state: 'failed',
+          logUrl: 'https://dash.cloudflare.com/log'
+        },
+        context
+      )
+    ).toMatchInlineSnapshot(`
+      "## Cloudflare Pages Deployment
+
+      | Name | Result |
+      | --- | --- |
+      | Status | ❌ Failed |
+      | Environment | a \\| b |
+      | Project | cloudflare-pages-action |
+      | Commit | [\`ffac537\`](https://github.com/andykenward/github-actions-cloudflare-pages/commit/ffac537e6cbbf934b08745a378932722df287a53) |
+      | Event | push |
+      | Build log | [View build log](https://dash.cloudflare.com/log) |"
+    `)
+  })
+
+  test('notes why the action failed after a deployment went live', () => {
+    expect.assertions(1)
+
+    expect(
+      commentBody(
+        {...base, state: 'ready', deployment, note: 'boom\nagain'},
+        context
+      )
+    ).toContain('\n\n> boom again')
+  })
+})
+
+// `Effect.fn` returns an anonymous function, so the title is a string.
+// oxlint-disable-next-line vitest/prefer-describe-function-title
+describe('upsertComment', () => {
+  const PULL_REQUEST_ID = 'PR_kwDOJn0nrM5vY7Xq'
+  const COMMENT_ID = 'IC_kwDOJn0nrM5vY7Xq'
+  let mockApi: MockApi
+
+  beforeEach(() => {
+    mockApi = setMockApi()
+  })
+
+  afterEach(async () => {
+    mockApi.mockAgent.assertNoPendingInterceptors()
+    await mockApi.mockAgent.close()
+  })
+
+  const interceptAdd = () =>
+    mockApi.interceptGithub(
+      {
+        query: AddPullRequestCommentDocument,
+        variables: {input: {subjectId: PULL_REQUEST_ID, body: 'body'}}
+      },
+      {data: {addComment: {commentEdge: {node: {id: 'IC_new'}}}}}
+    )
+
+  const interceptLookup = (response: object) =>
+    mockApi.interceptGithub(
+      {query: GetPullRequestCommentDocument, variables: {id: COMMENT_ID}},
+      response
+    )
+
+  it.effect('posts nothing without a pull request', () =>
+    Effect.gen(function* () {
+      expect.assertions(2)
+
+      expect(
+        yield* upsertComment(undefined, COMMENT_ID, 'body')
+      ).toBeUndefined()
+      expect(info).toHaveBeenCalledWith(
+        'comment - No Pull Request could be found to post comment.'
+      )
+    }).pipe(Effect.provide(CommonLayer))
+  )
+
+  it.effect('posts a new comment when there is no previous one', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      interceptAdd()
+
+      expect(yield* upsertComment(PULL_REQUEST_ID, undefined, 'body')).toBe(
+        'IC_new'
+      )
+    }).pipe(Effect.provide(CommonLayer))
+  )
+
+  it.effect('edits the previous comment on the same pull request', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      interceptLookup({
+        data: {node: {id: COMMENT_ID, pullRequest: {id: PULL_REQUEST_ID}}}
+      })
+      mockApi.interceptGithub(
+        {
+          query: UpdatePullRequestCommentDocument,
+          variables: {input: {id: COMMENT_ID, body: 'body'}}
+        },
+        {data: {updateIssueComment: {issueComment: {id: COMMENT_ID}}}}
+      )
+
+      expect(yield* upsertComment(PULL_REQUEST_ID, COMMENT_ID, 'body')).toBe(
+        COMMENT_ID
+      )
+    }).pipe(Effect.provide(CommonLayer))
+  )
+
+  it.effect.each([
+    {
+      reason: 'is on another pull request',
+      response: {
+        data: {node: {id: COMMENT_ID, pullRequest: {id: 'PR_other'}}}
+      }
+    },
+    {
+      reason: 'was deleted',
+      response: {
+        data: {node: null},
+        errors: [
+          {
+            type: 'NOT_FOUND',
+            path: ['node'],
+            message: `Could not resolve to a node with the global id of '${COMMENT_ID}'`
+          }
+        ]
+      }
+    }
+  ])('posts a new comment when the previous one $reason', ({response}) =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      interceptLookup(response)
+      interceptAdd()
+
+      expect(yield* upsertComment(PULL_REQUEST_ID, COMMENT_ID, 'body')).toBe(
+        'IC_new'
+      )
+    }).pipe(Effect.provide(CommonLayer))
+  )
+
+  it.effect('fails with any other error looking up the previous comment', () =>
+    Effect.gen(function* () {
+      expect.assertions(1)
+
+      interceptLookup({
+        data: {node: null},
+        errors: [{type: 'FORBIDDEN', path: ['node'], message: 'forbidden'}]
+      })
+
+      const error = yield* Effect.flip(
+        upsertComment(PULL_REQUEST_ID, COMMENT_ID, 'body')
+      )
+
+      expect(error._tag).toBe('GitHubApiError')
+    }).pipe(Effect.provide(CommonLayer))
+  )
 })

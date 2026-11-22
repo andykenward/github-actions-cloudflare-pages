@@ -23,7 +23,8 @@ paths:
   - GitHub Environments must be created manually — the action can't create them (that needs `administration:write`).
   - With `GITHUB_TOKEN`, grant `contents: read`, `deployments: write`, `pull-requests: write`, plus `actions: read` for private repos.
   - Supported events: `push`, `pull_request`, `workflow_dispatch`, `workflow_run`.
-  - A failed, canceled or skipped Cloudflare build fails the step, as does one still running after 10 minutes, or an upload still running after 30. The outputs and job summary are written first; no pull request comment or GitHub Deployment is created.
+  - A failed, canceled or skipped Cloudflare build fails the step, as does one still running after 10 minutes, or an upload still running after 30. The outputs and job summary are written first. The GitHub Deployment (created `in_progress` before the upload) and the PR comment then show the failure — with the status Cloudflare reports, so a deployment that went live is still marked successful.
+  - The deploy keeps one PR comment, edited in place; a delete action older than the deploy action can't read its payload, so docs say to update both together.
   - The delete action deletes at most 500 deployments per run (oldest first) and lists at most 100 pages of 100.
   - The README's Troubleshooting table quotes the actions' exact error messages. Changing a message in `src/` means updating that table, `delete/README.md`'s, and the skill's.
   - A deploy job's `timeout-minutes` must exceed the action's 10-minute polling ceiling plus upload time, or the runner kills the job before the action can report. Agents copy examples verbatim.

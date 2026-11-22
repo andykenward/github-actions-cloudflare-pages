@@ -5,6 +5,7 @@ import {info, setOutput, summary} from '@actions/core'
 import {it} from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import * as Layer from 'effect/Layer'
+import * as Ref from 'effect/Ref'
 import {afterEach, beforeEach, describe, expect, vi} from 'vitest'
 
 import type {PagesDeployment} from '@/common/cloudflare/types.js'
@@ -32,6 +33,10 @@ import {NoPollDelay} from '@/tests/helpers/layers.js'
 import {wranglerReporting} from '@/tests/helpers/wrangler.js'
 
 const WRANGLER_VERSION = '4.0.0'
+
+/** Where the deploy records the Cloudflare id; these tests don't read it. */
+// oxlint-disable-next-line unicorn/no-useless-undefined
+const makeDeploymentIdRef = Ref.make<string | undefined>(undefined)
 
 vi.mock(import('@/common/utils.js'))
 vi.mock(import('@actions/core'))
@@ -69,6 +74,7 @@ describe('createCloudflareDeployment', () => {
 
         const error = yield* Effect.flip(
           createCloudflareDeployment({
+            deploymentIdRef: yield* makeDeploymentIdRef,
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
             directory: 'mock-directory',
@@ -110,6 +116,7 @@ describe('createCloudflareDeployment', () => {
 
         const error = yield* Effect.flip(
           createCloudflareDeployment({
+            deploymentIdRef: yield* makeDeploymentIdRef,
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
             directory: 'mock-directory',
@@ -152,6 +159,7 @@ describe('createCloudflareDeployment', () => {
         )
 
         const {deployment, wranglerOutput} = yield* createCloudflareDeployment({
+          deploymentIdRef: yield* makeDeploymentIdRef,
           accountId: 'mock-cloudflare-account-id',
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
@@ -278,6 +286,7 @@ describe('createCloudflareDeployment', () => {
         )
 
         yield* createCloudflareDeployment({
+          deploymentIdRef: yield* makeDeploymentIdRef,
           accountId: 'mock-cloudflare-account-id',
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
@@ -360,6 +369,7 @@ describe('createCloudflareDeployment', () => {
         )
 
         yield* createCloudflareDeployment({
+          deploymentIdRef: yield* makeDeploymentIdRef,
           accountId: 'mock-cloudflare-account-id',
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
@@ -414,7 +424,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
 
   it.live('polls that deployment, not the list', () =>
     Effect.gen(function* () {
-      expect.assertions(1)
+      expect.assertions(2)
 
       vi.mocked(execFileAsync).mockImplementationOnce(
         wranglerReporting(MOCK_DEPLOYMENT_ID, () => {}) as never
@@ -426,7 +436,9 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
         deploymentResponse('success')
       )
 
+      const deploymentIdRef = yield* makeDeploymentIdRef
       const {deployment} = yield* createCloudflareDeployment({
+        deploymentIdRef,
         accountId: 'mock-cloudflare-account-id',
         projectName: 'mock-cloudflare-project-name',
         directory: 'mock-directory',
@@ -434,6 +446,8 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
       })
 
       expect(deployment.id).toBe(RESPONSE_DEPLOYMENTS.result[0]?.id)
+      // Recorded, so a failure after this point can still name it.
+      expect(yield* Ref.get(deploymentIdRef)).toBe(MOCK_DEPLOYMENT_ID)
     }).pipe(Effect.provide(TestLayer))
   )
 
@@ -453,6 +467,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
 
       const error = yield* Effect.flip(
         createCloudflareDeployment({
+          deploymentIdRef: yield* makeDeploymentIdRef,
           accountId: 'mock-cloudflare-account-id',
           projectName: 'mock-cloudflare-project-name',
           directory: 'mock-directory',
@@ -487,6 +502,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
 
         const error = yield* Effect.flip(
           createCloudflareDeployment({
+            deploymentIdRef: yield* makeDeploymentIdRef,
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
             directory: 'mock-directory',
@@ -535,6 +551,7 @@ describe('createCloudflareDeployment with the deployment id wrangler reports', (
 
         const error = yield* Effect.flip(
           createCloudflareDeployment({
+            deploymentIdRef: yield* makeDeploymentIdRef,
             accountId: 'mock-cloudflare-account-id',
             projectName: 'mock-cloudflare-project-name',
             directory: 'mock-directory',

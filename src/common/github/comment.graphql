@@ -33,3 +33,25 @@ query GetOpenPullRequestByBranch(
     }
   }
 }
+
+# Edits the deployment comment in place, so a pull request keeps one comment.
+mutation UpdatePullRequestComment($input: UpdateIssueCommentInput!) {
+  updateIssueComment(input: $input) {
+    issueComment {
+      id
+    }
+  }
+}
+
+# The pull request a previous deployment comment is on: it is reused only on
+# the same pull request, since a branch can be reused for a new one.
+query GetPullRequestComment($id: ID!) {
+  node(id: $id) {
+    ... on IssueComment {
+      id
+      pullRequest {
+        id
+      }
+    }
+  }
+}

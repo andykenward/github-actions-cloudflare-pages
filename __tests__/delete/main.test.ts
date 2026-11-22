@@ -26,6 +26,16 @@ const withId = (node_id: string): GitHubDeployment => ({
   node_id
 })
 
+/** A deployment whose payload recorded `commentId`, or none. */
+const withComment = (
+  node_id: string,
+  commentId?: string
+): GitHubDeployment => ({
+  ...DEPLOYMENT,
+  node_id,
+  payload: {...(DEPLOYMENT.payload as object), commentId}
+})
+
 /**
  * A `GitHubRestApi` that lists `deployments`. Provided inside `DeleteLayer`, so
  * it takes the place of the real client for `run`.
@@ -176,6 +186,63 @@ describe('delete', () => {
       }).pipe(
         Effect.provide(
           listing([withId('DE_1'), withId('DE_2'), withId('DE_3')])
+        ),
+        Effect.provide(DeleteLayer)
+      )
+    })
+
+    it.effect.each([
+      {
+        name: 'a comment a kept deployment still uses',
+        keepLatest: '1',
+        // DE_1 is kept, and its comment is A.
+        expected: [
+          ['DE_2', false],
+          ['DE_3', false],
+          ['DE_4', true],
+          ['DE_5', false]
+        ]
+      },
+      {
+        name: 'a shared comment only once',
+        keepLatest: '0',
+        expected: [
+          ['DE_1', true],
+          ['DE_2', false],
+          ['DE_3', false],
+          ['DE_4', true],
+          ['DE_5', false]
+        ]
+      }
+    ])('deletes $name', ({keepLatest, expected}) => {
+      stubInputEnv(INPUT_KEY_KEEP_LATEST, keepLatest)
+
+      return Effect.gen(function* () {
+        expect.assertions(1)
+
+        vi.mocked(batchDelete).mockReturnValue(
+          Effect.succeed({...ROW, success: true})
+        )
+
+        yield* run
+
+        expect(
+          vi
+            .mocked(batchDelete)
+            .mock.calls.map(([{node_id}, deleteComment]) => [
+              node_id,
+              deleteComment
+            ])
+        ).toStrictEqual(expected)
+      }).pipe(
+        Effect.provide(
+          listing([
+            withComment('DE_1', 'A'),
+            withComment('DE_2', 'A'),
+            withComment('DE_3', 'A'),
+            withComment('DE_4', 'B'),
+            withComment('DE_5')
+          ])
         ),
         Effect.provide(DeleteLayer)
       )

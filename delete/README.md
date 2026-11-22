@@ -9,7 +9,8 @@ Delete deployments created by [`andykenward/github-actions-cloudflare-pages`](..
 
 - Delete the Cloudflare Pages deployment.
 - Mark the GitHub deployment status `INACTIVE` once the Cloudflare Pages deployment is deleted.
-- Delete the GitHub deployment and its related comment.
+- Delete the GitHub deployment and its related comment. The deploy action keeps one comment per pull request, shared by its deployments, so the comment is only deleted once no deployment left in place (for example one kept by `keep-latest`) still uses it.
+- Delete deployments recorded before the Cloudflare build finished: the Cloudflare deployment is found from the deployment's status, and a run that failed or was cancelled before reaching Cloudflare only has its GitHub records deleted.
 - Delete up to 5 deployments at a time.
 - Write a [job summary] of what was deleted.
 - Fail the step if any deployment could not be deleted. The rest are still deleted, and the job summary lists which failed and why.
@@ -70,16 +71,17 @@ A run deletes at most 500 deployments, oldest first, and lists at most 10 000 fr
 
 ## Troubleshooting
 
-| Message                                                                                 | Cause and fix                                                                                                                 |
-| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `delete - <n> of <total> deployments failed to delete; see the job summary for details` | Some deletions failed. The job summary's Error column says why for each one — see the rows below.                             |
-| `Payload is not valid` (in the job summary)                                             | The deployment wasn't created by the deploy action, or its payload was changed. This action only deletes its own deployments. |
-| `Deleting Cloudflare deployment failed` (in the job summary)                            | Cloudflare refused the deletion. Check `cloudflare-api-token` has the **Cloudflare Pages: Edit** permission on the account.   |
-| `Updating GitHub deployment status failed` (in the job summary)                         | GitHub refused the status change. Check `github-token` has `deployments: write`.                                              |
-| `Deleting GitHub deployment failed` (in the job summary)                                | GitHub rejected the whole request, e.g. a rate limit, after the Cloudflare deployment was deleted. Re-run the workflow.       |
-| `Deleting the GitHub deployment or its comment failed: …` (in the job summary)          | The row succeeded — the status was set — but the deployment or its comment is still there. Delete it by hand, or re-run.      |
-| `delete - Deleting the oldest 500 of <n> deployments; re-run to delete the rest`        | A warning, not a failure: more than 500 deployments were due. Re-run until it stops.                                          |
-| `GitHub API listing <path> still had pages after 100; narrow the query`                 | More than 10 000 deployments reference the branch. Set `github-environment` to list fewer, or delete some by hand.            |
+| Message                                                                                 | Cause and fix                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `delete - <n> of <total> deployments failed to delete; see the job summary for details` | Some deletions failed. The job summary's Error column says why for each one — see the rows below.                                                                                                                    |
+| `Payload is not valid` (in the job summary)                                             | The deployment wasn't created by the deploy action, or its payload was changed. This action only deletes its own deployments. A delete action older than the deploy action also reports this — update both together. |
+| `Payload version <n> is newer than this delete action supports; …` (in the job summary) | A newer deploy action wrote the deployment. Update the delete action to the deploy action's version.                                                                                                                 |
+| `Deleting Cloudflare deployment failed` (in the job summary)                            | Cloudflare refused the deletion. Check `cloudflare-api-token` has the **Cloudflare Pages: Edit** permission on the account.                                                                                          |
+| `Updating GitHub deployment status failed` (in the job summary)                         | GitHub refused the status change. Check `github-token` has `deployments: write`.                                                                                                                                     |
+| `Deleting GitHub deployment failed` (in the job summary)                                | GitHub rejected the whole request, e.g. a rate limit, after the Cloudflare deployment was deleted. Re-run the workflow.                                                                                              |
+| `Deleting the GitHub deployment or its comment failed: …` (in the job summary)          | The row succeeded — the status was set — but the deployment or its comment is still there. Delete it by hand, or re-run.                                                                                             |
+| `delete - Deleting the oldest 500 of <n> deployments; re-run to delete the rest`        | A warning, not a failure: more than 500 deployments were due. Re-run until it stops.                                                                                                                                 |
+| `GitHub API listing <path> still had pages after 100; narrow the query`                 | More than 10 000 deployments reference the branch. Set `github-environment` to list fewer, or delete some by hand.                                                                                                   |
 
 Errors about inputs or the GitHub API read the same as the deploy action's — see its [Troubleshooting](../README.md#troubleshooting).
 

@@ -241,7 +241,8 @@ describe(GitHubContext, () => {
           vi.mocked(isDebug).mockReturnValue(false)
         })
 
-        const {repo, branch, sha, graphqlEndpoint, apiUrl, ref} = yield* context
+        const {repo, branch, sha, graphqlEndpoint, apiUrl, ref, runUrl} =
+          yield* context
 
         expect(debug).toHaveBeenCalledWith(
           `context: ${JSON.stringify({
@@ -251,9 +252,40 @@ describe(GitHubContext, () => {
             sha,
             graphqlEndpoint,
             apiUrl,
-            ref
+            ref,
+            runUrl
           })}`
         )
       })
+  )
+
+  it.effect.each([
+    {
+      runId: '1234',
+      serverUrl: 'https://github.example.com',
+      expected:
+        'https://github.example.com/andykenward/github-actions-cloudflare-pages/actions/runs/1234'
+    },
+    {
+      // Running the built action locally: no run, so the Actions page.
+      runId: '',
+      serverUrl: '',
+      expected:
+        'https://github.com/andykenward/github-actions-cloudflare-pages/actions'
+    }
+  ])(
+    'links the run log (GITHUB_RUN_ID: "$runId")',
+    ({runId, serverUrl, expected}) => {
+      vi.stubEnv('GITHUB_RUN_ID', runId)
+      vi.stubEnv('GITHUB_SERVER_URL', serverUrl)
+
+      return Effect.gen(function* () {
+        expect.assertions(1)
+
+        const {runUrl} = yield* context
+
+        expect(runUrl).toBe(expected)
+      })
+    }
   )
 })
