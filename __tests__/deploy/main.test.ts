@@ -57,9 +57,9 @@ const ENVIRONMENT_MISSING: {
   ]
 }
 
-/** The test env has no `GITHUB_RUN_ID`, so the run link is the Actions page. */
+/** The run log link, from the `GITHUB_RUN_ID` the test env pins. */
 const RUN_URL =
-  'https://github.com/andykenward/github-actions-cloudflare-pages/actions'
+  'https://github.com/andykenward/github-actions-cloudflare-pages/actions/runs/1234567890'
 
 const CLOUDFLARE_LOG_URL = `https://dash.cloudflare.com/mock-cloudflare-account-id/pages/view/mock-cloudflare-project-name/${MOCK_DEPLOYMENT_ID}`
 
