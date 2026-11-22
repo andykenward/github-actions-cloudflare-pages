@@ -107,6 +107,10 @@ describe('recent deployments', () => {
   })
 })
 
+/** A payload as GraphQL returns it: the stored JSON, encoded again. */
+const graphqlPayload = (payload: object): string =>
+  JSON.stringify(JSON.stringify(payload))
+
 describe(previousCommentId, () => {
   test('takes the newest deployment that recorded a comment', () => {
     expect.assertions(1)
@@ -118,12 +122,12 @@ describe(previousCommentId, () => {
         node(
           'DE_1',
           BRANCH,
-          '{"version":3,"commentId":"IC_1","cloudflare":{}}'
+          graphqlPayload({version: 3, commentId: 'IC_1', cloudflare: {}})
         ),
         node(
           'DE_0',
           BRANCH,
-          '{"url":"x","commentId":"IC_0","cloudflareId":"y"}'
+          graphqlPayload({url: 'x', commentId: 'IC_0', cloudflareId: 'y'})
         )
       ])
     ).toBe('IC_1')
@@ -133,7 +137,7 @@ describe(previousCommentId, () => {
     expect.assertions(1)
 
     expect(
-      previousCommentId([node('DE_1', BRANCH, '{"url":"x"}')])
+      previousCommentId([node('DE_1', BRANCH, graphqlPayload({url: 'x'}))])
     ).toBeUndefined()
   })
 })

@@ -233,6 +233,11 @@ describe(payloadCommentId, () => {
       expected: 'comment-id-123'
     },
     {name: 'a v3 object', payload: PAYLOAD_V3, expected: 'comment-id-123'},
+    {
+      name: "GraphQL's twice-encoded string",
+      payload: JSON.stringify(JSON.stringify(PAYLOAD_V3)),
+      expected: 'comment-id-123'
+    },
     {name: 'no comment', payload: {url: 'x'}, expected: undefined},
     {name: 'invalid JSON', payload: '{', expected: undefined},
     {name: 'null', payload: null, expected: undefined}

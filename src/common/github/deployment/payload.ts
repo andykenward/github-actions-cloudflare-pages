@@ -39,8 +39,17 @@ const decodeV1 = Schema.decodeUnknownOption(
 
 /** Every payload version has `commentId`; nothing else is read here. */
 const PayloadCommentId = Schema.Struct({commentId: CommentId})
+/**
+ * REST gives the stored object; GraphQL's `payload` is that JSON encoded
+ * again, a JSON string whose value is the JSON text (checked live
+ * 2026-11-22), so it takes two parses.
+ */
 const decodeCommentId = Schema.decodeUnknownOption(
-  Schema.Union([PayloadCommentId, Schema.fromJsonString(PayloadCommentId)])
+  Schema.Union([
+    PayloadCommentId,
+    Schema.fromJsonString(PayloadCommentId),
+    Schema.fromJsonString(Schema.fromJsonString(PayloadCommentId))
+  ])
 )
 
 /** The comment a payload of any version recorded, if any. */
